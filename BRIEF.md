@@ -1,6 +1,6 @@
 # VyonEx clean-room rewrite — brief for the implementing agent
 
-You are writing **VyonEx**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL. An earlier VyonEx exists, but it contains GPL-licensed code. Your job is to write a new one from scratch, from this brief and from permissively licensed public sources only, so it can be released under **Apache-2.0**.
+You are writing **VyonEx**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **VyonExKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier VyonEx exists, but it contains GPL-licensed code. Your job is to write new ones from scratch, from this brief and from permissively licensed public sources only, so they can be released under **Apache-2.0**.
 
 This brief tells you **what** the library must do. It deliberately does not tell you how the old one did it. Do not try to find out.
 
@@ -16,6 +16,7 @@ This brief tells you **what** the library must do. It deliberately does not tell
 3. **Allowed sources:**
    - **yt-dlp** (`github.com/yt-dlp/yt-dlp`) is released under the Unlicense (public domain). You may read it and port its logic. Check the `LICENSE` file at the commit you use.
    - yt-dlp's wiki (PO Token guide, extractor arguments).
+   - **YouTubeKit** (`github.com/alexeichhorn/YouTubeKit`) is MIT-licensed. You may read it and port from it, mainly for the Swift engine. If you copy or closely port any part, add its copyright line (`Copyright (c) 2022 Alexander Eichhorn`) and the MIT license text to a `NOTICE` file, and log what you took.
    - Any companion repository (for example the JS challenge solver), **only after** you have checked its license file and it is Unlicense, MIT, BSD, ISC or Apache-2.0.
    - YouTube's own public responses (watch page, player JS, player API), observed live by you.
    - Documentation for Kotlin, Ktor, kotlinx.serialization, kotlinx.coroutines and QuickJS-KT, and RFCs.
@@ -171,7 +172,7 @@ Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, playlists, search,
 
 ## 6. Tests and definition of done
 
-- **Offline unit tests** (`commonTest`, plus `jvmTest` where needed), using fixtures **you capture yourself** from YouTube and store under `src/commonTest/resources`. Cover:
+- **Offline unit tests** (`commonTest`, plus `jvmTest` where needed), using fixtures **you capture yourself** from YouTube and store in the top-level `fixtures/` folder (shared with the Swift tests, see section 8). Cover:
   - format selection (all three modes and the "no cap above 64" rule)
   - the URL allowlist
   - remember, forget, cap and clear of streams
@@ -188,10 +189,32 @@ Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, playlists, search,
 
 ## 7. Hand back
 
-Report:
+Deliver the work in two pull requests into `main`: the Kotlin library first (branch `rewrite`), then the Swift package (branch `rewrite-swift`, see section 8).
+
+Report in each:
 - which client identities you chose and why
 - test results (offline and live)
 - any open items in `QUESTIONS.md`
 - the commit hash
 
 Do not push anywhere except the repository you were given.
+
+---
+
+## 8. Second deliverable: native Swift engine `VyonExKit`
+
+A pure-Swift package with the same job and behavior as the Kotlin library, for Apple apps that don't want the Kotlin framework. Build it after the Kotlin PR is open.
+
+- **Layout:** Swift Package Manager package in `swift/`, library product and module `VyonExKit`, license Apache-2.0. The module is not named `VyonEx`, so it can't clash with the Kotlin XCFramework.
+- **Platforms:** iOS 15 and macOS 12 (needed to run tests on the CI machine). Add tvOS, watchOS and visionOS only if they compile without extra code.
+- **Dependencies:** none. Use `URLSession` for HTTP and `JavaScriptCore` to run the player script's functions.
+- **Concurrency:** Swift `async`/`await`. The main type is an `actor` or otherwise `Sendable`, and everything is safe to call from any thread.
+- **API.** Same concepts and member names as section 3, in Swift style:
+  - Value types (`struct`/`enum`): `VyonExStream`, `VyonExAudioCandidate`, `VyonExAudioFormat`, `VyonExSession`, `VyonExLogLevel`, `PoTokenResult`, `PoTokenProviderKind`.
+  - Protocols: `VyonExConfigStore`; `VyonExKitHost` (`session() async -> VyonExSession`, `configStore`, `now`, `log(_:_:trackId:)`, optional `tokenProvider`); `PoTokenProvider` (`capabilities`, `poToken(videoId:visitorData:cookie:) async throws -> PoTokenResult?`, `prewarm`, `invalidateAttestation`, `close`).
+  - Main type `VyonExKit(host:)`: `initialize()`, `audioCandidates(videoId:) async -> [VyonExAudioCandidate]`, `extract(videoId:maxKbps:skipClients:requireM4a:) async throws -> VyonExStream?`, `headers(for:)`, `onRefused(url:) -> String?`, `exclude(videoId:profileId:)`, `onSessionChanged()`.
+  - The host may pass its own `URLSession`; otherwise use a dedicated one with the section 4.7 JVM timeouts.
+- **Behavior:** exactly section 4, with `extract` working like the **iOS** version (primary clients, then the watch-page fallback). Caches stay in memory; an on-disk cache in the app's Caches folder is optional.
+- **Parity:** put the captured YouTube fixtures in a top-level `fixtures/` folder that both the Kotlin and Swift tests read, so both engines are checked against the same inputs.
+- **Tests:** offline XCTest or Swift Testing cases covering the same list as section 6, plus the opt-in live test under `VYONEX_LIVE=1`.
+- **CI:** add to the macOS job `swift test` in `swift/`, and an `xcodebuild` build of `VyonExKit` for the iOS Simulator.
