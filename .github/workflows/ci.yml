@@ -39,3 +39,9 @@ jobs:
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
           -F build/XCFrameworks/release/VyonEx.xcframework/ios-arm64_x86_64-simulator
           apicheck/ApiCheck.swift
+      - name: VyonExKit tests
+        working-directory: swift
+        run: swift test
+      - name: VyonExKit build for the iOS Simulator
+        working-directory: swift
+        run: xcodebuild build -scheme VyonExKit -destination 'generic/platform=iOS Simulator'

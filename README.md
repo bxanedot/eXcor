@@ -17,7 +17,7 @@ val stream = vyonEx.extract("dQw4w9WgXcQ", maxKbps = 160)
    `TV_SAMSUNG` (TVHTML5), `VISIONOS`, then `WEB` (only with a PO token from `host.tokenProvider`).
    Logged-in sessions skip `VISIONOS`, which does not take cookies.
 3. Decodes signature and `n` by running the player script's own functions in QuickJS, through
-   yt-dlp's EJS solver (`vendor/ejs`). The prepared player is cached per player version
+   yt-dlp's EJS solver (`swift/Sources/VyonExKit/ejs`, shared with VyonExKit). The prepared player is cached per player version
    (JVM: `filesDir/vyonex-players`, three newest; iOS: memory).
 4. Picks a format (`requireM4a`, `maxKbps <= 64`, or AUTO), allows only
    `https://*.googlevideo.com|youtube.com/videoplayback` URLs, never SABR or HLS.
@@ -36,7 +36,25 @@ VYONEX_LIVE=1 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # live, op
 Offline tests read the captured responses in `fixtures/` (see `fixtures/README.md`).
 `apicheck/ApiCheck.swift` is type-checked against the XCFramework in CI.
 
+## VyonExKit (native Swift)
+
+`swift/` is a dependency-free Swift package with the same behavior for Apple apps that do not
+want the Kotlin framework: `URLSession` for HTTP, JavaScriptCore for the player functions,
+iOS 15 / macOS 12. `extract` works like the iOS Kotlin version (player API, then the watch page).
+
+```swift
+let kit = VyonExKit(host: myHost)       // myHost: VyonExKitHost; optional URLSession: VyonExKit(host:session:)
+kit.initialize()
+if let stream = try await kit.extract(videoId: "dQw4w9WgXcQ", maxKbps: 160) { /* stream.url, stream.headers */ }
+```
+
+```sh
+cd swift && swift test                     # offline tests over the shared fixtures/
+VYONEX_LIVE=1 swift test --filter LiveTests
+```
+
 ## Files
 
 - `src/commonMain`: public API and the engine; `src/jvmMain`, `src/iosMain`: `VyonEx`, `VyonExHost`, transport, disk cache.
+- `swift/`: VyonExKit; `swift/Sources/VyonExKit/ejs`: the vendored solver both engines use.
 - `PROVENANCE.md`: every source used. `QUESTIONS.md`: open questions. `NOTICE`: third-party notices.
