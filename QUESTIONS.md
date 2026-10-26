@@ -53,3 +53,20 @@ Each item names the reading chosen; nothing was looked up in the old code.
     player version (during warm-up). Acceptable?
 17. **Toolchain.** Gradle itself runs on JDK 21 (locally and in CI); JDK 27 is the compile
     toolchain and JVM bytecode targets 26, as specified.
+
+## VyonExKit (Swift)
+
+18. **Platforms.** Only iOS 15 and macOS 12. watchOS has no JavaScriptCore, and tvOS/visionOS
+    could not be compiled from the Linux build machine, so they are not declared.
+19. **Timeouts.** `URLSession` has no connect timeout: the dedicated session uses
+    `timeoutIntervalForRequest` 20 s (socket) and `timeoutIntervalForResource` 30 s (request).
+    It also ignores stored cookies, so only the host session's cookie is sent.
+20. **API spelling.** `VyonExConfigStore` uses `getString(_:)`, `putString(_:_:)` and so on;
+    `VyonExKitHost.now` is a `Date`; `TokenProviderCapabilities` is added because
+    `PoTokenProvider.capabilities` needs a type. `VyonExKit` is a `final class` (Sendable, lock
+    inside) rather than an actor, so `headers(for:)`, `onRefused(url:)`, `exclude` and
+    `onSessionChanged` stay synchronous like the Kotlin API.
+21. **`extract` throws only on cancellation**, like the iOS Kotlin version: a player-API failure
+    falls through to the watch page, and anything else returns nil.
+22. **No disk cache** in VyonExKit (optional in the brief): the player is prepared again once per
+    app launch and player version, during warm-up.
