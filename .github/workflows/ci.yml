@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Gradle runs on JDK 21; the build compiles with the JDK 27 toolchain installed next to it.
+env:
+  GRADLE_ARGS: -Porg.gradle.java.installations.fromEnv=JAVA_HOME_27_X64,JAVA_HOME_27_ARM64 --stacktrace
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar
+        shell: bash
+
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - name: JVM tests, iOS simulator tests, framework links, XCFramework
+        run: ./gradlew $GRADLE_ARGS jvmTest iosSimulatorArm64Test linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosSimulatorArm64 linkReleaseFrameworkIosX64 assembleVyonExReleaseXCFramework
+      - name: Swift type-check of the public API
+        run: >
+          xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
+          -F build/XCFrameworks/release/VyonEx.xcframework/ios-arm64_x86_64-simulator
+          apicheck/ApiCheck.swift
