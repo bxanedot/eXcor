@@ -16,16 +16,26 @@ import kotlinx.serialization.json.JsonPrimitive
 internal fun signatureTimestamp(playerCode: String): Int? =
     Regex("""(?:signatureTimestamp|sts)\s*:\s*(\d{5})""").find(playerCode)?.groupValues?.get(1)?.toInt()
 
+// Parsing the player recurses deeper than QuickJS's default 256 KB stack limit allows on iOS, so
+// all JS runs on a thread with a large stack and a matching limit (the limit stays well below it).
+internal const val JS_THREAD_STACK_BYTES = 16L shl 20
+private const val JS_STACK_LIMIT_BYTES = 8L shl 20
+
+/** Runs [block] on a fresh thread with [JS_THREAD_STACK_BYTES] of stack. */
+internal expect suspend fun <T> onJsThread(block: suspend () -> T): T
+
+private fun newQuickJs() = QuickJs.create(Dispatchers.Default).apply { maxStackSize = JS_STACK_LIMIT_BYTES }
+
 /**
  * Turns the raw player script into a self-contained script that exposes its `n` and `sig`
  * functions, using yt-dlp's EJS solver. Parsing the player is the expensive step, so the
  * result is what gets cached per player version.
  */
-internal suspend fun preparePlayer(playerCode: String): String {
-    val js = QuickJs.create(Dispatchers.Default)
+internal suspend fun preparePlayer(playerCode: String): String = onJsThread {
+    val js = newQuickJs()
     try {
         js.evaluate<Any?>("$EJS_LIB\nObject.assign(globalThis, lib);\n$EJS_CORE\n0")
-        return js.evaluate(
+        js.evaluate<String>(
             "jsc({type:'player',player:${quote(playerCode)},requests:[],output_preprocessed:true}).preprocessed_player",
         )
     } finally {
@@ -38,21 +48,21 @@ internal class PlayerJs private constructor(private val js: QuickJs) {
     private val lock = Mutex()
 
     suspend fun solve(type: String, challenge: String): String = lock.withLock {
-        js.evaluate("_vx.$type(${quote(challenge)})")
+        onJsThread { js.evaluate<String>("_vx.$type(${quote(challenge)})") }
     }
 
     suspend fun close() = lock.withLock { js.close() }
 
     companion object {
-        suspend fun load(prepared: String): PlayerJs {
-            val js = QuickJs.create(Dispatchers.Default)
+        suspend fun load(prepared: String): PlayerJs = onJsThread {
+            val js = newQuickJs()
             try {
                 js.evaluate<Any?>("var _vx={n:null,sig:null};(function(_result){\n$prepared\n})(_vx);0")
             } catch (e: Throwable) {
                 js.close()
                 throw e
             }
-            return PlayerJs(js)
+            PlayerJs(js)
         }
     }
 }
