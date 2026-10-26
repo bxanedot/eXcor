@@ -92,4 +92,8 @@ val generateFixturesPath = tasks.register("generateFixturesPath") {
 }
 kotlin.sourceSets.commonTest { kotlin.srcDir(generateFixturesPath) }
 
+// Declared so that toggling VYONEX_LIVE re-runs the tests instead of reusing results.
 tasks.withType<Test>().configureEach { environment("VYONEX_LIVE", System.getenv("VYONEX_LIVE") ?: "") }
+tasks.withType<AbstractTestTask>().configureEach {
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
