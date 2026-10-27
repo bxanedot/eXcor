@@ -73,6 +73,7 @@ class ApiCheckTest {
         listOf<Any>(candidate.url, candidate.kbps, candidate.mimeType, candidate.format)
         assertEquals(listOf("M4A", "WEBM_OPUS", "OTHER"), VyonExAudioFormat.entries.map { it.name })
         assertEquals(listOf("NOT_LIVE", "LIVE", "UPCOMING", "WAS_LIVE", "POST_LIVE"), VyonExLiveStatus.entries.map { it.name })
+        assertEquals(listOf("VIDEO", "PLAYLIST", "ALBUM", "ARTIST"), VyonExResultKind.entries.map { it.name })
         val refused = VyonExUnplayableException("v", VyonExUnplayableReason.OTHER, "UNPLAYABLE", "r")
         // Still an IllegalStateException, so callers that caught that keep working.
         val stillState: IllegalStateException = refused
@@ -150,6 +151,13 @@ class ApiCheckTest {
             val q: VyonExListPage = vyonEx.related("v")
             val r: VyonExListPage = vyonEx.relatedMore("token")
             listOf(p, q, r)
+            val s: VyonExSearchPage = vyonEx.search("q")
+            val t: VyonExSearchPage = vyonEx.searchMore("token")
+            val u: VyonExSearchPage = vyonEx.searchMusic("q")
+            (s.results + t.results + u.results).forEach {
+                listOf<Any?>(it.kind == VyonExResultKind.VIDEO, it.id, it.title, it.channelName, it.channelId, it.durationSeconds, it.thumbnails)
+            }
+            listOf<Any?>(s.continuation)
             listOf(a, b, c, d, e, f, init)
         }
         listOf(network)

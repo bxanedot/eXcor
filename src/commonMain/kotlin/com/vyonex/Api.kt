@@ -218,6 +218,26 @@ data class VyonExArtist(
 /** A mix (`RD…`) and its first videos. Mixes do not end: `VyonEx.mixMore(continuation)` keeps going from the last one. */
 data class VyonExMix(val playlistId: String, val title: String?, val firstPage: VyonExListPage)
 
+/** What a search result opens: a video or song to play, or a playlist, album or artist page. */
+enum class VyonExResultKind { VIDEO, PLAYLIST, ALBUM, ARTIST }
+
+/**
+ * One search result. [id] is a video ID, a playlist ID (`VyonEx.playlist`), an album page (`MPREb_…`, `VyonEx.album`)
+ * or a channel (`UC…`, `VyonEx.artist`). [channelName] is the credited channel or artist; artists have none.
+ */
+data class VyonExSearchResult(
+    val kind: VyonExResultKind,
+    val id: String,
+    val title: String?,
+    val channelName: String?,
+    val channelId: String?,
+    val durationSeconds: Long?,
+    val thumbnails: List<VyonExThumbnail>,
+)
+
+/** A page of search results; [continuation] asks for the next one and is null on the last. */
+data class VyonExSearchPage(val results: List<VyonExSearchResult>, val continuation: String?)
+
 /** What a YouTube or YouTube Music link or ID points at; see `VyonEx.parse`. */
 sealed class VyonExRef {
     /** A video, possibly opened from a list ([playlistId]) at [startSeconds]. */

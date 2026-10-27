@@ -7,6 +7,9 @@ import com.vyonex.VyonExListPage
 import com.vyonex.VyonExMix
 import com.vyonex.VyonExPlaylist
 import com.vyonex.VyonExRelease
+import com.vyonex.VyonExResultKind
+import com.vyonex.VyonExSearchPage
+import com.vyonex.VyonExSearchResult
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExThumbnail
 import kotlinx.serialization.json.JsonArray
@@ -53,16 +56,7 @@ internal fun lockupItemOf(lockup: JsonElement?): VyonExListItem? {
     if (lockup.at("contentType").str != "LOCKUP_CONTENT_TYPE_VIDEO") return null
     val videoId = lockup.at("contentId").str ?: return null
     val meta = lockup.at("metadata", "lockupMetadataViewModel")
-    // The channel is the metadata part whose first command opens a channel page. A video credited to several channels
-    // has no such part; they are listed in the avatar stack's dialog instead, and yt-dlp takes the first.
-    val channel = meta.at("metadata", "contentMetadataViewModel", "metadataRows").list
-        .flatMap { it.at("metadataParts").list }
-        .map { it.at("text") }
-        .firstOrNull { it.at("commandRuns").list.firstOrNull().at("onTap", "innertubeCommand", "browseEndpoint", "browseId") != null }
-        ?: meta.at(
-            "image", "avatarStackViewModel", "rendererContext", "commandContext", "onTap", "innertubeCommand", "showDialogCommand",
-            "panelLoadingStrategy", "inlineContent", "dialogViewModel", "customContent", "listViewModel", "listItems",
-        ).list.firstOrNull().at("listItemViewModel", "title")
+    val channel = lockupChannelOf(meta)
     val image = lockup.at("contentImage", "thumbnailViewModel")
     val badges = image.at("overlays").list.flatMap {
         it.at("thumbnailBottomOverlayViewModel", "badges").list + it.at("thumbnailOverlayBadgeViewModel", "thumbnailBadges").list
@@ -71,11 +65,27 @@ internal fun lockupItemOf(lockup: JsonElement?): VyonExListItem? {
         videoId = videoId,
         title = meta.at("title", "content").str,
         channelName = channel.at("content").str,
-        channelId = channel.at("commandRuns").list.firstOrNull().at("onTap", "innertubeCommand", "browseEndpoint", "browseId").str,
+        channelId = channel.lockupChannelId(),
         durationSeconds = badges.firstNotNullOfOrNull { durationOf(it.at("thumbnailBadgeViewModel", "text").str) },
         thumbnails = thumbnailsOf(image.at("image", "sources")),
     )
 }
+
+/**
+ * The channel of a lockup: the metadata part whose first command opens a channel page. A video credited to several
+ * channels has no such part; they are listed in the avatar stack's dialog instead, and yt-dlp takes the first.
+ */
+private fun lockupChannelOf(meta: JsonElement?) = meta.at("metadata", "contentMetadataViewModel", "metadataRows").list
+    .flatMap { it.at("metadataParts").list }
+    .map { it.at("text") }
+    .firstOrNull { it.lockupChannelId() != null }
+    ?: meta.at(
+        "image", "avatarStackViewModel", "rendererContext", "commandContext", "onTap", "innertubeCommand", "showDialogCommand",
+        "panelLoadingStrategy", "inlineContent", "dialogViewModel", "customContent", "listViewModel", "listItems",
+    ).list.firstOrNull().at("listItemViewModel", "title")
+
+private fun JsonElement?.lockupChannelId() =
+    at("commandRuns").list.firstOrNull().at("onTap", "innertubeCommand", "browseEndpoint", "browseId").str
 
 /** The videos in [entries] and the token for the next page, if any. */
 internal fun listPageOf(entries: List<JsonElement>) = VyonExListPage(
@@ -111,7 +121,7 @@ internal fun playlistOf(playlistId: String, response: JsonObject): VyonExPlaylis
 
 /** The next page of a list from a continuation response, wherever yt-dlp looks for its items. */
 internal fun continuationPageOf(response: JsonObject) = listPageOf(
-    listOf("onResponseReceivedActions", "onResponseReceivedEndpoints").flatMap { response.at(it).list }.flatMap {
+    listOf("onResponseReceivedActions", "onResponseReceivedEndpoints", "onResponseReceivedCommands").flatMap { response.at(it).list }.flatMap {
         it.at("appendContinuationItemsAction", "continuationItems").list + it.at("reloadContinuationItemsCommand", "continuationItems").list
     },
 )
@@ -120,10 +130,10 @@ internal fun continuationPageOf(response: JsonObject) = listPageOf(
 internal fun relatedOf(response: JsonObject) =
     listPageOf(response.at("contents", "twoColumnWatchNextResults", "secondaryResults", "secondaryResults", "results").list)
 
-/** A mix's video (a `playlistPanelVideoRenderer`, read as yt-dlp's _extract_video reads it). */
-private fun panelItemOf(item: JsonElement?): VyonExListItem? {
+/** A `videoRenderer` (search) or a mix's `playlistPanelVideoRenderer`, read as yt-dlp's _extract_video reads both. */
+private fun videoRendererItemOf(item: JsonElement?): VyonExListItem? {
     val videoId = item.at("videoId").str ?: return null
-    val byline = item.at("shortBylineText")
+    val byline = item.at("ownerText") ?: item.at("shortBylineText")
     return VyonExListItem(
         videoId = videoId,
         title = textOf(item.at("title")),
@@ -153,7 +163,7 @@ internal fun mixMoreOf(response: JsonObject, after: String) =
  */
 private fun mixPageOf(panel: JsonElement, after: String?): VyonExListPage {
     val entries = panel.at("contents").list.map { it.at("playlistPanelVideoRenderer") }
-    val items = entries.mapNotNull(::panelItemOf)
+    val items = entries.mapNotNull(::videoRendererItemOf)
     val fresh = items.drop(items.indexOfFirst { it.videoId == after } + 1)
     val last = entries.lastOrNull().at("navigationEndpoint", "watchEndpoint")
     val playlistId = panel.at("playlistId").str
@@ -253,3 +263,90 @@ internal fun artistOf(channelId: String, response: JsonObject): VyonExArtist? {
 
 private fun JsonElement?.moreEndpoint() =
     at("header", "musicCarouselShelfBasicHeaderRenderer", "moreContentButton", "buttonRenderer", "navigationEndpoint", "browseEndpoint")
+
+private fun VyonExListItem.asResult() =
+    VyonExSearchResult(VyonExResultKind.VIDEO, videoId, title, channelName, channelId, durationSeconds, thumbnails)
+
+/** A YouTube search entry: a video, or a playlist; shelves, Shorts grids and channel cards are left out. */
+private fun webResultOf(entry: JsonElement?): VyonExSearchResult? {
+    videoRendererItemOf(entry.at("videoRenderer"))?.let { return it.asResult() }
+    val lockup = entry.at("lockupViewModel")
+    lockupItemOf(lockup)?.let { return it.asResult() }
+    if (lockup.at("contentType").str != "LOCKUP_CONTENT_TYPE_PLAYLIST") return null
+    val meta = lockup.at("metadata", "lockupMetadataViewModel")
+    val channel = lockupChannelOf(meta)
+    return VyonExSearchResult(
+        kind = VyonExResultKind.PLAYLIST,
+        id = lockup.at("contentId").str ?: return null,
+        title = meta.at("title", "content").str,
+        channelName = channel.at("content").str,
+        channelId = channel.lockupChannelId(),
+        durationSeconds = null,
+        thumbnails = thumbnailsOf(lockup.at("contentImage", "collectionThumbnailViewModel", "primaryThumbnail", "thumbnailViewModel", "image", "sources")),
+    )
+}
+
+private fun webSearchPageOf(sections: List<JsonElement>) = VyonExSearchPage(
+    results = sections.flatMap { it.at("itemSectionRenderer", "contents").list }.mapNotNull(::webResultOf),
+    continuation = sections.firstNotNullOfOrNull { it.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str },
+)
+
+/** A YouTube search response (WEB `search`). */
+internal fun webSearchOf(response: JsonObject) =
+    webSearchPageOf(response.at("contents", "twoColumnSearchResultsRenderer", "primaryContents", "sectionListRenderer", "contents").list)
+
+/** The next page of a YouTube search; yt-dlp finds it under onResponseReceivedCommands. */
+internal fun webSearchMoreOf(response: JsonObject) =
+    webSearchPageOf(response.at("onResponseReceivedCommands").list.flatMap { it.at("appendContinuationItemsAction", "continuationItems").list })
+
+private val MUSIC_CHANNEL_PAGES = setOf("MUSIC_PAGE_TYPE_ARTIST", "MUSIC_PAGE_TYPE_USER_CHANNEL")
+
+/** What a YouTube Music result opens, from its endpoints rather than its localized "Song • …" label. */
+private fun musicResultOf(videoId: String?, browse: JsonElement?, title: String?, credits: List<JsonElement>, thumbnails: List<VyonExThumbnail>): VyonExSearchResult? {
+    val id = browse.at("browseId").str
+    val (kind, target) = when {
+        videoId != null -> VyonExResultKind.VIDEO to videoId
+        browse.musicPageType() == "MUSIC_PAGE_TYPE_ALBUM" -> VyonExResultKind.ALBUM to id
+        browse.musicPageType() == "MUSIC_PAGE_TYPE_ARTIST" -> VyonExResultKind.ARTIST to id
+        browse.musicPageType() == "MUSIC_PAGE_TYPE_PLAYLIST" -> VyonExResultKind.PLAYLIST to id?.removePrefix("VL")
+        else -> return null // profiles, podcasts
+    }
+    // The credited artist or channel is the run that opens one; the duration is the run that reads as one.
+    val channel = credits.firstOrNull { it.at("navigationEndpoint", "browseEndpoint").musicPageType() in MUSIC_CHANNEL_PAGES }
+    return VyonExSearchResult(
+        kind = kind,
+        id = target ?: return null,
+        title = title,
+        channelName = channel.at("text").str,
+        channelId = channel.at("navigationEndpoint", "browseEndpoint", "browseId").str,
+        durationSeconds = credits.firstNotNullOfOrNull { durationOf(it.at("text").str) },
+        thumbnails = thumbnails,
+    )
+}
+
+/** A YouTube Music search response (WEB_REMIX `search`): the top result card, then the result rows. */
+internal fun musicSearchOf(response: JsonObject): VyonExSearchPage {
+    val sections = response.at("contents", "tabbedSearchResultsRenderer", "tabs").list.firstOrNull()
+        .at("tabRenderer", "content", "sectionListRenderer", "contents").list
+    val results = sections.flatMap { section ->
+        val card = section.at("musicCardShelfRenderer")
+        val top = card?.let {
+            val endpoint = it.at("title", "runs").list.firstOrNull().at("navigationEndpoint")
+            musicResultOf(
+                endpoint.at("watchEndpoint", "videoId").str, endpoint.at("browseEndpoint"), textOf(it.at("title")),
+                it.at("subtitle", "runs").list, thumbnailsOf(it.at("thumbnail", "musicThumbnailRenderer", "thumbnail", "thumbnails")),
+            )
+        }
+        val rows = (card.at("contents").list + section.at("itemSectionRenderer", "contents").list).mapNotNull { entry ->
+            val row = entry.at("musicResponsiveListItemRenderer") ?: return@mapNotNull null
+            fun column(index: Int) = row.at("flexColumns").list.getOrNull(index).at("musicResponsiveListItemFlexColumnRenderer", "text")
+            musicResultOf(
+                row.at("playlistItemData", "videoId").str, row.at("navigationEndpoint", "browseEndpoint"), textOf(column(0)),
+                column(1).at("runs").list, thumbnailsOf(row.at("thumbnail", "musicThumbnailRenderer", "thumbnail", "thumbnails")),
+            )
+        }
+        listOfNotNull(top) + rows
+    }
+    // The top result can come back among the rows.
+    return VyonExSearchPage(results.distinctBy { it.kind to it.id }, continuation = null)
+}

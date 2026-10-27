@@ -100,6 +100,14 @@ class VyonEx(host: VyonExHost) {
 
     suspend fun relatedMore(continuation: String): VyonExListPage = engine.relatedMore(continuation)
 
+    /** YouTube's search results (videos and playlists), then `searchMore` for more. Logged out. */
+    suspend fun search(query: String): VyonExSearchPage = engine.search(query)
+
+    suspend fun searchMore(continuation: String): VyonExSearchPage = engine.searchMore(continuation)
+
+    /** YouTube Music's top results: songs, videos, albums, artists, playlists (one page). Logged out. */
+    suspend fun searchMusic(query: String): VyonExSearchPage = engine.searchMusic(query)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)

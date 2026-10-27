@@ -124,6 +124,14 @@ func apiCheck() async throws {
     let related: VyonExListPage = try await vyonEx.related(videoId: "v")
     let relatedMore: VyonExListPage = try await vyonEx.relatedMore(continuation: related.continuation ?? "")
     _ = relatedMore.items
+    let search: VyonExSearchPage = try await vyonEx.search(query: "q")
+    let searchMore: VyonExSearchPage = try await vyonEx.searchMore(continuation: search.continuation ?? "")
+    let music: VyonExSearchPage = try await vyonEx.searchMusic(query: "q")
+    for result: VyonExSearchResult in search.results + searchMore.results + music.results {
+        let kind: VyonExResultKind = result.kind
+        let duration: KotlinLong? = result.durationSeconds
+        _ = (kind == .video || kind == .playlist || kind == .album || kind == .artist, result.id, result.title, result.channelName, result.channelId, duration, result.thumbnails)
+    }
     let headers: [String: String]? = vyonEx.headersFor(url: "u")
     let refused: String? = vyonEx.onRefused(url: "u")
     _ = (headers, refused)

@@ -15,6 +15,7 @@ import com.vyonex.VyonExSession
 import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExMix
 import com.vyonex.VyonExPlaylist
+import com.vyonex.VyonExSearchPage
 import com.vyonex.VyonExSink
 import com.vyonex.VyonExStream
 import com.vyonex.VyonExUnplayableException
@@ -323,6 +324,20 @@ internal class Engine(
     suspend fun related(videoId: String): VyonExListPage = relatedOf(innertube("next") { put("videoId", videoId) })
 
     suspend fun relatedMore(continuation: String): VyonExListPage = continuationPageOf(innertube("next") { put("continuation", continuation) })
+
+    /** YouTube's search results for [query] (videos and playlists), logged out. */
+    suspend fun search(query: String): VyonExSearchPage {
+        require(query.isNotBlank()) { "VyonEx: empty search" }
+        return webSearchOf(innertube("search") { put("query", query) })
+    }
+
+    suspend fun searchMore(continuation: String): VyonExSearchPage = webSearchMoreOf(innertube("search") { put("continuation", continuation) })
+
+    /** YouTube Music's top results for [query]: songs, videos, albums, artists and playlists, logged out. */
+    suspend fun searchMusic(query: String): VyonExSearchPage {
+        require(query.isNotBlank()) { "VyonEx: empty search" }
+        return musicSearchOf(innertube("search", MUSIC_WEB, MUSIC_ORIGIN) { put("query", query) })
+    }
 
     /** A logged-out InnerTube call (WEB unless told otherwise): no cookie is sent, so lists are the public ones. */
     private suspend fun innertube(
