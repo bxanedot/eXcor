@@ -92,6 +92,9 @@ func apiCheck() async throws {
             _ = written
         }
         _ = (formats.videoId, formats.clientName, formats.profileId)
+        if let pair: VyonExMergePair = vyonEx.mergePair(formats: formats, maxHeight: 2160, container: .webm) {
+            _ = (pair.video.itag, pair.audio.itag, pair.container == .mp4)
+        }
     }
     let headers: [String: String]? = vyonEx.headersFor(url: "u")
     let refused: String? = vyonEx.onRefused(url: "u")

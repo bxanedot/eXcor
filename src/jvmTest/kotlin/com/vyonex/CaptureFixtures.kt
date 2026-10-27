@@ -90,7 +90,9 @@ class CaptureFixtures {
             return null
         }
         val redacted = redactCapture(text)
-        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted)) { "$file: redaction incomplete, not written" }
+        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted)) {
+            "$file: redaction incomplete, not written"
+        }
         File(FIXTURES, file).writeText(redacted)
         println("$file: ${redacted.length} chars")
         return redacted

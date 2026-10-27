@@ -19,8 +19,10 @@ Codex's actions and contributions, not a legal or release determination.
 | Ktor `ktor-client-okhttp-jvm` 3.6.0 jar from Maven Central, `OkHttpEngine` bytecode read with `javap` | 3.6.0 | Apache-2.0 (POM) | learned that closing the engine shuts down the dispatcher and connection pool of the clients it built, so the JVM `close()` leaves the Ktor client open (`QUESTIONS.md` item 29) |
 | YouTube public endpoints, observed live from the build machine | 2026-10-26 | YouTube's content (fixtures only) | `iframe_api`, player script `dce23b30`, `youtubei/v1/player` with the three identities, `www.youtube.com/` page; the watch page answered with a bot-check redirect. Captures are in `fixtures/` |
 | YouTube watch page, captured by Codex on the owner's home network | 2026-10-27 | YouTube's content (fixture only) | `fixtures/watch-page.html`, requester IP replaced with `192.0.2.1`; used by the watch-page tests |
+| YouTube logged-out responses (unplayable players, browse, next, search), captured by Codex with `CaptureFixtures` on the owner's home network | 2026-10-27 | YouTube's content (fixtures only) | 14 files in `fixtures/` (listed in `fixtures/README.md`), visitor IDs and heartbeat token redacted; input for the playlist, album, artist, search and related-video work |
 | [YouTube Terms of Service](https://www.youtube.com/t/terms) | accessed 2026-10-27 | Terms of Service, not a content license | assessed public redistribution risk for captured fixtures; see `QUESTIONS.md` item 4 |
 | Apache License 2.0 text, https://www.apache.org/licenses/LICENSE-2.0.txt | fetched 2026-10-26 | — | `LICENSE` |
+| Synthetic clips made on the build machine with FFmpeg 6.1.1 (Ubuntu package) from its own `testsrc` pattern and `sine` tone; no outside media | 2026-10-27 | generated output; no FFmpeg code is in the repository | `src/androidDeviceTest/resources/clips/`, used by `MergeCheck`. 64x64, 30 fps, 2 s: `video-avc.mp4` (libx264, `-g 30`) and `audio-aac.m4a` (aac 32k) written with `-movflags frag_keyframe+empty_moov+default_base_moof`, like YouTube's fragmented MP4; `video-vp9.webm` (libvpx-vp9, `-g 30 -b:v 50k`) and `audio-opus.webm` (libopus 24k, 48 kHz) |
 
 Vendored files: `ejs/core.min.js` sha256 `18da6ce0758b416e7ae645084f4f8801f9f9d59d6c477c05eaa0ff94ebd8cc00`,
 `ejs/lib.min.js` sha256 `c55987fe697e5b9ee18830163f7af85327e9bb5c3e674b969d38c8d205eaa577`. Their
@@ -88,5 +90,6 @@ All from Maven Central; licenses as declared in each POM.
 | QuickJS-KT Android artifact (`quickjs-kt-android`, bundles QuickJS natives, MIT) | 1.0.15 | Apache-2.0 | main (Android) |
 | org.gradle.toolchains.foojay-resolver-convention | 1.0.0 | Apache-2.0 | build |
 | GitHub Actions `actions/checkout@v4`, `actions/setup-java@v4` | v4 | MIT | CI |
+| Android Emulator and AOSP x86_64 system images (API 26, 36), installed by `sdkmanager` on the CI runner | current at run time | Android SDK License Agreement (Google) | CI only (`MergeCheck`), not redistributed |
 
 The JVM tests run on TestNG rather than kotlin-test's default JUnit 4, which is EPL-1.0.

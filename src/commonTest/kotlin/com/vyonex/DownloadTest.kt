@@ -1,6 +1,11 @@
 package com.vyonex
 
 import com.vyonex.internal.Engine
+import com.vyonex.internal.audioFormatsOf
+import com.vyonex.internal.formatOf
+import com.vyonex.internal.mergePairOf
+import com.vyonex.internal.str
+import com.vyonex.internal.videoFormatsOf
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -96,5 +101,18 @@ class DownloadTest {
         assertEquals(1, requests.count { it.url.host.endsWith(".googlevideo.com") })
         assertEquals(setOf("User-Agent"), formats.headers.keys)
         assertFalse("videoplayback" in formats.toString() || formats.formats.any { "videoplayback" in it.toString() })
+    }
+
+    @Test
+    fun mergePairsStayInOneCodecFamily() {
+        val formats = videoFormatsOf(fixtureJson("player-response-visionos.json")) + audioFormatsOf(fixtureJson("player-response-visionos.json"))
+        val all = formats.map { formatOf(it, it["url"].str.orEmpty()) }
+        fun pair(maxHeight: Int, container: VyonExContainer) = mergePairOf(all, maxHeight, container)?.let { it.video.itag to it.audio.itag }
+        // 4K only exists as VP9 (or AV1); the WebM pair takes VP9 2160p with the best Opus.
+        assertEquals(313 to 251, pair(2160, VyonExContainer.WEBM))
+        // H.264 stops at 1080p; the MP4 pair takes it with the best AAC.
+        assertEquals(137 to 140, pair(2160, VyonExContainer.MP4))
+        assertEquals(136 to 140, pair(720, VyonExContainer.MP4))
+        assertEquals(null, pair(100, VyonExContainer.WEBM))
     }
 }

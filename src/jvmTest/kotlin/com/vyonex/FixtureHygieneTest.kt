@@ -21,6 +21,7 @@ class FixtureHygieneTest {
         val text = it.readText()
         assertFalse(hasCookieValue(text), "${it.name}: a cookie value is left in (not printed)")
         assertFalse(hasVisitorId(text), "${it.name}: a visitor ID is left in (not printed)")
+        assertFalse(hasHeartbeatData(text), "${it.name}: heartbeat data is left in (not printed)")
     }
 
     @Test
@@ -29,10 +30,10 @@ class FixtureHygieneTest {
         val capture = """{"responseContext":{"visitorData":"$visitor"},"remoteHost":"8.8.4.4","""" +
             """"a":"https://r1.googlevideo.com/videoplayback?ip=8.8.8.8&id=1","b":"x\u0026ip=2a00:1450::1\u0026c=WEB","""" +
             """"c":"url=https%3A%2F%2Fr1.googlevideo.com%2Fvideoplayback%3Fid%3D1%26ip%3D2a00%3A1450%3A%3A1%26ipbits%3D0","""" +
-            """"d":"ip=0.0.0.0&x","e":"${URLEncoder.encode(visitor, Charsets.UTF_8)}"}"""
-        assertTrue(hasPublicAddress(capture) && hasVisitorId(capture))
+            """"d":"ip=0.0.0.0&x","e":"${URLEncoder.encode(visitor, Charsets.UTF_8)}","heartbeatParams":{"heartbeatServerData":"GAEgALIB"}}"""
+        assertTrue(hasPublicAddress(capture) && hasVisitorId(capture) && hasHeartbeatData(capture))
         val redacted = redactCapture(capture)
-        assertFalse(hasPublicAddress(redacted) || hasVisitorId(redacted) || "Cgt0ZXN0" in redacted, redacted)
+        assertFalse(hasPublicAddress(redacted) || hasVisitorId(redacted) || hasHeartbeatData(redacted) || "Cgt0ZXN0" in redacted || "GAEgALIB" in redacted, redacted)
         listOf("?ip=192.0.2.1&id=1", "\\u0026ip=192.0.2.1\\u0026", "%26ip%3D192.0.2.1%26ipbits", "ip=0.0.0.0&x", "\"remoteHost\":\"192.0.2.1\"")
             .forEach { assertTrue(it in redacted, it) }
     }
@@ -53,6 +54,10 @@ internal val REMOTE_HOST = Regex(""""remoteHost"\s*:\s*"([^"]*)"""")
 private val COOKIE_VALUE = Regex("""\b(?:LOGIN_INFO|S?APISID|HSID|SSID|__Secure-[\w-]+|VISITOR_INFO1_LIVE)=[^;\s"'&]""")
 internal val VISITOR_ID = Regex(""""(?:visitorData|VISITOR_DATA)"\s*:\s*"([^"]+)"""")
 internal const val REDACTED_VISITOR = "REDACTED-VISITOR-DATA"
+// An encrypted per-request token for watch-time heartbeats (upcoming streams carry one). It may encode the
+// requester, and nothing here reads it.
+private val HEARTBEAT = Regex(""""heartbeatServerData"\s*:\s*"([^"]+)"""")
+private const val REDACTED_HEARTBEAT = "REDACTED-HEARTBEAT-DATA"
 
 internal fun addressOf(value: String) =
     URLDecoder.decode(URLDecoder.decode(value, Charsets.UTF_8), Charsets.UTF_8).substringBefore('&')
@@ -64,6 +69,8 @@ internal fun hasCookieValue(text: String) = COOKIE_VALUE.containsMatchIn(text)
 
 internal fun hasVisitorId(text: String) = VISITOR_ID.findAll(text).any { it.groupValues[1] != REDACTED_VISITOR }
 
+internal fun hasHeartbeatData(text: String) = HEARTBEAT.findAll(text).any { it.groupValues[1] != REDACTED_HEARTBEAT }
+
 internal fun isPublic(literal: String): Boolean {
     val address = InetAddress.ofLiteral(literal)
     val text = address.hostAddress
@@ -73,10 +80,10 @@ internal fun isPublic(literal: String): Boolean {
         address.isSiteLocalAddress || address.isMulticastAddress || documentation || uniqueLocal)
 }
 
-/** fixtures/README.md: public addresses become 192.0.2.1 and every copy of a visitor ID a placeholder. */
+/** fixtures/README.md: public addresses become 192.0.2.1, every copy of a visitor ID and heartbeat data a placeholder. */
 internal fun redactCapture(text: String): String {
-    var out = text
-    VISITOR_ID.findAll(text).map { it.groupValues[1] }.filter { it != REDACTED_VISITOR }.toSet().forEach { id ->
+    var out = HEARTBEAT.replace(text) { it.value.replace(it.groupValues[1], REDACTED_HEARTBEAT) }
+    VISITOR_ID.findAll(out).map { it.groupValues[1] }.filter { it != REDACTED_VISITOR }.toSet().forEach { id ->
         listOf(id, URLEncoder.encode(id, Charsets.UTF_8)).forEach { out = out.replace(it, REDACTED_VISITOR) }
     }
     for (pattern in listOf(IP_PARAM, REMOTE_HOST)) {
