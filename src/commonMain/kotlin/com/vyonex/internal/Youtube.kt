@@ -32,38 +32,6 @@ internal const val YT_ORIGIN = "https://www.youtube.com"
 internal const val DESKTOP_UA =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 
-internal class Identity(
-    val profileId: String,
-    val clientName: String,
-    val clientId: Int,
-    val clientVersion: String,
-    val userAgent: String,
-    val device: Map<String, String> = emptyMap(),
-    val needsPlayerJs: Boolean,
-    val supportsCookies: Boolean,
-    val needsPoToken: Boolean,
-)
-
-// yt-dlp 2026.10.21 defaults to tv_samsung, visionos, web (values from its INNERTUBE_CLIENTS).
-// Live on 2026-10-26: TVHTML5 gave ciphered URLs that play once decoded, VISIONOS gave direct URLs,
-// WEB gave SABR-only formats without a PO token. VISIONOS does not take cookies, so like yt-dlp
-// it is skipped for logged-in sessions.
-internal val IDENTITIES = listOf(
-    Identity(
-        "TV_SAMSUNG", "TVHTML5", 7, "5.20260707",
-        "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/2.4.0 TV Safari/538.1",
-        mapOf("deviceMake" to "Samsung", "deviceModel" to "UKS9800", "osName" to "Tizen", "osVersion" to "2.4.0"),
-        needsPlayerJs = true, supportsCookies = true, needsPoToken = false,
-    ),
-    Identity(
-        "VISIONOS", "VISIONOS", 101, "1.02",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
-        mapOf("deviceMake" to "Apple", "deviceModel" to "RealityDevice17,1", "osName" to "visionOS", "osVersion" to "26.5.23O471"),
-        needsPlayerJs = false, supportsCookies = false, needsPoToken = false,
-    ),
-    Identity("WEB", "WEB", 1, "2.20260708.00.00", DESKTOP_UA, needsPlayerJs = true, supportsCookies = true, needsPoToken = true),
-)
-
 internal fun playerRequestBody(
     id: Identity,
     videoId: String,
@@ -84,6 +52,7 @@ internal fun playerRequestBody(
             put("timeZone", "UTC")
             put("utcOffsetMinutes", 0)
         }
+        id.embedUrl?.let { url -> putJsonObject("thirdParty") { put("embedUrl", url) } }
     }
     put("videoId", videoId)
     putJsonObject("playbackContext") {

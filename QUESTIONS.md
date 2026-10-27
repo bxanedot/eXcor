@@ -373,3 +373,18 @@ Each item names the reading chosen; nothing was looked up in the old code.
     without reading its body. Other content types still count, so an unexpected but real media
     type is not refused. googlevideo's answer shape (206, `Content-Range`, a media type) is standard
     HTTP; it has not been re-checked live since the change, as the build machines get a bot check.
+50. **More client identities, a logged-in order, client health (owner's comparison report P0,
+    2026-10-27).** The client profiles moved from the engine into `Clients.kt`, as data, so a
+    change on YouTube's side means editing a table. Logged in, the order is now yt-dlp's own
+    (`web_embedded`, `tv_samsung`, `web`): the embedded player takes cookies, needs no PO token, and
+    says which page embeds it (`thirdParty.embedUrl`, any non-YouTube page per yt-dlp; its value is
+    used). Logged out it stays `tv_samsung`, `visionos`, `web`. Both then try `tv` (the Cobalt TV
+    client) and `tv_downgraded`, which yt-dlp defines but does not try by default; they need no PO
+    token, so they cost a request only when the others failed. Clients that need a PO token for
+    their media (`mweb`, `ios`, `android`, `android_vr`, `web_safari`, `web_music`, `web_creator`,
+    `tv_simply`) are not added: VyonEx only gets tokens from the host, and a token minted for WEB is
+    not known to serve those clients. A client refused three times in a row across videos (refused
+    media, or a failed request; never a refusal of one video, such as an age gate) is tried after
+    the others for 30 minutes; a success or a new session clears it. On the owner's network, where
+    YouTube refuses TV_SAMSUNG (item 2), this saves a player request and a probe per video. The
+    new clients are untested live: the build machines get a bot check.

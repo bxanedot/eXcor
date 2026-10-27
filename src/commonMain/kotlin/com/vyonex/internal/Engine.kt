@@ -71,6 +71,7 @@ internal class Engine(
     internal val players = Players(http, store)
     private val remembered = AtomicReference(emptyMap<String, VyonExStream>())
     private val exclusions = AtomicReference(emptyMap<String, Long>())
+    internal val health = ClientHealth(host::nowMs)
 
     fun initialize() {
         scope.launch {
@@ -89,6 +90,7 @@ internal class Engine(
     fun onSessionChanged() {
         remembered.store(emptyMap())
         exclusions.store(emptyMap())
+        health.clear()
         if (host.configStore.enabled) scope.launch { warmUp() }
     }
 
@@ -183,7 +185,7 @@ internal class Engine(
     /** Everything YouTube says about the video: WEB reports the most (microformat), VISIONOS needs no player script. */
     suspend fun metadata(videoId: String): VyonExMetadata? {
         val session = host.session()
-        for (id in listOf("WEB", "VISIONOS").map { profile -> IDENTITIES.first { it.profileId == profile } }) {
+        for (id in listOf("WEB", "VISIONOS").map(::identity)) {
             try {
                 // Cookies go only to clients that take them.
                 val asked = if (id.supportsCookies) session else session.copy(cookie = null)
@@ -212,9 +214,8 @@ internal class Engine(
         val loggedIn = isLoggedIn(session.cookie)
         var visitorData = session.visitorData
         var unplayable: VyonExUnplayableException? = null
-        for (id in IDENTITIES) {
+        for (id in health.ordered(if (loggedIn) LOGGED_IN_ORDER else LOGGED_OUT_ORDER)) {
             if (id.profileId in skipClients || id.clientName in skipClients || isExcluded(videoId, id.profileId)) continue
-            if (loggedIn && !id.supportsCookies) continue
             try {
                 val token = if (id.needsPoToken) {
                     val provider = tokenProvider ?: continue
@@ -230,11 +231,15 @@ internal class Engine(
                     log(DEBUG, "${id.profileId} refused (${refusal.status}: ${refusal.youtubeReason})", videoId)
                     continue
                 }
-                pick(id, pr, token?.streamingDataToken, mediaHeaders(id.userAgent, session))?.let { return it }
+                pick(id, pr, token?.streamingDataToken, mediaHeaders(id.userAgent, session))?.let {
+                    health.succeeded(id.profileId)
+                    return it
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 log(WARN, "${id.profileId} failed: ${e.describe()}", videoId)
+                health.failed(id.profileId)
             }
         }
         unplayable?.let { throw it }
@@ -343,7 +348,7 @@ internal class Engine(
     /** A logged-out InnerTube call (WEB unless told otherwise): no cookie is sent, so lists are the public ones. */
     private suspend fun innertube(
         endpoint: String,
-        id: Identity = IDENTITIES.first { it.profileId == "WEB" },
+        id: Identity = identity("WEB"),
         origin: String = YT_ORIGIN,
         fields: JsonObjectBuilder.() -> Unit,
     ): JsonObject {
@@ -377,6 +382,7 @@ internal class Engine(
 
     fun exclude(videoId: String, profileId: String) {
         log(WARN, "excluding $profileId for 10 minutes", videoId)
+        health.failed(profileId)
         val now = host.nowMs()
         exclusions.update { all -> all.filterValues { it > now } + ("$videoId/$profileId" to now + EXCLUSION_MS) }
     }

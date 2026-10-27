@@ -55,7 +55,8 @@ internal fun fixtureEngine(
             url.encodedPath.startsWith("/s/player/dce23b30/") -> respond(fixture("player-dce23b30.js"))
             url.encodedPath == "/youtubei/v1/player" -> {
                 val body = (request.body as TextContent).text
-                val client = mapOf("TVHTML5" to "tv_samsung", "VISIONOS" to "visionos", "WEB" to webFixture)
+                // The embedded player is answered with the VISIONOS capture, whose formats have direct URLs.
+                val client = mapOf("TVHTML5" to "tv_samsung", "VISIONOS" to "visionos", "WEB" to webFixture, "WEB_EMBEDDED_PLAYER" to "visionos")
                     .entries.first { "\"clientName\":\"${it.key}\"" in body }.value
                 respond(fixture(playerFixture ?: "player-response-$client.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
             }

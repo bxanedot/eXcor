@@ -91,7 +91,7 @@ class DownloadTest {
     @Test
     fun formatsListsEveryPlayableQualityAfterOneProbe() = runTest {
         val requests = mutableListOf<HttpRequestData>()
-        val formats = assertNotNull(fixtureEngine(host, requests = requests).formats("dQw4w9WgXcQ", setOf("TV_SAMSUNG")))
+        val formats = assertNotNull(fixtureEngine(host, requests = requests).formats("dQw4w9WgXcQ", setOf("TVHTML5")))
         assertEquals("VISIONOS", formats.profileId)
         // The capture's 5 audio and 22 video formats, all with direct URLs; video tops out at 2160p.
         assertEquals(5, formats.formats.count { !it.hasVideo })

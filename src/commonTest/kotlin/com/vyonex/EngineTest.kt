@@ -109,8 +109,8 @@ class EngineTest {
     @Test
     fun skippedExcludedAndTokenlessIdentitiesAreNotTried() = runTest {
         engine.exclude("video1", "TV_SAMSUNG")
-        // VISIONOS is skipped by profile, WEB has no token provider: no request is made at all.
-        assertNull(engine.extract("video1", 160, setOf("VISIONOS"), false))
+        // VISIONOS and the TV fallbacks are skipped by profile, WEB has no token provider: no request is made at all.
+        assertNull(engine.extract("video1", 160, setOf("VISIONOS", "TV", "TV_DOWNGRADED"), false))
         assertNull(engine.extract("video1", 160, setOf("TVHTML5", "VISIONOS"), false))
     }
 
@@ -119,6 +119,6 @@ class EngineTest {
         assertNull(engine.watchPageStream("video1", 160, setOf("WEB"), false))
         assertNull(engine.watchPageStream("video1", 160, setOf("WEB_WATCH_PAGE"), false))
         engine.exclude("video1", "WEB_WATCH_PAGE")
-        assertNull(engine.extractOrWatchPage("video1", 160, setOf("TV_SAMSUNG", "VISIONOS"), false))
+        assertNull(engine.extractOrWatchPage("video1", 160, setOf("TVHTML5", "VISIONOS"), false))
     }
 }

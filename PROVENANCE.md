@@ -34,8 +34,8 @@ SHA3-512 values equal the allowlist in yt-dlp 2026.10.21 `yt_dlp/extractor/youtu
 
 | yt-dlp location | VyonEx location | What |
 |---|---|---|
-| `extractor/youtube/_video.py` `_DEFAULT_CLIENTS`, `_DEFAULT_AUTHED_CLIENTS`, `_get_requested_clients` | `Youtube.kt` `IDENTITIES`, `Engine.extract` | identity order; skipping cookie-less clients when logged in |
-| `extractor/youtube/_base.py` `INNERTUBE_CLIENTS` (`tv_samsung`, `visionos`, `web`) | `Youtube.kt` `IDENTITIES` | client names, numeric ids, versions, user agents, device fields; which ones need the JS player, cookies and a GVS PO token |
+| `extractor/youtube/_video.py` `_DEFAULT_CLIENTS`, `_DEFAULT_AUTHED_CLIENTS`, `_get_requested_clients` | `Clients.kt` `LOGGED_OUT_ORDER`, `LOGGED_IN_ORDER`, `Engine.extract` | identity order (logged out: tv_samsung, visionos, web; logged in: web_embedded, tv_samsung, web); no cookie-less client when logged in. The `tv` and `tv_downgraded` fallbacks after them are VyonEx's choice, not a yt-dlp default |
+| `extractor/youtube/_base.py` `INNERTUBE_CLIENTS` (`tv_samsung`, `visionos`, `web`, `web_embedded`, `tv`, `tv_downgraded`), `WEB_PO_TOKEN_POLICIES`, `build_innertube_clients`, `_fix_embedded_ytcfg` | `Clients.kt` `IDENTITIES` | client names, numeric ids, versions, user agents, device fields; which ones need the JS player, cookies and a GVS PO token |
 | `_base.py` `generate_api_headers`, `_call_api`, `_extract_context` | `Engine.playerResponse`, `playerRequestBody` | player endpoint, `prettyPrint=false`, `X-YouTube-Client-Name/Version`, `Origin`, `X-Goog-Visitor-Id`, `X-Origin`, `timeZone`/`utcOffsetMinutes` |
 | `_base.py` `_make_sid_authorization`, `_get_sid_authorization_header`, `_get_sid_cookies`, `_has_auth_cookies` | `Youtube.kt` `sidAuthorization`, `isLoggedIn` | ported: SAPISIDHASH / SAPISID1PHASH / SAPISID3PHASH, logged-in test |
 | `_video.py` `_generate_player_context`, `_get_checkok_params`, `_extract_player_response` | `playerRequestBody` | `playbackContext.contentPlaybackContext` (`html5Preference`, `signatureTimestamp`), `contentCheckOk`, `racyCheckOk`, `serviceIntegrityDimensions.poToken` |

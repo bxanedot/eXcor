@@ -20,7 +20,7 @@ class ProbeTest {
     @Test
     fun refusedUrlIsNotReturnedAndItsProfileIsExcluded() = runTest {
         val engine = fixtureEngine(host, refusedClients = setOf("VISIONOS"))
-        assertNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TV_SAMSUNG"), false))
+        assertNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TVHTML5"), false))
         assertTrue(engine.isExcluded("dQw4w9WgXcQ", "VISIONOS"))
         assertTrue(host.logs.any { it.second == "VyonEx: VISIONOS URL refused (HTTP 403)" }, "${host.logs}")
     }
@@ -28,7 +28,7 @@ class ProbeTest {
     @Test
     fun answeringUrlIsReturnedAndRemembered() = runTest {
         val engine = fixtureEngine(host)
-        val stream = assertNotNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TV_SAMSUNG"), false))
+        val stream = assertNotNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TVHTML5"), false))
         assertEquals("VISIONOS", stream.profileId)
         // VISIONOS has no response-wide loudnessDb; itag 251 carries its own.
         assertEquals(0.97999954, stream.loudnessDb)
@@ -56,7 +56,7 @@ class ProbeTest {
     @Test
     fun aSuccessThatIgnoredTheRangeIsRefused() = runTest {
         val engine = fixtureEngine(host, mediaAnswer = HttpStatusCode.OK to headersOf(HttpHeaders.ContentType, "audio/webm"))
-        assertNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TV_SAMSUNG"), false))
+        assertNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TVHTML5"), false))
         assertTrue(engine.isExcluded("dQw4w9WgXcQ", "VISIONOS"))
         assertTrue(host.logs.any { it.second == "VyonEx: VISIONOS URL refused (HTTP 200)" }, "${host.logs}")
     }
@@ -65,7 +65,7 @@ class ProbeTest {
     fun anErrorPageWithA206IsRefused() = runTest {
         val page = headersOf(HttpHeaders.ContentRange to listOf("bytes 0-0/512"), HttpHeaders.ContentType to listOf("text/html"))
         val engine = fixtureEngine(host, mediaAnswer = HttpStatusCode.PartialContent to page)
-        assertNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TV_SAMSUNG"), false))
+        assertNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TVHTML5"), false))
         assertTrue(host.logs.any { it.second == "VyonEx: VISIONOS URL refused (not media: text/html)" }, "${host.logs}")
     }
 

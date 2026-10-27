@@ -98,9 +98,11 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
 ## How it works
 
 1. Reads `host.session()` (cookie, visitor data, `gl`, `hl`) on every call.
-2. Asks the player API with up to three client identities, in yt-dlp's current default order:
-   `TV_SAMSUNG` (TVHTML5), `VISIONOS`, then `WEB` (only with a PO token from `host.tokenProvider`).
-   Logged-in sessions skip `VISIONOS`, which does not take cookies.
+2. Asks the player API with one client identity after another (`Clients.kt`), in yt-dlp's current
+   default order: logged out `TV_SAMSUNG` (TVHTML5), `VISIONOS`, then `WEB` (only with a PO token
+   from `host.tokenProvider`); logged in `WEB_EMBEDDED`, `TV_SAMSUNG`, `WEB` (no `VISIONOS`, which
+   takes no cookies). Then two more TV clients that need no PO token, `TV` and `TV_DOWNGRADED`. A
+   client refused three times in a row, across videos, is tried last for 30 minutes.
 3. Decodes signature and `n` by running the player script's own functions in QuickJS, through
    yt-dlp's EJS solver (vendored in `ejs/`). The prepared player is cached per player version
    (JVM: `filesDir/vyonex-players`, three newest; iOS: memory).
