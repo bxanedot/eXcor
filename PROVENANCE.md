@@ -1,11 +1,11 @@
 # Provenance
 
-This log records external sources and a clean-room process limitation. During workspace
-discovery, directory and file metadata under the forbidden `Desktop\vyon-main` and
-`Documents\Codex\2026-*` locations was accessed, and `git status` was run in
-`Desktop\vyon-main`. No source-file contents from the former repository were read, and no
-XERJ index or GPL/LGPL/AGPL extractor code was opened. Because forbidden metadata was accessed,
-this repository cannot be certified as fully clean-room compliant.
+The library code was written by Claude in a separate cloud environment with no access to the
+owner's PC. Codex contributed the watch-page capture, live-test runs and results, and
+documentation. During local workspace discovery, Codex listed directory and file metadata under
+the forbidden `Desktop\vyon-main` and `Documents\Codex\2026-*` locations and ran `git status`
+in `Desktop\vyon-main`; it did not read source-file contents from those locations. This records
+Codex's actions and contributions, not a legal or release determination.
 
 ## Sources read or ported
 
