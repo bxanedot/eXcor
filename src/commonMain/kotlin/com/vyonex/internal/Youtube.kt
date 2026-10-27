@@ -1,7 +1,10 @@
 package com.vyonex.internal
 
 import com.vyonex.VyonExAudioFormat
+import com.vyonex.VyonExCaptionTrack
+import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExSession
+import com.vyonex.VyonExThumbnail
 import io.ktor.http.decodeURLQueryComponent
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.parseQueryString
@@ -11,6 +14,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
@@ -111,6 +115,7 @@ internal fun sidAuthorization(cookie: String, nowMs: Long): String? {
 internal fun JsonElement?.at(vararg keys: String): JsonElement? = keys.fold(this) { e, key -> (e as? JsonObject)?.get(key) }
 internal val JsonElement?.str get() = (this as? JsonPrimitive)?.contentOrNull
 private val JsonElement?.int get() = str?.toIntOrNull()
+private val JsonElement?.bool get() = (this as? JsonPrimitive)?.booleanOrNull
 
 internal class AudioFormat(json: JsonObject, val url: String) {
     val itag = json["itag"].int
@@ -122,15 +127,91 @@ internal class AudioFormat(json: JsonObject, val url: String) {
     val loudnessDb = (json["loudnessDb"] as? JsonPrimitive)?.doubleOrNull
 }
 
-internal fun audioFormatsOf(playerResponse: JsonObject): List<JsonObject> {
+internal fun audioFormatsOf(playerResponse: JsonObject) = formatsOf(playerResponse, "audio/")
+
+internal fun videoFormatsOf(playerResponse: JsonObject) = formatsOf(playerResponse, "video/")
+
+private fun formatsOf(playerResponse: JsonObject, mimePrefix: String): List<JsonObject> {
     val data = playerResponse["streamingData"] as? JsonObject ?: return emptyList()
     return listOf("formats", "adaptiveFormats").flatMap { (data[it] as? JsonArray).orEmpty() }
         .filterIsInstance<JsonObject>()
         .filter {
             // Live, OTF and DRM formats cannot be fetched directly with byte ranges.
-            it["mimeType"].str.orEmpty().startsWith("audio/") && it["targetDurationSec"] == null &&
+            it["mimeType"].str.orEmpty().startsWith(mimePrefix) && it["targetDurationSec"] == null &&
                 it["type"].str != "FORMAT_STREAM_TYPE_OTF" && it["drmFamilies"] == null
         }
+}
+
+internal class VideoFormat(json: JsonObject, val url: String) {
+    val itag = json["itag"].int
+    val mimeType = json["mimeType"].str.orEmpty()
+    val width = json["width"].int ?: 0
+    val height = json["height"].int ?: 0
+    val fps = json["fps"].int ?: 0
+    val bitrate = json["bitrate"].int ?: 0
+    // Combined audio+video formats list both codecs, e.g. codecs="avc1.42001E, mp4a.40.2".
+    val muxed = ',' in mimeType
+}
+
+// H.264 first because every player decodes it (AVPlayer included), then VP9, then AV1.
+private val VideoFormat.codecRank get() = when {
+    "avc1" in mimeType -> 3
+    "vp9" in mimeType || "vp09" in mimeType -> 2
+    "av01" in mimeType -> 1
+    else -> 0
+}
+
+/** The tallest format up to [maxHeight] (the smallest one if none fits), then fps, codec, bitrate. */
+internal fun selectVideo(formats: List<VideoFormat>, maxHeight: Int, requireAvc: Boolean): VideoFormat? {
+    val pool = if (requireAvc) formats.filter { "avc1" in it.mimeType } else formats
+    val smallest = pool.minOfOrNull { it.height }
+    val fitting = pool.filter { it.height <= maxHeight }.ifEmpty { pool.filter { it.height == smallest } }
+    return fitting.maxWithOrNull(compareBy({ it.height }, { it.fps }, { it.codecRank }, { it.bitrate }))
+}
+
+internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMetadata {
+    val details = playerResponse["videoDetails"]
+    val micro = playerResponse.at("microformat", "playerMicroformatRenderer")
+    fun text(e: JsonElement?) =
+        e.str ?: e.at("simpleText").str ?: (e.at("runs") as? JsonArray)?.joinToString("") { it.at("text").str.orEmpty() }
+    fun strings(e: JsonElement?) = (e as? JsonArray).orEmpty().mapNotNull { it.str }
+    fun thumbnails(e: JsonElement?) = (e.at("thumbnail", "thumbnails") as? JsonArray).orEmpty().mapNotNull { t ->
+        t.at("url").str?.let { VyonExThumbnail(it, t.at("width").int ?: 0, t.at("height").int ?: 0) }
+    }
+    return VyonExMetadata(
+        videoId = videoId,
+        title = details.at("title").str ?: text(micro.at("title")),
+        author = details.at("author").str ?: micro.at("ownerChannelName").str,
+        channelId = details.at("channelId").str ?: micro.at("externalChannelId").str,
+        channelUrl = micro.at("ownerProfileUrl").str,
+        durationSeconds = (details.at("lengthSeconds") ?: micro.at("lengthSeconds")).str?.toLongOrNull(),
+        viewCount = (details.at("viewCount") ?: micro.at("viewCount")).str?.toLongOrNull(),
+        likeCount = micro.at("likeCount").str?.toLongOrNull(),
+        description = details.at("shortDescription").str ?: text(micro.at("description")),
+        keywords = strings(details.at("keywords")),
+        category = micro.at("category").str,
+        publishDate = micro.at("publishDate").str,
+        uploadDate = micro.at("uploadDate").str,
+        thumbnails = (thumbnails(details) + thumbnails(micro)).distinctBy { it.url },
+        isLive = details.at("isLiveContent").bool,
+        isPrivate = details.at("isPrivate").bool,
+        isUnlisted = micro.at("isUnlisted").bool,
+        isFamilySafe = micro.at("isFamilySafe").bool,
+        isShortsEligible = micro.at("isShortsEligible").bool,
+        allowRatings = details.at("allowRatings").bool,
+        availableCountries = strings(micro.at("availableCountries")),
+        canonicalUrl = micro.at("canonicalUrl").str,
+        captions = (playerResponse.at("captions", "playerCaptionsTracklistRenderer", "captionTracks") as? JsonArray).orEmpty()
+            .mapNotNull { track ->
+                val url = track.at("baseUrl").str?.takeIf { it.startsWith("$YT_ORIGIN/api/timedtext?") }
+                val language = track.at("languageCode").str
+                // yt-dlp: an `exp` of xpe or xpv means the track needs a PO token, which is not attached here.
+                val needsToken = url != null && parseQueryString(url.substringAfter('?')).getAll("exp").orEmpty()
+                    .any { it == "xpe" || it == "xpv" }
+                if (url == null || language == null || needsToken) null
+                else VyonExCaptionTrack(url, language, text(track.at("name")), track.at("kind").str == "asr")
+            },
+    )
 }
 
 private val N_PARAM = Regex("([?&]n=)([^&]*)")

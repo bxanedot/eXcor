@@ -7,7 +7,9 @@ import com.vyonex.VyonExLogLevel.DEBUG
 import com.vyonex.VyonExLogLevel.INFO
 import com.vyonex.VyonExLogLevel.WARN
 import com.vyonex.VyonExSession
+import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExStream
+import com.vyonex.VyonExVideoStream
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -79,7 +81,63 @@ internal class Engine(
     }
 
     /** Player API extraction. Throws when YouTube says the video cannot be played. */
-    suspend fun extract(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): VyonExStream? {
+    suspend fun extract(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): VyonExStream? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val format = selectFormat(playableFormats(audioFormatsOf(pr), poToken, null, ::AudioFormat), maxKbps, requireM4a)
+            if (format == null) log(DEBUG, "${id.profileId} has no usable audio format", videoId)
+            format?.let { accept(videoId, it, pr, id.clientName, id.profileId, headers) }
+        }
+
+    /** A video stream and, for video-only formats, the audio to play with it. Throws like [extract]. */
+    suspend fun extractVideo(videoId: String, maxHeight: Int, skipClients: Set<String>, requireAvc: Boolean): VyonExVideoStream? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val audio = selectFormat(playableFormats(audioFormatsOf(pr), poToken, null, ::AudioFormat), 160, requireAvc)
+            val videos = playableFormats(videoFormatsOf(pr), poToken, null, ::VideoFormat)
+            // Video-only formats need an audio track; without one only combined formats can play.
+            val video = selectVideo(if (audio == null) videos.filter { it.muxed } else videos, maxHeight, requireAvc)
+            if (video == null) {
+                log(DEBUG, "${id.profileId} has no usable video format", videoId)
+                return@viaIdentities null
+            }
+            if (!answers(video.url, headers, videoId, id.profileId)) return@viaIdentities null
+            val audioStream = if (video.muxed) null else accept(videoId, audio!!, pr, id.clientName, id.profileId, headers) ?: return@viaIdentities null
+            log(INFO, "chose ${id.profileId} video itag ${video.itag} (${video.width}x${video.height}@${video.fps}, ${video.mimeType})", videoId)
+            // Remembered like audio streams, so headersFor and onRefused work for the video URL too.
+            remember(VyonExStream(videoId, video.url, video.bitrate / 1000, video.mimeType, null, id.clientName, id.profileId, headers))
+            VyonExVideoStream(
+                videoId, video.url, video.width, video.height, video.fps, video.bitrate / 1000, video.mimeType,
+                audioStream, id.clientName, id.profileId, headers,
+            )
+        }
+
+    /** Everything YouTube says about the video: WEB reports the most (microformat), VISIONOS needs no player script. */
+    suspend fun metadata(videoId: String): VyonExMetadata? {
+        val session = host.session()
+        for (id in listOf("WEB", "VISIONOS").map { profile -> IDENTITIES.first { it.profileId == profile } }) {
+            try {
+                // Cookies go only to clients that take them.
+                val asked = if (id.supportsCookies) session else session.copy(cookie = null)
+                val pr = playerResponse(id, videoId, asked, session.visitorData, null, isLoggedIn(asked.cookie))
+                if (pr["videoDetails"] != null) return metadataOf(videoId, pr)
+                log(DEBUG, "${id.profileId} has no video details (${pr.at("playabilityStatus", "status").str})", videoId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                log(WARN, "${id.profileId} metadata failed: ${e.describe()}", videoId)
+            }
+        }
+        return null
+    }
+
+    /**
+     * Tries the identities in order, one player request each, until [pick] returns a result.
+     * Throws when YouTube said the video cannot be played and nothing was found.
+     */
+    private suspend fun <T : Any> viaIdentities(
+        videoId: String,
+        skipClients: Set<String>,
+        pick: suspend (id: Identity, pr: JsonObject, poToken: String?, headers: Map<String, String>) -> T?,
+    ): T? {
         val session = host.session()
         val loggedIn = isLoggedIn(session.cookie)
         var visitorData = session.visitorData
@@ -103,12 +161,7 @@ internal class Engine(
                     log(DEBUG, "${id.profileId} refused ($reason)", videoId)
                     continue
                 }
-                val format = selectFormat(playableFormats(pr, token?.streamingDataToken, null), maxKbps, requireM4a)
-                if (format == null) {
-                    log(DEBUG, "${id.profileId} has no usable audio format", videoId)
-                    continue
-                }
-                accept(videoId, format, pr, id.clientName, id.profileId, mediaHeaders(id.userAgent, session))?.let { return it }
+                pick(id, pr, token?.streamingDataToken, mediaHeaders(id.userAgent, session))?.let { return it }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -227,11 +280,16 @@ internal class Engine(
         }
         val page = parseWatchPage(html) ?: return null
         if (page.playerResponse.at("playabilityStatus", "status").str != "OK") return null
-        return page.playerResponse to playableFormats(page.playerResponse, null, page.playerId)
+        return page.playerResponse to playableFormats(audioFormatsOf(page.playerResponse), null, page.playerId, ::AudioFormat)
     }
 
-    private suspend fun playableFormats(pr: JsonObject, poToken: String?, playerId: String?): List<AudioFormat> =
-        audioFormatsOf(pr).mapNotNull { json ->
+    private suspend fun <F> playableFormats(
+        formats: List<JsonObject>,
+        poToken: String?,
+        playerId: String?,
+        make: (JsonObject, String) -> F,
+    ): List<F> =
+        formats.mapNotNull { json ->
             val url = try {
                 playableUrl(json) { type, challenge ->
                     (if (playerId != null) players.get(playerId) else players.current()).js.solve(type, challenge)
@@ -243,13 +301,25 @@ internal class Engine(
                 null
             }
             val full = if (url != null && poToken != null) "$url&pot=${poToken.encodeURLParameter()}" else url
-            full?.takeIf(::isAllowedUrl)?.let { AudioFormat(json, it) }
+            full?.takeIf(::isAllowedUrl)?.let { make(json, it) }
         }
 
     /**
      * BRIEF 4.2 only counts a format "whose URL works", so the URL is probed for one byte with the
-     * stream's own headers. A refusal excludes the profile, as onRefused would, and returns null.
+     * stream's own headers. A refusal excludes the profile, as onRefused would.
      */
+    private suspend fun answers(url: String, headers: Map<String, String>, videoId: String, profileId: String): Boolean {
+        val status = http.get(url) {
+            headers.forEach { (name, value) -> header(name, value) }
+            header(HttpHeaders.Range, "bytes=0-0")
+        }.status
+        if (status.isSuccess()) return true
+        log(WARN, "$profileId URL refused (HTTP ${status.value})", videoId)
+        exclude(videoId, profileId)
+        return false
+    }
+
+    /** The audio stream for [format] once its URL answers, remembered for headersFor and onRefused. */
     private suspend fun accept(
         videoId: String,
         format: AudioFormat,
@@ -258,15 +328,7 @@ internal class Engine(
         profileId: String,
         headers: Map<String, String>,
     ): VyonExStream? {
-        val status = http.get(format.url) {
-            headers.forEach { (name, value) -> header(name, value) }
-            header(HttpHeaders.Range, "bytes=0-0")
-        }.status
-        if (!status.isSuccess()) {
-            log(WARN, "$profileId URL refused (HTTP ${status.value})", videoId)
-            exclude(videoId, profileId)
-            return null
-        }
+        if (!answers(format.url, headers, videoId, profileId)) return null
         log(INFO, "chose $profileId itag ${format.itag} (${format.mimeType}, ${format.bitrate / 1000} kbps)", videoId)
         return remember(
             VyonExStream(

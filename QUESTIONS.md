@@ -63,26 +63,39 @@ Each item names the reading chosen; nothing was looked up in the old code.
 
 ## VyonExKit (Swift)
 
-18. **Platforms.** Only iOS 15 and macOS 12. watchOS has no JavaScriptCore, and tvOS/visionOS
-    could not be compiled from the Linux build machine, so they are not declared.
-19. **Timeouts.** `URLSession` has no connect timeout: the dedicated session uses
-    `timeoutIntervalForRequest` 20 s (socket) and `timeoutIntervalForResource` 30 s (request).
-    It also ignores stored cookies, so only the host session's cookie is sent.
-20. **API spelling.** `VyonExConfigStore` uses `getString(_:)`, `putString(_:_:)` and so on;
-    `VyonExKitHost.now` is a `Date`; `TokenProviderCapabilities` is added because
-    `PoTokenProvider.capabilities` needs a type. `VyonExKit` is a `final class` (Sendable, lock
-    inside) rather than an actor, so `headers(for:)`, `onRefused(url:)`, `exclude` and
-    `onSessionChanged` stay synchronous like the Kotlin API.
-21. **`extract` throws only on cancellation**, like the iOS Kotlin version: a player-API failure
-    falls through to the watch page, and anything else returns nil.
-22. **No disk cache** in VyonExKit (optional in the brief): the player is prepared again once per
-    app launch and player version, during warm-up.
+18–22. VyonExKit's questions (platforms, timeouts, API spelling, errors, caching) were dropped with
+    the package on 2026-10-27: the owner chose one engine, and iOS apps use the Kotlin XCFramework.
 
 ## After delivery
 
-23. **"Whose URL works" (4.2).** After a live run returned a URL that got HTTP 403, both engines
-    now probe the chosen URL with a one-byte ranged GET using the returned headers before
+23. **"Whose URL works" (4.2).** After a live run returned a URL that got HTTP 403, the engine
+    now probes the chosen URL with a one-byte ranged GET using the returned headers before
     returning it. A refusal is logged at WARN, excludes that profile for 10 minutes (as `onRefused`
     would) and moves on to the next identity. Cost: one small extra request per identity tried.
     A probe cannot catch refusals that depend on how the host fetches (for example a different
     IPv4/IPv6 route in the host's player than in its OkHttp client).
+24. **Video (owner's request, 2026-10-27, beyond section 5's "audio").** `extractVideo(videoId,
+    maxHeight = 1080, skipClients, requireAvc = false)` uses the same identities, exclusions, URL
+    probe and errors as `extract`. It picks the tallest format up to `maxHeight` (the smallest if
+    none fits), then frame rate, then H.264 over VP9 over AV1 (H.264 plays everywhere), then
+    bitrate. Video-only formats come with the best audio up to 160 kbps (`requireAvc` also means
+    AAC audio); without usable audio only combined formats are considered. Both URLs are probed and
+    remembered, so `headersFor` and `onRefused` work for either. There is no watch-page fallback:
+    logged-out pages are SABR-only (item 1). Should AV1/VP9 win over H.264 at the same height for
+    hosts that decode them?
+25. **Combined formats.** Only TV_SAMSUNG returns one (itag 18, 360p, ciphered); VISIONOS has
+    adaptive formats only. So at most 360p comes as a single URL; anything taller needs the host
+    to play video and audio together.
+26. **Metadata.** `metadata(videoId)` asks WEB first, which adds the microformat (likes, category,
+    publish/upload dates, family-safe, unlisted, Shorts, countries, profile and canonical URLs),
+    then VISIONOS (title, author, description, keywords, views, duration, thumbnails). No PO token
+    is needed for metadata, cookies go only to WEB, and the call returns null when neither reports
+    `videoDetails`. WEB needs the player's `signatureTimestamp`, so a cold call waits for player
+    preparation (item 16). Dates are YouTube's ISO 8601 strings, unparsed. Caption tracks are
+    listed with their signed `timedtext` URLs (only `https://www.youtube.com/api/timedtext`); like
+    yt-dlp, a track whose `exp` is `xpe` or `xpv` needs a PO token, so it is left out. Caption URLs
+    are not probed. Dislikes, comments and chapters are not in the player response and are not
+    fetched.
+27. **iOS names.** Swift does not see Kotlin default arguments, so it passes every parameter of
+    `extractVideo`; and Kotlin/Native renames `VyonExMetadata.description` to `description_`,
+    since `NSObject` already has `description`.

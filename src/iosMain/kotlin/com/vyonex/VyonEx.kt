@@ -40,6 +40,17 @@ class VyonEx(host: VyonExHost) {
         requireM4a: Boolean = false,
     ): VyonExStream? = engine.extractOrWatchPage(videoId, maxKbps, skipClients, requireM4a)
 
+    @Throws(Throwable::class)
+    suspend fun extractVideo(
+        videoId: String,
+        maxHeight: Int = 1080,
+        skipClients: Set<String> = emptySet(),
+        requireAvc: Boolean = false,
+    ): VyonExVideoStream? = engine.extractVideo(videoId, maxHeight, skipClients, requireAvc)
+
+    @Throws(Throwable::class)
+    suspend fun metadata(videoId: String): VyonExMetadata? = engine.metadata(videoId)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)
