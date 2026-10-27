@@ -89,6 +89,17 @@ class VyonEx(host: VyonExHost) {
     /** A YouTube Music artist page (`UC…` channel ID): top songs, playlists of all songs and videos, releases. */
     suspend fun artist(channelId: String): VyonExArtist? = engine.artist(channelId)
 
+    /** A mix (`RD…`) and its first videos; [videoId] picks where it starts. */
+    suspend fun mix(playlistId: String, videoId: String? = null): VyonExMix? = engine.mix(playlistId, videoId)
+
+    /** More of a mix, from the previous page's `continuation`; mixes keep going until YouTube has nothing new. */
+    suspend fun mixMore(continuation: String): VyonExListPage = engine.mixMore(continuation)
+
+    /** The videos YouTube recommends beside [videoId] (logged out), then `relatedMore` for more. */
+    suspend fun related(videoId: String): VyonExListPage = engine.related(videoId)
+
+    suspend fun relatedMore(continuation: String): VyonExListPage = engine.relatedMore(continuation)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)

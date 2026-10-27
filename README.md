@@ -59,6 +59,14 @@ val artist = vyonEx.artist("UCuAXFkgsw1L7xaCfnd5JJOw")
 // Every song by the artist: artist.songsPlaylistId with playlist/playlistMore. Albums and singles: artist.releases.
 ```
 
+Mixes and recommendations (what YouTube shows next to a video, logged out):
+
+```kotlin
+val mix = vyonEx.mix("RDdQw4w9WgXcQ")                 // a video's mix starts with that video
+val more = vyonEx.mixMore(mix!!.firstPage.continuation!!)  // mixes go on; continuation is null once nothing is new
+val related = vyonEx.related("dQw4w9WgXcQ")           // then relatedMore(related.continuation!!)
+```
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift
@@ -101,6 +109,8 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
    (`lockupViewModel`) as yt-dlp does: title, channel, duration, thumbnails.
 10. `album` and `artist` ask YouTube Music's own web client (`WEB_REMIX`) the same way. Shelves on
     an artist page are told apart by what they link to, not by their localized titles.
+11. `mix`, `mixMore`, `related` and `relatedMore` ask the logged-out WEB `next` (watch-next)
+    endpoint: the mix panel's videos and the related videos beside the player.
 
 ## Build and test
 

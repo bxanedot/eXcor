@@ -13,6 +13,7 @@ import com.vyonex.VyonExLogLevel.INFO
 import com.vyonex.VyonExLogLevel.WARN
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExMetadata
+import com.vyonex.VyonExMix
 import com.vyonex.VyonExPlaylist
 import com.vyonex.VyonExSink
 import com.vyonex.VyonExStream
@@ -283,31 +284,55 @@ internal class Engine(
     suspend fun playlist(playlistId: String): VyonExPlaylist? {
         // yt-dlp: a mix is not a playlist page; it is read from the watch-next endpoint instead.
         require(!playlistId.startsWith("RD")) { "VyonEx: $playlistId is a mix, not a playlist" }
-        return playlistOf(playlistId, browse { put("browseId", "VL$playlistId") })
+        return playlistOf(playlistId, innertube("browse") { put("browseId", "VL$playlistId") })
     }
 
-    suspend fun playlistMore(continuation: String): VyonExListPage = continuationPageOf(browse { put("continuation", continuation) })
+    suspend fun playlistMore(continuation: String): VyonExListPage = continuationPageOf(innertube("browse") { put("continuation", continuation) })
 
     /** A YouTube Music album page; null when YouTube shows no such album. */
     suspend fun album(browseId: String): VyonExAlbum? {
         require(browseId.startsWith("MPREb_")) { "VyonEx: $browseId is not an album page" }
-        return albumOf(browseId, browse(MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", browseId) })
+        return albumOf(browseId, innertube("browse", MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", browseId) })
     }
 
     /** A YouTube Music artist page; null when YouTube shows no artist for the channel. */
     suspend fun artist(channelId: String): VyonExArtist? {
         require(channelId.startsWith("UC")) { "VyonEx: $channelId is not a channel ID" }
-        return artistOf(channelId, browse(MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", channelId) })
+        return artistOf(channelId, innertube("browse", MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", channelId) })
     }
 
-    /** A logged-out browse request (WEB unless told otherwise): no cookie is sent, so lists are the public ones. */
-    private suspend fun browse(
+    /** A mix (`RD…`) and its first videos; [videoId] picks where it starts (a video's own mix, RD + ID, starts there). */
+    suspend fun mix(playlistId: String, videoId: String? = null): VyonExMix? {
+        require(playlistId.startsWith("RD")) { "VyonEx: $playlistId is not a mix" }
+        val seed = videoId ?: playlistId.removePrefix("RD").takeIf { it.length == 11 }
+        return mixOf(innertube("next") { put("playlistId", playlistId); seed?.let { put("videoId", it) } })
+    }
+
+    /** The mix's next videos, from the previous page's continuation. */
+    suspend fun mixMore(continuation: String): VyonExListPage {
+        val parts = continuation.split(' ')
+        require(parts.size == 4 && parts[0].startsWith("RD") && parts[2].toIntOrNull() != null) { "VyonEx: not a mix continuation" }
+        val (playlistId, videoId, index, params) = parts
+        return mixMoreOf(
+            innertube("next") { put("playlistId", playlistId); put("videoId", videoId); put("index", index.toInt()); put("params", params) },
+            after = videoId,
+        )
+    }
+
+    /** The videos YouTube shows beside [videoId] (its "up next" recommendations, logged out). */
+    suspend fun related(videoId: String): VyonExListPage = relatedOf(innertube("next") { put("videoId", videoId) })
+
+    suspend fun relatedMore(continuation: String): VyonExListPage = continuationPageOf(innertube("next") { put("continuation", continuation) })
+
+    /** A logged-out InnerTube call (WEB unless told otherwise): no cookie is sent, so lists are the public ones. */
+    private suspend fun innertube(
+        endpoint: String,
         id: Identity = IDENTITIES.first { it.profileId == "WEB" },
         origin: String = YT_ORIGIN,
         fields: JsonObjectBuilder.() -> Unit,
     ): JsonObject {
         val session = host.session()
-        val response = http.post("$origin/youtubei/v1/browse?prettyPrint=false") {
+        val response = http.post("$origin/youtubei/v1/$endpoint?prettyPrint=false") {
             contentType(ContentType.Application.Json)
             setBody(innertubeBody(id, session, fields))
             header(HttpHeaders.UserAgent, id.userAgent)
@@ -316,7 +341,7 @@ internal class Engine(
             header(HttpHeaders.Origin, origin)
             session.visitorData?.let { header("X-Goog-Visitor-Id", it) }
         }
-        check(response.status.isSuccess()) { "VyonEx: browse HTTP ${response.status.value}" }
+        check(response.status.isSuccess()) { "VyonEx: $endpoint HTTP ${response.status.value}" }
         return Json.parseToJsonElement(response.bodyAsText()).jsonObject
     }
 

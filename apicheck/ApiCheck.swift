@@ -117,6 +117,13 @@ func apiCheck() async throws {
             _ = (release.browseId, release.title, year, release.thumbnails)
         }
     }
+    if let mix: VyonExMix = try await vyonEx.mix(playlistId: "RD", videoId: nil) {
+        let more: VyonExListPage = try await vyonEx.mixMore(continuation: mix.firstPage.continuation ?? "")
+        _ = (mix.playlistId, mix.title, more.items)
+    }
+    let related: VyonExListPage = try await vyonEx.related(videoId: "v")
+    let relatedMore: VyonExListPage = try await vyonEx.relatedMore(continuation: related.continuation ?? "")
+    _ = relatedMore.items
     let headers: [String: String]? = vyonEx.headersFor(url: "u")
     let refused: String? = vyonEx.onRefused(url: "u")
     _ = (headers, refused)

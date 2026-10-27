@@ -143,6 +143,13 @@ class ApiCheckTest {
             val n: VyonExArtist? = vyonEx.artist("UC")
             listOf<Any?>(n?.channelId, n?.name, n?.description, n?.thumbnails, n?.topSongs, n?.songsPlaylistId, n?.videosPlaylistId)
             n?.releases?.forEach { listOf<Any?>(it.browseId, it.title, it.year, it.thumbnails) }
+            val o: VyonExMix? = vyonEx.mix("RD")
+            val o2: VyonExMix? = vyonEx.mix(playlistId = "RD", videoId = "v")
+            listOf<Any?>(o?.playlistId, o?.title, o?.firstPage, o2)
+            val p: VyonExListPage = vyonEx.mixMore("token")
+            val q: VyonExListPage = vyonEx.related("v")
+            val r: VyonExListPage = vyonEx.relatedMore("token")
+            listOf(p, q, r)
             listOf(a, b, c, d, e, f, init)
         }
         listOf(network)
