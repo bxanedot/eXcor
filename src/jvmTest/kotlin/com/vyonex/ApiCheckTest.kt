@@ -114,6 +114,14 @@ class ApiCheckTest {
             val d: VyonExVideoStream? = vyonEx.extractVideo("v")
             val e: VyonExVideoStream? = vyonEx.extractVideo(videoId = "v", maxHeight = 720, skipClients = setOf("WEB"), requireAvc = true)
             val f: VyonExMetadata? = vyonEx.metadata("v")
+            val g: VyonExFormats? = vyonEx.formats("v")
+            g?.formats?.forEach { listOf<Any?>(it.itag, it.url, it.mimeType, it.kbps, it.contentLength, it.hasAudio, it.hasVideo, it.width, it.height, it.fps) }
+            listOf<Any?>(g?.videoId, g?.clientName, g?.profileId, g?.headers)
+            val sink = VyonExSink { bytes -> bytes.size }
+            val format = VyonExFormat(1, "u", "m", 1, null, hasAudio = true, hasVideo = false, width = null, height = null, fps = null)
+            val h: Long = vyonEx.download(format, emptyMap(), sink)
+            val i: Long = vyonEx.download(format = format, headers = emptyMap(), sink = sink, from = 10, onProgress = { written, total -> listOf(written, total) })
+            listOf(h, i)
             listOf(a, b, c, d, e, f, init)
         }
         listOf(network)

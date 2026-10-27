@@ -51,6 +51,19 @@ class VyonEx(host: VyonExHost) {
     @Throws(Throwable::class)
     suspend fun metadata(videoId: String): VyonExMetadata? = engine.metadata(videoId)
 
+    @Throws(Throwable::class)
+    suspend fun formats(videoId: String, skipClients: Set<String> = emptySet()): VyonExFormats? = engine.formats(videoId, skipClients)
+
+    /** Downloads [format] into [sink] from byte [from] in 10 MiB ranged requests; returns the position reached. */
+    @Throws(Throwable::class)
+    suspend fun download(
+        format: VyonExFormat,
+        headers: Map<String, String>,
+        sink: VyonExSink,
+        from: Long = 0,
+        onProgress: ((written: Long, total: Long?) -> Unit)? = null,
+    ): Long = engine.download(format, headers, sink, from, onProgress)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)

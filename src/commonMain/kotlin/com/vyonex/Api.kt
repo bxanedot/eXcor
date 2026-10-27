@@ -95,6 +95,45 @@ data class VyonExMusicInfo(
 /** Whether a video is, was or will be a live stream. [POST_LIVE]: just ended, still being processed. */
 enum class VyonExLiveStatus { NOT_LIVE, LIVE, UPCOMING, WAS_LIVE, POST_LIVE }
 
+/** One format of a video as `VyonEx.formats` lists it: audio, video, or both (combined). */
+data class VyonExFormat(
+    val itag: Int,
+    val url: String,
+    val mimeType: String,
+    val kbps: Int,
+    val contentLength: Long?,
+    val hasAudio: Boolean,
+    val hasVideo: Boolean,
+    val width: Int?,
+    val height: Int?,
+    val fps: Int?,
+) {
+    // The URL may carry a PO token.
+    override fun toString() =
+        "VyonExFormat(itag=$itag, mimeType=$mimeType, kbps=$kbps, contentLength=$contentLength, " +
+            "hasAudio=$hasAudio, hasVideo=$hasVideo, ${width}x$height@$fps)"
+}
+
+/**
+ * Every format of a video from one client, all fetched with [headers]. They are not remembered for
+ * `headersFor`/`onRefused`; when a download is refused, call `exclude(videoId, profileId)` and list again.
+ */
+data class VyonExFormats(
+    val videoId: String,
+    val formats: List<VyonExFormat>,
+    val clientName: String,
+    val profileId: String,
+    val headers: Map<String, String>,
+) {
+    override fun toString() =
+        "VyonExFormats(videoId=$videoId, formats=${formats.size}, clientName=$clientName, profileId=$profileId, headers=${headers.keys})"
+}
+
+/** Receives a download's bytes, in order. */
+fun interface VyonExSink {
+    fun write(bytes: ByteArray)
+}
+
 /** What a YouTube or YouTube Music link or ID points at; see `VyonEx.parse`. */
 sealed class VyonExRef {
     /** A video, possibly opened from a list ([playlistId]) at [startSeconds]. */

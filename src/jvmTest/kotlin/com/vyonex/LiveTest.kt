@@ -93,6 +93,18 @@ class LiveTest {
         assertTrue(!info.description.isNullOrEmpty())
     }
 
+    @Test
+    fun listsFormatsAndDownloadsTheSmallestAudio() = runBlocking {
+        if (System.getenv("VYONEX_LIVE") != "1") return@runBlocking
+        val formats = assertNotNull(VyonEx(host).formats("dQw4w9WgXcQ"))
+        println("dQw4w9WgXcQ -> $formats")
+        val smallest = formats.formats.filter { !it.hasVideo }.minBy { it.contentLength ?: Long.MAX_VALUE }
+        var written = 0L
+        val end = VyonEx(host).download(smallest, formats.headers, { written += it.size }, 0, null)
+        println("dQw4w9WgXcQ -> downloaded itag ${smallest.itag}: $written of ${smallest.contentLength} bytes")
+        assertTrue(written == end && written == smallest.contentLength, "$written of ${smallest.contentLength}")
+    }
+
     /**
      * Opt-in survey of any videos: VYONEX_LIVE=1 VYONEX_LIVE_IDS=id1,id2 (comma-separated). Prints one line per
      * video with profile, itag and HTTP code, or YouTube's reason, never a URL. Unplayable videos are reported,

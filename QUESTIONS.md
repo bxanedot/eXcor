@@ -179,3 +179,28 @@ Each item names the reading chosen; nothing was looked up in the old code.
     tests run on Android yet: QuickJS-KT's Android native library cannot load on the build
     machine's JVM, so the common tests keep running on the JVM and the iOS simulator, and Android
     gets device checks with the sample app. CI builds the AAR on the Windows runner.
+36. **Owner decisions, 2026-10-27, second round.** (a) Downloads are in: every quality YouTube
+    offers, fetched in ranged chunks, with video and audio merged into one file on the device.
+    YouTube never offers 4K (or anything above 360p) as one stream: 4K exists only as VP9 or AV1
+    video plus separate audio, and H.264 stops at 1080p, so "4K in one stream" means merging. DRM
+    formats stay excluded. YouTube's terms forbid downloading outside its own apps and copyright
+    still applies; nothing here is legal clearance. (b) Artist pages and logged-out recommendations
+    (related videos, mixes) are in. (c) Account features (library, likes, Premium, members-only)
+    come later, as a separate reviewed step: they need an in-app sign-in, stored login cookies and,
+    since VISIONOS takes no cookies and TV_SAMSUNG is refused on the owner's network, likely PO
+    tokens from the app. (d) Captures go into the public repository after all (reversing item
+    31's "private"); the terms question in item 4 stays open. **Capture tool:** `CaptureFixtures`
+    (opt-in, `VYONEX_CAPTURE=1`) sends the logged-out requests, redacts and checks before writing,
+    and stops at a bot check. A run from the cloud build machine wrote four player responses and
+    then hit a bot check; those were discarded because that network answered differently (the
+    age-restricted video came back as `UNPLAYABLE: This video is not available` instead of the
+    owner network's `LOGIN_REQUIRED: Sign in to confirm your age`). It also showed upcoming
+    streams answering `LIVE_STREAM_OFFLINE` with a `liveStreamability` object.
+37. **Downloads, library part.** `formats(videoId)` lists every playable format (audio, video,
+    combined) of the first identity whose URLs answer; one probe stands for the list, since a
+    response's formats share its signature and address checks. The formats are not remembered for
+    `headersFor`/`onRefused` (a listing of about 27 would push the playing stream out of the
+    64-entry memory); on a refusal the app calls `exclude` and lists again. `download` fetches
+    10 MiB ranged requests (yt-dlp's chunk size for YouTube), resumes from a byte offset, accepts
+    only allowlisted URLs, and throws on a refused chunk without printing the URL. Merging video and
+    audio into one file comes next, in the Android code.

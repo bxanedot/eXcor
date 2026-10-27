@@ -22,5 +22,15 @@ When adding captures, before committing:
   `REDACTED-VISITOR-DATA`;
 - capture logged out, so no cookie values are present.
 
-`FixtureHygieneTest` checks all three and fails without printing the value it found. The visitor
+`FixtureHygieneTest` checks all three and fails without printing the value it found.
+
+`CaptureFixtures` makes the logged-out captures for errors, collections, search and related videos,
+redacting before it writes and refusing to write anything the checks above still flag:
+
+```sh
+VYONEX_CAPTURE=1 ./gradlew jvmTest --tests com.vyonex.CaptureFixtures --rerun -i
+```
+
+Run it from a home network: datacenter addresses get different answers and bot checks. It stops at
+a bot check rather than working around it. The visitor
 IDs in the captures above were replaced on 2026-10-27; nothing else in them was changed.

@@ -170,6 +170,8 @@ Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, playlists, search,
 
 > **Amended by the owner on 2026-10-27.** Now in scope: video formats and captions (added earlier the same day), YouTube and YouTube Music links, playlists, albums, mixes, music metadata, and, after collections, search. Still out of scope: Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, SABR streaming, HLS (so live streams), account sign-in flows, minting PO tokens inside the library, and downloads or offline copies. The owner also chose Android + iOS as the app's platforms (an Android library target follows). See `QUESTIONS.md` item 31.
 
+> **Amended again by the owner on 2026-10-27.** Also in scope: downloads of video and audio in every quality YouTube offers (DRM-free formats only), with video and audio merged into one file on the device; YouTube Music artist pages; recommendations available logged out (related videos and mixes). Account features (library, likes, Premium, members-only) come later as a separately reviewed step. See `QUESTIONS.md` item 36.
+
 ---
 
 ## 6. Tests and definition of done
