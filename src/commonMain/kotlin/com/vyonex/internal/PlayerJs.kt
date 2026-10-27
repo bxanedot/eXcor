@@ -114,6 +114,13 @@ internal class Players(private val http: HttpClient, private val store: PlayerSt
         loaded = null
         currentId = null
     }
+
+    /** Frees the loaded player without touching the store. */
+    suspend fun close() = lock.withLock {
+        loaded?.js?.close()
+        loaded = null
+        currentId = null
+    }
 }
 
 internal suspend fun HttpClient.text(url: String, block: HttpRequestBuilder.() -> Unit = {}): String {

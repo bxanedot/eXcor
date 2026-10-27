@@ -64,6 +64,13 @@ class VyonEx(host: VyonExHost) {
     fun exclude(videoId: String, profileId: String) = engine.exclude(videoId, profileId)
 
     fun onSessionChanged() = engine.onSessionChanged()
+
+    /**
+     * Stops background work and frees the loaded player; do not use this instance afterwards. The Ktor client
+     * stays open: closing its OkHttp engine would shut down the dispatcher and connection pool it shares with
+     * [VyonExHost.httpClient].
+     */
+    fun close() = engine.close()
 }
 
 /**

@@ -66,6 +66,7 @@ func apiCheck() async throws {
     _ = (headers, refused)
     vyonEx.exclude(videoId: "v", profileId: "p")
     vyonEx.onSessionChanged()
+    vyonEx.close()
 
     let levels: [VyonExLogLevel] = [.debug, .info, .warn, .error]
     let kinds: [PoTokenProviderKind] = [.webBotguard, .webpageAttestation, .androidDroidguard, .iosAttestation, .external]

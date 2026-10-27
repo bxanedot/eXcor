@@ -67,6 +67,7 @@ The survey prints one line per video (profile, itag, HTTP code, or YouTube's rea
 and fails only if a returned URL does not answer.
 
 On the JVM the prepared player is cached under `filesDir` only while `configStore.enabled` is true.
+`close()` stops background work and frees the loaded player when the host is done with VyonEx.
 
 Offline tests read the captured responses in `fixtures/` (see `fixtures/README.md`).
 `apicheck/ApiCheck.swift` is type-checked against the XCFramework in CI.
