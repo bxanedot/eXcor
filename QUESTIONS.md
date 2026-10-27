@@ -161,3 +161,14 @@ Each item names the reading chosen; nothing was looked up in the old code.
     live right now. `durationSeconds` is null for live-now and upcoming streams, and for a zero
     length. `liveStatus` was appended to `VyonExMetadata`, a type added after BRIEF section 3, so
     code constructing it must pass the new field.
+33. **YouTube Music track info.** `VyonExMetadata.music` (track, artists, album, release year and
+    date) is read from the description of auto-generated YouTube Music uploads, with yt-dlp's
+    pattern, so it matches yt-dlp's results, quirks included: an `Artist:` line counts only when
+    more lines follow it, and a release date needs a `℗` line before it. Other videos get null.
+    Checked live on 2026-10-27 from the cloud build machine: `MgNrAu2pzNs` gave "Voyeur Girl" by
+    Stephen on *it's too much love to know my dear* (2019) and `DbCvuSGfR3Y` "Back Around" by
+    half·alive on *Conditions Of A Punk* (2021), as in yt-dlp's tests. That machine got no streams for
+    either (`UNPLAYABLE: This video is not available`); the owner's network played both (item 2).
+34. **No Apple devices (owner, 2026-10-27).** The Android app comes first. iOS stays a library
+    target that CI builds and tests on the simulator; an iOS app, device timing (plan S1) and the
+    AVPlayer spike (S2) wait for a Mac and an iPhone.
