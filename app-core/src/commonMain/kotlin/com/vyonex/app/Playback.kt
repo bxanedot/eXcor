@@ -40,8 +40,11 @@ sealed interface PlayState {
     data object Idle : PlayState
     data class Loading(val track: Track) : PlayState
 
-    /** [stream] is what the platform player plays now (its URL with its headers). */
-    data class Ready(val track: Track, val stream: VyonExStream) : PlayState
+    /**
+     * Start [stream] (its URL with its headers) from the beginning. Not a data class: each start, a repeat of the same
+     * stream too, is a new value of [Playback.state], so a collector sees it.
+     */
+    class Ready(val track: Track, val stream: VyonExStream) : PlayState
 
     /** [youtubeReason] is YouTube's own message when it gave one. */
     data class Failed(val track: Track, val failure: Failure, val youtubeReason: String?) : PlayState
@@ -159,7 +162,7 @@ class Playback(
         // Repeating a track that still plays reuses its stream.
         val playing = (_state.value as? PlayState.Ready)?.takeIf { !retry && it.track.videoId == track.videoId && fresh(it.stream) }
         if (playing != null) {
-            _state.value = playing
+            _state.value = PlayState.Ready(track, playing.stream)
             return
         }
         _state.value = PlayState.Loading(track)

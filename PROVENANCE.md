@@ -22,6 +22,7 @@ Codex's actions and contributions, not a legal or release determination.
 | YouTube logged-out responses (unplayable players, browse, next, search), captured by Codex with `CaptureFixtures` on the owner's home network | 2026-10-27 | YouTube's content (fixtures only) | 14 files in `fixtures/` (listed in `fixtures/README.md`), visitor IDs and heartbeat token redacted; input for the playlist, album, artist, search and related-video work |
 | [YouTube Terms of Service](https://www.youtube.com/t/terms) | accessed 2026-10-27 | Terms of Service, not a content license | assessed public redistribution risk for captured fixtures; see `QUESTIONS.md` item 4 |
 | AOSP `frameworks/av` `media/libstagefright/webm/WebmWriter.cpp` at `android-8.0.0_r1`, `android-9.0.0_r1`, `android-10.0.0_r1` (android.googlesource.com) | read 2026-10-27 | Apache-2.0 | which audio codecs Android's WebM muxer accepts per version (Vorbis only before Android 10, Opus from Android 10); `VyonExMerge.supports`. Nothing copied |
+| AndroidX Media3 sources jars `media3-common`, `media3-session`, `media3-exoplayer` 1.11.1 (Google's Maven) | read 2026-10-27 | Apache-2.0 (POM) | how the app's player adds next and previous for the session (`ForwardingSimpleBasePlayer`, as `ForwardingPlayer`'s own documentation advises), that a session's play button prepares an idle player, and that `ExoPlayer.prepare` acts only when idle; `PlaybackService`. Nothing copied |
 | Apache License 2.0 text, https://www.apache.org/licenses/LICENSE-2.0.txt | fetched 2026-10-26 | — | `LICENSE` |
 | Synthetic clips made on the build machine with FFmpeg 6.1.1 (Ubuntu package) from its own `testsrc` pattern and `sine` tone; no outside media | 2026-10-27 | generated output; no FFmpeg code is in the repository | `src/androidDeviceTest/resources/clips/`, used by `MergeCheck`. 64x64, 30 fps, 2 s: `video-avc.mp4` (libx264, `-g 30`) and `audio-aac.m4a` (aac 32k) written with `-movflags frag_keyframe+empty_moov+default_base_moof`, like YouTube's fragmented MP4; `video-vp9.webm` (libvpx-vp9, `-g 30 -b:v 50k`) and `audio-opus.webm` (libopus 24k, 48 kHz) |
 
@@ -73,7 +74,7 @@ needs a PO token comes from yt-dlp 2026.10.21 `_video.py` (`_real_extract`, `req
 
 ## Dependencies
 
-All from Maven Central; licenses as declared in each POM.
+From Maven Central, and the AndroidX ones from Google's Maven; licenses as declared in each POM.
 
 | Dependency | Version | License | Scope |
 |---|---|---|---|
@@ -91,12 +92,18 @@ All from Maven Central; licenses as declared in each POM.
 | TestNG | 7.0.0 | Apache-2.0 | test (JVM) |
 | JCommander (via TestNG) | 1.72 | Apache-2.0 | test (JVM) |
 | Gradle wrapper | 9.8.2 | Apache-2.0 | build |
-| Android Gradle Plugin (`com.android.kotlin.multiplatform.library`), from Google's Maven | 9.4.1 | Apache-2.0 | build |
+| Android Gradle Plugin (`com.android.kotlin.multiplatform.library`, `com.android.application`), from Google's Maven | 9.4.1 | Apache-2.0 | build |
+| Kotlin Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose`) | 2.4.21 | Apache-2.0 | build (app) |
 | Android SDK Platform 37 (`android.jar` to compile against) | 37.0 | Android SDK License Agreement (Google) | build only, not redistributed |
 | OkHttp Android artifact (`okhttp-android`, via Ktor's OkHttp engine) | 5.5.0 | Apache-2.0 | main (Android) |
 | QuickJS-KT Android artifact (`quickjs-kt-android`, bundles QuickJS natives, MIT) | 1.0.15 | Apache-2.0 | main (Android) |
 | org.gradle.toolchains.foojay-resolver-convention | 1.0.0 | Apache-2.0 | build |
-| GitHub Actions `actions/checkout@v4`, `actions/setup-java@v4` | v4 | MIT | CI |
-| Android Emulator and AOSP x86_64 system images (API 26, 36), installed by `sdkmanager` on the CI runner | current at run time | Android SDK License Agreement (Google) | CI only (`MergeCheck`), not redistributed |
+| Jetpack Compose from Google's Maven (BOM 2026.09.00: ui, foundation, runtime, animation 1.12.1; material3 1.4.0), activity-compose 1.13.0, lifecycle-runtime-compose 2.11.0, and the AndroidX libraries they bring (core 1.18.0, lifecycle, savedstate, collection, annotation, emoji2, window, navigationevent, profileinstaller, startup, tracing and others) | as listed | Apache-2.0 | main (app) |
+| AndroidX Media3 `media3-exoplayer`, `media3-session` (+ common, datasource, decoder, extractor, container, database), and `androidx.media` | 1.11.1, 1.7.0 | Apache-2.0 | main (app) |
+| kotlinx-coroutines-android | 1.11.0 | Apache-2.0 | main (app) |
+| Guava (`-android`, + failureaccess, listenablefuture; via Media3) | 33.3.1-android | Apache-2.0 (parent POM) | main (app) |
+| JSpecify (via Media3) | 1.0.0 | Apache-2.0 | main (app) |
+| GitHub Actions `actions/checkout@v4`, `actions/setup-java@v4`, `actions/upload-artifact@v4` | v4 | MIT | CI |
+| Android Emulator and AOSP x86_64 system images (API 26, 36), installed by `sdkmanager` on the CI runner | current at run time | Android SDK License Agreement (Google) | CI only (`MergeCheck`, the app start check), not redistributed |
 
 The JVM tests run on TestNG rather than kotlin-test's default JUnit 4, which is EPL-1.0.

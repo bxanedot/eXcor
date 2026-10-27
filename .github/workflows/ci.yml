@@ -20,11 +20,12 @@ jobs:
             27
             21
       # The runner image ships an Android SDK; AGP fetches a missing platform itself.
-      - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar assembleAndroidMain
+      - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar assembleAndroidMain :android-app:lintDebug
         shell: bash
 
   # VyonExMerge runs on Android's own MediaExtractor and MediaMuxer, so MergeCheck runs on emulators: the
   # library's minimum API and a current one. GitHub's Linux runners offer KVM once its device is opened up.
+  # The app is started on the same emulators.
   android-device:
     runs-on: ubuntu-latest
     # An emulator that never boots would otherwise hold the runner for hours.
@@ -41,7 +42,7 @@ jobs:
           java-version: |
             27
             21
-      - run: ./gradlew $GRADLE_ARGS assembleAndroidDeviceTest
+      - run: ./gradlew $GRADLE_ARGS assembleAndroidDeviceTest :android-app:assembleDebug
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -64,6 +65,26 @@ jobs:
           # am instrument exits 0 either way; the report says how it went.
           $adb shell am instrument -w com.vyonex.test/com.vyonex.MergeCheck | tee report.txt
           grep -q 'MergeCheck: OK' report.txt
+      # Opens no link, so it makes no request beyond the library's background warm-up.
+      - name: App starts on the API ${{ matrix.api }} emulator
+        run: |
+          adb=$ANDROID_HOME/platform-tools/adb
+          $adb install -r android-app/build/outputs/apk/debug/android-app-debug.apk
+          $adb shell am start -W -n com.vyonex.android/.MainActivity
+          # A shared text reaches the running screen (it fills the link field).
+          $adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT not-a-link -n com.vyonex.android/.MainActivity
+          sleep 10
+          # Still running, with the media service the screen connects to, and nothing in the crash log.
+          $adb shell pidof com.vyonex.android
+          $adb shell dumpsys activity services com.vyonex.android | grep -q PlaybackService
+          $adb logcat -d -b crash > crash.txt
+          if grep -q com.vyonex.android crash.txt; then cat crash.txt; exit 1; fi
+      # A debug build signed with this run's throwaway key, for trying the app on a phone.
+      - if: matrix.api == 36
+        uses: actions/upload-artifact@v4
+        with:
+          name: vyonex-android-debug
+          path: android-app/build/outputs/apk/debug/android-app-debug.apk
 
   macos:
     runs-on: macos-15

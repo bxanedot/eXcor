@@ -1,15 +1,19 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.vyonex.app
 
 import com.vyonex.VyonExStream
 import com.vyonex.VyonExUnplayableException
 import com.vyonex.VyonExUnplayableReason
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 
 private const val NOW = 1_800_000_000L
 
@@ -40,6 +44,11 @@ private class FakeSource : StreamSource {
     }
 }
 
+private fun assertReady(track: Track, stream: VyonExStream, state: PlayState) {
+    assertIs<PlayState.Ready>(state)
+    assertEquals(track to stream, state.track to state.stream)
+}
+
 // TestNG runs every test on one instance of the class, so each test makes its own fake.
 class PlaybackTest {
     private val abc = listOf(track("a"), track("b"), track("c"))
@@ -52,12 +61,12 @@ class PlaybackTest {
         playback.play(abc)
         assertEquals(PlayState.Loading(abc[0]), playback.state.value)
         advanceUntilIdle()
-        assertEquals(PlayState.Ready(abc[0], streamOf("a")), playback.state.value)
+        assertReady(abc[0], streamOf("a"), playback.state.value)
         assertEquals(listOf("a", "b"), source.lookups)
         // "b" was fetched ahead, so moving on asks only for "c".
         playback.next()
         advanceUntilIdle()
-        assertEquals(PlayState.Ready(abc[1], streamOf("b")), playback.state.value)
+        assertReady(abc[1], streamOf("b"), playback.state.value)
         assertEquals(listOf("a", "b", "c"), source.lookups)
     }
 
@@ -77,15 +86,17 @@ class PlaybackTest {
         playback.ended()
         advanceUntilIdle()
         // Repeating all wraps to the first track, which was fetched ahead.
-        assertEquals(PlayState.Ready(abc[0], streamOf("a")), playback.state.value)
+        assertReady(abc[0], streamOf("a"), playback.state.value)
         assertEquals(lookups + 1, source.lookups.size)
 
         playback.setRepeat(RepeatMode.ONE)
         val before = source.lookups.size
+        val playing = playback.state.value
         playback.ended()
         advanceUntilIdle()
-        // Repeating one replays the same stream without asking again.
-        assertEquals(PlayState.Ready(abc[0], streamOf("a")), playback.state.value)
+        // Repeating one replays the same stream without asking again, as a new state the player sees.
+        assertReady(abc[0], streamOf("a"), playback.state.value)
+        assertNotEquals(playing, playback.state.value)
         assertEquals(before, source.lookups.size)
     }
 
@@ -100,7 +111,7 @@ class PlaybackTest {
         // "b" fetched ahead expires within the margin, so it is asked for again when it becomes current.
         playback.next()
         advanceUntilIdle()
-        assertEquals(PlayState.Ready(abc[1], streamOf("b", version = 2)), playback.state.value)
+        assertReady(abc[1], streamOf("b", version = 2), playback.state.value)
         assertEquals(listOf("a", "b", "b"), source.lookups)
         // So is the current one when repeated.
         playback.skipTo(0)
@@ -108,7 +119,7 @@ class PlaybackTest {
         playback.setRepeat(RepeatMode.ONE)
         playback.ended()
         advanceUntilIdle()
-        assertEquals(PlayState.Ready(abc[0], streamOf("a", version = 2)), playback.state.value)
+        assertReady(abc[0], streamOf("a", version = 2), playback.state.value)
     }
 
     @Test
@@ -119,11 +130,11 @@ class PlaybackTest {
         playback.play(abc.take(1))
         advanceUntilIdle()
         playback.refused("https://elsewhere.example/other")
-        assertEquals(PlayState.Ready(abc[0], streamOf("a")), playback.state.value)
+        assertReady(abc[0], streamOf("a"), playback.state.value)
 
         playback.refused(streamOf("a").url)
         advanceUntilIdle()
-        assertEquals(PlayState.Ready(abc[0], streamOf("a", version = 2)), playback.state.value)
+        assertReady(abc[0], streamOf("a", version = 2), playback.state.value)
         // A second refusal ends the attempts for this track.
         playback.refused(streamOf("a", version = 2).url)
         assertEquals(PlayState.Failed(abc[0], Failure.NO_STREAM, null), playback.state.value)
@@ -169,7 +180,7 @@ class PlaybackTest {
         playback.skipTo(1)
         source.gates.getValue("a").complete(Unit)
         advanceUntilIdle()
-        assertEquals(PlayState.Ready(abc[1], streamOf("b")), playback.state.value)
+        assertReady(abc[1], streamOf("b"), playback.state.value)
     }
 
     @Test
@@ -180,7 +191,7 @@ class PlaybackTest {
         advanceUntilIdle()
         playback.remove(0)
         advanceUntilIdle()
-        assertEquals(PlayState.Ready(abc[1], streamOf("b")), playback.state.value)
+        assertReady(abc[1], streamOf("b"), playback.state.value)
         assertEquals(listOf("b", "c"), playback.queue.value.tracks.map { it.videoId })
     }
 }

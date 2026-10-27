@@ -126,16 +126,22 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
 ## The app (in progress)
 
 The Android app lives in this repository, on top of the library. `app-core/` is its shared logic (Kotlin
-Multiplatform, so an iOS app can reuse it): the play queue and the playback controller. The Android shell
-(Compose, Media3) comes next.
+Multiplatform, so an iOS app can reuse it): the play queue and the playback controller. `android-app/` is the
+Android shell (Compose, Media3): paste or share a YouTube or YouTube Music link (a video, playlist, album, mix
+or artist), see its tracks, and play them in the background with the system's media notification. No search,
+downloads or player screen yet.
 
 ```kotlin
 val playback = Playback(source, scope, nowSeconds)  // source: VyonEx behind StreamSource
 playback.play(tracks)       // looks up the first track's stream, then the next one's ahead
 playback.state              // Idle, Loading, Ready(track, stream) or Failed(track, failure, YouTube's reason)
+                            // each Ready, a repeat too, is a new value: start the stream from the beginning
 playback.ended()            // from the platform player; follows repeat (off, all, one)
 playback.refused(url)       // the player got HTTP 403: VyonEx is told, and the track is looked up once more
 ```
+
+To try the app (Android 8.0 or newer), take `vyonex-android-debug` from a CI run's Artifacts. It is a debug
+build signed with that run's throwaway key, so uninstall the previous one before installing a newer one.
 
 ## Build and test
 
@@ -144,6 +150,7 @@ Gradle 9.8.2 (wrapper), Kotlin 2.4.21, JDK 27 toolchain, JVM target 26.
 ```sh
 ./gradlew jvmTest jvmJar                      # any OS (library and app-core)
 ./gradlew assembleAndroidMain                 # Android AAR; needs ANDROID_HOME (an Android SDK)
+./gradlew :android-app:assembleDebug          # the app's debug APK, in android-app/build/outputs/apk/debug/
 ./gradlew iosSimulatorArm64Test assembleVyonExReleaseXCFramework   # macOS
 VYONEX_LIVE=1 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # live, opt-in
 VYONEX_LIVE=1 VYONEX_LIVE_IDS=id1,id2 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # also surveys these videos
@@ -162,4 +169,5 @@ Offline tests read the captured responses in `fixtures/` (see `fixtures/README.m
 
 - `src/commonMain`: public API and the engine; `src/jvmMain`, `src/iosMain`: `VyonEx`, `VyonExHost`, transport, disk cache.
 - `ejs/`: the vendored yt-dlp/ejs solver, compiled into the library.
+- `app-core/`: the app's shared logic (queue, playback controller); `android-app/`: the Android app.
 - `PROVENANCE.md`: every source used. `QUESTIONS.md`: open questions. `NOTICE`: third-party notices.
