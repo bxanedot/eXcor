@@ -1,10 +1,15 @@
 package com.vyonex.android
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +24,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,8 +35,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -98,6 +106,34 @@ class MainActivity : ComponentActivity() {
     private var controller by mutableStateOf<MediaController?>(null)
     private var opening: Job? = null
     private var playing by mutableStateOf(false)
+    private var afterPermissions: (() -> Unit)? = null
+
+    private val askPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        val then = afterPermissions
+        afterPermissions = null
+        // The notification permission only shows progress; below Android 10 saving needs the storage permission.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || granted(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            then?.invoke()
+        } else {
+            Toast.makeText(this, "VyonEx needs storage access to save downloads.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun granted(permission: String) = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+
+    /** Asks for what downloading uses and has not been granted, then runs [then]. */
+    private fun withPermissions(then: () -> Unit) {
+        val needed = buildList {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+        }.filterNot(::granted)
+        if (needed.isEmpty()) {
+            then()
+        } else {
+            afterPermissions = then
+            askPermissions.launch(needed.toTypedArray())
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,7 +142,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
                 Surface(Modifier.fillMaxSize()) {
-                    Screen(app.vyonEx, app.playback)
+                    Screen(app.vyonEx, app.playback, app.downloads)
                 }
             }
         }
@@ -152,9 +188,11 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Screen(vyonEx: VyonEx, playback: Playback) {
+    private fun Screen(vyonEx: VyonEx, playback: Playback, downloads: Downloads) {
         val scope = rememberCoroutineScope()
         val state by playback.state.collectAsStateWithLifecycle()
+        val jobs by downloads.jobs.collectAsStateWithLifecycle()
+        var downloading by remember { mutableStateOf<List<Track>?>(null) }
         fun open() {
             val ref = vyonEx.parse(link) ?: run {
                 opened = Opened.Problem("That is not a YouTube or YouTube Music link.")
@@ -191,22 +229,35 @@ class MainActivity : ComponentActivity() {
                 is Opened.Shown -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(now.page.title ?: "", style = MaterialTheme.typography.titleLarge)
                     now.page.byline?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                    Button(onClick = { playback.play(now.page.tracks) }, enabled = now.page.tracks.isNotEmpty()) { Text("Play all") }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { playback.play(now.page.tracks) }, enabled = now.page.tracks.isNotEmpty()) { Text("Play all") }
+                        OutlinedButton(onClick = { downloading = now.page.tracks }, enabled = now.page.tracks.isNotEmpty()) { Text("Download all") }
+                    }
                     LazyColumn(Modifier.weight(1f)) {
                         itemsIndexed(now.page.tracks) { index, track ->
-                            Column(Modifier.fillMaxWidth().clickable { playback.play(now.page.tracks, index) }.padding(vertical = 8.dp)) {
-                                Text(track.title ?: track.videoId, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(
-                                    listOfNotNull(track.artist, track.durationSeconds?.let { "%d:%02d".format(it / 60, it % 60) }).joinToString(" · "),
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f).clickable { playback.play(now.page.tracks, index) }.padding(vertical = 8.dp)) {
+                                    Text(track.title ?: track.videoId, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        listOfNotNull(track.artist, track.durationSeconds?.let { "%d:%02d".format(it / 60, it % 60) }).joinToString(" · "),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                TextButton(onClick = { downloading = listOf(track) }) { Text("Download") }
                             }
                         }
                     }
                 }
             }
             if (opened !is Opened.Shown) Spacer(Modifier.weight(1f))
+            DownloadList(jobs, downloads::clearFinished)
             NowPlaying(state, playback)
+        }
+        downloading?.let { tracks ->
+            DownloadDialog(tracks, vyonEx, downloads.writesOpus, onDismiss = { downloading = null }) { choice, label ->
+                downloading = null
+                withPermissions { downloads.add(tracks, choice, label) }
+            }
         }
     }
 

@@ -41,6 +41,11 @@ val pair = vyonEx.mergePair(formats, maxHeight = 2160, container = container)!! 
 // (VyonExContainer.MP4: H.264 + AAC, which YouTube offers up to 1080p.) Download pair.video and
 // pair.audio into two files as above, then:
 VyonExMerge.merge(videoFile, audioFile, outputFile, pair.container)  // needs room for both inputs again
+// The same pair from shared (common) code, where VyonEx itself is not available:
+val samePair = formats.mergePair(maxHeight = 2160, container = container)
+
+// Audio alone: YouTube's fragmented MP4 and WebM become a plain .m4a (AAC) or an Ogg .opus (Opus, Android 10+).
+VyonExMerge.remuxAudio(audioFile, outputFile)
 ```
 
 Playlists (public ones; no cookie is sent):
@@ -128,8 +133,10 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
 The Android app lives in this repository, on top of the library. `app-core/` is its shared logic (Kotlin
 Multiplatform, so an iOS app can reuse it): the play queue and the playback controller. `android-app/` is the
 Android shell (Compose, Media3): paste or share a YouTube or YouTube Music link (a video, playlist, album, mix
-or artist), see its tracks, and play them in the background with the system's media notification. No search,
-downloads or player screen yet.
+or artist), see its tracks, and play them in the background with the system's media notification. Each track,
+or the whole page, can be downloaded: audio (AAC or Opus, every bitrate YouTube offers) or video (every height,
+merged into one MP4 or WebM file), into Music/VyonEx and Movies/VyonEx, with progress in a notification. No search
+or player screen yet.
 
 ```kotlin
 val playback = Playback(source, scope, nowSeconds)  // source: VyonEx behind StreamSource

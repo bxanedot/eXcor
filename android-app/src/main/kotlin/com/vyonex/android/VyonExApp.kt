@@ -16,11 +16,13 @@ import okhttp3.OkHttpClient
 import java.io.File
 import java.util.Locale
 
-/** One VyonEx and one play queue for the whole app; the screens and the media service share them. */
+/** One VyonEx, one play queue and one download queue for the whole app; the screens and the services share them. */
 class VyonExApp : Application() {
     lateinit var vyonEx: VyonEx
         private set
     lateinit var playback: Playback
+        private set
+    lateinit var downloads: Downloads
         private set
 
     override fun onCreate() {
@@ -38,6 +40,7 @@ class VyonExApp : Application() {
             MainScope(),
             nowSeconds = { System.currentTimeMillis() / 1000 },
         )
+        downloads = Downloads(this, vyonEx)
     }
 }
 

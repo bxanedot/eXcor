@@ -37,7 +37,11 @@ object VyonExMerge {
             require(sources.map { it.mime } == CODECS.getValue(container).toList()) {
                 "VyonEx: ${sources[0].mime} + ${sources[1].mime} cannot go into $container without re-encoding"
             }
-            write(sources, output, container)
+            write(
+                sources,
+                output,
+                if (container == VyonExContainer.WEBM) MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM else MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+            )
         } catch (e: Throwable) {
             output.delete()
             throw e
@@ -46,11 +50,35 @@ object VyonExMerge {
         }
     }
 
-    private fun write(sources: List<Source>, output: File, container: VyonExContainer) {
-        val muxer = MediaMuxer(
-            output.path,
-            if (container == VyonExContainer.WEBM) MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM else MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
-        )
+    /**
+     * Writes [output] from a downloaded audio-only format: AAC into a plain MP4 (an .m4a file), Opus into Ogg (an .opus
+     * file). YouTube serves them as fragmented MP4 and WebM, which many music players read badly. Ogg needs Android 10,
+     * like Opus in WebM ([supports] WEBM); before that only AAC can be saved. On failure no [output] is left.
+     */
+    fun remuxAudio(audio: File, output: File) {
+        var source: Source? = null
+        try {
+            source = Source(audio, "audio/")
+            val format = when (source.mime) {
+                MediaFormat.MIMETYPE_AUDIO_AAC -> MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4
+                MediaFormat.MIMETYPE_AUDIO_OPUS -> if (supports(VyonExContainer.WEBM)) {
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG
+                } else {
+                    throw UnsupportedOperationException("VyonEx: Android ${Build.VERSION.SDK_INT} cannot write Ogg (Android 10 can); save AAC")
+                }
+                else -> throw IllegalArgumentException("VyonEx: ${source.mime} cannot be saved without re-encoding")
+            }
+            write(listOf(source), output, format)
+        } catch (e: Throwable) {
+            output.delete()
+            throw e
+        } finally {
+            source?.extractor?.release()
+        }
+    }
+
+    private fun write(sources: List<Source>, output: File, outputFormat: Int) {
+        val muxer = MediaMuxer(output.path, outputFormat)
         try {
             val tracks = sources.map { muxer.addTrack(it.format) }
             muxer.start()

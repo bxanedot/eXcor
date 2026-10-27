@@ -345,3 +345,23 @@ Each item names the reading chosen; nothing was looked up in the old code.
     anywhere yet: this machine has no KVM for an emulator, and the CI emulators open no link because
     YouTube asks the build machines to sign in (item 41). The Gradle daemon now gets 3 GB
     (`gradle.properties`); merging the app's dex files ran out of the default 512 MB.
+48. **App: downloads.** A "Download" on each track and "Download all" on a page open a dialog: audio
+    or video, then a quality. For one track the list is what YouTube offers for it (asked when the
+    dialog opens): every audio format that can be saved ("Opus · 140 kbps · 3 MB") and every height
+    that merges into one file ("1080p60 · MP4 · 85 MB"). For many tracks it is "best audio" or "best
+    up to" a height, applied to each. MP4 (H.264 and AAC) wins over WebM at the same height because
+    it plays everywhere; above 1080p YouTube has only VP9, so those are WebM. Android 8 and 9 cannot
+    write Opus (into WebM or Ogg), so they get AAC and MP4 only, up to 1080p. A height YouTube offers
+    only in AV1 (8K, for example) is left out, since nothing merges it without re-encoding. Audio is
+    rewritten without re-encoding into a plain .m4a or an Ogg .opus (the new `VyonExMerge.remuxAudio`),
+    because YouTube's fragmented MP4 and WebM files confuse many music players. Files go to
+    Music/VyonEx and Movies/VyonEx through MediaStore (Android 10 and later, no permission) or the
+    shared folders with the storage permission (Android 8 and 9). A foreground service of the data
+    sync type runs the queue, one track at a time, with progress in a notification; the notification
+    permission is asked for on Android 13 and later, and downloads run without it. Each track's
+    formats are asked for when its turn comes, as URLs expire. A dropped connection resumes from the
+    bytes already written, twice. The queue lives in memory: if Android ends the app, unfinished
+    downloads are gone. Android 15 and later allow data sync work six hours a day; past that the rest
+    of the queue is marked as stopped. The choice logic is in `app-core` (`Download.kt`, tested on
+    the JVM and the iOS simulator); `VyonExFormats.mergePair` makes the library's pair selection usable
+    from shared code. No download has run against YouTube yet: the build machines get a bot check.
