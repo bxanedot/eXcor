@@ -164,7 +164,28 @@ internal class AudioFormat(json: JsonObject, val url: String) {
     val loudnessDb = (json["loudnessDb"] as? JsonPrimitive)?.doubleOrNull
 }
 
-internal fun audioFormatsOf(playerResponse: JsonObject) = formatsOf(playerResponse, "audio/")
+/**
+ * The audio formats, of one language: a video with dubbed tracks lists each format once per track, and only the
+ * best-ranked track's are kept, so every choice made from them plays the original.
+ */
+internal fun audioFormatsOf(playerResponse: JsonObject): List<JsonObject> {
+    val formats = formatsOf(playerResponse, "audio/")
+    val best = formats.maxOfOrNull(::audioTrackRank) ?: return formats
+    return formats.filter { audioTrackRank(it) == best }
+}
+
+// yt-dlp get_language_code_and_preference: descriptive tracks last, then the original, then YouTube's default.
+// The display name is in the session's language, so "original" may not match; the default then decides.
+private fun audioTrackRank(format: JsonObject): Int {
+    val track = format["audioTrack"] ?: return -1
+    val name = track.at("displayName").str.orEmpty().lowercase()
+    return when {
+        "descriptive" in name -> -10
+        "original" in name -> 10
+        track.at("audioIsDefault").bool == true -> 5
+        else -> -1
+    }
+}
 
 internal fun videoFormatsOf(playerResponse: JsonObject) = formatsOf(playerResponse, "video/")
 
