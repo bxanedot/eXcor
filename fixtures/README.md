@@ -1,6 +1,6 @@
 # Test fixtures
 
-Responses captured from YouTube on 2026-10-26 for the offline tests of both engines. They
+Responses captured from YouTube on 2026-10-26 for the offline tests. They
 are YouTube's content, kept here only as test input: they are **not** covered by this
 repository's Apache-2.0 license and are not part of any published artifact.
 

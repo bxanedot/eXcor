@@ -14,7 +14,7 @@ repositories { mavenCentral() }
 // The challenge solver scripts must reach every target, and Kotlin/Native has no resource
 // loading, so they are compiled in as string constants.
 val generateEjs = tasks.register("generateEjs") {
-    val input = layout.projectDirectory.dir("swift/Sources/VyonExKit/ejs")
+    val input = layout.projectDirectory.dir("ejs")
     val output = layout.buildDirectory.dir("generated/ejs")
     inputs.dir(input)
     outputs.dir(output)
@@ -36,7 +36,7 @@ val generateEjs = tasks.register("generateEjs") {
         file.parentFile.mkdirs()
         file.writeText(
             "package com.vyonex.internal\n\n" +
-                "// Generated from swift/Sources/VyonExKit/ejs (yt-dlp/ejs 0.8.0, Unlicense; bundles meriyah ISC and astring MIT).\n" +
+                "// Generated from ejs/ (yt-dlp/ejs 0.8.0, Unlicense; bundles meriyah ISC and astring MIT).\n" +
                 "internal val EJS_LIB: String =\n${literal(dir.resolve("lib.min.js").readText())}\n\n" +
                 "internal val EJS_CORE: String =\n${literal(dir.resolve("core.min.js").readText())}\n",
         )

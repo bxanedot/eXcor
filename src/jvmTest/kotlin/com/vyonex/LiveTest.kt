@@ -69,4 +69,27 @@ class LiveTest {
             }
         }
     }
+
+    @Test
+    fun extractsVideoAndMetadata() = runBlocking {
+        if (System.getenv("VYONEX_LIVE") != "1") return@runBlocking
+        val vyonEx = VyonEx(host)
+        val video = assertNotNull(vyonEx.extractVideo("dQw4w9WgXcQ", 720))
+        println("dQw4w9WgXcQ -> $video")
+        for (url in listOfNotNull(video.url, video.audio?.url)) {
+            val request = Request.Builder().url(url).header("Range", "bytes=0-1023")
+                .apply { video.headers.forEach { (name, value) -> header(name, value) } }.build()
+            client.newCall(request).execute().use {
+                assertTrue(it.code == 200 || it.code == 206, "HTTP ${it.code} (profile=${video.profileId}, itag=${Url(url).parameters["itag"]})")
+            }
+        }
+        val info = assertNotNull(vyonEx.metadata("dQw4w9WgXcQ"))
+        println(
+            "dQw4w9WgXcQ -> \"${info.title}\" by ${info.author}, ${info.durationSeconds} s, ${info.viewCount} views, " +
+                "${info.likeCount} likes, category ${info.category}, ${info.description?.length} description chars, " +
+                "${info.keywords.size} keywords, ${info.thumbnails.size} thumbnails",
+        )
+        assertTrue("Never Gonna Give You Up" in info.title.orEmpty(), "${info.title}")
+        assertTrue(!info.description.isNullOrEmpty())
+    }
 }

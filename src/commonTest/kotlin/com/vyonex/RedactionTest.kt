@@ -25,17 +25,35 @@ class RedactionTest {
     }
 
     @Test
-    fun streamHidesUrlTokenAndCookieHeader() {
-        val stream = VyonExStream(
+    fun streamHidesUrlTokenAndCookieHeader() = assertNoSecrets(stream().toString())
+
+    @Test
+    fun videoStreamHidesUrlTokenAndCookieHeader() {
+        val video = VyonExVideoStream(
             videoId = "dQw4w9WgXcQ",
-            url = "https://r1.googlevideo.com/videoplayback?pot=SECRET-GVS-TOKEN",
-            kbps = 128,
-            mimeType = "audio/webm; codecs=\"opus\"",
-            loudnessDb = -1.5,
+            url = "https://r1.googlevideo.com/videoplayback?pot=SECRET-GVS-TOKEN&itag=137",
+            width = 1920, height = 1080, fps = 25, kbps = 4334,
+            mimeType = "video/mp4; codecs=\"avc1.640028\"",
+            audio = stream(),
             clientName = "WEB",
             profileId = "WEB",
             headers = mapOf("User-Agent" to "ua", "Cookie" to "SID=SECRET-COOKIE"),
         )
-        assertNoSecrets(stream.toString())
+        assertNoSecrets(video.toString())
     }
+
+    @Test
+    fun captionTrackHidesSignedUrl() =
+        assertNoSecrets(VyonExCaptionTrack("https://www.youtube.com/api/timedtext?signature=SECRET-GVS-TOKEN", "en", "English", false).toString())
+
+    private fun stream() = VyonExStream(
+        videoId = "dQw4w9WgXcQ",
+        url = "https://r1.googlevideo.com/videoplayback?pot=SECRET-GVS-TOKEN",
+        kbps = 128,
+        mimeType = "audio/webm; codecs=\"opus\"",
+        loudnessDb = -1.5,
+        clientName = "WEB",
+        profileId = "WEB",
+        headers = mapOf("User-Agent" to "ua", "Cookie" to "SID=SECRET-COOKIE"),
+    )
 }
