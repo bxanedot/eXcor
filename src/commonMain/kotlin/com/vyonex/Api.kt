@@ -158,6 +158,30 @@ fun interface VyonExSink {
     fun write(bytes: ByteArray)
 }
 
+/** A video in a list (a playlist page, and later albums, mixes, search results). Fields YouTube left out are null or empty. */
+data class VyonExListItem(
+    val videoId: String,
+    val title: String?,
+    val channelName: String?,
+    val channelId: String?,
+    val durationSeconds: Long?,
+    val thumbnails: List<VyonExThumbnail>,
+)
+
+/** More of a list; [continuation] asks for the next page and is null on the last one. */
+data class VyonExListPage(val items: List<VyonExListItem>, val continuation: String?)
+
+/** A playlist and its first page of videos; `VyonEx.playlistMore(continuation)` fetches the rest. */
+data class VyonExPlaylist(
+    val playlistId: String,
+    val title: String?,
+    val description: String?,
+    val ownerName: String?,
+    val ownerChannelId: String?,
+    val thumbnails: List<VyonExThumbnail>,
+    val firstPage: VyonExListPage,
+)
+
 /** What a YouTube or YouTube Music link or ID points at; see `VyonEx.parse`. */
 sealed class VyonExRef {
     /** A video, possibly opened from a list ([playlistId]) at [startSeconds]. */

@@ -132,6 +132,11 @@ class ApiCheckTest {
             listOf(h, i)
             val j: VyonExMergePair? = vyonEx.mergePair(g!!, maxHeight = 2160, container = VyonExContainer.WEBM)
             listOf<Any?>(j?.video, j?.audio, j?.container == VyonExContainer.MP4)
+            val k: VyonExPlaylist? = vyonEx.playlist("PL")
+            listOf<Any?>(k?.playlistId, k?.title, k?.description, k?.ownerName, k?.ownerChannelId, k?.thumbnails, k?.firstPage)
+            val l: VyonExListPage = vyonEx.playlistMore("token")
+            l.items.forEach { listOf<Any?>(it.videoId, it.title, it.channelName, it.channelId, it.durationSeconds, it.thumbnails) }
+            listOf<Any?>(l.continuation)
             listOf(a, b, c, d, e, f, init)
         }
         listOf(network)
