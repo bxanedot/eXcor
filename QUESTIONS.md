@@ -223,10 +223,8 @@ Each item names the reading chosen; nothing was looked up in the old code.
     API 26 a merge failed in `MediaMuxer.addTrack` without saying which; Android 8's missing Opus
     explains it. With `supports` in place, API 26 merged MP4 with every sample (60 and 88) and
     refused WebM as intended (PR #18). A real 4K download has not been merged yet. That needs the owner's network and device.
-    Merging needs free space for both inputs again until they are deleted. Open: on a video with
-    dubbed audio tracks, the audio choice here and in `extract` ignores which track is the
-    original, so it can take a dub. The fix (yt-dlp reads `audioTrack.audioIsDefault`) waits for a
-    capture of such a video.
+    Merging needs free space for both inputs again until they are deleted. Dubbed audio tracks:
+    item 45.
 39. **Why a video won't play.** `VyonExUnplayableException` (still an `IllegalStateException`,
     same message) carries `reason`, YouTube's `status` and `youtubeReason`. The sorting follows
     yt-dlp: age gate (`desktopLegacyAgeGateReason` or its age phrases), country block (the
@@ -298,3 +296,12 @@ Each item names the reading chosen; nothing was looked up in the old code.
     never by the localized "Song • …" labels. In the captures: 16 videos and 3 playlists on the
     YouTube page; 15 songs and videos, 6 playlists, 3 artists and 3 albums on YouTube Music. Search
     suggestions while typing are not built; they use another endpoint that was not captured.
+45. **Dubbed audio: the original track.** A video with dubbed tracks lists each audio format once
+    per track, with an `audioTrack` (`id`, `displayName`, `audioIsDefault`). `audioFormatsOf` now
+    keeps only the best-ranked track's formats, ranked as yt-dlp's `get_language_code_and_preference`
+    does: "descriptive" last, "original" in the display name first, then YouTube's default. So
+    `extract`, `extractVideo`, `formats` and the merge pairs all play the original. The display name
+    comes in the session's language, where "original" may be another word; YouTube's default track
+    then decides, which may be a dub in the listener's language. Other languages are not offered
+    yet. Unchecked against a capture: the multi-audio capture hit a bot check from the build
+    machine (item 41), so the tests add the fields yt-dlp reads to the captured formats.

@@ -102,7 +102,8 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
 4. Audio: picks a format (`requireM4a`, `maxKbps <= 64`, or AUTO). Video: the tallest format up to
    `maxHeight` (the smallest if none fits), then frame rate, then H.264 over VP9 over AV1, then
    bitrate; `requireAvc` keeps only H.264 video and AAC audio (what AVPlayer plays). Video-only
-   formats come with the best audio up to 160 kbps.
+   formats come with the best audio up to 160 kbps. On a video with dubbed audio, every choice is
+   made from the original track's formats (as yt-dlp ranks them).
 5. Allows only `https://*.googlevideo.com|youtube.com/videoplayback` URLs, never SABR or HLS, and
    checks every returned URL answers a one-byte ranged GET with the returned headers; a refused
    identity is excluded for 10 minutes and the next one is tried.
