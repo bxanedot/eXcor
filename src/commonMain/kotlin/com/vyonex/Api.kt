@@ -311,6 +311,23 @@ data class VyonExSearchResult(
     val thumbnails: List<VyonExThumbnail>,
 )
 
+/** The tabs of a channel VyonEx lists: its videos, Shorts, live streams and playlists. */
+enum class VyonExChannelTab(internal val path: String) { VIDEOS("videos"), SHORTS("shorts"), LIVE("streams"), PLAYLISTS("playlists") }
+
+/** A YouTube channel; [handle] is its `@name`, [tabs] the ones it has. */
+data class VyonExChannel(
+    val channelId: String,
+    val title: String?,
+    val handle: String?,
+    val description: String?,
+    val avatars: List<VyonExThumbnail>,
+    val banners: List<VyonExThumbnail>,
+    val tabs: List<VyonExChannelTab>,
+)
+
+/** A page of a channel tab: videos (also Shorts and live streams) or playlists; [continuation] asks for the next page. */
+data class VyonExChannelPage(val items: List<VyonExSearchResult>, val continuation: String?)
+
 /** A page of search results; [continuation] asks for the next one and is null on the last. */
 data class VyonExSearchPage(val results: List<VyonExSearchResult>, val continuation: String?)
 

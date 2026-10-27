@@ -424,3 +424,20 @@ Each item names the reading chosen; nothing was looked up in the old code.
     (only the player gets a bot check). Comment authors are people, so the capture tool replaces
     their channel IDs, handles and pictures with numbered placeholders before writing; the texts
     stay. Community posts are not read yet.
+54. **Channels (owner's comparison report P2).** `channel(UC…)` reads a channel's page logged out
+    (title, handle, description, avatars, banners, and which of its Videos, Shorts, Live and
+    Playlists tabs it has); `channelTab(channelId, tab)` and `channelTabMore(continuation)` list a
+    tab, as yt-dlp's tab extractor does. A tab is asked for with the `params` its channel page
+    gives, found by the tab's URL rather than its localized title, and kept per channel, so the
+    first tab of a channel costs one extra request. Videos and live streams are video lockups,
+    Shorts `shortsLockupViewModel`s (title from the overlay, else from their English accessibility
+    label), playlists playlist lockups. Captured from the cloud build machine, which `browse`
+    answers. The channel's Home, Releases, Posts and Search tabs are not read.
+55. **Reliability benchmark (owner's comparison report; BENCHMARKS.md).** `BenchmarkTest`, opt-in,
+    runs a fixed set of videos by kind (ordinary, Short, YouTube Music, 4K 60 fps, dubbed audio,
+    24/7 live, and three refusals) and records per video the outcome, the identity that served it,
+    the time, the network calls, and whether the media answers a 1 KiB ranged GET with exactly 1 KiB
+    (live streams: whether the manifest answers). Bot checks are named and make a run not count.
+    No result is recorded yet: it has to run on a normal network. A trial from the build machine
+    served the first video and then got bot checks. It never runs other extractors; comparing is a
+    separate step (BENCHMARKS.md).

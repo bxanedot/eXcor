@@ -3,6 +3,9 @@ package com.vyonex.internal
 import com.vyonex.VyonExAudioCandidate
 import com.vyonex.VyonExCaptionFormat
 import com.vyonex.VyonExCaptionTrack
+import com.vyonex.VyonExChannel
+import com.vyonex.VyonExChannelPage
+import com.vyonex.VyonExChannelTab
 import com.vyonex.VyonExChapter
 import com.vyonex.VyonExCommentPage
 import com.vyonex.VyonExFormat
@@ -82,6 +85,7 @@ internal class Engine(
     private val remembered = AtomicReference(emptyMap<String, VyonExStream>())
     private val exclusions = AtomicReference(emptyMap<String, Long>())
     internal val health = ClientHealth(host::nowMs)
+    private val tabParams = AtomicReference(emptyMap<String, Map<VyonExChannelTab, String>>())
 
     fun initialize() {
         scope.launch {
@@ -376,6 +380,28 @@ internal class Engine(
     }
 
     /** A YouTube Music artist page; null when YouTube shows no artist for the channel. */
+    /** A channel's page, logged out; its tabs' `params` are kept for [channelTab]. Null when there is no such channel. */
+    suspend fun channel(channelId: String): VyonExChannel? {
+        require(channelId.startsWith("UC")) { "VyonEx: $channelId is not a channel ID" }
+        val response = innertube("browse") { put("browseId", channelId) }
+        val params = channelTabParamsOf(response)
+        tabParams.update { all -> (if (all.size >= MAX_REMEMBERED) emptyMap() else all) + (channelId to params) }
+        return channelOf(response)
+    }
+
+    /**
+     * The first page of a channel [tab]; empty when the channel has no such tab. The tab is asked for with the
+     * `params` its channel page gives (one more request the first time, for the channel page).
+     */
+    suspend fun channelTab(channelId: String, tab: VyonExChannelTab): VyonExChannelPage {
+        val params = tabParams.load()[channelId]?.get(tab)
+            ?: run { channel(channelId); tabParams.load()[channelId]?.get(tab) }
+            ?: return VyonExChannelPage(emptyList(), null)
+        return channelPageOf(innertube("browse") { put("browseId", channelId); put("params", params) })
+    }
+
+    suspend fun channelTabMore(continuation: String): VyonExChannelPage = channelPageMoreOf(innertube("browse") { put("continuation", continuation) })
+
     suspend fun artist(channelId: String): VyonExArtist? {
         require(channelId.startsWith("UC")) { "VyonEx: $channelId is not a channel ID" }
         return artistOf(channelId, innertube("browse", MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", channelId) })
