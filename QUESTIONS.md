@@ -433,3 +433,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
     Shorts `shortsLockupViewModel`s (title from the overlay, else from their English accessibility
     label), playlists playlist lockups. Captured from the cloud build machine, which `browse`
     answers. The channel's Home, Releases, Posts and Search tabs are not read.
+55. **Reliability benchmark (owner's comparison report; BENCHMARKS.md).** `BenchmarkTest`, opt-in,
+    runs a fixed set of videos by kind (ordinary, Short, YouTube Music, 4K 60 fps, dubbed audio,
+    24/7 live, and three refusals) and records per video the outcome, the identity that served it,
+    the time, the network calls, and whether the media answers a 1 KiB ranged GET with exactly 1 KiB
+    (live streams: whether the manifest answers). Bot checks are named and make a run not count.
+    No result is recorded yet: it has to run on a normal network. A trial from the build machine
+    served the first video and then got bot checks. It never runs other extractors; comparing is a
+    separate step (BENCHMARKS.md).
