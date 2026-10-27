@@ -26,6 +26,16 @@ Android apps use the same API as the JVM (`VyonExHost` with your `OkHttpClient` 
 cache, `context.filesDir`). The library needs `minSdk` 26 and an app compiled against API 37 or
 newer, which OkHttp 5.5 requires.
 
+Downloads (every quality YouTube offers, DRM-free formats only):
+
+```kotlin
+val formats = vyonEx.formats("dQw4w9WgXcQ")              // all audio and video formats of one client
+val best = formats!!.formats.filter { it.hasVideo }.maxBy { it.height ?: 0 }
+file.outputStream().use { out -> vyonEx.download(best, formats.headers, { out.write(it) }) }
+// 10 MiB ranged requests; pass from = bytes already written to resume. Above 360p, video and audio are
+// separate formats: download both and merge them into one file.
+```
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift

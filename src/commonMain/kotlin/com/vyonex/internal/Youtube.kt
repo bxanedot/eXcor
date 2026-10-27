@@ -2,6 +2,7 @@ package com.vyonex.internal
 
 import com.vyonex.VyonExAudioFormat
 import com.vyonex.VyonExCaptionTrack
+import com.vyonex.VyonExFormat
 import com.vyonex.VyonExLiveStatus
 import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExMusicInfo
@@ -153,6 +154,24 @@ internal class VideoFormat(json: JsonObject, val url: String) {
     val bitrate = json["bitrate"].int ?: 0
     // Combined audio+video formats list both codecs, e.g. codecs="avc1.42001E, mp4a.40.2".
     val muxed = ',' in mimeType
+}
+
+internal fun formatOf(json: JsonObject, url: String): VyonExFormat {
+    val mimeType = json["mimeType"].str.orEmpty()
+    val video = mimeType.startsWith("video/")
+    return VyonExFormat(
+        itag = json["itag"].int ?: 0,
+        url = url,
+        mimeType = mimeType,
+        kbps = (json["bitrate"].int ?: 0) / 1000,
+        contentLength = json["contentLength"].str?.toLongOrNull(),
+        // A video format lists two codecs when it carries audio too.
+        hasAudio = !video || ',' in mimeType,
+        hasVideo = video,
+        width = json["width"].int,
+        height = json["height"].int,
+        fps = json["fps"].int,
+    )
 }
 
 // H.264 first because every player decodes it (AVPlayer included), then VP9, then AV1.

@@ -1,6 +1,8 @@
 package com.vyonex.internal
 
 import com.vyonex.VyonExAudioCandidate
+import com.vyonex.VyonExFormat
+import com.vyonex.VyonExFormats
 import com.vyonex.VyonExHostServices
 import com.vyonex.VyonExLogLevel
 import com.vyonex.VyonExLogLevel.DEBUG
@@ -8,6 +10,7 @@ import com.vyonex.VyonExLogLevel.INFO
 import com.vyonex.VyonExLogLevel.WARN
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExMetadata
+import com.vyonex.VyonExSink
 import com.vyonex.VyonExStream
 import com.vyonex.VyonExVideoStream
 import com.vyonex.internal.primary.extraction.TokenProvider
@@ -16,9 +19,11 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsBytes
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
@@ -40,6 +45,8 @@ import kotlin.concurrent.atomics.update
 
 internal const val MAX_REMEMBERED = 64
 internal const val EXCLUSION_MS = 10 * 60 * 1000L
+// yt-dlp _video.py CHUNK_SIZE.
+internal const val DOWNLOAD_CHUNK_BYTES = 10L shl 20
 private val WATCH_PAGE_PROFILES = listOf("WEB", "WEB_WATCH_PAGE")
 
 /** Everything behind the platform `VyonEx` classes. */
@@ -117,6 +124,51 @@ internal class Engine(
                 audioStream, id.clientName, id.profileId, headers,
             )
         }
+
+    /** Every playable format of the first identity whose URLs answer, for downloads. Throws like [extract]. */
+    suspend fun formats(videoId: String, skipClients: Set<String>): VyonExFormats? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val all = playableFormats(audioFormatsOf(pr) + videoFormatsOf(pr), poToken, null, ::formatOf)
+            if (all.isEmpty()) log(DEBUG, "${id.profileId} has no usable format", videoId)
+            // One probe stands for the list: a response's formats share its signature and address checks.
+            all.firstOrNull()?.takeIf { answers(it.url, headers, videoId, id.profileId) }
+                ?.let { VyonExFormats(videoId, all, id.clientName, id.profileId, headers) }
+        }
+
+    /**
+     * Writes [format] to [sink] from byte [from] in ranged requests of [chunkBytes], as yt-dlp does (YouTube slows
+     * long single requests), and returns the position reached. A refused request throws: list the formats again
+     * and resume from the bytes already written.
+     */
+    suspend fun download(
+        format: VyonExFormat,
+        headers: Map<String, String>,
+        sink: VyonExSink,
+        from: Long,
+        onProgress: ((Long, Long?) -> Unit)?,
+        chunkBytes: Long = DOWNLOAD_CHUNK_BYTES,
+    ): Long {
+        require(isAllowedUrl(format.url)) { "VyonEx: not a YouTube media URL" }
+        var position = from
+        var total = format.contentLength
+        while (total == null || position < total) {
+            val last = (position + chunkBytes - 1).let { if (total != null) minOf(it, total - 1) else it }
+            val response = http.get(format.url) {
+                headers.forEach { (name, value) -> header(name, value) }
+                header(HttpHeaders.Range, "bytes=$position-$last")
+            }
+            // A 200 is the whole file, which is only right when starting from the beginning.
+            val whole = response.status == HttpStatusCode.OK && position == 0L
+            check(response.status == HttpStatusCode.PartialContent || whole) { "VyonEx: download refused (HTTP ${response.status.value})" }
+            total = total ?: response.headers[HttpHeaders.ContentRange]?.substringAfterLast('/')?.toLongOrNull()
+            val bytes = response.bodyAsBytes()
+            sink.write(bytes)
+            position += bytes.size
+            onProgress?.invoke(position, total)
+            if (whole || bytes.isEmpty() || (total == null && bytes.size < chunkBytes)) break
+        }
+        return position
+    }
 
     /** Everything YouTube says about the video: WEB reports the most (microformat), VISIONOS needs no player script. */
     suspend fun metadata(videoId: String): VyonExMetadata? {

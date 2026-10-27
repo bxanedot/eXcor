@@ -196,3 +196,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
     age-restricted video came back as `UNPLAYABLE: This video is not available` instead of the
     owner network's `LOGIN_REQUIRED: Sign in to confirm your age`). It also showed upcoming
     streams answering `LIVE_STREAM_OFFLINE` with a `liveStreamability` object.
+37. **Downloads, library part.** `formats(videoId)` lists every playable format (audio, video,
+    combined) of the first identity whose URLs answer; one probe stands for the list, since a
+    response's formats share its signature and address checks. The formats are not remembered for
+    `headersFor`/`onRefused` (a listing of about 27 would push the playing stream out of the
+    64-entry memory); on a refusal the app calls `exclude` and lists again. `download` fetches
+    10 MiB ranged requests (yt-dlp's chunk size for YouTube), resumes from a byte offset, accepts
+    only allowlisted URLs, and throws on a refused chunk without printing the URL. Merging video and
+    audio into one file comes next, in the Android code.
