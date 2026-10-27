@@ -172,3 +172,10 @@ Each item names the reading chosen; nothing was looked up in the old code.
 34. **No Apple devices (owner, 2026-10-27).** The Android app comes first. iOS stays a library
     target that CI builds and tests on the simulator; an iOS app, device timing (plan S1) and the
     AVPlayer spike (S2) wait for a Mac and an iPhone.
+35. **Android target (plan L6, moved earlier at the owner's request).** Built with AGP 9.4.1's
+    Kotlin Multiplatform Android library plugin. `compileSdk` is 37 because OkHttp 5.5.0's Android
+    artifact demands it; `minSdk` is 26, where `java.nio.file` (the disk cache) starts. The JVM and
+    Android share `src/jvmCommonMain` (OkHttp, `java.io.File`), so the host API is identical. No
+    tests run on Android yet: QuickJS-KT's Android native library cannot load on the build
+    machine's JVM, so the common tests keep running on the JVM and the iOS simulator, and Android
+    gets device checks with the sample app. CI builds the AAR on the Windows runner.
