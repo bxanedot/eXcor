@@ -52,7 +52,8 @@ let video = try await vyonEx.extractVideo(videoId: "dQw4w9WgXcQ", maxHeight: 108
 let info = try await vyonEx.metadata(videoId: "dQw4w9WgXcQ")   // info?.description_ is the description
 ```
 
-Swift sees no Kotlin default arguments, so it passes every parameter. Kotlin/Native renames
+Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend` function that returns
+`Long` (`download`) returns a boxed `KotlinLong` in Swift. Kotlin/Native renames
 `description` to `description_` because `NSObject` already has a `description`.
 
 ## How it works
