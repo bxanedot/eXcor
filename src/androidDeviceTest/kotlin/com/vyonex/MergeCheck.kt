@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.os.Build
 import android.os.Bundle
 import java.io.File
 
@@ -34,6 +35,12 @@ class MergeCheck : Instrumentation() {
             Triple(VyonExContainer.WEBM, "video-vp9.webm", "audio-opus.webm"),
         ).map { (container, video, audio) ->
             val output = File(dir, "merged-$container")
+            if (!VyonExMerge.supports(container)) {
+                // Android 8 and 9 write no Opus into WebM: refused up front, nothing left behind.
+                val error = runCatching { VyonExMerge.merge(clip(video), clip(audio), output, container) }.exceptionOrNull()
+                check(error is UnsupportedOperationException && !output.exists()) { "$container: $error, output left: ${output.exists()}" }
+                return@map "$container: refused on API ${Build.VERSION.SDK_INT}, as expected"
+            }
             VyonExMerge.merge(clip(video), clip(audio), output, container)
             // Every sample of both inputs, in one file with one track each.
             val expected = samplesOf(clip(video)) + samplesOf(clip(audio))

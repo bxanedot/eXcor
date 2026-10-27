@@ -35,7 +35,9 @@ file.outputStream().use { out -> vyonEx.download(best, formats.headers, { out.wr
 // 10 MiB ranged requests; pass from = bytes already written to resume.
 
 // Above 360p, video and audio are separate formats. One file, on Android, without re-encoding:
-val pair = vyonEx.mergePair(formats, maxHeight = 2160, container = VyonExContainer.WEBM)!!  // VP9 + Opus
+// Android 8 and 9 cannot write Opus into WebM, so they merge MP4 (up to 1080p); choose before downloading.
+val container = if (VyonExMerge.supports(VyonExContainer.WEBM)) VyonExContainer.WEBM else VyonExContainer.MP4
+val pair = vyonEx.mergePair(formats, maxHeight = 2160, container = container)!!  // WEBM: VP9 + Opus
 // (VyonExContainer.MP4: H.264 + AAC, which YouTube offers up to 1080p.) Download pair.video and
 // pair.audio into two files as above, then:
 VyonExMerge.merge(videoFile, audioFile, outputFile, pair.container)  // needs room for both inputs again

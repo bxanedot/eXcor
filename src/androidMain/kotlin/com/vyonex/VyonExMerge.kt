@@ -4,6 +4,7 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
+import android.os.Build
 import java.io.File
 import java.nio.ByteBuffer
 
@@ -18,10 +19,19 @@ object VyonExMerge {
         VyonExContainer.MP4 to (MediaFormat.MIMETYPE_VIDEO_AVC to MediaFormat.MIMETYPE_AUDIO_AAC),
     )
 
+    /**
+     * Whether this device can write [container]. Android's WebM writer takes Opus only from Android 10 (API 29), so
+     * Android 8 and 9 merge MP4 alone, which YouTube offers up to 1080p; choose the container before downloading.
+     */
+    fun supports(container: VyonExContainer) = container == VyonExContainer.MP4 || Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
     /** Writes [output] from [video] and [audio] (as downloaded for a [VyonExMergePair]); on failure no [output] is left. */
     fun merge(video: File, audio: File, output: File, container: VyonExContainer) {
         val sources = mutableListOf<Source>()
         try {
+            if (!supports(container)) {
+                throw UnsupportedOperationException("VyonEx: Android ${Build.VERSION.SDK_INT} cannot write Opus into WebM (Android 10 can); use MP4")
+            }
             sources += Source(video, "video/")
             sources += Source(audio, "audio/")
             require(sources.map { it.mime } == CODECS.getValue(container).toList()) {
