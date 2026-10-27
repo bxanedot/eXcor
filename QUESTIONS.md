@@ -256,3 +256,19 @@ Each item names the reading chosen; nothing was looked up in the old code.
     capture stopped there on 2026-10-27, as designed). Later captures and live checks need the
     owner's own run, or they are left out and said so. The dubbed-audio fix (item 38) will be built
     from yt-dlp's field names and marked as unchecked against a capture.
+42. **YouTube Music albums and artists.** `album(MPREb_…)` and `artist(UC…)` ask the logged-out
+    `WEB_REMIX` client (yt-dlp's `web_music`) on music.youtube.com. An album gives title, artist and
+    channel (from the header's strapline), year (the four-digit part of "Album • 2015", whatever the
+    language), cover and tracks (yt-dlp's `_music_reponsive_list_entry`: `playlistItemData.videoId`,
+    the first column's title; rows without their own credits are the album artist's). Its
+    `playlistId` comes from the page's canonical URL, which is how yt-dlp resolves an album to its
+    playlist; in the captures the album's 50 tracks equal its playlist's 50 videos, in order. An
+    artist gives name, description, pictures, the top songs, `songsPlaylistId` and
+    `videosPlaylistId` (the song shelf's and the video shelf's links to playlists of everything),
+    and the releases (albums, singles, EPs; page type `MUSIC_PAGE_TYPE_ALBUM`), up to the 10 per
+    shelf the page shows. The "more" pages of releases (`MPAD…` browse IDs) were not captured, so
+    an artist with more than ten albums shows ten; their songs are all in `songsPlaylistId`, which
+    is what "download an artist" uses. Shelves are found by what they link to, never by their
+    localized titles. `parse` now reads channel links (`/channel/UC…`, YouTube Music's
+    `/browse/UC…`, a bare `UC…` ID) as `VyonExRef.Channel`; `@handle` links still give null, as
+    resolving a handle takes a request.

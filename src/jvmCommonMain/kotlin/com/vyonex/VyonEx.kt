@@ -83,6 +83,12 @@ class VyonEx(host: VyonExHost) {
     /** The next page of a list, from the previous page's `continuation`. */
     suspend fun playlistMore(continuation: String): VyonExListPage = engine.playlistMore(continuation)
 
+    /** A YouTube Music album page (`MPREb_…`, from `parse`): title, artist, year, tracks; null when there is none. */
+    suspend fun album(browseId: String): VyonExAlbum? = engine.album(browseId)
+
+    /** A YouTube Music artist page (`UC…` channel ID): top songs, playlists of all songs and videos, releases. */
+    suspend fun artist(channelId: String): VyonExArtist? = engine.artist(channelId)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)

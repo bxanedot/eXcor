@@ -51,6 +51,14 @@ var page = playlist!!.firstPage
 while (page.continuation != null) page = vyonEx.playlistMore(page.continuation!!)  // the next ~100
 ```
 
+YouTube Music albums and artists (links from `parse`: `VyonExRef.Album`, `VyonExRef.Channel`):
+
+```kotlin
+val album = vyonEx.album("MPREb_gTAcphH99wE")    // title, artist, year, cover, tracks; playlistId for the same tracks
+val artist = vyonEx.artist("UCuAXFkgsw1L7xaCfnd5JJOw")
+// Every song by the artist: artist.songsPlaylistId with playlist/playlistMore. Albums and singles: artist.releases.
+```
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift
@@ -91,6 +99,8 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
    Swift gets it as the `NSError`'s `kotlinException`.
 9. `playlist` and `playlistMore` ask the logged-out WEB `browse` endpoint and read each video
    (`lockupViewModel`) as yt-dlp does: title, channel, duration, thumbnails.
+10. `album` and `artist` ask YouTube Music's own web client (`WEB_REMIX`) the same way. Shelves on
+    an artist page are told apart by what they link to, not by their localized titles.
 
 ## Build and test
 

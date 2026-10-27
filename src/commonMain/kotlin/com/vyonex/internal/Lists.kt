@@ -1,8 +1,11 @@
 package com.vyonex.internal
 
+import com.vyonex.VyonExAlbum
+import com.vyonex.VyonExArtist
 import com.vyonex.VyonExListItem
 import com.vyonex.VyonExListPage
 import com.vyonex.VyonExPlaylist
+import com.vyonex.VyonExRelease
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExThumbnail
 import kotlinx.serialization.json.JsonArray
@@ -14,6 +17,11 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 
 private val JsonElement?.list get() = (this as? JsonArray).orEmpty()
+
+internal const val MUSIC_ORIGIN = "https://music.youtube.com"
+
+// yt-dlp 2026.10.21 INNERTUBE_CLIENTS web_music; for YouTube Music pages only, never for playback.
+internal val MUSIC_WEB = Identity("WEB_REMIX", "WEB_REMIX", 67, "1.20260707.12.00", DESKTOP_UA, needsPlayerJs = false, supportsCookies = true, needsPoToken = false)
 
 /** A logged-out InnerTube request for [id]'s client; [fields] are the endpoint's own (browseId, continuation, …). */
 internal fun innertubeBody(id: Identity, session: VyonExSession, fields: JsonObjectBuilder.() -> Unit): String = buildJsonObject {
@@ -102,3 +110,91 @@ internal fun playlistOf(playlistId: String, response: JsonObject): VyonExPlaylis
 internal fun continuationPageOf(response: JsonObject) = listPageOf(
     response.at("onResponseReceivedActions").list.flatMap { it.at("appendContinuationItemsAction", "continuationItems").list },
 )
+
+/** A YouTube Music album page (WEB_REMIX browse of `MPREb_…`); null when it has no album header. */
+internal fun albumOf(browseId: String, response: JsonObject): VyonExAlbum? {
+    val columns = response.at("contents", "twoColumnBrowseResultsRenderer")
+    val header = columns.at("tabs").list
+        .flatMap { it.at("tabRenderer", "content", "sectionListRenderer", "contents").list }
+        .firstNotNullOfOrNull { it.at("musicResponsiveHeaderRenderer") } ?: return null
+    val artist = textOf(header.at("straplineTextOne"))
+    val artistChannelId = header.at("straplineTextOne", "runs").list
+        .firstNotNullOfOrNull { it.at("navigationEndpoint", "browseEndpoint", "browseId").str }
+    return VyonExAlbum(
+        browseId = browseId,
+        // yt-dlp resolves an album to its playlist through the page's canonical URL.
+        playlistId = response.at("microformat", "microformatDataRenderer", "urlCanonical").str
+            ?.substringAfter("list=", "")?.substringBefore('&')?.ifEmpty { null },
+        title = textOf(header.at("title")),
+        artist = artist,
+        artistChannelId = artistChannelId,
+        year = yearOf(header.at("subtitle")),
+        thumbnails = thumbnailsOf(header.at("thumbnail", "musicThumbnailRenderer", "thumbnail", "thumbnails")),
+        tracks = columns.at("secondaryContents", "sectionListRenderer", "contents").list
+            .flatMap { it.at("musicShelfRenderer", "contents").list }
+            .mapNotNull { musicTrackOf(it.at("musicResponsiveListItemRenderer"), artist, artistChannelId) },
+    )
+}
+
+/** A track row (yt-dlp _music_reponsive_list_entry); null when it cannot be played. A row without credits is the album artist's. */
+private fun musicTrackOf(row: JsonElement?, artist: String?, artistChannelId: String?): VyonExListItem? {
+    val videoId = row.at("playlistItemData", "videoId").str ?: return null
+    fun column(index: Int) = row.at("flexColumns").list.getOrNull(index).at("musicResponsiveListItemFlexColumnRenderer", "text")
+    val credits = column(1)
+    return VyonExListItem(
+        videoId = videoId,
+        title = column(0).at("runs").list.firstOrNull().at("text").str,
+        channelName = textOf(credits)?.ifEmpty { null } ?: artist,
+        channelId = credits.at("runs").list.firstNotNullOfOrNull { it.at("navigationEndpoint", "browseEndpoint", "browseId").str } ?: artistChannelId,
+        durationSeconds = durationOf(textOf(row.at("fixedColumns").list.firstOrNull().at("musicResponsiveListItemFixedColumnRenderer", "text"))),
+        thumbnails = thumbnailsOf(row.at("thumbnail", "musicThumbnailRenderer", "thumbnail", "thumbnails")),
+    )
+}
+
+// "Album • 2015", "Single • 2026", "2023": the four-digit part, whatever the language of the rest.
+private fun yearOf(subtitle: JsonElement?) =
+    subtitle.at("runs").list.firstNotNullOfOrNull { run -> run.at("text").str?.takeIf { it.length == 4 }?.toIntOrNull() }
+
+private fun JsonElement?.musicPageType() =
+    at("browseEndpointContextSupportedConfigs", "browseEndpointContextMusicConfig", "pageType").str
+
+private fun playlistIdOf(browse: JsonElement?) =
+    browse.takeIf { it.musicPageType() == "MUSIC_PAGE_TYPE_PLAYLIST" }.at("browseId").str?.removePrefix("VL")
+
+/**
+ * A YouTube Music artist page (WEB_REMIX browse of the channel); null when it has no artist header. Shelves are told
+ * apart by what they link to, not by their localized titles.
+ */
+internal fun artistOf(channelId: String, response: JsonObject): VyonExArtist? {
+    val header = response.at("header", "musicImmersiveHeaderRenderer") ?: return null
+    val shelves = response.at("contents", "singleColumnBrowseResultsRenderer", "tabs").list
+        .flatMap { it.at("tabRenderer", "content", "sectionListRenderer", "contents").list }
+    val name = textOf(header.at("title"))
+    // The song shelf links to a playlist of all the artist's songs.
+    val songs = shelves.firstNotNullOfOrNull { it.at("musicShelfRenderer") }
+    val carousels = shelves.mapNotNull { it.at("musicCarouselShelfRenderer") }
+    // The video shelf holds videos and links to a playlist of all of them (live performances link to a channel tab).
+    val videos = carousels.firstOrNull { shelf ->
+        shelf.at("contents").list.firstOrNull().at("musicTwoRowItemRenderer", "navigationEndpoint", "watchEndpoint") != null &&
+            playlistIdOf(shelf.moreEndpoint()) != null
+    }
+    return VyonExArtist(
+        channelId = channelId,
+        name = name,
+        description = textOf(header.at("description")),
+        thumbnails = thumbnailsOf(header.at("thumbnail", "musicThumbnailRenderer", "thumbnail", "thumbnails")),
+        topSongs = songs.at("contents").list.mapNotNull { musicTrackOf(it.at("musicResponsiveListItemRenderer"), name, null) },
+        songsPlaylistId = playlistIdOf(songs.at("bottomEndpoint", "browseEndpoint")),
+        videosPlaylistId = videos?.let { playlistIdOf(it.moreEndpoint()) },
+        releases = carousels.flatMap { it.at("contents").list }.mapNotNull { item ->
+            val row = item.at("musicTwoRowItemRenderer")
+            val browse = row.at("navigationEndpoint", "browseEndpoint").takeIf { it.musicPageType() == "MUSIC_PAGE_TYPE_ALBUM" }
+            browse.at("browseId").str?.let {
+                VyonExRelease(it, textOf(row.at("title")), yearOf(row.at("subtitle")), thumbnailsOf(row.at("thumbnailRenderer", "musicThumbnailRenderer", "thumbnail", "thumbnails")))
+            }
+        }.distinctBy { it.browseId },
+    )
+}
+
+private fun JsonElement?.moreEndpoint() =
+    at("header", "musicCarouselShelfBasicHeaderRenderer", "moreContentButton", "buttonRenderer", "navigationEndpoint", "browseEndpoint")

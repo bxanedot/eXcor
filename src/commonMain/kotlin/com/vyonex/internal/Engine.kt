@@ -3,6 +3,8 @@ package com.vyonex.internal
 import com.vyonex.VyonExAudioCandidate
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExFormats
+import com.vyonex.VyonExAlbum
+import com.vyonex.VyonExArtist
 import com.vyonex.VyonExHostServices
 import com.vyonex.VyonExListPage
 import com.vyonex.VyonExLogLevel
@@ -286,17 +288,32 @@ internal class Engine(
 
     suspend fun playlistMore(continuation: String): VyonExListPage = continuationPageOf(browse { put("continuation", continuation) })
 
-    /** A logged-out WEB browse request: no cookie is sent, so lists are the public ones. */
-    private suspend fun browse(fields: JsonObjectBuilder.() -> Unit): JsonObject {
-        val id = IDENTITIES.first { it.profileId == "WEB" }
+    /** A YouTube Music album page; null when YouTube shows no such album. */
+    suspend fun album(browseId: String): VyonExAlbum? {
+        require(browseId.startsWith("MPREb_")) { "VyonEx: $browseId is not an album page" }
+        return albumOf(browseId, browse(MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", browseId) })
+    }
+
+    /** A YouTube Music artist page; null when YouTube shows no artist for the channel. */
+    suspend fun artist(channelId: String): VyonExArtist? {
+        require(channelId.startsWith("UC")) { "VyonEx: $channelId is not a channel ID" }
+        return artistOf(channelId, browse(MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", channelId) })
+    }
+
+    /** A logged-out browse request (WEB unless told otherwise): no cookie is sent, so lists are the public ones. */
+    private suspend fun browse(
+        id: Identity = IDENTITIES.first { it.profileId == "WEB" },
+        origin: String = YT_ORIGIN,
+        fields: JsonObjectBuilder.() -> Unit,
+    ): JsonObject {
         val session = host.session()
-        val response = http.post("$YT_ORIGIN/youtubei/v1/browse?prettyPrint=false") {
+        val response = http.post("$origin/youtubei/v1/browse?prettyPrint=false") {
             contentType(ContentType.Application.Json)
             setBody(innertubeBody(id, session, fields))
             header(HttpHeaders.UserAgent, id.userAgent)
             header("X-YouTube-Client-Name", id.clientId.toString())
             header("X-YouTube-Client-Version", id.clientVersion)
-            header(HttpHeaders.Origin, YT_ORIGIN)
+            header(HttpHeaders.Origin, origin)
             session.visitorData?.let { header("X-Goog-Visitor-Id", it) }
         }
         check(response.status.isSuccess()) { "VyonEx: browse HTTP ${response.status.value}" }

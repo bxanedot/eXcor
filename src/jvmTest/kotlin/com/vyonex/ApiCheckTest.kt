@@ -113,6 +113,7 @@ class ApiCheckTest {
             is VyonExRef.Playlist -> listOf(ref.playlistId)
             is VyonExRef.Album -> listOf(ref.browseId)
             is VyonExRef.Mix -> listOf(ref.playlistId)
+            is VyonExRef.Channel -> listOf(ref.channelId)
             null -> Unit
         }
         val network: suspend () -> Unit = {
@@ -137,6 +138,11 @@ class ApiCheckTest {
             val l: VyonExListPage = vyonEx.playlistMore("token")
             l.items.forEach { listOf<Any?>(it.videoId, it.title, it.channelName, it.channelId, it.durationSeconds, it.thumbnails) }
             listOf<Any?>(l.continuation)
+            val m: VyonExAlbum? = vyonEx.album("MPREb_x")
+            listOf<Any?>(m?.browseId, m?.playlistId, m?.title, m?.artist, m?.artistChannelId, m?.year, m?.thumbnails, m?.tracks)
+            val n: VyonExArtist? = vyonEx.artist("UC")
+            listOf<Any?>(n?.channelId, n?.name, n?.description, n?.thumbnails, n?.topSongs, n?.songsPlaylistId, n?.videosPlaylistId)
+            n?.releases?.forEach { listOf<Any?>(it.browseId, it.title, it.year, it.thumbnails) }
             listOf(a, b, c, d, e, f, init)
         }
         listOf(network)

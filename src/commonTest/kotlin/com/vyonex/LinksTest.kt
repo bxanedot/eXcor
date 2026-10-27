@@ -1,6 +1,7 @@
 package com.vyonex
 
 import com.vyonex.VyonExRef.Album
+import com.vyonex.VyonExRef.Channel
 import com.vyonex.VyonExRef.Mix
 import com.vyonex.VyonExRef.Playlist
 import com.vyonex.VyonExRef.Video
@@ -63,6 +64,11 @@ class LinksTest {
         "RD$v" to Mix("RD$v"),
         album to Album(album),
         "https://music.youtube.com/browse/$album" to Album(album),
+        "UCuAXFkgsw1L7xaCfnd5JJOw" to Channel("UCuAXFkgsw1L7xaCfnd5JJOw"),
+        "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw" to Channel("UCuAXFkgsw1L7xaCfnd5JJOw"),
+        "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw/videos" to Channel("UCuAXFkgsw1L7xaCfnd5JJOw"),
+        "https://music.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw" to Channel("UCuAXFkgsw1L7xaCfnd5JJOw"),
+        "https://music.youtube.com/browse/UCuAXFkgsw1L7xaCfnd5JJOw" to Channel("UCuAXFkgsw1L7xaCfnd5JJOw"),
     )
 
     @Test
@@ -78,10 +84,9 @@ class LinksTest {
         "https://user@www.youtube.com/watch?v=$v",
         "https://www.youtube.com:8443/watch?v=$v",
         "https://www.youtube.com/@RickAstleyYT",
-        "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw",
+        "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJO",
         "https://www.youtube.com/embed/live_stream?channel=UCuAXFkgsw1L7xaCfnd5JJOw",
         "https://www.youtube.com/watch?v=dQw4w9WgXc",
-        "https://music.youtube.com/browse/UCuAXFkgsw1L7xaCfnd5JJOw",
         "https://www.youtube.com/results?search_query=rick",
     ).forEach { assertEquals(null, parseRef(it), it) }
 
