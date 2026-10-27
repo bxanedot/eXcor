@@ -67,6 +67,14 @@ val more = vyonEx.mixMore(mix!!.firstPage.continuation!!)  // mixes go on; conti
 val related = vyonEx.related("dQw4w9WgXcQ")           // then relatedMore(related.continuation!!)
 ```
 
+Search (logged out). Each result says what it opens (`VIDEO`, `PLAYLIST`, `ALBUM`, `ARTIST`) and carries the ID
+for `extract`, `playlist`, `album` or `artist`:
+
+```kotlin
+val videos = vyonEx.search("rick astley")                  // YouTube: videos and playlists; searchMore for more
+val music = vyonEx.searchMusic("never gonna give you up")   // YouTube Music top results: songs, albums, artists…
+```
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift
@@ -111,6 +119,8 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
     an artist page are told apart by what they link to, not by their localized titles.
 11. `mix`, `mixMore`, `related` and `relatedMore` ask the logged-out WEB `next` (watch-next)
     endpoint: the mix panel's videos and the related videos beside the player.
+12. `search` asks the WEB `search` endpoint and `searchMusic` YouTube Music's; results are classified
+    by what they link to, never by localized labels such as "Song" or "Album".
 
 ## Build and test
 

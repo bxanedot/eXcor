@@ -284,3 +284,17 @@ Each item names the reading chosen; nothing was looked up in the old code.
     `relatedMore` reads the next page from `onResponseReceivedEndpoints`, where yt-dlp finds it.
     That response shape was not captured; the test wraps the captured items in it. These are
     YouTube's logged-out recommendations, not personal ones (account features come later).
+44. **Search (logged out).** `search(query)` asks the WEB `search` endpoint, as yt-dlp's
+    `_search_results` does without filters, and returns its videos (`videoRenderer`, read like mix
+    items by yt-dlp's `_extract_video`, or `lockupViewModel`) and playlists (`lockupViewModel` of
+    type playlist), in the order shown; `searchMore` reads the next page from
+    `onResponseReceivedCommands`, where yt-dlp finds it (not captured; the test wraps the captured
+    sections in that shape). Shelves ("Latest from …"), Shorts grids and the channel card are left
+    out. `searchMusic(query)` asks YouTube Music's `search` with `WEB_REMIX` and returns the top
+    result card and the result rows: songs and videos (`playlistItemData.videoId`), albums, artists
+    and playlists (the browse endpoint's page type); profiles and podcasts are left out. It is one
+    page: YouTube Music's top results carry no continuation, and the filtered tabs ("Songs",
+    "Albums", …) take `params` that were not captured. Results are classified by what they link to,
+    never by the localized "Song • …" labels. In the captures: 16 videos and 3 playlists on the
+    YouTube page; 15 songs and videos, 6 playlists, 3 artists and 3 albums on YouTube Music. Search
+    suggestions while typing are not built; they use another endpoint that was not captured.
