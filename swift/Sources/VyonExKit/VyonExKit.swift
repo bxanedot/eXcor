@@ -253,7 +253,8 @@ public final class VyonExKit: @unchecked Sendable {
         log(.info, "chose \(profileId) itag \(format.itag.map { String($0) } ?? "?") (\(format.mimeType), \(format.bitrate / 1000) kbps)", videoId)
         return remember(VyonExStream(
             videoId: videoId, url: format.url, kbps: format.bitrate / 1000, mimeType: format.mimeType,
-            loudnessDb: at(pr, "playerConfig", "audioConfig", "loudnessDb") as? Double,
+            // Formats carry their own value (enablePerFormatLoudness); VISIONOS has no response-wide one.
+            loudnessDb: format.loudnessDb ?? at(pr, "playerConfig", "audioConfig", "loudnessDb") as? Double,
             clientName: clientName, profileId: profileId, headers: headers
         ))
     }

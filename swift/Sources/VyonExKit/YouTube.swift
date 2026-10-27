@@ -117,6 +117,7 @@ struct AudioFormat {
     let averageBitrate: Int?
     let channels: Int?
     let sampleRate: Int?
+    let loudnessDb: Double?
 
     init(_ json: JSONObject, url: String) {
         itag = int(json["itag"])
@@ -126,6 +127,7 @@ struct AudioFormat {
         averageBitrate = int(json["averageBitrate"])
         channels = int(json["audioChannels"])
         sampleRate = int(json["audioSampleRate"])
+        loudnessDb = json["loudnessDb"] as? Double
     }
 }
 

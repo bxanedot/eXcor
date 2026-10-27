@@ -62,6 +62,8 @@ class ProbeTest {
         val engine = engine(refusedClients = emptySet())
         val stream = assertNotNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TV_SAMSUNG"), false))
         assertEquals("VISIONOS", stream.profileId)
+        // VISIONOS has no response-wide loudnessDb; itag 251 carries its own.
+        assertEquals(0.97999954, stream.loudnessDb)
         assertEquals(stream.headers, engine.headersFor(stream.url))
         assertFalse(engine.isExcluded("dQw4w9WgXcQ", "VISIONOS"))
     }

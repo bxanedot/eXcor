@@ -274,7 +274,8 @@ internal class Engine(
                 url = format.url,
                 kbps = format.bitrate / 1000,
                 mimeType = format.mimeType,
-                loudnessDb = (pr.at("playerConfig", "audioConfig", "loudnessDb") as? JsonPrimitive)?.doubleOrNull,
+                // Formats carry their own value (enablePerFormatLoudness); VISIONOS has no response-wide one.
+                loudnessDb = format.loudnessDb ?: (pr.at("playerConfig", "audioConfig", "loudnessDb") as? JsonPrimitive)?.doubleOrNull,
                 clientName = clientName,
                 profileId = profileId,
                 headers = headers,

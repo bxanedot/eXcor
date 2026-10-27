@@ -70,6 +70,8 @@ final class ProbeTests: XCTestCase {
         let extracted = try await kit.extractPrimary(videoId: "dQw4w9WgXcQ", maxKbps: 160, skipClients: ["TV_SAMSUNG"], requireM4a: false)
         let stream = try XCTUnwrap(extracted)
         XCTAssertEqual(stream.profileId, "VISIONOS")
+        // VISIONOS has no response-wide loudnessDb; itag 251 carries its own.
+        XCTAssertEqual(stream.loudnessDb, 0.97999954)
         XCTAssertEqual(kit.headers(for: stream.url), stream.headers)
         XCTAssertFalse(kit.isExcluded("dQw4w9WgXcQ", "VISIONOS"))
     }
