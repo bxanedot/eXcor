@@ -2,9 +2,11 @@ package com.vyonex.internal
 
 import com.vyonex.VyonExAudioFormat
 import com.vyonex.VyonExCaptionTrack
+import com.vyonex.VyonExContainer
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExLiveStatus
 import com.vyonex.VyonExMetadata
+import com.vyonex.VyonExMergePair
 import com.vyonex.VyonExMusicInfo
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExThumbnail
@@ -172,6 +174,21 @@ internal fun formatOf(json: JsonObject, url: String): VyonExFormat {
         height = json["height"].int,
         fps = json["fps"].int,
     )
+}
+
+/**
+ * The tallest video-only format up to [maxHeight] (then fps, then bitrate) with the best audio of the same family,
+ * so the two merge into one [container] file without re-encoding; null if the video has no such pair.
+ */
+internal fun mergePairOf(formats: List<VyonExFormat>, maxHeight: Int, container: VyonExContainer): VyonExMergePair? {
+    val (videoCodec, audioMime) = when (container) {
+        VyonExContainer.WEBM -> "vp9" to "audio/webm"
+        VyonExContainer.MP4 -> "avc1" to "audio/mp4"
+    }
+    val video = formats.filter { it.hasVideo && !it.hasAudio && videoCodec in it.mimeType && (it.height ?: 0) <= maxHeight }
+        .maxWithOrNull(compareBy({ it.height ?: 0 }, { it.fps ?: 0 }, { it.kbps })) ?: return null
+    val audio = formats.filter { !it.hasVideo && it.mimeType.startsWith(audioMime) }.maxByOrNull { it.kbps } ?: return null
+    return VyonExMergePair(video, audio, container)
 }
 
 // H.264 first because every player decodes it (AVPlayer included), then VP9, then AV1.

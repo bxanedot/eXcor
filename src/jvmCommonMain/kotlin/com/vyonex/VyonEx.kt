@@ -1,6 +1,7 @@
 package com.vyonex
 
 import com.vyonex.internal.Engine
+import com.vyonex.internal.mergePairOf
 import com.vyonex.internal.parseRef
 import com.vyonex.internal.PlayerStore
 import com.vyonex.internal.primary.extraction.TokenProvider
@@ -71,6 +72,10 @@ class VyonEx(host: VyonExHost) {
         from: Long = 0,
         onProgress: ((written: Long, total: Long?) -> Unit)? = null,
     ): Long = engine.download(format, headers, sink, from, onProgress)
+
+    /** The best video and audio of [formats] that merge into one [container] file, at most [maxHeight] tall. */
+    fun mergePair(formats: VyonExFormats, maxHeight: Int, container: VyonExContainer): VyonExMergePair? =
+        mergePairOf(formats.formats, maxHeight, container)
 
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 

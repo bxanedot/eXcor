@@ -122,6 +122,8 @@ class ApiCheckTest {
             val h: Long = vyonEx.download(format, emptyMap(), sink)
             val i: Long = vyonEx.download(format = format, headers = emptyMap(), sink = sink, from = 10, onProgress = { written, total -> listOf(written, total) })
             listOf(h, i)
+            val j: VyonExMergePair? = vyonEx.mergePair(g!!, maxHeight = 2160, container = VyonExContainer.WEBM)
+            listOf<Any?>(j?.video, j?.audio, j?.container == VyonExContainer.MP4)
             listOf(a, b, c, d, e, f, init)
         }
         listOf(network)

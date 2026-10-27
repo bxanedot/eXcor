@@ -129,6 +129,12 @@ data class VyonExFormats(
         "VyonExFormats(videoId=$videoId, formats=${formats.size}, clientName=$clientName, profileId=$profileId, headers=${headers.keys})"
 }
 
+/** A video format and an audio format that merge into one file without re-encoding. */
+data class VyonExMergePair(val video: VyonExFormat, val audio: VyonExFormat, val container: VyonExContainer)
+
+/** [WEBM]: VP9 + Opus, up to 4K and beyond. [MP4]: H.264 + AAC, up to 1080p (YouTube has no H.264 above it). */
+enum class VyonExContainer { WEBM, MP4 }
+
 /** Receives a download's bytes, in order. */
 fun interface VyonExSink {
     fun write(bytes: ByteArray)

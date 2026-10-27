@@ -203,4 +203,20 @@ Each item names the reading chosen; nothing was looked up in the old code.
     64-entry memory); on a refusal the app calls `exclude` and lists again. `download` fetches
     10 MiB ranged requests (yt-dlp's chunk size for YouTube), resumes from a byte offset, accepts
     only allowlisted URLs, and throws on a refused chunk without printing the URL. Merging video and
-    audio into one file comes next, in the Android code.
+    audio into one file is item 38.
+38. **Merging into one file (Android).** `mergePair(formats, maxHeight, container)` picks the tallest
+    video (then frame rate, then bitrate) and the best audio of one codec family: `WEBM` is VP9 +
+    Opus, which is how YouTube offers 4K; `MP4` is H.264 + AAC, which stops at 1080p.
+    `VyonExMerge.merge` (Android only) copies the encoded samples into one file with Android's
+    `MediaExtractor` and `MediaMuxer`, interleaved by time, so nothing is re-encoded. It refuses
+    other codec pairs and leaves no partial file. Left out for now: AV1 (whether Android's MP4 muxer
+    takes it on every supported Android version is unchecked), HDR VP9 (`vp09.02…`; its colour
+    metadata would need carrying over) and iOS (no Apple devices, item 34; AVFoundation also writes
+    no WebM). Checked in CI by `MergeCheck`, a plain `Instrumentation` (androidx.test's runner needs
+    JUnit 4, EPL-1.0), on API 26 and API 36 emulators. It merges synthetic two-second clips laid out
+    the way YouTube serves its formats (fragmented MP4, WebM) and compares every track's sample
+    count. A real 4K download has not been merged yet. That needs the owner's network and device.
+    Merging needs free space for both inputs again until they are deleted. Open: on a video with
+    dubbed audio tracks, the audio choice here and in `extract` ignores which track is the
+    original, so it can take a dub. The fix (yt-dlp reads `audioTrack.audioIsDefault`) waits for a
+    capture of such a video.

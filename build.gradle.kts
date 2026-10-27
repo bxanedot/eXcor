@@ -64,6 +64,8 @@ kotlin {
         compileSdk = 37
         minSdk = 26
         compilerOptions { jvmTarget = JvmTarget.JVM_17 }
+        // MergeCheck runs VyonExMerge on an emulator in CI; see the android-device job.
+        withDeviceTest { instrumentationRunner = "com.vyonex.MergeCheck" }
     }
 
     // The default hierarchy (iosMain and friends) plus jvmCommonMain: the OkHttp and java.io.File host API that

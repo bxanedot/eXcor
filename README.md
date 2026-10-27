@@ -32,8 +32,13 @@ Downloads (every quality YouTube offers, DRM-free formats only):
 val formats = vyonEx.formats("dQw4w9WgXcQ")              // all audio and video formats of one client
 val best = formats!!.formats.filter { it.hasVideo }.maxBy { it.height ?: 0 }
 file.outputStream().use { out -> vyonEx.download(best, formats.headers, { out.write(it) }) }
-// 10 MiB ranged requests; pass from = bytes already written to resume. Above 360p, video and audio are
-// separate formats: download both and merge them into one file.
+// 10 MiB ranged requests; pass from = bytes already written to resume.
+
+// Above 360p, video and audio are separate formats. One file, on Android, without re-encoding:
+val pair = vyonEx.mergePair(formats, maxHeight = 2160, container = VyonExContainer.WEBM)!!  // VP9 + Opus
+// (VyonExContainer.MP4: H.264 + AAC, which YouTube offers up to 1080p.) Download pair.video and
+// pair.audio into two files as above, then:
+VyonExMerge.merge(videoFile, audioFile, outputFile, pair.container)  // needs room for both inputs again
 ```
 
 iOS apps use the same library through `VyonEx.xcframework`:
