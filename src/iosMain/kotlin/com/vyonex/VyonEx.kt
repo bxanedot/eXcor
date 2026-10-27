@@ -1,6 +1,7 @@
 package com.vyonex
 
 import com.vyonex.internal.Engine
+import com.vyonex.internal.parseRef
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
@@ -24,6 +25,9 @@ class VyonEx(host: VyonExHost) {
     fun initialize() = engine.initialize()
 
     fun initializeFallback() {}
+
+    /** What a YouTube or YouTube Music link, or a bare ID, points at; null if it is neither. Makes no request. */
+    fun parse(input: String): VyonExRef? = parseRef(input)
 
     @Throws(Throwable::class)
     suspend fun audioCandidates(videoId: String): List<VyonExAudioCandidate> = engine.audioCandidates(videoId)

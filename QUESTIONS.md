@@ -27,6 +27,15 @@ Each item names the reading chosen; nothing was looked up in the old code.
    The same day, the new `VYONEX_LIVE_IDS` survey for `dQw4w9WgXcQ` from the cloud build machine
    got TV_SAMSUNG streams (audio itag 251; video itag 137 + audio 251; each ranged GET 206) and
    WEB metadata, so TV_SAMSUNG answered there while it was refused on the owner's network.
+   **Survey on `77054a1`, owner's network (wired), logged out, reported by Codex:** 0 failures; every
+   returned URL answered 206 and TV_SAMSUNG was refused (403) again, so VISIONOS served everything.
+   A Short gave 608x1080 VP9 (itag 780) + opus; a 60 fps video 1080p60 H.264 (itag 299); an
+   age-restricted video `LOGIN_REQUIRED: Sign in to confirm your age` (reported, not bypassed); a
+   24/7 live stream `UNPLAYABLE: This live stream recording is not available.`; an upcoming event
+   `UNPLAYABLE: This live event will begin in 30 hours.`; a copyright-blocked video its block
+   reason. Not yet verified: a YouTube Music auto-generated track, a region lock, and a private
+   video (the chosen IDs did not fit). The run showed `isLive` reading true for past and upcoming
+   streams and a live stream's time on air as its duration; fixed in item 32.
    Logged-in sessions remain untested live.
 
 ## Readings of the brief
@@ -133,3 +142,19 @@ Each item names the reading chosen; nothing was looked up in the old code.
     address in `ip=`/`remoteHost`, a cookie value or an unredacted visitor ID, without printing
     it. The remaining `ip=` values are YouTube's `0.0.0.0` placeholder, the capture machine's
     private `fc00::/7` IPv6, or the documentation address.
+31. **Owner decisions, 2026-10-27, on the product plan.** BRIEF section 5 amended (links, playlists,
+    albums, mixes, music metadata, then search); YouTube captures move out of public view by making
+    the repository private (owner's action); the app targets Android + iOS, so the library gains an
+    Android target later; search lives in the library, after collections. **Link parsing**
+    (`VyonEx.parse`, no network) ports yt-dlp's URL forms for YouTube's own hosts only
+    (`youtube.com`, `www.`/`m.`/`music.youtube.com`, `youtube-nocookie.com`, `youtu.be`; no mirrors,
+    ports or userinfo). A watch link with `list=` is a video opened from that list; a list without a
+    usable video is the list; `RD…` lists are mixes; `/browse/VL…` is the playlist after `VL`;
+    `/browse/MPREb_…` and bare `MPREb_…` IDs are albums. Personal lists (`WL`, `LL`, `LM`, `RDMM`)
+    parse but will need a login to resolve. Channel and search links return null. `t`/`start`
+    accept seconds, `[h:]m:s` and `1h2m3s`.
+32. **Live status.** `VyonExMetadata.liveStatus` follows yt-dlp's reading of `isPostLiveDvr`,
+    `isLive` (or the microformat's `isLiveNow`), `isUpcoming` and `isLiveContent`. `isLive` now means
+    live right now. `durationSeconds` is null for live-now and upcoming streams, and for a zero
+    length. `liveStatus` was appended to `VyonExMetadata`, a type added after BRIEF section 3, so
+    code constructing it must pass the new field.

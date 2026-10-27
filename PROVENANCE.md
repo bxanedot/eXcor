@@ -39,6 +39,9 @@ SHA3-512 values equal the allowlist in yt-dlp 2026.10.21 `yt_dlp/extractor/youtu
 | `_video.py` `_download_player_url`, `_PLAYER_JS_VARIANT_MAP['main']`, `_construct_player_url` | `Players.current`, `Players.get`, `playerIdOf` | player version from `iframe_api`; always fetching the `player_ias` variant |
 | `_video.py` `_extract_formats_and_subtitles` | `audioFormatsOf`, `playableUrl`, `Engine.playableFormats` | `signatureCipher` fields (`url`, `s`, `sp` defaulting to `signature`), `n` transform, `pot` parameter, skipping live/OTF/DRM formats and URL-less (SABR) formats |
 | `_base.py` `_YT_INITIAL_PLAYER_RESPONSE_RE` | `parseWatchPage` | `ytInitialPlayerResponse =` marker |
+| `_video.py` `YoutubeIE._VALID_URL`; `_base.py` `_PLAYLIST_ID_RE`; `_tab.py` `YoutubeTabIE._real_extract` (`VL`/`MP` browse IDs) | `Links.kt` `parseRef` | link forms (`watch?v=`, `v/`, `embed/`, `e/`, `shorts/`, `live/`, `youtu.be/`, not `videoseries`/`live_stream`), playlist ID pattern, `VL` prefix; YouTube's own hosts only |
+| `_video.py` `_real_extract` (`start`/`t` query and fragment) and `utils.parse_duration` | `Links.kt` `startSeconds` | the subset used: seconds, `[h:]m:s`, `1h2m3s` |
+| `_video.py` `_list_formats` (`live_status`) and the zero-duration rule in `_real_extract` | `metadataOf` | `VyonExLiveStatus` from `isPostLiveDvr`, `isLive`/`isLiveNow`, `isUpcoming`, `isLiveContent` |
 | `extractor/youtube/jsc/_builtin/ejs.py` `_construct_stdin` | `PlayerJs.kt` `preparePlayer` | how the scripts are run: lib, `Object.assign(globalThis, lib)`, core, `jsc({type:'player', …, output_preprocessed:true})` |
 
 VyonExKit, a Swift port of this code, was removed on 2026-10-27 at the owner's request (iOS apps
@@ -53,7 +56,7 @@ Written from the captured player responses in `fixtures/` (what YouTube returned
 code), added at the owner's request on 2026-10-27: video format selection (`VideoFormat`,
 `selectVideo`; combined formats recognised by the two codecs in their `mimeType`) and the
 metadata mapping (`metadataOf`, from `videoDetails`, `microformat.playerMicroformatRenderer` and
-`captions.playerCaptionsTracklistRenderer`). The rule that a caption URL whose `exp` is `xpe` or `xpv`
+`captions.playerCaptionsTracklistRenderer`). Test IDs in `LinksTest` are public IDs from yt-dlp's test data. The rule that a caption URL whose `exp` is `xpe` or `xpv`
 needs a PO token comes from yt-dlp 2026.10.21 `_video.py` (`_real_extract`, `requires_pot`).
 
 ## Dependencies

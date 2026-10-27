@@ -168,6 +168,8 @@ On **both** platforms `VyonEx` also has: `initializeFallback()`, `suspend audioC
 
 Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, playlists, search, captions, video formats, SABR streaming, HLS, account sign-in flows, and minting PO tokens inside the library (the host provides them).
 
+> **Amended by the owner on 2026-10-27.** Now in scope: video formats and captions (added earlier the same day), YouTube and YouTube Music links, playlists, albums, mixes, music metadata, and, after collections, search. Still out of scope: Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, SABR streaming, HLS (so live streams), account sign-in flows, minting PO tokens inside the library, and downloads or offline copies. The owner also chose Android + iOS as the app's platforms (an Android library target follows). See `QUESTIONS.md` item 31.
+
 ---
 
 ## 6. Tests and definition of done

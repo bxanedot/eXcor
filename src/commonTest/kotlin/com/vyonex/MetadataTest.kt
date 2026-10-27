@@ -41,6 +41,7 @@ class MetadataTest {
         assertTrue(m.thumbnails.any { it.width == 1920 && it.height == 1080 }, "${m.thumbnails}")
         assertTrue(m.thumbnails.any { it.width == 1280 && it.height == 720 }, "${m.thumbnails}")
         assertEquals(false, m.isLive)
+        assertEquals(VyonExLiveStatus.NOT_LIVE, m.liveStatus)
         assertEquals(false, m.isPrivate)
         assertEquals(false, m.isUnlisted)
         assertEquals(true, m.isFamilySafe)
@@ -84,6 +85,22 @@ class MetadataTest {
                 track("https://www.youtube.com/api/timedtext?v=x&lang=en") + "]}}}",
         ).jsonObject
         assertEquals(listOf("https://www.youtube.com/api/timedtext?v=x&lang=en"), metadataOf("x", pr).captions.map { it.url })
+    }
+
+    @Test
+    fun liveStatusFollowsYtDlp() {
+        // Hand-written responses with only the flags yt-dlp reads. Durations of live-now and upcoming streams are dropped:
+        // a 24/7 stream reported its years on air as lengthSeconds in a live run.
+        fun meta(details: String, micro: String = "{}") = metadataOf(
+            "x", Json.parseToJsonElement("""{"videoDetails":$details,"microformat":{"playerMicroformatRenderer":$micro}}""").jsonObject,
+        ).let { Triple(it.liveStatus, it.isLive, it.durationSeconds) }
+        assertEquals(Triple(VyonExLiveStatus.LIVE, true, null), meta("""{"isLive":true,"isLiveContent":true,"lengthSeconds":"121601512"}"""))
+        assertEquals(Triple(VyonExLiveStatus.LIVE, true, null), meta("""{"isLiveContent":true}""", """{"liveBroadcastDetails":{"isLiveNow":true}}"""))
+        assertEquals(Triple(VyonExLiveStatus.UPCOMING, false, null), meta("""{"isUpcoming":true,"isLiveContent":true,"lengthSeconds":"0"}"""))
+        assertEquals(Triple(VyonExLiveStatus.WAS_LIVE, false, 3600L), meta("""{"isLiveContent":true,"lengthSeconds":"3600"}"""))
+        assertEquals(Triple(VyonExLiveStatus.POST_LIVE, false, 7200L), meta("""{"isPostLiveDvr":true,"isLiveContent":true,"lengthSeconds":"7200"}"""))
+        assertEquals(Triple(VyonExLiveStatus.NOT_LIVE, false, 213L), meta("""{"isLiveContent":false,"lengthSeconds":"213"}"""))
+        assertEquals(Triple(null, null, null), meta("{}"))
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.vyonex.internal
 
 import com.vyonex.VyonExAudioFormat
 import com.vyonex.VyonExCaptionTrack
+import com.vyonex.VyonExLiveStatus
 import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExThumbnail
@@ -178,13 +179,26 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
     fun thumbnails(e: JsonElement?) = (e.at("thumbnail", "thumbnails") as? JsonArray).orEmpty().mapNotNull { t ->
         t.at("url").str?.let { VyonExThumbnail(it, t.at("width").int ?: 0, t.at("height").int ?: 0) }
     }
+    // yt-dlp _list_formats: isLiveContent alone is also true for past and upcoming streams.
+    val liveNow = details.at("isLive").bool ?: micro.at("liveBroadcastDetails", "isLiveNow").bool
+    val liveContent = details.at("isLiveContent").bool
+    val liveStatus = when {
+        details.at("isPostLiveDvr").bool == true -> VyonExLiveStatus.POST_LIVE
+        liveNow == true -> VyonExLiveStatus.LIVE
+        details.at("isUpcoming").bool == true -> VyonExLiveStatus.UPCOMING
+        liveContent == true -> VyonExLiveStatus.WAS_LIVE
+        liveNow == false || liveContent == false -> VyonExLiveStatus.NOT_LIVE
+        else -> null
+    }
     return VyonExMetadata(
         videoId = videoId,
         title = details.at("title").str ?: text(micro.at("title")),
         author = details.at("author").str ?: micro.at("ownerChannelName").str,
         channelId = details.at("channelId").str ?: micro.at("externalChannelId").str,
         channelUrl = micro.at("ownerProfileUrl").str,
-        durationSeconds = (details.at("lengthSeconds") ?: micro.at("lengthSeconds")).str?.toLongOrNull(),
+        // Zero means unknown, as in yt-dlp; live and upcoming streams report time on air or zero.
+        durationSeconds = (details.at("lengthSeconds") ?: micro.at("lengthSeconds")).str?.toLongOrNull()
+            ?.takeIf { it > 0 && liveStatus != VyonExLiveStatus.LIVE && liveStatus != VyonExLiveStatus.UPCOMING },
         viewCount = (details.at("viewCount") ?: micro.at("viewCount")).str?.toLongOrNull(),
         likeCount = micro.at("likeCount").str?.toLongOrNull(),
         description = details.at("shortDescription").str ?: text(micro.at("description")),
@@ -193,7 +207,7 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
         publishDate = micro.at("publishDate").str,
         uploadDate = micro.at("uploadDate").str,
         thumbnails = (thumbnails(details) + thumbnails(micro)).distinctBy { it.url },
-        isLive = details.at("isLiveContent").bool,
+        isLive = liveStatus?.let { it == VyonExLiveStatus.LIVE },
         isPrivate = details.at("isPrivate").bool,
         isUnlisted = micro.at("isUnlisted").bool,
         isFamilySafe = micro.at("isFamilySafe").bool,
@@ -211,6 +225,7 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
                 if (url == null || language == null || needsToken) null
                 else VyonExCaptionTrack(url, language, text(track.at("name")), track.at("kind").str == "asr")
             },
+        liveStatus = liveStatus,
     )
 }
 
