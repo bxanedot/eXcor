@@ -5,6 +5,7 @@ import com.vyonex.VyonExCaptionTrack
 import com.vyonex.VyonExContainer
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExLiveStatus
+import com.vyonex.VyonExManifestKind
 import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExMergePair
 import com.vyonex.VyonExMusicInfo
@@ -91,7 +92,7 @@ internal fun sidAuthorization(cookie: String, nowMs: Long): String? {
 internal fun JsonElement?.at(vararg keys: String): JsonElement? = keys.fold(this) { e, key -> (e as? JsonObject)?.get(key) }
 internal val JsonElement?.str get() = (this as? JsonPrimitive)?.contentOrNull
 private val JsonElement?.int get() = str?.toIntOrNull()
-private val JsonElement?.bool get() = (this as? JsonPrimitive)?.booleanOrNull
+internal val JsonElement?.bool get() = (this as? JsonPrimitive)?.booleanOrNull
 
 /** YouTube's text fields: a plain string, `simpleText`, or `runs` of pieces. */
 internal fun textOf(e: JsonElement?) =
@@ -328,6 +329,35 @@ internal suspend fun playableUrl(format: JsonObject, solve: suspend (type: Strin
 private val ALLOWED_URL = Regex("""https://(?:[a-z0-9-]+\.)*(?:googlevideo|youtube)\.com(?::443)?/videoplayback(?:\?[^#\s\\]*)?""")
 
 internal fun isAllowedUrl(url: String) = ALLOWED_URL.matches(url)
+
+private val ALLOWED_MANIFEST = Regex("""https://(?:[a-z0-9-]+\.)*googlevideo\.com(?::443)?/api/manifest/[^?#\s\\]*(?:\?[^#\s\\]*)?""")
+
+internal fun isAllowedManifestUrl(url: String) = ALLOWED_MANIFEST.matches(url)
+
+// yt-dlp _extract_formats_and_subtitles: the n challenge is a path segment, and HLS keeps its file suffix last.
+private val MANIFEST_N = Regex("""/n/([^/]+)/""")
+private val HLS_SUFFIX = Regex("""/(?:file|playlist)/index\.m3u8$""")
+
+/** [url] with its n challenge solved and, when given, [poToken] added as a `/pot/` segment (before HLS's file name). */
+internal suspend fun manifestUrlOf(url: String, poToken: String?, solveN: suspend (String) -> String): String {
+    val query = url.substringAfter('?', "").let { if (it.isEmpty()) "" else "?$it" }
+    var path = url.substringBefore('?')
+    MANIFEST_N.find(path)?.let { m -> path = path.replaceRange(m.groups[1]!!.range, solveN(m.groupValues[1])) }
+    if (poToken != null) {
+        val suffix = HLS_SUFFIX.find(path)?.value.orEmpty()
+        path = path.removeSuffix(suffix).trimEnd('/') + "/pot/$poToken" + suffix
+    }
+    return path + query
+}
+
+/** Whether the start of an answer is a manifest of [kind]: an M3U8 playlist or an MPD document. */
+internal fun isManifest(kind: VyonExManifestKind, start: String): Boolean {
+    val text = start.trimStart('\uFEFF', ' ', '\t', '\r', '\n')
+    return when (kind) {
+        VyonExManifestKind.HLS -> text.startsWith("#EXTM3U")
+        VyonExManifestKind.DASH -> "<MPD" in text
+    }
+}
 
 private val AudioFormat.codecRank get() = when {
     mimeType.startsWith("audio/webm") -> 2

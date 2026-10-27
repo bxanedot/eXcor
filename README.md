@@ -48,6 +48,13 @@ val samePair = formats.mergePair(maxHeight = 2160, container = container)
 VyonExMerge.remuxAudio(audioFile, outputFile)
 ```
 
+Live streams (and any video whose client offers one) come as an HLS or DASH manifest, which players read themselves:
+
+```kotlin
+val manifest = vyonEx.manifest("jfKfPfyJRdk")  // kind HLS or DASH, url, headers, isLive
+// ExoPlayer: HlsMediaSource / DashMediaSource with manifest.headers; AVPlayer: HLS.
+```
+
 Playlists (public ones; no cookie is sent):
 
 ```kotlin
@@ -111,7 +118,8 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
    bitrate; `requireAvc` keeps only H.264 video and AAC audio (what AVPlayer plays). Video-only
    formats come with the best audio up to 160 kbps. On a video with dubbed audio, every choice is
    made from the original track's formats (as yt-dlp ranks them).
-5. Allows only `https://*.googlevideo.com|youtube.com/videoplayback` URLs, never SABR or HLS, and
+5. Allows only `https://*.googlevideo.com|youtube.com/videoplayback` URLs (manifests:
+   `https://*.googlevideo.com/api/manifest/…`), never SABR, and
    checks every returned URL answers a one-byte ranged GET with the returned headers: only a 206
    for that byte counts (not a 200, which ignored the range, nor an HTML, JSON or text page), and
    the answer's body is never read. A refused identity is excluded for 10 minutes and the next one

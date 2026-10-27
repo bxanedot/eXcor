@@ -64,6 +64,9 @@ class VyonEx(host: VyonExHost) {
 
     suspend fun formats(videoId: String, skipClients: Set<String> = emptySet()): VyonExFormats? = engine.formats(videoId, skipClients)
 
+    /** The HLS or DASH manifest of a live stream (or of any video whose client offers one); null when none answers. */
+    suspend fun manifest(videoId: String, skipClients: Set<String> = emptySet()): VyonExManifest? = engine.manifest(videoId, skipClients)
+
     /** Downloads [format] into [sink] from byte [from] in 10 MiB ranged requests; returns the position reached. */
     suspend fun download(
         format: VyonExFormat,

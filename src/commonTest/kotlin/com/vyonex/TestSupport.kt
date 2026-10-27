@@ -42,6 +42,10 @@ internal fun fixtureEngine(
     playerFixture: String? = null,
     /** When set, how every media URL answers: a status and its headers. */
     mediaAnswer: Pair<HttpStatusCode, Headers>? = null,
+    /** When set, the player response every client gets, as text (for responses built in a test). */
+    playerBody: String? = null,
+    /** How manifest URLs answer: a status and a body. */
+    manifestAnswer: Pair<HttpStatusCode, String> = HttpStatusCode.OK to "#EXTM3U\n#EXT-X-INDEPENDENT-SEGMENTS\n",
 ) = Engine(
     host,
     tokenProvider = tokenProvider,
@@ -58,8 +62,9 @@ internal fun fixtureEngine(
                 // The embedded player is answered with the VISIONOS capture, whose formats have direct URLs.
                 val client = mapOf("TVHTML5" to "tv_samsung", "VISIONOS" to "visionos", "WEB" to webFixture, "WEB_EMBEDDED_PLAYER" to "visionos")
                     .entries.first { "\"clientName\":\"${it.key}\"" in body }.value
-                respond(fixture(playerFixture ?: "player-response-$client.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                respond(playerBody ?: fixture(playerFixture ?: "player-response-$client.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
             }
+            url.host == "manifest.googlevideo.com" -> respond(manifestAnswer.second, manifestAnswer.first)
             url.host.endsWith(".googlevideo.com") -> {
                 // The probe asks for one byte with the stream's own headers.
                 assertEquals("bytes=0-0", request.headers[HttpHeaders.Range])

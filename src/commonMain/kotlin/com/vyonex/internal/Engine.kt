@@ -8,6 +8,8 @@ import com.vyonex.VyonExArtist
 import com.vyonex.VyonExHostServices
 import com.vyonex.VyonExListPage
 import com.vyonex.VyonExLogLevel
+import com.vyonex.VyonExManifest
+import com.vyonex.VyonExManifestKind
 import com.vyonex.VyonExLogLevel.DEBUG
 import com.vyonex.VyonExLogLevel.INFO
 import com.vyonex.VyonExLogLevel.WARN
@@ -28,6 +30,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -35,6 +38,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.readBuffer
+import kotlinx.io.readByteArray
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -146,6 +151,38 @@ internal class Engine(
             all.firstOrNull()?.takeIf { answers(it.url, headers, videoId, id.profileId) }
                 ?.let { VyonExFormats(videoId, all, id.clientName, id.profileId, headers) }
         }
+
+    /**
+     * The manifest a client offers for [videoId]: HLS when there is one (yt-dlp skips DASH while a stream is live),
+     * else DASH. Its n challenge is solved, a PO token added where the client needs one, and the manifest fetched to
+     * see it is one; a client whose manifest does not answer is excluded, as a refused stream URL is.
+     */
+    suspend fun manifest(videoId: String, skipClients: Set<String>): VyonExManifest? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val data = pr["streamingData"]
+            val (kind, raw) = listOf(VyonExManifestKind.HLS to "hlsManifestUrl", VyonExManifestKind.DASH to "dashManifestUrl")
+                .firstNotNullOfOrNull { (kind, key) -> data.at(key).str?.let { kind to it } }
+                ?: return@viaIdentities null.also { log(DEBUG, "${id.profileId} offers no manifest", videoId) }
+            val url = manifestUrlOf(raw, poToken) { players.current().js.solve("n", it) }.takeIf(::isAllowedManifestUrl)
+                ?: return@viaIdentities null.also { log(WARN, "${id.profileId} manifest is not a googlevideo manifest", videoId) }
+            if (!manifestAnswers(url, kind, headers, videoId, id.profileId)) return@viaIdentities null
+            VyonExManifest(videoId, kind, url, headers, id.profileId, isLive = pr.at("videoDetails", "isLive").bool == true)
+        }
+
+    /** Like [answers] for a manifest: a 200 whose first kilobyte is a manifest of [kind]. */
+    private suspend fun manifestAnswers(url: String, kind: VyonExManifestKind, headers: Map<String, String>, videoId: String, profileId: String): Boolean {
+        val refusal = http.prepareGet(url) { headers.forEach { (name, value) -> header(name, value) } }.execute { response ->
+            when {
+                response.status != HttpStatusCode.OK -> "HTTP ${response.status.value}"
+                !isManifest(kind, response.bodyAsChannel().readBuffer(1024L).readByteArray().decodeToString()) -> "not a $kind manifest"
+                else -> null
+            }
+        }
+        if (refusal == null) return true
+        log(WARN, "$profileId manifest refused ($refusal)", videoId)
+        exclude(videoId, profileId)
+        return false
+    }
 
     /**
      * Writes [format] to [sink] from byte [from] in ranged requests of [chunkBytes], as yt-dlp does (YouTube slows

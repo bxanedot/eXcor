@@ -158,6 +158,13 @@ class PlaybackTest {
     }
 
     @Test
+    fun expiryIsReadFromMediaAndManifestUrls() {
+        assertEquals(NOW + 60, expiresAt(streamOf("a", life = 60)))
+        val manifest = streamOf("a").copy(url = "https://manifest.googlevideo.com/api/manifest/hls_variant/expire/${NOW + 90}/id/x/file/index.m3u8")
+        assertEquals(NOW + 90, expiresAt(manifest))
+    }
+
+    @Test
     fun failuresAsTheListenerSeesThem() {
         fun failure(reason: VyonExUnplayableReason, said: String? = "x") = failureOf(VyonExUnplayableException("v", reason, "S", said)).first
         assertEquals(Failure.SIGN_IN_REQUIRED, failure(VyonExUnplayableReason.SIGN_IN_REQUIRED, "Sign in to view"))

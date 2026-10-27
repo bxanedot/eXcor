@@ -39,6 +39,7 @@ SHA3-512 values equal the allowlist in yt-dlp 2026.10.21 `yt_dlp/extractor/youtu
 | `_base.py` `generate_api_headers`, `_call_api`, `_extract_context` | `Engine.playerResponse`, `playerRequestBody` | player endpoint, `prettyPrint=false`, `X-YouTube-Client-Name/Version`, `Origin`, `X-Goog-Visitor-Id`, `X-Origin`, `timeZone`/`utcOffsetMinutes` |
 | `_base.py` `_make_sid_authorization`, `_get_sid_authorization_header`, `_get_sid_cookies`, `_has_auth_cookies` | `Youtube.kt` `sidAuthorization`, `isLoggedIn` | ported: SAPISIDHASH / SAPISID1PHASH / SAPISID3PHASH, logged-in test |
 | `_video.py` `_generate_player_context`, `_get_checkok_params`, `_extract_player_response` | `playerRequestBody` | `playbackContext.contentPlaybackContext` (`html5Preference`, `signatureTimestamp`), `contentCheckOk`, `racyCheckOk`, `serviceIntegrityDimensions.poToken` |
+| `_video.py` `_extract_formats_and_subtitles` (`get_manifest_n_challenge`, the `hlsManifestUrl` / `dashManifestUrl` handling: n challenge as a `/n/` path segment, PO token as a `/pot/` segment before HLS's `/file|playlist/index.m3u8`, DASH skipped while live) | `Youtube.kt` `manifestUrlOf`, `Engine.manifest` | which manifest to take and how its URL is completed; nothing about parsing manifests (players read them) |
 | `_video.py` `_extract_signature_timestamp` | `PlayerJs.kt` `signatureTimestamp` | ported regex for `signatureTimestamp`/`sts` |
 | `_video.py` `_download_player_url`, `_PLAYER_JS_VARIANT_MAP['main']`, `_construct_player_url` | `Players.current`, `Players.get`, `playerIdOf` | player version from `iframe_api`; always fetching the `player_ias` variant |
 | `_video.py` `_is_agegated` (`AGE_GATE_REASONS`), `_real_extract` (`errorScreen.playerErrorMessageRenderer` `reason`/`subreason`, the "not made this video available in your country" check, "sign in" reasons) | `Youtube.kt` `unplayableOf` | how a refusal is sorted; the reason strings to match |
@@ -99,7 +100,7 @@ From Maven Central, and the AndroidX ones from Google's Maven; licenses as decla
 | QuickJS-KT Android artifact (`quickjs-kt-android`, bundles QuickJS natives, MIT) | 1.0.15 | Apache-2.0 | main (Android) |
 | org.gradle.toolchains.foojay-resolver-convention | 1.0.0 | Apache-2.0 | build |
 | Jetpack Compose from Google's Maven (BOM 2026.09.00: ui, foundation, runtime, animation 1.12.1; material3 1.4.0), activity-compose 1.13.0, lifecycle-runtime-compose 2.11.0, and the AndroidX libraries they bring (core 1.18.0, lifecycle, savedstate, collection, annotation, emoji2, window, navigationevent, profileinstaller, startup, tracing and others) | as listed | Apache-2.0 | main (app) |
-| AndroidX Media3 `media3-exoplayer`, `media3-session` (+ common, datasource, decoder, extractor, container, database), and `androidx.media` | 1.11.1, 1.7.0 | Apache-2.0 | main (app) |
+| AndroidX Media3 `media3-exoplayer`, `media3-session`, `media3-exoplayer-hls`, `media3-exoplayer-dash` (+ common, datasource, decoder, extractor, container, database), and `androidx.media` | 1.11.1, 1.7.0 | Apache-2.0 | main (app) |
 | kotlinx-coroutines-android | 1.11.0 | Apache-2.0 | main (app) |
 | Guava (`-android`, + failureaccess, listenablefuture; via Media3) | 33.3.1-android | Apache-2.0 (parent POM) | main (app) |
 | JSpecify (via Media3) | 1.0.0 | Apache-2.0 | main (app) |

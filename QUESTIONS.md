@@ -388,3 +388,18 @@ Each item names the reading chosen; nothing was looked up in the old code.
     the others for 30 minutes; a success or a new session clears it. On the owner's network, where
     YouTube refuses TV_SAMSUNG (item 2), this saves a player request and a probe per video. The
     new clients are untested live: the build machines get a bot check.
+51. **Live streams: HLS and DASH manifests (owner, 2026-10-27: "add an engine for DASH / HLS").**
+    `manifest(videoId)` returns the manifest a client offers, as yt-dlp reads it: HLS when there is
+    one (yt-dlp skips DASH while live), else DASH; the `/n/` challenge in its path solved with the
+    player; a PO token added as a `/pot/` segment where the client needs one; only
+    `https://*.googlevideo.com/api/manifest/…` URLs; and the manifest fetched to see that it is one
+    (an M3U8 or an MPD in its first kilobyte), else the client is excluded as for a refused stream.
+    Players read manifests themselves, so VyonEx does not parse them: the app plays a live stream
+    through Media3's HLS or DASH source when `extract` finds no single file. The VISIONOS capture
+    of an ordinary video already carries an `hls_variant` manifest (demuxed audio), so `manifest`
+    works for ordinary videos too. No live stream could be captured (bot check on the build
+    machines); the live tests give the VISIONOS capture the fields yt-dlp reads. Not yet: downloading
+    a manifest's segments (recording), DASH's own manifests for post-live recordings beyond what
+    players do, and SABR. While looking, the fixture check learned that manifest URLs carry the
+    requester's address as an `/ip/` path segment; it now redacts those as it does `ip=` (the
+    existing capture's is a private address).

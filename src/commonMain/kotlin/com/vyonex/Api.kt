@@ -41,6 +41,26 @@ data class VyonExVideoStream(
             "clientName=$clientName, profileId=$profileId, headers=${headers.keys})"
 }
 
+/** How a [VyonExManifest] lists its media: [HLS] (an M3U8 master playlist) or [DASH] (an MPD). */
+enum class VyonExManifestKind { HLS, DASH }
+
+/**
+ * A stream YouTube serves through a manifest instead of single files: live streams, and recordings of them still
+ * being processed. Players read [url] with [headers] themselves (ExoPlayer: HLS and DASH; AVPlayer: HLS). [isLive]:
+ * live right now.
+ */
+data class VyonExManifest(
+    val videoId: String,
+    val kind: VyonExManifestKind,
+    val url: String,
+    val headers: Map<String, String>,
+    val profileId: String,
+    val isLive: Boolean,
+) {
+    // The URL may carry a PO token and the headers a cookie.
+    override fun toString() = "VyonExManifest(videoId=$videoId, kind=$kind, profileId=$profileId, isLive=$isLive, headers=${headers.keys})"
+}
+
 data class VyonExThumbnail(val url: String, val width: Int, val height: Int)
 
 /**
