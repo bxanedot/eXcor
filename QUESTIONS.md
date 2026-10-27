@@ -4,10 +4,13 @@ Each item names the reading chosen; nothing was looked up in the old code.
 
 ## Blocked by YouTube from the cloud build machine
 
-1. **Watch page.** `GET https://www.youtube.com/watch?v=…` redirected to Google's bot check
-   (`fixtures/watch-page-blocked.html`). I did not try to get around it. The watch-page
-   parsing fixture is therefore assembled from captured parts (`fixtures/README.md`). Please
-   recapture `fixtures/watch-page-assembled.html` from a normal network.
+1. **Watch page.** `GET https://www.youtube.com/watch?v=…` redirected the cloud build machine to
+   Google's bot check (`fixtures/watch-page-blocked.html`); I did not try to get around it.
+   **Update 2026-10-27:** a real page from the owner's network is now `fixtures/watch-page.html`
+   (IP address redacted). Logged out, its audio formats are SABR-only (no `url`, no
+   `signatureCipher`), so by the brief's no-SABR rule the iOS watch-page fallback returns nil and
+   `audioCandidates` returns an empty list for logged-out sessions. Logged-in pages may differ;
+   untested.
 2. **Live test.** `VYONEX_LIVE=1` passed for `dQw4w9WgXcQ` (TV_SAMSUNG, signature and `n`
    decoded, ranged GET 206). `kJQP7kiw5Fk` then got "This video is not available" from both
    TVHTML5 and VISIONOS, and afterwards every request from this IP got

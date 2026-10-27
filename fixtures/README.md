@@ -12,12 +12,8 @@ repository's Apache-2.0 license and are not part of any published artifact.
 | `player-response-visionos.json` | same, client `VISIONOS` 1.02 |
 | `player-response-web.json` | same, client `WEB` 2.20260708.00.00, no PO token (SABR-only formats) |
 | `watch-page-blocked.html` | `GET https://www.youtube.com/watch?v=dQw4w9WgXcQ` from the build machine: a redirect to Google's bot check |
-| `watch-page-assembled.html` | **assembled**, see below |
+| `watch-page.html` | `GET https://www.youtube.com/watch?v=dQw4w9WgXcQ&hl=en&gl=US` from the owner's home network on 2026-10-27 (captured by Codex). **Redacted:** the requester's IP address, which appeared 64 times in stream URLs and `remoteHost`, is replaced with the documentation address `192.0.2.1` (RFC 5737); nothing else is changed. Logged out, player `6b2fce74`, audio formats SABR-only |
 | `challenges-dce23b30.json` | `n` and signature challenges from `player-response-tv_samsung.json` with the answers VyonEx computed; the decoded URLs answered `206`, undecoded ones `403` |
 
-`watch-page-assembled.html`: the watch page could not be fetched from the cloud build
-machine (see `watch-page-blocked.html` and QUESTIONS.md). It is the captured
-`https://www.youtube.com/` page (real `ytcfg` and player URL) with
-`<script>var ytInitialPlayerResponse = <player-response-tv_samsung.json>;…</script>`
-inserted before `</body>`, the form a watch page uses. Replace it with a real capture
-from a normal network when possible.
+When adding captures, replace the requester's IP address (`ip=` parameters, `remoteHost`) with
+a documentation address before committing.

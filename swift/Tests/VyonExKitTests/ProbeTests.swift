@@ -14,7 +14,9 @@ class FixtureProtocol: URLProtocol {
         var status = 200
         var body = Data()
         do {
-            if url.path == "/iframe_api" {
+            if url.path == "/watch" {
+                body = Data(try fixture("watch-page.html").utf8)
+            } else if url.path == "/iframe_api" {
                 body = Data(try fixture("iframe_api.js").utf8)
             } else if url.path.hasPrefix("/s/player/dce23b30/") {
                 body = Data(try fixture("player-dce23b30.js").utf8)
