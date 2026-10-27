@@ -37,6 +37,8 @@ internal fun fixtureEngine(
     tokenProvider: TokenProvider? = null,
     webFixture: String = "web",
     requests: MutableList<HttpRequestData> = mutableListOf(),
+    /** When set, the one player response every client gets. */
+    playerFixture: String? = null,
 ) = Engine(
     host,
     tokenProvider = tokenProvider,
@@ -52,7 +54,7 @@ internal fun fixtureEngine(
                 val body = (request.body as TextContent).text
                 val client = mapOf("TVHTML5" to "tv_samsung", "VISIONOS" to "visionos", "WEB" to webFixture)
                     .entries.first { "\"clientName\":\"${it.key}\"" in body }.value
-                respond(fixture("player-response-$client.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                respond(fixture(playerFixture ?: "player-response-$client.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
             }
             url.host.endsWith(".googlevideo.com") -> {
                 // The probe asks for one byte with the stream's own headers.

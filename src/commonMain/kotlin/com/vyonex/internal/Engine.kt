@@ -12,6 +12,7 @@ import com.vyonex.VyonExSession
 import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExSink
 import com.vyonex.VyonExStream
+import com.vyonex.VyonExUnplayableException
 import com.vyonex.VyonExVideoStream
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
@@ -201,7 +202,7 @@ internal class Engine(
         val session = host.session()
         val loggedIn = isLoggedIn(session.cookie)
         var visitorData = session.visitorData
-        var unplayable: String? = null
+        var unplayable: VyonExUnplayableException? = null
         for (id in IDENTITIES) {
             if (id.profileId in skipClients || id.clientName in skipClients || isExcluded(videoId, id.profileId)) continue
             if (loggedIn && !id.supportsCookies) continue
@@ -214,11 +215,10 @@ internal class Engine(
                 }
                 val pr = playerResponse(id, videoId, session, token?.visitorData ?: visitorData, token?.playerRequestToken, loggedIn)
                 visitorData = visitorData ?: pr.at("responseContext", "visitorData").str
-                val status = pr.at("playabilityStatus", "status").str
-                if (status != "OK") {
-                    val reason = "$status: ${pr.at("playabilityStatus", "reason").str}"
-                    unplayable = unplayable ?: reason
-                    log(DEBUG, "${id.profileId} refused ($reason)", videoId)
+                val refusal = unplayableOf(videoId, pr)
+                if (refusal != null) {
+                    unplayable = unplayable ?: refusal
+                    log(DEBUG, "${id.profileId} refused (${refusal.status}: ${refusal.youtubeReason})", videoId)
                     continue
                 }
                 pick(id, pr, token?.streamingDataToken, mediaHeaders(id.userAgent, session))?.let { return it }
@@ -228,21 +228,23 @@ internal class Engine(
                 log(WARN, "${id.profileId} failed: ${e.describe()}", videoId)
             }
         }
-        if (unplayable != null) throw IllegalStateException("VyonEx: video $videoId is unplayable ($unplayable)")
+        unplayable?.let { throw it }
         return null
     }
 
-    /** The iOS `extract`: the player API first, then the watch page. */
+    /** The iOS `extract`: the player API first, then the watch page; YouTube's refusal stands if neither plays. */
     suspend fun extractOrWatchPage(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): VyonExStream? {
+        var refusal: VyonExUnplayableException? = null
         val primary = try {
             extract(videoId, maxKbps, skipClients, requireM4a)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
+            refusal = e as? VyonExUnplayableException
             log(INFO, "player API failed, trying the watch page: ${e.describe()}", videoId)
             null
         }
-        return primary ?: watchPageStream(videoId, maxKbps, skipClients, requireM4a)
+        return primary ?: watchPageStream(videoId, maxKbps, skipClients, requireM4a) ?: refusal?.let { throw it }
     }
 
     suspend fun watchPageStream(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): VyonExStream? {

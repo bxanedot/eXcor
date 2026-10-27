@@ -125,11 +125,11 @@ class LiveTest {
             if (code != 200 && code != 206) broken += "$videoId: $result"
             return result
         }
-        // The JVM reports an unplayable video only as IllegalStateException (BRIEF 4.2 step 10).
+        // An unplayable video is reported as VyonExUnplayableException; anything else is a fault.
         suspend fun <T : Any> outcome(videoId: String, call: suspend () -> T?, show: (T) -> String): String = try {
             call()?.let(show) ?: "none"
-        } catch (e: IllegalStateException) {
-            e.message.orEmpty()
+        } catch (e: VyonExUnplayableException) {
+            "${e.reason} ${e.message}"
         } catch (e: Exception) {
             broken += "$videoId: ${e::class.simpleName}"
             "error ${e::class.simpleName}"

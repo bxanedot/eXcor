@@ -10,6 +10,8 @@ import com.vyonex.VyonExMergePair
 import com.vyonex.VyonExMusicInfo
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExThumbnail
+import com.vyonex.VyonExUnplayableException
+import com.vyonex.VyonExUnplayableReason
 import io.ktor.http.decodeURLQueryComponent
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.parseQueryString
@@ -122,6 +124,36 @@ internal val JsonElement?.str get() = (this as? JsonPrimitive)?.contentOrNull
 private val JsonElement?.int get() = str?.toIntOrNull()
 private val JsonElement?.bool get() = (this as? JsonPrimitive)?.booleanOrNull
 
+/** YouTube's text fields: a plain string, `simpleText`, or `runs` of pieces. */
+internal fun textOf(e: JsonElement?) =
+    e.str ?: e.at("simpleText").str ?: (e.at("runs") as? JsonArray)?.joinToString("") { it.at("text").str.orEmpty() }
+
+// yt-dlp _is_agegated: one of these in the status or reason, or a desktopLegacyAgeGateReason.
+private val AGE_GATE = listOf("confirm your age", "age-restricted", "inappropriate", "age_verification_required", "age_check_required")
+private const val NOT_IN_COUNTRY = "The uploader has not made this video available in your country"
+
+/** Why [playerResponse] refuses playback, sorted the way yt-dlp reads it; null when it plays. */
+internal fun unplayableOf(videoId: String, playerResponse: JsonObject): VyonExUnplayableException? {
+    val playability = playerResponse["playabilityStatus"]
+    val status = playability.at("status").str
+    if (status == "OK") return null
+    val error = playability.at("errorScreen", "playerErrorMessageRenderer")
+    val reason = playability.at("reason").str ?: textOf(error.at("reason"))
+    val subreason = textOf(error.at("subreason"))
+    val kind = when {
+        (playability.at("desktopLegacyAgeGateReason").int ?: 0) != 0 ||
+            listOfNotNull(status, reason).any { s -> AGE_GATE.any { it in s.lowercase() } } -> VyonExUnplayableReason.AGE_RESTRICTED
+        subreason?.startsWith(NOT_IN_COUNTRY) == true -> VyonExUnplayableReason.GEO_RESTRICTED
+        status == "LIVE_STREAM_OFFLINE" -> VyonExUnplayableReason.UPCOMING
+        status == "ERROR" -> VyonExUnplayableReason.UNAVAILABLE
+        reason?.contains("sign in", ignoreCase = true) == true -> VyonExUnplayableReason.SIGN_IN_REQUIRED
+        else -> VyonExUnplayableReason.OTHER
+    }
+    // yt-dlp adds the subreason when it says more, as it does for country blocks.
+    val message = if (subreason != null && subreason != reason) listOfNotNull(reason, subreason).joinToString(". ") else reason
+    return VyonExUnplayableException(videoId, kind, status, message)
+}
+
 internal class AudioFormat(json: JsonObject, val url: String) {
     val itag = json["itag"].int
     val mimeType = json["mimeType"].str.orEmpty()
@@ -210,8 +242,6 @@ internal fun selectVideo(formats: List<VideoFormat>, maxHeight: Int, requireAvc:
 internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMetadata {
     val details = playerResponse["videoDetails"]
     val micro = playerResponse.at("microformat", "playerMicroformatRenderer")
-    fun text(e: JsonElement?) =
-        e.str ?: e.at("simpleText").str ?: (e.at("runs") as? JsonArray)?.joinToString("") { it.at("text").str.orEmpty() }
     fun strings(e: JsonElement?) = (e as? JsonArray).orEmpty().mapNotNull { it.str }
     fun thumbnails(e: JsonElement?) = (e.at("thumbnail", "thumbnails") as? JsonArray).orEmpty().mapNotNull { t ->
         t.at("url").str?.let { VyonExThumbnail(it, t.at("width").int ?: 0, t.at("height").int ?: 0) }
@@ -229,7 +259,7 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
     }
     return VyonExMetadata(
         videoId = videoId,
-        title = details.at("title").str ?: text(micro.at("title")),
+        title = details.at("title").str ?: textOf(micro.at("title")),
         author = details.at("author").str ?: micro.at("ownerChannelName").str,
         channelId = details.at("channelId").str ?: micro.at("externalChannelId").str,
         channelUrl = micro.at("ownerProfileUrl").str,
@@ -238,7 +268,7 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
             ?.takeIf { it > 0 && liveStatus != VyonExLiveStatus.LIVE && liveStatus != VyonExLiveStatus.UPCOMING },
         viewCount = (details.at("viewCount") ?: micro.at("viewCount")).str?.toLongOrNull(),
         likeCount = micro.at("likeCount").str?.toLongOrNull(),
-        description = details.at("shortDescription").str ?: text(micro.at("description")),
+        description = details.at("shortDescription").str ?: textOf(micro.at("description")),
         keywords = strings(details.at("keywords")),
         category = micro.at("category").str,
         publishDate = micro.at("publishDate").str,
@@ -260,10 +290,10 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
                 val needsToken = url != null && parseQueryString(url.substringAfter('?')).getAll("exp").orEmpty()
                     .any { it == "xpe" || it == "xpv" }
                 if (url == null || language == null || needsToken) null
-                else VyonExCaptionTrack(url, language, text(track.at("name")), track.at("kind").str == "asr")
+                else VyonExCaptionTrack(url, language, textOf(track.at("name")), track.at("kind").str == "asr")
             },
         liveStatus = liveStatus,
-        music = (details.at("shortDescription").str ?: text(micro.at("description")))?.let(::musicInfoOf),
+        music = (details.at("shortDescription").str ?: textOf(micro.at("description")))?.let(::musicInfoOf),
     )
 }
 

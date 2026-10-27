@@ -92,6 +92,24 @@ data class VyonExMusicInfo(
     val releaseDate: String?,
 )
 
+/**
+ * YouTube refused to play [videoId] to every client tried. [youtubeReason] is YouTube's own message, fit to show
+ * (for example "This live event will begin in 27 hours."); [status] is its `playabilityStatus`.
+ */
+class VyonExUnplayableException(
+    val videoId: String,
+    val reason: VyonExUnplayableReason,
+    val status: String?,
+    val youtubeReason: String?,
+) : IllegalStateException("VyonEx: video $videoId is unplayable ($status: $youtubeReason)")
+
+/**
+ * [AGE_RESTRICTED] and [SIGN_IN_REQUIRED] need an account, which VyonEx does not use. [UNAVAILABLE]: no such video,
+ * or removed. [UPCOMING]: a live stream or premiere that has not started. [GEO_RESTRICTED]: not offered in the
+ * requester's country. [OTHER]: any other refusal, such as a copyright block or a live stream without a recording.
+ */
+enum class VyonExUnplayableReason { AGE_RESTRICTED, SIGN_IN_REQUIRED, UNAVAILABLE, UPCOMING, GEO_RESTRICTED, OTHER }
+
 /** Whether a video is, was or will be a live stream. [POST_LIVE]: just ended, still being processed. */
 enum class VyonExLiveStatus { NOT_LIVE, LIVE, UPCOMING, WAS_LIVE, POST_LIVE }
 

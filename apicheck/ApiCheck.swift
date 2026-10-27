@@ -113,3 +113,13 @@ func apiCheck() async throws {
     _ = VyonExAudioCandidate(url: "u", kbps: 1, mimeType: "m", format: .m4a)
     _ = VyonExStream(videoId: "v", url: "u", kbps: 1, mimeType: "m", loudnessDb: nil, clientName: "c", profileId: "p", headers: [:])
 }
+
+// How an app reads YouTube's refusal from a thrown error.
+func refusalOf(_ error: Error) -> VyonExUnplayableReason? {
+    guard let refused = (error as NSError).kotlinException as? VyonExUnplayableException else { return nil }
+    let reasons: [VyonExUnplayableReason] = [.ageRestricted, .signInRequired, .unavailable, .upcoming, .geoRestricted, .other]
+    let status: String? = refused.status
+    let said: String? = refused.youtubeReason
+    _ = (reasons, refused.videoId, status, said)
+    return refused.reason
+}

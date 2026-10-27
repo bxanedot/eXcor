@@ -74,6 +74,10 @@ Swift sees no Kotlin default arguments, so it passes every parameter. Kotlin/Nat
 6. iOS `extract` falls back to the watch page; `audioCandidates` lists the watch page's audio.
 7. `metadata` asks `WEB` (which adds the microformat: likes, category, dates, countries), then
    `VISIONOS`; it returns null when neither reports video details.
+8. When YouTube refuses the video to every client, `extract`, `extractVideo` and `formats` throw
+   `VyonExUnplayableException`: `reason` (age-restricted, sign-in required, unavailable, upcoming,
+   country-blocked or other, sorted as yt-dlp does) and `youtubeReason`, YouTube's own message.
+   Swift gets it as the `NSError`'s `kotlinException`.
 
 ## Build and test
 
