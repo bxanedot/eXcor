@@ -48,14 +48,15 @@ Each item names the reading chosen; nothing was looked up in the old code.
    compile whether or not they override them. `httpClient` has no default.
 6. **`configStore`.** Decision: when `enabled = false`, disable JVM disk-player-cache reads and
    writes while preserving in-memory caches. This follows section 4.7's promise to work without
-   persistence. Current `main` still creates `DiskPlayerStore` whenever `filesDir` is non-null;
-   this decision is not yet implemented.
+   persistence. Implemented in PR #9; see item 28.
 7. **`putString` value** is taken as non-null `String`.
 8. **Logged-in identities.** Cookies go with every YouTube request when present; logged-in
    sessions (LOGIN_INFO + SAPISID, as yt-dlp) also send SAPISIDHASH and skip VISIONOS.
    yt-dlp's logged-in default starts with `web_embedded`; it is left out because it answered
    "This video is unavailable" live without the embed page's `encryptedHostFlags`, and no
-   account was available to test logged-in behavior.
+   account was available to test logged-in behavior. Offline tests (`LoggedInTest`) now cover
+   this with made-up cookies and tokens: login detection, the SAPISIDHASH values, the headers
+   sent, the VISIONOS skip, and the PO-token path. It is still untested against a real account.
 9. **Media headers.** `User-Agent` of the identity used, plus `Cookie` only when logged in;
    watch-page streams use the headers listed in 4.3.
 10. **`audioCandidates`** has no `skipClients`, so it does not apply the skip/exclusion rule of
@@ -121,3 +122,14 @@ Each item names the reading chosen; nothing was looked up in the old code.
     (section 4.7); the prepared player stays cached in memory. `enabled` is checked on every
     access, so switching it takes effect at once. Deleting a refused player still happens while
     disabled, so it cannot come back once the cache is enabled again.
+29. **`close()`** (added for the app, milestone L0). It stops background work and frees the
+    loaded player; the instance must not be used afterwards. On iOS it also closes VyonEx's own
+    HTTP client. On the JVM the Ktor client stays open: Ktor 3.6.0's OkHttp engine, when closed,
+    evicts the connection pool and shuts down the dispatcher of the clients it built, and those
+    are shared with the host's `OkHttpClient`.
+30. **Visitor IDs in captures.** The four response captures held YouTube's anonymous visitor IDs
+    (`visitorData` and its copies). On 2026-10-27 every copy was replaced with
+    `REDACTED-VISITOR-DATA`; no test reads them. `FixtureHygieneTest` now fails on a public
+    address in `ip=`/`remoteHost`, a cookie value or an unredacted visitor ID, without printing
+    it. The remaining `ip=` values are YouTube's `0.0.0.0` placeholder, the capture machine's
+    private `fc00::/7` IPv6, or the documentation address.

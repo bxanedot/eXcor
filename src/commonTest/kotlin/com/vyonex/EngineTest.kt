@@ -97,6 +97,16 @@ class EngineTest {
     }
 
     @Test
+    fun closeStopsBackgroundWork() = runTest {
+        host.failSession = true
+        engine.close()
+        engine.onSessionChanged()
+        withContext(Dispatchers.Default) {
+            assertNull(withTimeoutOrNull(500) { host.sessionCalls.receive() }, "no warm-up after close")
+        }
+    }
+
+    @Test
     fun skippedExcludedAndTokenlessIdentitiesAreNotTried() = runTest {
         engine.exclude("video1", "TV_SAMSUNG")
         // VISIONOS is skipped by profile, WEB has no token provider: no request is made at all.

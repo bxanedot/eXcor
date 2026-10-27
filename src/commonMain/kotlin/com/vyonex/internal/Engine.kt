@@ -26,6 +26,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -59,6 +60,13 @@ internal class Engine(
             delay(2_000)
             warmUp()
         }
+    }
+
+    /** Stops background work and frees the loaded player. The engine must not be used afterwards. */
+    fun close() {
+        scope.cancel()
+        // Under the players' lock, so a JS call in flight finishes first.
+        CoroutineScope(Dispatchers.Default).launch { players.close() }
     }
 
     fun onSessionChanged() {

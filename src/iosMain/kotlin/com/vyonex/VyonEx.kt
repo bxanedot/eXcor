@@ -12,18 +12,14 @@ interface VyonExHost : VyonExHostServices {
 
 class VyonEx(host: VyonExHost) {
     // Own Darwin client; caches stay in memory on iOS.
-    private val engine = Engine(
-        host = host,
-        tokenProvider = host.tokenProvider,
-        http = HttpClient(Darwin) {
-            install(HttpTimeout) {
-                requestTimeoutMillis = 30_000
-                connectTimeoutMillis = 15_000
-                socketTimeoutMillis = 20_000
-            }
-        },
-        store = null,
-    )
+    private val http = HttpClient(Darwin) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 15_000
+            socketTimeoutMillis = 20_000
+        }
+    }
+    private val engine = Engine(host = host, tokenProvider = host.tokenProvider, http = http, store = null)
 
     fun initialize() = engine.initialize()
 
@@ -58,4 +54,10 @@ class VyonEx(host: VyonExHost) {
     fun exclude(videoId: String, profileId: String) = engine.exclude(videoId, profileId)
 
     fun onSessionChanged() = engine.onSessionChanged()
+
+    /** Stops background work, frees the loaded player and closes the HTTP client; do not use this instance afterwards. */
+    fun close() {
+        engine.close()
+        http.close()
+    }
 }

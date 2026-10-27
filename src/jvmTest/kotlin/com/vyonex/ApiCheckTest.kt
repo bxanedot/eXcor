@@ -112,5 +112,6 @@ class ApiCheckTest {
         assertNull(vyonEx.onRefused("u"))
         vyonEx.exclude("v", "p")
         vyonEx.onSessionChanged()
+        vyonEx.close()
     }
 }
