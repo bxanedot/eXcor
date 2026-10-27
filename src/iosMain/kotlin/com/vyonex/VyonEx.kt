@@ -52,6 +52,23 @@ class VyonEx(host: VyonExHost) {
     @Throws(Throwable::class)
     suspend fun metadata(videoId: String): VyonExMetadata? = engine.metadata(videoId)
 
+    /** The video's chapters (from YouTube's chapter list, else timestamps in its description); empty when it has none. */
+    @Throws(Throwable::class)
+    suspend fun chapters(videoId: String): List<VyonExChapter> = engine.chapters(videoId)
+
+    /** A video's public comments, top first or [newestFirst]; empty when comments are off. Logged out. */
+    @Throws(Throwable::class)
+    suspend fun comments(videoId: String, newestFirst: Boolean = false): VyonExCommentPage = engine.comments(videoId, newestFirst)
+
+    /** The next page of comments, or a comment's replies (its `repliesContinuation`). */
+    @Throws(Throwable::class)
+    suspend fun commentsMore(continuation: String): VyonExCommentPage = engine.commentsMore(continuation)
+
+    /** The text of a caption track from [metadata] in [format], translated into [translateTo] when given. */
+    @Throws(Throwable::class)
+    suspend fun captionText(track: VyonExCaptionTrack, format: VyonExCaptionFormat, translateTo: String? = null): String =
+        engine.captionText(track, format, translateTo)
+
     @Throws(Throwable::class)
     suspend fun formats(videoId: String, skipClients: Set<String> = emptySet()): VyonExFormats? = engine.formats(videoId, skipClients)
 

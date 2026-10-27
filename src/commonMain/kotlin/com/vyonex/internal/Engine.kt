@@ -1,6 +1,10 @@
 package com.vyonex.internal
 
 import com.vyonex.VyonExAudioCandidate
+import com.vyonex.VyonExCaptionFormat
+import com.vyonex.VyonExCaptionTrack
+import com.vyonex.VyonExChapter
+import com.vyonex.VyonExCommentPage
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExFormats
 import com.vyonex.VyonExAlbum
@@ -22,6 +26,7 @@ import com.vyonex.VyonExSink
 import com.vyonex.VyonExStream
 import com.vyonex.VyonExUnplayableException
 import com.vyonex.VyonExVideoStream
+import com.vyonex.urlFor
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -182,6 +187,37 @@ internal class Engine(
         log(WARN, "$profileId manifest refused ($refusal)", videoId)
         exclude(videoId, profileId)
         return false
+    }
+
+    /**
+     * A video's chapters as yt-dlp finds them: the watch-next response's player bar or chapters panel, else
+     * timestamps in the description. Both are checked against the video's duration, so the player is asked too.
+     */
+    suspend fun chapters(videoId: String): List<VyonExChapter> {
+        val info = metadata(videoId) ?: return emptyList()
+        val duration = info.durationSeconds?.toDouble()
+        return chaptersOfNext(innertube("next") { put("videoId", videoId) }, duration).ifEmpty { chaptersOfDescription(info.description, duration) }
+    }
+
+    /**
+     * The first page of a video's comments, top first or [newestFirst]; empty when its comments are off. Two requests:
+     * the watch-next response names the comment section, which is then asked for (three for newest first).
+     */
+    suspend fun comments(videoId: String, newestFirst: Boolean): VyonExCommentPage {
+        val token = commentsTokenOf(innertube("next") { put("videoId", videoId) }) ?: return VyonExCommentPage(emptyList(), null, null)
+        val top = innertube("next") { put("continuation", token) }
+        val newest = if (newestFirst) newestFirstTokenOf(top) else null
+        return commentPageOf(if (newest != null) innertube("next") { put("continuation", newest) } else top)
+    }
+
+    /** The next page of comments, or a comment's replies (its [VyonExComment.repliesContinuation]). */
+    suspend fun commentsMore(continuation: String): VyonExCommentPage = commentPageOf(innertube("next") { put("continuation", continuation) })
+
+    /** The text of [track] in [format], translated into [translateTo] when given. */
+    suspend fun captionText(track: VyonExCaptionTrack, format: VyonExCaptionFormat, translateTo: String?): String {
+        val url = track.urlFor(format, translateTo)
+        require(url.startsWith("$YT_ORIGIN/api/timedtext?")) { "VyonEx: not a YouTube caption URL" }
+        return http.text(url) { header(HttpHeaders.UserAgent, DESKTOP_UA) }
     }
 
     /**

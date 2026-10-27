@@ -2,6 +2,7 @@ package com.vyonex.internal
 
 import com.vyonex.VyonExAudioFormat
 import com.vyonex.VyonExCaptionTrack
+import com.vyonex.VyonExChapter
 import com.vyonex.VyonExContainer
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExLiveStatus
@@ -281,10 +282,12 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
                 val needsToken = url != null && parseQueryString(url.substringAfter('?')).getAll("exp").orEmpty()
                     .any { it == "xpe" || it == "xpv" }
                 if (url == null || language == null || needsToken) null
-                else VyonExCaptionTrack(url, language, textOf(track.at("name")), track.at("kind").str == "asr")
+                else VyonExCaptionTrack(url, language, textOf(track.at("name")), track.at("kind").str == "asr", track.at("isTranslatable").bool == true)
             },
         liveStatus = liveStatus,
         music = (details.at("shortDescription").str ?: textOf(micro.at("description")))?.let(::musicInfoOf),
+        translationLanguages = (playerResponse.at("captions", "playerCaptionsTracklistRenderer", "translationLanguages") as? JsonArray).orEmpty()
+            .mapNotNull { language -> language.at("languageCode").str?.let { code -> textOf(language.at("languageName"))?.let { code to it } } }.toMap(),
     )
 }
 
@@ -414,4 +417,46 @@ private fun balancedObject(s: String, open: Int): String? {
         i++
     }
     return null
+}
+
+// yt-dlp _extract_chapters_from_description: a time then a title on a line, or a title then a time.
+private const val TIME = """(?:\d+:)?\d{1,2}:\d{2}"""
+private val TIME_FIRST = Regex("""(?m)^\s*($TIME)\b\W*\s(.+?)\s*$""")
+private val TIME_LAST = Regex("""(?m)^\s*(.+?)\b\W*\s($TIME)\s*$""")
+
+/**
+ * yt-dlp _extract_chapters_helper: chapters that start in order, from 0 up to [duration], each ending where the next
+ * starts. [sort] for chapters read from a description, where yt-dlp sorts them first. Nothing without a duration.
+ */
+internal fun chaptersFrom(starts: List<Pair<Double?, String?>>, duration: Double?, sort: Boolean): List<VyonExChapter> {
+    if (duration == null || duration <= 0) return emptyList()
+    val kept = mutableListOf<Pair<Double, String>>()
+    for ((start, title) in if (sort) starts.sortedBy { it.first ?: 0.0 } else starts) {
+        if (start != null && start >= (kept.lastOrNull()?.first ?: 0.0) && start <= duration) kept += start to title.orEmpty()
+    }
+    return kept.mapIndexed { i, (start, title) -> VyonExChapter(title, start, kept.getOrNull(i + 1)?.first ?: duration) }
+}
+
+/** The chapters a watch-next response shows: the player bar's, else the "chapters" panel's (yt-dlp's two places). */
+internal fun chaptersOfNext(next: JsonElement?, duration: Double?): List<VyonExChapter> {
+    val bar = next.at("playerOverlays", "playerOverlayRenderer", "decoratedPlayerBarRenderer", "decoratedPlayerBarRenderer", "playerBar",
+        "chapteredPlayerBarRenderer", "chapters") as? JsonArray
+    chaptersFrom(bar.orEmpty().map { chapter ->
+        val renderer = chapter.at("chapterRenderer")
+        renderer.at("timeRangeStartMillis").str?.toDoubleOrNull()?.div(1000) to textOf(renderer.at("title"))
+    }, duration, sort = false).takeIf { it.isNotEmpty() }?.let { return it }
+    val panels = (next.at("engagementPanels") as? JsonArray).orEmpty()
+        .mapNotNull { it.at("engagementPanelSectionListRenderer", "content", "macroMarkersListRenderer", "contents") as? JsonArray }
+    return panels.firstNotNullOfOrNull { contents ->
+        chaptersFrom(contents.mapNotNull { it.at("macroMarkersListItemRenderer").takeIf { r -> r != null } }.map { marker ->
+            durationOf(textOf(marker.at("timeDescription")))?.toDouble() to textOf(marker.at("title"))
+        }, duration, sort = false).takeIf { it.isNotEmpty() }
+    }.orEmpty()
+}
+
+/** Chapters written as timestamps in a description. */
+internal fun chaptersOfDescription(description: String?, duration: Double?): List<VyonExChapter> {
+    val text = description.orEmpty()
+    return chaptersFrom(TIME_FIRST.findAll(text).map { durationOf(it.groupValues[1])?.toDouble() to it.groupValues[2] }.toList(), duration, sort = true)
+        .ifEmpty { chaptersFrom(TIME_LAST.findAll(text).map { durationOf(it.groupValues[2])?.toDouble() to it.groupValues[1] }.toList(), duration, sort = true) }
 }
