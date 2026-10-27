@@ -20,6 +20,14 @@ Each item names the reading chosen; nothing was looked up in the old code.
    (itag 251). TV_SAMSUNG's URL for `dQw4w9WgXcQ` was refused by the probe (403), and its player
    requests for the other two got `LOGIN_REQUIRED` (bot check), so YouTube was refusing that
    client on this network.
+   **Update 2026-10-27, merged `main` at `c7a769c`, owner's network, logged out:** two runs were
+   reported, both 2 tests and 0 failures: `extractsRangeFetchableStreams`
+   (audio for the three videos) and `extractsVideoAndMetadata` (video + audio streams answering a
+   ranged GET, and metadata). Which network adapter carried the traffic was not recorded.
+   The same day, the new `VYONEX_LIVE_IDS` survey for `dQw4w9WgXcQ` from the cloud build machine
+   got TV_SAMSUNG streams (audio itag 251; video itag 137 + audio 251; each ranged GET 206) and
+   WEB metadata, so TV_SAMSUNG answered there while it was refused on the owner's network.
+   Logged-in sessions remain untested live.
 
 ## Readings of the brief
 
@@ -99,3 +107,8 @@ Each item names the reading chosen; nothing was looked up in the old code.
 27. **iOS names.** Swift does not see Kotlin default arguments, so it passes every parameter of
     `extractVideo`; and Kotlin/Native renames `VyonExMetadata.description` to `description_`,
     since `NSObject` already has `description`.
+28. **`configStore.enabled` and the disk cache (owner's decision, 2026-10-27; settles item 6).**
+    While `enabled` is false the JVM disk cache reads and writes nothing, so nothing persists
+    (section 4.7); the prepared player stays cached in memory. `enabled` is checked on every
+    access, so switching it takes effect at once. Deleting a refused player still happens while
+    disabled, so it cannot come back once the cache is enabled again.

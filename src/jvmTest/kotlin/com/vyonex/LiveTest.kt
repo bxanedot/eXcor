@@ -92,4 +92,46 @@ class LiveTest {
         assertTrue("Never Gonna Give You Up" in info.title.orEmpty(), "${info.title}")
         assertTrue(!info.description.isNullOrEmpty())
     }
+
+    /**
+     * Opt-in survey of any videos: VYONEX_LIVE=1 VYONEX_LIVE_IDS=id1,id2 (comma-separated). Prints one line per
+     * video with profile, itag and HTTP code, or YouTube's reason, never a URL. Unplayable videos are reported,
+     * not failed; it fails only when a returned URL does not answer or an error is not the documented kind.
+     */
+    @Test
+    fun surveysListedVideos() = runBlocking {
+        val ids = System.getenv("VYONEX_LIVE_IDS").orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() }
+        if (System.getenv("VYONEX_LIVE") != "1" || ids.isEmpty()) return@runBlocking
+        val vyonEx = VyonEx(host)
+        val broken = mutableListOf<String>()
+        // Every returned URL must answer a ranged GET with its headers (BRIEF 4.2: "whose URL works").
+        fun fetch(videoId: String, url: String, headers: Map<String, String>): String {
+            val request = Request.Builder().url(url).header("Range", "bytes=0-1023")
+                .apply { headers.forEach { (name, value) -> header(name, value) } }.build()
+            val code = client.newCall(request).execute().use { it.code }
+            val result = "itag ${Url(url).parameters["itag"]} HTTP $code"
+            if (code != 200 && code != 206) broken += "$videoId: $result"
+            return result
+        }
+        // The JVM reports an unplayable video only as IllegalStateException (BRIEF 4.2 step 10).
+        suspend fun <T : Any> outcome(videoId: String, call: suspend () -> T?, show: (T) -> String): String = try {
+            call()?.let(show) ?: "none"
+        } catch (e: IllegalStateException) {
+            e.message.orEmpty()
+        } catch (e: Exception) {
+            broken += "$videoId: ${e::class.simpleName}"
+            "error ${e::class.simpleName}"
+        }
+        for (videoId in ids) {
+            val audio = outcome(videoId, { vyonEx.extract(videoId, 160) }) { "${it.profileId} ${fetch(videoId, it.url, it.headers)}" }
+            val video = outcome(videoId, { vyonEx.extractVideo(videoId, 1080) }) { v ->
+                "${v.profileId} ${v.width}x${v.height}@${v.fps} ${v.mimeType} ${fetch(videoId, v.url, v.headers)}" +
+                    (v.audio?.let { " + audio ${fetch(videoId, it.url, it.headers)}" } ?: " (combined)")
+            }
+            val info = vyonEx.metadata(videoId)
+                ?.let { "\"${it.title}\" ${it.durationSeconds} s live=${it.isLive} microformat=${it.category != null}" } ?: "none"
+            println("$videoId | audio: $audio | video: $video | metadata: $info")
+        }
+        assertTrue(broken.isEmpty(), broken.joinToString("\n"))
+    }
 }
