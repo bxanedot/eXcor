@@ -11,3 +11,6 @@ plugins {
 }
 
 rootProject.name = "vyonex"
+
+// The Android app's shared logic; the library itself is the root project.
+include(":app-core")

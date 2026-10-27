@@ -305,3 +305,19 @@ Each item names the reading chosen; nothing was looked up in the old code.
     then decides, which may be a dub in the listener's language. Other languages are not offered
     yet. Unchecked against a capture: the multi-audio capture hit a bot check from the build
     machine (item 41), so the tests add the fields yt-dlp reads to the captured formats.
+46. **App, milestone A1: `app-core` (owner, 2026-10-27: the app starts now, in this repository).**
+    A Kotlin Multiplatform subproject next to the library (the root project), for the Android app
+    first and an iOS app later. `Queue` is immutable: play order, the current track, repeat (off,
+    all, one). Shuffle reorders what comes after the current track, once. "Next" on repeat-one
+    moves on; only a track that ends repeats. `Playback` looks a track's stream up when the track
+    becomes current, since stream URLs expire, and the next track's while the current one plays.
+    A stream within 60 seconds of its `expire` time is looked up again, also when repeating. When
+    the platform player is refused a URL (HTTP 403), VyonEx's `onRefused` is told and the track is
+    looked up once more; a second refusal ends in `NO_STREAM`. YouTube's refusals become the
+    listener's terms (`Failure`): sign-in, age, unavailable, not yet live, not in this country,
+    blocked, and `BOT_CHECK` for "Sign in to confirm you're not a bot" (matched in English only).
+    After any failure nothing is fetched ahead and nothing is retried on its own. A failed track is
+    not skipped automatically; the app decides what to show. `StreamSource` is the slice of VyonEx
+    it needs, because `VyonEx` itself is a per-platform class; tests use a fake. 13 tests run on the
+    JVM and, in CI, on the iOS simulator. The deprecated `androidLibrary {}` block in both builds is
+    now `android {}`, as AGP 9.4 asks.
