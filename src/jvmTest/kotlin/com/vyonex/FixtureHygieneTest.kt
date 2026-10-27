@@ -30,11 +30,12 @@ class FixtureHygieneTest {
         val capture = """{"responseContext":{"visitorData":"$visitor"},"remoteHost":"8.8.4.4","""" +
             """"a":"https://r1.googlevideo.com/videoplayback?ip=8.8.8.8&id=1","b":"x\u0026ip=2a00:1450::1\u0026c=WEB","""" +
             """"c":"url=https%3A%2F%2Fr1.googlevideo.com%2Fvideoplayback%3Fid%3D1%26ip%3D2a00%3A1450%3A%3A1%26ipbits%3D0","""" +
-            """"d":"ip=0.0.0.0&x","e":"${URLEncoder.encode(visitor, Charsets.UTF_8)}","heartbeatParams":{"heartbeatServerData":"GAEgALIB"}}"""
+            """"d":"ip=0.0.0.0&x","e":"${URLEncoder.encode(visitor, Charsets.UTF_8)}","heartbeatParams":{"heartbeatServerData":"GAEgALIB"},""" +
+            """"f":"https://manifest.googlevideo.com/api/manifest/hls_variant/ip/2a00%3A1450%3A%3A1/id/x"}"""
         assertTrue(hasPublicAddress(capture) && hasVisitorId(capture) && hasHeartbeatData(capture))
         val redacted = redactCapture(capture)
         assertFalse(hasPublicAddress(redacted) || hasVisitorId(redacted) || hasHeartbeatData(redacted) || "Cgt0ZXN0" in redacted || "GAEgALIB" in redacted, redacted)
-        listOf("?ip=192.0.2.1&id=1", "\\u0026ip=192.0.2.1\\u0026", "%26ip%3D192.0.2.1%26ipbits", "ip=0.0.0.0&x", "\"remoteHost\":\"192.0.2.1\"")
+        listOf("?ip=192.0.2.1&id=1", "\\u0026ip=192.0.2.1\\u0026", "%26ip%3D192.0.2.1%26ipbits", "ip=0.0.0.0&x", "\"remoteHost\":\"192.0.2.1\"", "/ip/192.0.2.1/id/x")
             .forEach { assertTrue(it in redacted, it) }
     }
 
@@ -47,8 +48,9 @@ class FixtureHygieneTest {
     }
 }
 
-// ip= in raw, JSON-escaped and HTML-escaped URLs and percent-encoded inside signatureCipher, plus remoteHost.
-internal val IP_PARAM = Regex("""(?:[?&]|\\u0026|&amp;|%26)ip(?:=|%3D)([0-9A-Fa-f:.%]+)""")
+// ip= in raw, JSON-escaped and HTML-escaped URLs and percent-encoded inside signatureCipher, the /ip/ path segment of
+// manifest URLs, plus remoteHost.
+internal val IP_PARAM = Regex("""(?:(?:[?&]|\\u0026|&amp;|%26)ip(?:=|%3D)|/ip/)([0-9A-Fa-f:.%]+)""")
 internal val REMOTE_HOST = Regex(""""remoteHost"\s*:\s*"([^"]*)"""")
 // The player script names these cookies in its code; only an assignment means a captured value.
 private val COOKIE_VALUE = Regex("""\b(?:LOGIN_INFO|S?APISID|HSID|SSID|__Secure-[\w-]+|VISITOR_INFO1_LIVE)=[^;\s"'&]""")

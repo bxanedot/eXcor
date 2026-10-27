@@ -5,6 +5,7 @@ import com.vyonex.VyonExCaptionTrack
 import com.vyonex.VyonExContainer
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExLiveStatus
+import com.vyonex.VyonExManifestKind
 import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExMergePair
 import com.vyonex.VyonExMusicInfo
@@ -32,38 +33,6 @@ internal const val YT_ORIGIN = "https://www.youtube.com"
 internal const val DESKTOP_UA =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 
-internal class Identity(
-    val profileId: String,
-    val clientName: String,
-    val clientId: Int,
-    val clientVersion: String,
-    val userAgent: String,
-    val device: Map<String, String> = emptyMap(),
-    val needsPlayerJs: Boolean,
-    val supportsCookies: Boolean,
-    val needsPoToken: Boolean,
-)
-
-// yt-dlp 2026.10.21 defaults to tv_samsung, visionos, web (values from its INNERTUBE_CLIENTS).
-// Live on 2026-10-26: TVHTML5 gave ciphered URLs that play once decoded, VISIONOS gave direct URLs,
-// WEB gave SABR-only formats without a PO token. VISIONOS does not take cookies, so like yt-dlp
-// it is skipped for logged-in sessions.
-internal val IDENTITIES = listOf(
-    Identity(
-        "TV_SAMSUNG", "TVHTML5", 7, "5.20260707",
-        "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/2.4.0 TV Safari/538.1",
-        mapOf("deviceMake" to "Samsung", "deviceModel" to "UKS9800", "osName" to "Tizen", "osVersion" to "2.4.0"),
-        needsPlayerJs = true, supportsCookies = true, needsPoToken = false,
-    ),
-    Identity(
-        "VISIONOS", "VISIONOS", 101, "1.02",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
-        mapOf("deviceMake" to "Apple", "deviceModel" to "RealityDevice17,1", "osName" to "visionOS", "osVersion" to "26.5.23O471"),
-        needsPlayerJs = false, supportsCookies = false, needsPoToken = false,
-    ),
-    Identity("WEB", "WEB", 1, "2.20260708.00.00", DESKTOP_UA, needsPlayerJs = true, supportsCookies = true, needsPoToken = true),
-)
-
 internal fun playerRequestBody(
     id: Identity,
     videoId: String,
@@ -84,6 +53,7 @@ internal fun playerRequestBody(
             put("timeZone", "UTC")
             put("utcOffsetMinutes", 0)
         }
+        id.embedUrl?.let { url -> putJsonObject("thirdParty") { put("embedUrl", url) } }
     }
     put("videoId", videoId)
     putJsonObject("playbackContext") {
@@ -122,7 +92,7 @@ internal fun sidAuthorization(cookie: String, nowMs: Long): String? {
 internal fun JsonElement?.at(vararg keys: String): JsonElement? = keys.fold(this) { e, key -> (e as? JsonObject)?.get(key) }
 internal val JsonElement?.str get() = (this as? JsonPrimitive)?.contentOrNull
 private val JsonElement?.int get() = str?.toIntOrNull()
-private val JsonElement?.bool get() = (this as? JsonPrimitive)?.booleanOrNull
+internal val JsonElement?.bool get() = (this as? JsonPrimitive)?.booleanOrNull
 
 /** YouTube's text fields: a plain string, `simpleText`, or `runs` of pieces. */
 internal fun textOf(e: JsonElement?) =
@@ -359,6 +329,35 @@ internal suspend fun playableUrl(format: JsonObject, solve: suspend (type: Strin
 private val ALLOWED_URL = Regex("""https://(?:[a-z0-9-]+\.)*(?:googlevideo|youtube)\.com(?::443)?/videoplayback(?:\?[^#\s\\]*)?""")
 
 internal fun isAllowedUrl(url: String) = ALLOWED_URL.matches(url)
+
+private val ALLOWED_MANIFEST = Regex("""https://(?:[a-z0-9-]+\.)*googlevideo\.com(?::443)?/api/manifest/[^?#\s\\]*(?:\?[^#\s\\]*)?""")
+
+internal fun isAllowedManifestUrl(url: String) = ALLOWED_MANIFEST.matches(url)
+
+// yt-dlp _extract_formats_and_subtitles: the n challenge is a path segment, and HLS keeps its file suffix last.
+private val MANIFEST_N = Regex("""/n/([^/]+)/""")
+private val HLS_SUFFIX = Regex("""/(?:file|playlist)/index\.m3u8$""")
+
+/** [url] with its n challenge solved and, when given, [poToken] added as a `/pot/` segment (before HLS's file name). */
+internal suspend fun manifestUrlOf(url: String, poToken: String?, solveN: suspend (String) -> String): String {
+    val query = url.substringAfter('?', "").let { if (it.isEmpty()) "" else "?$it" }
+    var path = url.substringBefore('?')
+    MANIFEST_N.find(path)?.let { m -> path = path.replaceRange(m.groups[1]!!.range, solveN(m.groupValues[1])) }
+    if (poToken != null) {
+        val suffix = HLS_SUFFIX.find(path)?.value.orEmpty()
+        path = path.removeSuffix(suffix).trimEnd('/') + "/pot/$poToken" + suffix
+    }
+    return path + query
+}
+
+/** Whether the start of an answer is a manifest of [kind]: an M3U8 playlist or an MPD document. */
+internal fun isManifest(kind: VyonExManifestKind, start: String): Boolean {
+    val text = start.trimStart('\uFEFF', ' ', '\t', '\r', '\n')
+    return when (kind) {
+        VyonExManifestKind.HLS -> text.startsWith("#EXTM3U")
+        VyonExManifestKind.DASH -> "<MPD" in text
+    }
+}
 
 private val AudioFormat.codecRank get() = when {
     mimeType.startsWith("audio/webm") -> 2

@@ -36,7 +36,7 @@ class VideoTest {
     @Test
     fun videoComesWithAudioAndBothAreRemembered() = runTest {
         val engine = fixtureEngine(host)
-        val video = assertNotNull(engine.extractVideo("dQw4w9WgXcQ", 1080, setOf("TV_SAMSUNG"), false))
+        val video = assertNotNull(engine.extractVideo("dQw4w9WgXcQ", 1080, setOf("TVHTML5"), false))
         assertEquals("VISIONOS", video.profileId)
         assertEquals(listOf(1920, 1080, 25), listOf(video.width, video.height, video.fps))
         assertTrue(video.mimeType.startsWith("video/mp4"), video.mimeType)
@@ -50,7 +50,7 @@ class VideoTest {
 
     @Test
     fun requireAvcPairsAacAudio() = runTest {
-        val video = assertNotNull(fixtureEngine(host).extractVideo("dQw4w9WgXcQ", 2160, setOf("TV_SAMSUNG"), true))
+        val video = assertNotNull(fixtureEngine(host).extractVideo("dQw4w9WgXcQ", 2160, setOf("TVHTML5"), true))
         assertTrue(video.mimeType.contains("avc1"), video.mimeType)
         assertTrue(assertNotNull(video.audio).mimeType.startsWith("audio/mp4"))
     }
@@ -58,7 +58,7 @@ class VideoTest {
     @Test
     fun refusedVideoUrlIsNotReturned() = runTest {
         val engine = fixtureEngine(host, refusedClients = setOf("VISIONOS"))
-        assertNull(engine.extractVideo("dQw4w9WgXcQ", 1080, setOf("TV_SAMSUNG"), false))
+        assertNull(engine.extractVideo("dQw4w9WgXcQ", 1080, setOf("TVHTML5"), false))
         assertTrue(engine.isExcluded("dQw4w9WgXcQ", "VISIONOS"))
     }
 }

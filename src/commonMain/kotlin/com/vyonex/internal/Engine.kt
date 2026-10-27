@@ -8,6 +8,8 @@ import com.vyonex.VyonExArtist
 import com.vyonex.VyonExHostServices
 import com.vyonex.VyonExListPage
 import com.vyonex.VyonExLogLevel
+import com.vyonex.VyonExManifest
+import com.vyonex.VyonExManifestKind
 import com.vyonex.VyonExLogLevel.DEBUG
 import com.vyonex.VyonExLogLevel.INFO
 import com.vyonex.VyonExLogLevel.WARN
@@ -23,10 +25,12 @@ import com.vyonex.VyonExVideoStream
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -34,6 +38,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.readBuffer
+import kotlinx.io.readByteArray
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +76,7 @@ internal class Engine(
     internal val players = Players(http, store)
     private val remembered = AtomicReference(emptyMap<String, VyonExStream>())
     private val exclusions = AtomicReference(emptyMap<String, Long>())
+    internal val health = ClientHealth(host::nowMs)
 
     fun initialize() {
         scope.launch {
@@ -88,6 +95,7 @@ internal class Engine(
     fun onSessionChanged() {
         remembered.store(emptyMap())
         exclusions.store(emptyMap())
+        health.clear()
         if (host.configStore.enabled) scope.launch { warmUp() }
     }
 
@@ -145,6 +153,38 @@ internal class Engine(
         }
 
     /**
+     * The manifest a client offers for [videoId]: HLS when there is one (yt-dlp skips DASH while a stream is live),
+     * else DASH. Its n challenge is solved, a PO token added where the client needs one, and the manifest fetched to
+     * see it is one; a client whose manifest does not answer is excluded, as a refused stream URL is.
+     */
+    suspend fun manifest(videoId: String, skipClients: Set<String>): VyonExManifest? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val data = pr["streamingData"]
+            val (kind, raw) = listOf(VyonExManifestKind.HLS to "hlsManifestUrl", VyonExManifestKind.DASH to "dashManifestUrl")
+                .firstNotNullOfOrNull { (kind, key) -> data.at(key).str?.let { kind to it } }
+                ?: return@viaIdentities null.also { log(DEBUG, "${id.profileId} offers no manifest", videoId) }
+            val url = manifestUrlOf(raw, poToken) { players.current().js.solve("n", it) }.takeIf(::isAllowedManifestUrl)
+                ?: return@viaIdentities null.also { log(WARN, "${id.profileId} manifest is not a googlevideo manifest", videoId) }
+            if (!manifestAnswers(url, kind, headers, videoId, id.profileId)) return@viaIdentities null
+            VyonExManifest(videoId, kind, url, headers, id.profileId, isLive = pr.at("videoDetails", "isLive").bool == true)
+        }
+
+    /** Like [answers] for a manifest: a 200 whose first kilobyte is a manifest of [kind]. */
+    private suspend fun manifestAnswers(url: String, kind: VyonExManifestKind, headers: Map<String, String>, videoId: String, profileId: String): Boolean {
+        val refusal = http.prepareGet(url) { headers.forEach { (name, value) -> header(name, value) } }.execute { response ->
+            when {
+                response.status != HttpStatusCode.OK -> "HTTP ${response.status.value}"
+                !isManifest(kind, response.bodyAsChannel().readBuffer(1024L).readByteArray().decodeToString()) -> "not a $kind manifest"
+                else -> null
+            }
+        }
+        if (refusal == null) return true
+        log(WARN, "$profileId manifest refused ($refusal)", videoId)
+        exclude(videoId, profileId)
+        return false
+    }
+
+    /**
      * Writes [format] to [sink] from byte [from] in ranged requests of [chunkBytes], as yt-dlp does (YouTube slows
      * long single requests), and returns the position reached. A refused request throws: list the formats again
      * and resume from the bytes already written.
@@ -182,7 +222,7 @@ internal class Engine(
     /** Everything YouTube says about the video: WEB reports the most (microformat), VISIONOS needs no player script. */
     suspend fun metadata(videoId: String): VyonExMetadata? {
         val session = host.session()
-        for (id in listOf("WEB", "VISIONOS").map { profile -> IDENTITIES.first { it.profileId == profile } }) {
+        for (id in listOf("WEB", "VISIONOS").map(::identity)) {
             try {
                 // Cookies go only to clients that take them.
                 val asked = if (id.supportsCookies) session else session.copy(cookie = null)
@@ -211,9 +251,8 @@ internal class Engine(
         val loggedIn = isLoggedIn(session.cookie)
         var visitorData = session.visitorData
         var unplayable: VyonExUnplayableException? = null
-        for (id in IDENTITIES) {
+        for (id in health.ordered(if (loggedIn) LOGGED_IN_ORDER else LOGGED_OUT_ORDER)) {
             if (id.profileId in skipClients || id.clientName in skipClients || isExcluded(videoId, id.profileId)) continue
-            if (loggedIn && !id.supportsCookies) continue
             try {
                 val token = if (id.needsPoToken) {
                     val provider = tokenProvider ?: continue
@@ -229,11 +268,15 @@ internal class Engine(
                     log(DEBUG, "${id.profileId} refused (${refusal.status}: ${refusal.youtubeReason})", videoId)
                     continue
                 }
-                pick(id, pr, token?.streamingDataToken, mediaHeaders(id.userAgent, session))?.let { return it }
+                pick(id, pr, token?.streamingDataToken, mediaHeaders(id.userAgent, session))?.let {
+                    health.succeeded(id.profileId)
+                    return it
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 log(WARN, "${id.profileId} failed: ${e.describe()}", videoId)
+                health.failed(id.profileId)
             }
         }
         unplayable?.let { throw it }
@@ -342,7 +385,7 @@ internal class Engine(
     /** A logged-out InnerTube call (WEB unless told otherwise): no cookie is sent, so lists are the public ones. */
     private suspend fun innertube(
         endpoint: String,
-        id: Identity = IDENTITIES.first { it.profileId == "WEB" },
+        id: Identity = identity("WEB"),
         origin: String = YT_ORIGIN,
         fields: JsonObjectBuilder.() -> Unit,
     ): JsonObject {
@@ -376,6 +419,7 @@ internal class Engine(
 
     fun exclude(videoId: String, profileId: String) {
         log(WARN, "excluding $profileId for 10 minutes", videoId)
+        health.failed(profileId)
         val now = host.nowMs()
         exclusions.update { all -> all.filterValues { it > now } + ("$videoId/$profileId" to now + EXCLUSION_MS) }
     }
@@ -455,15 +499,17 @@ internal class Engine(
 
     /**
      * BRIEF 4.2 only counts a format "whose URL works", so the URL is probed for one byte with the
-     * stream's own headers. A refusal excludes the profile, as onRefused would.
+     * stream's own headers, and only a ranged answer counts ([probeRefusal]). The answer is streamed
+     * and its body never read: a server ignoring the range would otherwise send the whole file. A
+     * refusal excludes the profile, as onRefused would.
      */
     private suspend fun answers(url: String, headers: Map<String, String>, videoId: String, profileId: String): Boolean {
-        val status = http.get(url) {
+        val refusal = http.prepareGet(url) {
             headers.forEach { (name, value) -> header(name, value) }
             header(HttpHeaders.Range, "bytes=0-0")
-        }.status
-        if (status.isSuccess()) return true
-        log(WARN, "$profileId URL refused (HTTP ${status.value})", videoId)
+        }.execute { probeRefusal(it.status, it.headers[HttpHeaders.ContentRange], it.headers[HttpHeaders.ContentType]) }
+        if (refusal == null) return true
+        log(WARN, "$profileId URL refused ($refusal)", videoId)
         exclude(videoId, profileId)
         return false
     }
@@ -513,3 +559,22 @@ internal class Engine(
 }
 
 private fun Throwable.describe() = "${this::class.simpleName}: $message"
+
+private val FIRST_BYTE = Regex("""bytes 0-0/(\d+)""")
+
+/**
+ * Why a probe's answer does not count, or null when it does: a 206 for exactly the first byte of a
+ * file that has bytes. A 200 means the range was ignored, and an error or block page (HTML, JSON,
+ * text) can come back with a success status. Media types are not checked one by one, so an
+ * unexpected but real media type still counts.
+ */
+internal fun probeRefusal(status: HttpStatusCode, contentRange: String?, contentType: String?): String? {
+    val type = contentType?.substringBefore(';')?.trim()?.lowercase()
+    return when {
+        status != HttpStatusCode.PartialContent -> "HTTP ${status.value}"
+        (FIRST_BYTE.matchEntire(contentRange?.trim().orEmpty())?.groupValues?.get(1)?.toLongOrNull() ?: 0) <= 0 ->
+            "range not honoured: ${contentRange ?: "no Content-Range"}"
+        type != null && (type.startsWith("text/") || type == "application/json") -> "not media: $type"
+        else -> null
+    }
+}

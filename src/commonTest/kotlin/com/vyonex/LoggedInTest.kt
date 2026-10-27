@@ -54,7 +54,7 @@ class LoggedInTest {
     fun aConsentCookieIsSentButIsNoLogin() = runTest {
         host.cookie = "CONSENT=YES+1"
         val requests = mutableListOf<HttpRequestData>()
-        val stream = assertNotNull(fixtureEngine(host, requests = requests).extract("dQw4w9WgXcQ", 160, setOf("TV_SAMSUNG"), false))
+        val stream = assertNotNull(fixtureEngine(host, requests = requests).extract("dQw4w9WgXcQ", 160, setOf("TVHTML5"), false))
         assertEquals("VISIONOS", stream.profileId)
         // Media requests carry a cookie only for a login.
         assertEquals(setOf("User-Agent"), stream.headers.keys)
@@ -65,6 +65,23 @@ class LoggedInTest {
     }
 
     @Test
+    fun loggedInTriesTheEmbeddedPlayerFirst() = runTest(timeout = 5.minutes) {
+        host.cookie = cookie
+        val requests = mutableListOf<HttpRequestData>()
+        val stream = assertNotNull(fixtureEngine(host, requests = requests).extract("dQw4w9WgXcQ", 160, emptySet(), false), "${host.logs}")
+        // yt-dlp's logged-in order starts with web_embedded, which needs no PO token.
+        assertEquals("WEB_EMBEDDED", stream.profileId)
+        val player = requests.playerRequests().single()
+        assertEquals("56", player.headers["X-YouTube-Client-Name"])
+        assertEquals(cookie, player.headers[HttpHeaders.Cookie])
+        assertEquals(sidAuthorization(cookie, host.now), player.headers[HttpHeaders.Authorization])
+        val body = (player.body as TextContent).text
+        listOf("\"clientName\":\"WEB_EMBEDDED_PLAYER\"", "\"thirdParty\":{\"embedUrl\":\"https://www.reddit.com/\"}")
+            .forEach { assertTrue(it in body, it) }
+        assertEquals(cookie, stream.headers["Cookie"])
+    }
+
+    @Test
     fun loggedInWebUsesCredentialsAndThePoToken() = runTest(timeout = 5.minutes) {
         host.cookie = cookie
         host.visitorData = "SESSION-VISITOR"
@@ -72,7 +89,7 @@ class LoggedInTest {
         // WEB is answered with the VISIONOS capture, whose formats have direct URLs (no SABR); WEB still needs the
         // player's signature timestamp, so the captured player is prepared first.
         val engine = fixtureEngine(host, tokenProvider = tokens, webFixture = "visionos", requests = requests)
-        val stream = assertNotNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TV_SAMSUNG"), false), "${host.logs}")
+        val stream = assertNotNull(engine.extract("dQw4w9WgXcQ", 160, setOf("TVHTML5", "WEB_EMBEDDED"), false), "${host.logs}")
 
         // VISIONOS takes no cookies, so a logged-in session skips it.
         val player = requests.playerRequests().single()

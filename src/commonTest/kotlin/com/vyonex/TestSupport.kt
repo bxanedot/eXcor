@@ -6,6 +6,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
@@ -27,8 +28,8 @@ internal fun fixtureJson(name: String): JsonObject = Json.parseToJsonElement(fix
 
 /**
  * An engine served by the fixtures: player requests are answered by client name (WEB with [webFixture]),
- * media URLs with 206 (403 when the URL's `c` client is in [refusedClients]), and [failing] paths with 500.
- * Every request is added to [requests].
+ * media URLs with a 206 for their first byte as googlevideo sends it (403 when the URL's `c` client is in
+ * [refusedClients], [mediaAnswer] when set), and [failing] paths with 500. Every request is added to [requests].
  */
 internal fun fixtureEngine(
     host: FakeHost,
@@ -39,6 +40,12 @@ internal fun fixtureEngine(
     requests: MutableList<HttpRequestData> = mutableListOf(),
     /** When set, the one player response every client gets. */
     playerFixture: String? = null,
+    /** When set, how every media URL answers: a status and its headers. */
+    mediaAnswer: Pair<HttpStatusCode, Headers>? = null,
+    /** When set, the player response every client gets, as text (for responses built in a test). */
+    playerBody: String? = null,
+    /** How manifest URLs answer: a status and a body. */
+    manifestAnswer: Pair<HttpStatusCode, String> = HttpStatusCode.OK to "#EXTM3U\n#EXT-X-INDEPENDENT-SEGMENTS\n",
 ) = Engine(
     host,
     tokenProvider = tokenProvider,
@@ -52,16 +59,25 @@ internal fun fixtureEngine(
             url.encodedPath.startsWith("/s/player/dce23b30/") -> respond(fixture("player-dce23b30.js"))
             url.encodedPath == "/youtubei/v1/player" -> {
                 val body = (request.body as TextContent).text
-                val client = mapOf("TVHTML5" to "tv_samsung", "VISIONOS" to "visionos", "WEB" to webFixture)
+                // The embedded player is answered with the VISIONOS capture, whose formats have direct URLs.
+                val client = mapOf("TVHTML5" to "tv_samsung", "VISIONOS" to "visionos", "WEB" to webFixture, "WEB_EMBEDDED_PLAYER" to "visionos")
                     .entries.first { "\"clientName\":\"${it.key}\"" in body }.value
-                respond(fixture(playerFixture ?: "player-response-$client.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                respond(playerBody ?: fixture(playerFixture ?: "player-response-$client.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
             }
+            url.host == "manifest.googlevideo.com" -> respond(manifestAnswer.second, manifestAnswer.first)
             url.host.endsWith(".googlevideo.com") -> {
                 // The probe asks for one byte with the stream's own headers.
                 assertEquals("bytes=0-0", request.headers[HttpHeaders.Range])
                 assertNotNull(request.headers[HttpHeaders.UserAgent])
-                val refused = url.parameters["c"] in refusedClients
-                respond("x", if (refused) HttpStatusCode.Forbidden else HttpStatusCode.PartialContent)
+                when {
+                    url.parameters["c"] in refusedClients -> respond("", HttpStatusCode.Forbidden)
+                    mediaAnswer != null -> respond("x", mediaAnswer.first, mediaAnswer.second)
+                    else -> respond(
+                        "x",
+                        HttpStatusCode.PartialContent,
+                        headersOf(HttpHeaders.ContentRange to listOf("bytes 0-0/3433514"), HttpHeaders.ContentType to listOf("audio/webm")),
+                    )
+                }
             }
             else -> error("unexpected request to ${url.host}${url.encodedPath}")
         }

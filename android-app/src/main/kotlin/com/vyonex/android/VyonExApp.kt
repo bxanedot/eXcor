@@ -7,6 +7,7 @@ import com.vyonex.VyonEx
 import com.vyonex.VyonExConfigStore
 import com.vyonex.VyonExHost
 import com.vyonex.VyonExLogLevel
+import com.vyonex.VyonExManifestKind
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExStream
 import com.vyonex.app.Playback
@@ -30,8 +31,14 @@ class VyonExApp : Application() {
         vyonEx = VyonEx(AndroidHost(this)).apply { init() }
         playback = Playback(
             object : StreamSource {
-                // The best audio; VyonEx picks the format.
-                override suspend fun stream(videoId: String): VyonExStream? = vyonEx.extract(videoId, maxKbps = 160)
+                // The best audio; VyonEx picks the format. A live stream has no single file, so its manifest plays.
+                override suspend fun stream(videoId: String): VyonExStream? =
+                    vyonEx.extract(videoId, maxKbps = 160) ?: vyonEx.manifest(videoId)?.let { manifest ->
+                        VyonExStream(
+                            manifest.videoId, manifest.url, 0, MANIFEST_TYPES.getValue(manifest.kind), null,
+                            manifest.profileId, manifest.profileId, manifest.headers,
+                        )
+                    }
 
                 override fun refused(url: String) {
                     vyonEx.onRefused(url)
@@ -43,6 +50,9 @@ class VyonExApp : Application() {
         downloads = Downloads(this, vyonEx)
     }
 }
+
+/** The MIME types the player picks its HLS or DASH source by. */
+internal val MANIFEST_TYPES = mapOf(VyonExManifestKind.HLS to "application/x-mpegURL", VyonExManifestKind.DASH to "application/dash+xml")
 
 /** Logged out (no cookie), in the phone's language and region. */
 private class AndroidHost(context: Context) : VyonExHost {

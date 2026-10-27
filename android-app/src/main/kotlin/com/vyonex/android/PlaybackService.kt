@@ -13,11 +13,14 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.dash.DashMediaSource
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.vyonex.VyonExManifestKind
 import com.vyonex.app.PlayState
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -101,7 +104,12 @@ class PlaybackService : MediaSessionService() {
                         .build(),
                 )
                 .build()
-            exo.setMediaSource(ProgressiveMediaSource.Factory(http).createMediaSource(item))
+            val source = when (ready.stream.mimeType) {
+                MANIFEST_TYPES.getValue(VyonExManifestKind.HLS) -> HlsMediaSource.Factory(http)
+                MANIFEST_TYPES.getValue(VyonExManifestKind.DASH) -> DashMediaSource.Factory(http)
+                else -> ProgressiveMediaSource.Factory(http)
+            }
+            exo.setMediaSource(source.createMediaSource(item))
         }
         if (start) {
             // Only acts when the player is stopped or failed, which it can be when the same track is started again.

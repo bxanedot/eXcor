@@ -48,6 +48,13 @@ val samePair = formats.mergePair(maxHeight = 2160, container = container)
 VyonExMerge.remuxAudio(audioFile, outputFile)
 ```
 
+Live streams (and any video whose client offers one) come as an HLS or DASH manifest, which players read themselves:
+
+```kotlin
+val manifest = vyonEx.manifest("jfKfPfyJRdk")  // kind HLS or DASH, url, headers, isLive
+// ExoPlayer: HlsMediaSource / DashMediaSource with manifest.headers; AVPlayer: HLS.
+```
+
 Playlists (public ones; no cookie is sent):
 
 ```kotlin
@@ -98,9 +105,11 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
 ## How it works
 
 1. Reads `host.session()` (cookie, visitor data, `gl`, `hl`) on every call.
-2. Asks the player API with up to three client identities, in yt-dlp's current default order:
-   `TV_SAMSUNG` (TVHTML5), `VISIONOS`, then `WEB` (only with a PO token from `host.tokenProvider`).
-   Logged-in sessions skip `VISIONOS`, which does not take cookies.
+2. Asks the player API with one client identity after another (`Clients.kt`), in yt-dlp's current
+   default order: logged out `TV_SAMSUNG` (TVHTML5), `VISIONOS`, then `WEB` (only with a PO token
+   from `host.tokenProvider`); logged in `WEB_EMBEDDED`, `TV_SAMSUNG`, `WEB` (no `VISIONOS`, which
+   takes no cookies). Then two more TV clients that need no PO token, `TV` and `TV_DOWNGRADED`. A
+   client refused three times in a row, across videos, is tried last for 30 minutes.
 3. Decodes signature and `n` by running the player script's own functions in QuickJS, through
    yt-dlp's EJS solver (vendored in `ejs/`). The prepared player is cached per player version
    (JVM: `filesDir/vyonex-players`, three newest; iOS: memory).
@@ -109,9 +118,12 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
    bitrate; `requireAvc` keeps only H.264 video and AAC audio (what AVPlayer plays). Video-only
    formats come with the best audio up to 160 kbps. On a video with dubbed audio, every choice is
    made from the original track's formats (as yt-dlp ranks them).
-5. Allows only `https://*.googlevideo.com|youtube.com/videoplayback` URLs, never SABR or HLS, and
-   checks every returned URL answers a one-byte ranged GET with the returned headers; a refused
-   identity is excluded for 10 minutes and the next one is tried.
+5. Allows only `https://*.googlevideo.com|youtube.com/videoplayback` URLs (manifests:
+   `https://*.googlevideo.com/api/manifest/…`), never SABR, and
+   checks every returned URL answers a one-byte ranged GET with the returned headers: only a 206
+   for that byte counts (not a 200, which ignored the range, nor an HTML, JSON or text page), and
+   the answer's body is never read. A refused identity is excluded for 10 minutes and the next one
+   is tried.
 6. iOS `extract` falls back to the watch page; `audioCandidates` lists the watch page's audio.
 7. `metadata` asks `WEB` (which adds the microformat: likes, category, dates, countries), then
    `VISIONOS`; it returns null when neither reports video details.

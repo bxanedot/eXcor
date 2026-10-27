@@ -66,7 +66,8 @@ internal fun failureOf(error: Throwable): Pair<Failure, String?> = when (error) 
 
 // Stream URLs carry their end of life as `expire` (Unix seconds); one this close to it is looked up again.
 private const val EXPIRY_MARGIN_SECONDS = 60
-private val EXPIRE = Regex("""[?&]expire=(\d+)""")
+// A media URL has `expire=` in its query, a manifest URL an `/expire/` segment in its path.
+private val EXPIRE = Regex("""(?:[?&]expire=|/expire/)(\d+)""")
 
 internal fun expiresAt(stream: VyonExStream): Long? = EXPIRE.find(stream.url)?.groupValues?.get(1)?.toLongOrNull()
 

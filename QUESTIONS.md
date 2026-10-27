@@ -365,3 +365,41 @@ Each item names the reading chosen; nothing was looked up in the old code.
     of the queue is marked as stopped. The choice logic is in `app-core` (`Download.kt`, tested on
     the JVM and the iOS simulator); `VyonExFormats.mergePair` makes the library's pair selection usable
     from shared code. No download has run against YouTube yet: the build machines get a bot check.
+49. **Stream probe: only a ranged media answer counts (owner's comparison report, 2026-10-27).**
+    The one-byte probe accepted any 2xx status and read the whole answer, so a server that ignored
+    the range would have sent an entire media file into memory, and an error page served as a
+    success would have passed. It now requires a 206 whose `Content-Range` is `bytes 0-0/<length>`
+    with a length above zero, turns away HTML, JSON and text answers, and streams the answer
+    without reading its body. Other content types still count, so an unexpected but real media
+    type is not refused. googlevideo's answer shape (206, `Content-Range`, a media type) is standard
+    HTTP; it has not been re-checked live since the change, as the build machines get a bot check.
+50. **More client identities, a logged-in order, client health (owner's comparison report P0,
+    2026-10-27).** The client profiles moved from the engine into `Clients.kt`, as data, so a
+    change on YouTube's side means editing a table. Logged in, the order is now yt-dlp's own
+    (`web_embedded`, `tv_samsung`, `web`): the embedded player takes cookies, needs no PO token, and
+    says which page embeds it (`thirdParty.embedUrl`, any non-YouTube page per yt-dlp; its value is
+    used). Logged out it stays `tv_samsung`, `visionos`, `web`. Both then try `tv` (the Cobalt TV
+    client) and `tv_downgraded`, which yt-dlp defines but does not try by default; they need no PO
+    token, so they cost a request only when the others failed. Clients that need a PO token for
+    their media (`mweb`, `ios`, `android`, `android_vr`, `web_safari`, `web_music`, `web_creator`,
+    `tv_simply`) are not added: VyonEx only gets tokens from the host, and a token minted for WEB is
+    not known to serve those clients. A client refused three times in a row across videos (refused
+    media, or a failed request; never a refusal of one video, such as an age gate) is tried after
+    the others for 30 minutes; a success or a new session clears it. On the owner's network, where
+    YouTube refuses TV_SAMSUNG (item 2), this saves a player request and a probe per video. The
+    new clients are untested live: the build machines get a bot check.
+51. **Live streams: HLS and DASH manifests (owner, 2026-10-27: "add an engine for DASH / HLS").**
+    `manifest(videoId)` returns the manifest a client offers, as yt-dlp reads it: HLS when there is
+    one (yt-dlp skips DASH while live), else DASH; the `/n/` challenge in its path solved with the
+    player; a PO token added as a `/pot/` segment where the client needs one; only
+    `https://*.googlevideo.com/api/manifest/…` URLs; and the manifest fetched to see that it is one
+    (an M3U8 or an MPD in its first kilobyte), else the client is excluded as for a refused stream.
+    Players read manifests themselves, so VyonEx does not parse them: the app plays a live stream
+    through Media3's HLS or DASH source when `extract` finds no single file. The VISIONOS capture
+    of an ordinary video already carries an `hls_variant` manifest (demuxed audio), so `manifest`
+    works for ordinary videos too. No live stream could be captured (bot check on the build
+    machines); the live tests give the VISIONOS capture the fields yt-dlp reads. Not yet: downloading
+    a manifest's segments (recording), DASH's own manifests for post-live recordings beyond what
+    players do, and SABR. While looking, the fixture check learned that manifest URLs carry the
+    requester's address as an `/ip/` path segment; it now redacts those as it does `ip=` (the
+    existing capture's is a private address).
