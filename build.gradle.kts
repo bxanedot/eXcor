@@ -59,7 +59,7 @@ kotlin {
 
     // For the Android app (owner's decision, QUESTIONS item 31). API 26 is where java.nio.file, used by the
     // disk cache, starts.
-    androidLibrary {
+    android {
         namespace = "com.vyonex"
         compileSdk = 37
         minSdk = 26

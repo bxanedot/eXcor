@@ -123,12 +123,26 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
 12. `search` asks the WEB `search` endpoint and `searchMusic` YouTube Music's; results are classified
     by what they link to, never by localized labels such as "Song" or "Album".
 
+## The app (in progress)
+
+The Android app lives in this repository, on top of the library. `app-core/` is its shared logic (Kotlin
+Multiplatform, so an iOS app can reuse it): the play queue and the playback controller. The Android shell
+(Compose, Media3) comes next.
+
+```kotlin
+val playback = Playback(source, scope, nowSeconds)  // source: VyonEx behind StreamSource
+playback.play(tracks)       // looks up the first track's stream, then the next one's ahead
+playback.state              // Idle, Loading, Ready(track, stream) or Failed(track, failure, YouTube's reason)
+playback.ended()            // from the platform player; follows repeat (off, all, one)
+playback.refused(url)       // the player got HTTP 403: VyonEx is told, and the track is looked up once more
+```
+
 ## Build and test
 
 Gradle 9.8.2 (wrapper), Kotlin 2.4.21, JDK 27 toolchain, JVM target 26.
 
 ```sh
-./gradlew jvmTest jvmJar                      # any OS
+./gradlew jvmTest jvmJar                      # any OS (library and app-core)
 ./gradlew assembleAndroidMain                 # Android AAR; needs ANDROID_HOME (an Android SDK)
 ./gradlew iosSimulatorArm64Test assembleVyonExReleaseXCFramework   # macOS
 VYONEX_LIVE=1 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # live, opt-in
