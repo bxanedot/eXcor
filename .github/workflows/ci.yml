@@ -19,7 +19,8 @@ jobs:
           java-version: |
             27
             21
-      - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar
+      # The runner image ships an Android SDK; AGP fetches a missing platform itself.
+      - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar assembleAndroidMain
         shell: bash
 
   macos:

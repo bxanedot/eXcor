@@ -80,6 +80,10 @@ All from Maven Central; licenses as declared in each POM.
 | TestNG | 7.0.0 | Apache-2.0 | test (JVM) |
 | JCommander (via TestNG) | 1.72 | Apache-2.0 | test (JVM) |
 | Gradle wrapper | 9.8.2 | Apache-2.0 | build |
+| Android Gradle Plugin (`com.android.kotlin.multiplatform.library`), from Google's Maven | 9.4.1 | Apache-2.0 | build |
+| Android SDK Platform 37 (`android.jar` to compile against) | 37.0 | Android SDK License Agreement (Google) | build only, not redistributed |
+| OkHttp Android artifact (`okhttp-android`, via Ktor's OkHttp engine) | 5.5.0 | Apache-2.0 | main (Android) |
+| QuickJS-KT Android artifact (`quickjs-kt-android`, bundles QuickJS natives, MIT) | 1.0.15 | Apache-2.0 | main (Android) |
 | org.gradle.toolchains.foojay-resolver-convention | 1.0.0 | Apache-2.0 | build |
 | GitHub Actions `actions/checkout@v4`, `actions/setup-java@v4` | v4 | MIT | CI |
 

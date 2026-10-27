@@ -1,15 +1,21 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     kotlin("multiplatform") version "2.4.21"
+    id("com.android.kotlin.multiplatform.library") version "9.4.1"
     `maven-publish`
 }
 
 group = "com.vyonex"
 version = "0.2.0"
 
-repositories { mavenCentral() }
+repositories {
+    google()
+    mavenCentral()
+}
 
 // The challenge solver scripts must reach every target, and Kotlin/Native has no resource
 // loading, so they are compiled in as string constants.
@@ -51,6 +57,27 @@ kotlin {
         testRuns.named("test") { executionTask.configure { useTestNG() } }
     }
 
+    // For the Android app (owner's decision, QUESTIONS item 31). API 26 is where java.nio.file, used by the
+    // disk cache, starts.
+    androidLibrary {
+        namespace = "com.vyonex"
+        compileSdk = 37
+        minSdk = 26
+        compilerOptions { jvmTarget = JvmTarget.JVM_17 }
+    }
+
+    // The default hierarchy (iosMain and friends) plus jvmCommonMain: the OkHttp and java.io.File host API that
+    // the JVM and Android share.
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmCommon") {
+                withJvm()
+                withCompilations { it.platformType == KotlinPlatformType.androidJvm }
+            }
+        }
+    }
+
     val xcf = XCFramework("VyonEx")
     listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
         target.binaries.framework {
@@ -70,7 +97,7 @@ kotlin {
                 implementation("io.github.dokar3:quickjs-kt:1.0.15")
             }
         }
-        jvmMain.dependencies { api("io.ktor:ktor-client-okhttp:3.6.0") }
+        getByName("jvmCommonMain").dependencies { api("io.ktor:ktor-client-okhttp:3.6.0") }
         iosMain.dependencies { implementation("io.ktor:ktor-client-darwin:3.6.0") }
         commonTest.dependencies {
             implementation(kotlin("test"))

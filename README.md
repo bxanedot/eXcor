@@ -22,6 +22,10 @@ val info = vyonEx.metadata("dQw4w9WgXcQ")
 // and, for YouTube Music uploads, info.music: track, artists, album, release year
 ```
 
+Android apps use the same API as the JVM (`VyonExHost` with your `OkHttpClient` and, for the player
+cache, `context.filesDir`). The library needs `minSdk` 26 and an app compiled against API 37 or
+newer, which OkHttp 5.5 requires.
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift
@@ -62,6 +66,7 @@ Gradle 9.8.2 (wrapper), Kotlin 2.4.21, JDK 27 toolchain, JVM target 26.
 
 ```sh
 ./gradlew jvmTest jvmJar                      # any OS
+./gradlew assembleAndroidMain                 # Android AAR; needs ANDROID_HOME (an Android SDK)
 ./gradlew iosSimulatorArm64Test assembleVyonExReleaseXCFramework   # macOS
 VYONEX_LIVE=1 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # live, opt-in
 VYONEX_LIVE=1 VYONEX_LIVE_IDS=id1,id2 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # also surveys these videos
