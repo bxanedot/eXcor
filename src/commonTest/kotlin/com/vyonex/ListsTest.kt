@@ -1,6 +1,8 @@
 package com.vyonex
 
 import com.vyonex.internal.Engine
+import com.vyonex.internal.albumOf
+import com.vyonex.internal.artistOf
 import com.vyonex.internal.continuationPageOf
 import com.vyonex.internal.durationOf
 import com.vyonex.internal.playlistOf
@@ -60,6 +62,48 @@ class ListsTest {
     }
 
     @Test
+    fun youTubeMusicAlbumPage() {
+        val album = assertNotNull(albumOf("MPREb_gTAcphH99wE", fixtureJson("browse-album-music.json")))
+        assertEquals("Royalty Free Music Library V2 (50 Songs)", album.title)
+        assertEquals("Royalty Free Music" to "UC9ALqqC4aIeG5iDs7i90Bfw", album.artist to album.artistChannelId)
+        assertEquals(2015, album.year)
+        // The same tracks as the album's playlist (captured separately as browse-album-playlist.json).
+        assertEquals("OLAK5uy_l1m0thk3g31NmIIz_vMIbWtyv7eZixlH0", album.playlistId)
+        assertEquals(4, album.thumbnails.size)
+        assertEquals(50, album.tracks.size)
+        // Rows without credits of their own are the album artist's.
+        assertEquals(
+            VyonExListItem("XNEnEBrHws8", "The Chill Zone", "Royalty Free Music", "UC9ALqqC4aIeG5iDs7i90Bfw", 268, emptyList()),
+            album.tracks.first(),
+        )
+        assertEquals("Cq4CADymLKU" to 215L, album.tracks.last().let { it.videoId to it.durationSeconds })
+        val playlist = assertNotNull(playlistOf("OLAK5uy_l1m0thk3g31NmIIz_vMIbWtyv7eZixlH0", fixtureJson("browse-album-playlist.json")))
+        assertEquals(playlist.firstPage.items.map { it.videoId }, album.tracks.map { it.videoId })
+        assertNull(albumOf("MPREb_x", fixtureJson("browse-playlist.json")))
+    }
+
+    @Test
+    fun youTubeMusicArtistPage() {
+        val artist = assertNotNull(artistOf("UCuAXFkgsw1L7xaCfnd5JJOw", fixtureJson("browse-artist-music.json")))
+        assertEquals("Rick Astley", artist.name)
+        assertTrue(artist.description!!.startsWith("Richard Paul Astley is an English singer"))
+        assertEquals(3, artist.thumbnails.size)
+        assertEquals(listOf("lYBUbBu4W08", "i_Q88T1HI_w", "3BFTio5296w", "ptiRKQnpx8M", "OFMthc9YkOw"), artist.topSongs.map { it.videoId })
+        val song = artist.topSongs.first()
+        assertEquals(listOf("Never Gonna Give You Up", "Rick Astley", "UCwZEU0wAwIyZb4x5G_KJp2w"), listOf(song.title, song.channelName, song.channelId))
+        assertEquals(2, song.thumbnails.size)
+        // All songs and all videos as playlists, told apart by what the shelves link to, not by their titles.
+        assertEquals("OLAK5uy_mYtM509QyBQ8g6U9moiAUud3rg6oswhHg", artist.songsPlaylistId)
+        assertEquals("OLAK5uy_kTAuc2ZOu5ihiGDql2Ax8X7zSYEe_z8ns", artist.videosPlaylistId)
+        // Ten albums then ten singles and EPs; featured-on and user playlists are not releases.
+        assertEquals(20, artist.releases.size)
+        assertEquals(VyonExRelease("MPREb_Me5NUhDIBWQ", "Are We There Yet?", 2023, artist.releases[0].thumbnails), artist.releases[0])
+        assertEquals("MPREb_SslJVn92SLw" to 2026, artist.releases[10].let { it.browseId to it.year })
+        assertTrue(artist.releases.all { it.browseId.startsWith("MPREb_") })
+        assertNull(artistOf("UCx", fixtureJson("browse-album-music.json")))
+    }
+
+    @Test
     fun durations() {
         assertEquals(260L, durationOf("4:20"))
         assertEquals(3723L, durationOf("1:02:03"))
@@ -87,8 +131,26 @@ class ListsTest {
         // Lists are public ones: the session's cookie is never sent.
         assertTrue(requests.all { it.headers[HttpHeaders.Cookie] == null && it.headers[HttpHeaders.Authorization] == null })
         assertEquals(listOf("visitor", "visitor"), requests.map { it.headers["X-Goog-Visitor-Id"] })
-        // A mix is not a playlist page.
+        // A mix is not a playlist page, nor a playlist an album page.
         assertFailsWith<IllegalArgumentException> { engine.playlist("RDdQw4w9WgXcQ") }
+        assertFailsWith<IllegalArgumentException> { engine.album("PLsyOSbh5bs16vubvKePAQ1x3PhKavfBIl") }
+        assertFailsWith<IllegalArgumentException> { engine.artist("MPREb_gTAcphH99wE") }
         assertEquals(2, requests.size)
+    }
+
+    @Test
+    fun albumsAskYouTubeMusic() = runTest {
+        val requests = mutableListOf<HttpRequestData>()
+        val engine = Engine(FakeHost().apply { cookie = "SID=secret" }, tokenProvider = null, store = null, http = HttpClient(MockEngine { request ->
+            requests += request
+            respond(fixture("browse-album-music.json"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }))
+        assertEquals(50, assertNotNull(engine.album("MPREb_gTAcphH99wE")).tracks.size)
+        val request = requests.single()
+        assertEquals("music.youtube.com/youtubei/v1/browse", request.url.host + request.url.encodedPath)
+        val body = (request.body as TextContent).text
+        assertTrue("\"clientName\":\"WEB_REMIX\"" in body && "\"browseId\":\"MPREb_gTAcphH99wE\"" in body, body)
+        assertEquals("67" to "https://music.youtube.com", request.headers["X-YouTube-Client-Name"] to request.headers[HttpHeaders.Origin])
+        assertNull(request.headers[HttpHeaders.Cookie])
     }
 }

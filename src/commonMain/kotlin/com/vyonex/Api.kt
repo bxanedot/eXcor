@@ -182,6 +182,39 @@ data class VyonExPlaylist(
     val firstPage: VyonExListPage,
 )
 
+/**
+ * A YouTube Music album page (`MPREb_…`). [playlistId] (`OLAK5uy_…`) holds the same tracks as a playlist. Tracks carry
+ * no thumbnails of their own; they share the album's.
+ */
+data class VyonExAlbum(
+    val browseId: String,
+    val playlistId: String?,
+    val title: String?,
+    val artist: String?,
+    val artistChannelId: String?,
+    val year: Int?,
+    val thumbnails: List<VyonExThumbnail>,
+    val tracks: List<VyonExListItem>,
+)
+
+/** An album, single or EP shown on an artist page; `VyonEx.album(browseId)` reads it. */
+data class VyonExRelease(val browseId: String, val title: String?, val year: Int?, val thumbnails: List<VyonExThumbnail>)
+
+/**
+ * A YouTube Music artist page. [songsPlaylistId] and [videosPlaylistId] list all of the artist's songs and videos
+ * (read them with `VyonEx.playlist`); [releases] are the albums, singles and EPs the page shows, up to 10 of each.
+ */
+data class VyonExArtist(
+    val channelId: String,
+    val name: String?,
+    val description: String?,
+    val thumbnails: List<VyonExThumbnail>,
+    val topSongs: List<VyonExListItem>,
+    val songsPlaylistId: String?,
+    val videosPlaylistId: String?,
+    val releases: List<VyonExRelease>,
+)
+
 /** What a YouTube or YouTube Music link or ID points at; see `VyonEx.parse`. */
 sealed class VyonExRef {
     /** A video, possibly opened from a list ([playlistId]) at [startSeconds]. */
@@ -194,6 +227,9 @@ sealed class VyonExRef {
 
     /** A mix (`RD…`): a list YouTube generates from a seed. */
     data class Mix(val playlistId: String) : VyonExRef()
+
+    /** A channel (`UC…`), which on YouTube Music is an artist page; see `VyonEx.artist`. */
+    data class Channel(val channelId: String) : VyonExRef()
 }
 
 enum class VyonExAudioFormat { M4A, WEBM_OPUS, OTHER }

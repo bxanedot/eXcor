@@ -48,6 +48,8 @@ func apiCheck() async throws {
         _ = album.browseId
     } else if let mix = ref as? VyonExRef.Mix {
         _ = mix.playlistId
+    } else if let channel = ref as? VyonExRef.Channel {
+        _ = channel.channelId
     }
     let candidates: [VyonExAudioCandidate] = try await vyonEx.audioCandidates(videoId: "v")
     for candidate in candidates {
@@ -102,6 +104,17 @@ func apiCheck() async throws {
         for item: VyonExListItem in page.items {
             let duration: KotlinLong? = item.durationSeconds
             _ = (item.videoId, item.title, item.channelName, item.channelId, duration, item.thumbnails)
+        }
+    }
+    if let album: VyonExAlbum = try await vyonEx.album(browseId: "MPREb_x") {
+        let year: KotlinInt? = album.year
+        _ = (album.browseId, album.playlistId, album.title, album.artist, album.artistChannelId, year, album.thumbnails, album.tracks)
+    }
+    if let artist: VyonExArtist = try await vyonEx.artist(channelId: "UC") {
+        _ = (artist.channelId, artist.name, artist.description_, artist.thumbnails, artist.topSongs, artist.songsPlaylistId, artist.videosPlaylistId)
+        for release: VyonExRelease in artist.releases {
+            let year: KotlinInt? = release.year
+            _ = (release.browseId, release.title, year, release.thumbnails)
         }
     }
     let headers: [String: String]? = vyonEx.headersFor(url: "u")

@@ -12,6 +12,7 @@ private val VIDEO_ID = Regex("[0-9A-Za-z_-]{11}")
 // yt-dlp _base.py _PLAYLIST_ID_RE.
 private val PLAYLIST_ID = Regex("(?:PL|LL|EC|UU|FL|RD|UL|TL|PU|OLAK5uy_)[0-9A-Za-z_-]{10,}|RDMM|WL|LL|LM")
 private val ALBUM_ID = Regex("MPREb_[0-9A-Za-z_-]+")
+private val CHANNEL_ID = Regex("UC[0-9A-Za-z_-]{22}")
 // Paths followed by a video ID; "videoseries" and "live_stream" fit the ID pattern but are not videos.
 private val VIDEO_PATHS = setOf("v", "embed", "e", "shorts", "live")
 private val NOT_VIDEO_IDS = setOf("videoseries", "live_stream")
@@ -23,6 +24,7 @@ internal fun parseRef(input: String): VyonExRef? {
     if (VIDEO_ID.matches(text)) return VyonExRef.Video(text)
     if (ALBUM_ID.matches(text)) return VyonExRef.Album(text)
     if (PLAYLIST_ID.matches(text)) return listRef(text)
+    if (CHANNEL_ID.matches(text)) return VyonExRef.Channel(text)
 
     val link = SCHEME.replace(text, "")
     // Anything before the first '/', '?' or '#' is the host; userinfo or a port makes it unknown.
@@ -47,11 +49,14 @@ internal fun parseRef(input: String): VyonExRef? {
     }
     if (segments.size == 2 && segments[0] == "browse") {
         val id = segments[1]
-        // yt-dlp _tab.py: a "VL" browse ID is the playlist after the prefix.
+        // yt-dlp _tab.py: a "VL" browse ID is the playlist after the prefix, a "UC" one the channel.
         if (id.startsWith("VL") && PLAYLIST_ID.matches(id.substring(2))) return listRef(id.substring(2))
         if (ALBUM_ID.matches(id)) return VyonExRef.Album(id)
+        if (CHANNEL_ID.matches(id)) return VyonExRef.Channel(id)
         return null
     }
+    // A channel page or one of its tabs; @handles need a request to resolve and are not read here.
+    if (segments.size >= 2 && segments[0] == "channel" && CHANNEL_ID.matches(segments[1])) return VyonExRef.Channel(segments[1])
     // A list without a usable video, as yt-dlp treats watch?list=, playlist?list= and embed/videoseries?list=.
     return list?.let(::listRef)
 }
