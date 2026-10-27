@@ -4,6 +4,7 @@ import com.vyonex.VyonExAlbum
 import com.vyonex.VyonExArtist
 import com.vyonex.VyonExListItem
 import com.vyonex.VyonExListPage
+import com.vyonex.VyonExMix
 import com.vyonex.VyonExPlaylist
 import com.vyonex.VyonExRelease
 import com.vyonex.VyonExSession
@@ -79,8 +80,10 @@ internal fun lockupItemOf(lockup: JsonElement?): VyonExListItem? {
 /** The videos in [entries] and the token for the next page, if any. */
 internal fun listPageOf(entries: List<JsonElement>) = VyonExListPage(
     items = entries.mapNotNull { lockupItemOf(it.at("lockupViewModel")) },
+    // The newer and the older continuation entry (yt-dlp _extract_continuation): playlists use the first, related videos the second.
     continuation = entries.firstNotNullOfOrNull {
         it.at("continuationItemViewModel", "continuationCommand", "innertubeCommand", "continuationCommand", "token").str
+            ?: it.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str
     },
 )
 
@@ -106,10 +109,62 @@ internal fun playlistOf(playlistId: String, response: JsonObject): VyonExPlaylis
     )
 }
 
-/** The next page of a list, from a browse continuation response. */
+/** The next page of a list from a continuation response, wherever yt-dlp looks for its items. */
 internal fun continuationPageOf(response: JsonObject) = listPageOf(
-    response.at("onResponseReceivedActions").list.flatMap { it.at("appendContinuationItemsAction", "continuationItems").list },
+    listOf("onResponseReceivedActions", "onResponseReceivedEndpoints").flatMap { response.at(it).list }.flatMap {
+        it.at("appendContinuationItemsAction", "continuationItems").list + it.at("reloadContinuationItemsCommand", "continuationItems").list
+    },
 )
+
+/** The related videos beside a video, from a watch-next response. */
+internal fun relatedOf(response: JsonObject) =
+    listPageOf(response.at("contents", "twoColumnWatchNextResults", "secondaryResults", "secondaryResults", "results").list)
+
+/** A mix's video (a `playlistPanelVideoRenderer`, read as yt-dlp's _extract_video reads it). */
+private fun panelItemOf(item: JsonElement?): VyonExListItem? {
+    val videoId = item.at("videoId").str ?: return null
+    val byline = item.at("shortBylineText")
+    return VyonExListItem(
+        videoId = videoId,
+        title = textOf(item.at("title")),
+        channelName = textOf(byline),
+        channelId = byline.at("runs").list.firstNotNullOfOrNull { it.at("navigationEndpoint", "browseEndpoint", "browseId").str },
+        durationSeconds = durationOf(textOf(item.at("lengthText"))),
+        thumbnails = thumbnailsOf(item.at("thumbnail", "thumbnails")),
+    )
+}
+
+private fun JsonObject.mixPanel() = at("contents", "twoColumnWatchNextResults", "playlist", "playlist")
+
+/** A mix from a watch-next response; null when the response has no mix panel. */
+internal fun mixOf(response: JsonObject): VyonExMix? {
+    val panel = response.mixPanel() ?: return null
+    return VyonExMix(panel.at("playlistId").str ?: return null, panel.at("title").str, mixPageOf(panel, after = null))
+}
+
+/** The videos after [after] in a later watch-next response of the same mix. */
+internal fun mixMoreOf(response: JsonObject, after: String) =
+    response.mixPanel()?.let { mixPageOf(it, after) } ?: VyonExListPage(emptyList(), null)
+
+/**
+ * yt-dlp _extract_inline_playlist: the panel shows a window of the mix, so a later call repeats videos up to [after]
+ * and only the ones following it are new. The continuation is the last video's place (playlist, video, index,
+ * params); with nothing new, the mix has run dry and there is none.
+ */
+private fun mixPageOf(panel: JsonElement, after: String?): VyonExListPage {
+    val entries = panel.at("contents").list.map { it.at("playlistPanelVideoRenderer") }
+    val items = entries.mapNotNull(::panelItemOf)
+    val fresh = items.drop(items.indexOfFirst { it.videoId == after } + 1)
+    val last = entries.lastOrNull().at("navigationEndpoint", "watchEndpoint")
+    val playlistId = panel.at("playlistId").str
+    val continuation = if (fresh.isEmpty() || playlistId == null) null else listOf(
+        playlistId,
+        last.at("videoId").str ?: items.last().videoId,
+        last.at("index").str ?: "${items.size}",
+        last.at("params").str ?: "OAE%3D",
+    ).joinToString(" ")
+    return VyonExListPage(fresh, continuation)
+}
 
 /** A YouTube Music album page (WEB_REMIX browse of `MPREb_…`); null when it has no album header. */
 internal fun albumOf(browseId: String, response: JsonObject): VyonExAlbum? {

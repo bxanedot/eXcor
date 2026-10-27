@@ -85,6 +85,21 @@ class VyonEx(host: VyonExHost) {
     @Throws(Throwable::class)
     suspend fun artist(channelId: String): VyonExArtist? = engine.artist(channelId)
 
+    /** A mix (`RD…`) and its first videos; [videoId] picks where it starts. */
+    @Throws(Throwable::class)
+    suspend fun mix(playlistId: String, videoId: String? = null): VyonExMix? = engine.mix(playlistId, videoId)
+
+    /** More of a mix, from the previous page's `continuation`; mixes keep going until YouTube has nothing new. */
+    @Throws(Throwable::class)
+    suspend fun mixMore(continuation: String): VyonExListPage = engine.mixMore(continuation)
+
+    /** The videos YouTube recommends beside [videoId] (logged out), then `relatedMore` for more. */
+    @Throws(Throwable::class)
+    suspend fun related(videoId: String): VyonExListPage = engine.related(videoId)
+
+    @Throws(Throwable::class)
+    suspend fun relatedMore(continuation: String): VyonExListPage = engine.relatedMore(continuation)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)

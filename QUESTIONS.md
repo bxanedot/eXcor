@@ -272,3 +272,15 @@ Each item names the reading chosen; nothing was looked up in the old code.
     localized titles. `parse` now reads channel links (`/channel/UC…`, YouTube Music's
     `/browse/UC…`, a bare `UC…` ID) as `VyonExRef.Channel`; `@handle` links still give null, as
     resolving a handle takes a request.
+43. **Mixes and related videos ("recommendations", logged out).** Both come from the WEB `next`
+    (watch-next) endpoint. `mix(RD…)` reads the mix panel's videos (`playlistPanelVideoRenderer`,
+    as yt-dlp's `_extract_video`: title, short byline for the channel, length text). A video's own
+    mix (`RD` + its 11-character ID) starts from that video; other mix kinds (`RDCLAK…`, `RDMM`)
+    are asked by playlist ID alone, which no capture covers. Mixes do not end: as in yt-dlp's
+    `_extract_inline_playlist`, the next call names the last video's place (playlist, video, index,
+    params) and keeps only the videos after it; when none are new, the continuation is null.
+    `mixMore` takes that place as an opaque continuation string. `related(videoId)` returns the
+    20 videos beside the player (the same `lockupViewModel` items as playlists) and a token;
+    `relatedMore` reads the next page from `onResponseReceivedEndpoints`, where yt-dlp finds it.
+    That response shape was not captured; the test wraps the captured items in it. These are
+    YouTube's logged-out recommendations, not personal ones (account features come later).

@@ -215,6 +215,9 @@ data class VyonExArtist(
     val releases: List<VyonExRelease>,
 )
 
+/** A mix (`RD…`) and its first videos. Mixes do not end: `VyonEx.mixMore(continuation)` keeps going from the last one. */
+data class VyonExMix(val playlistId: String, val title: String?, val firstPage: VyonExListPage)
+
 /** What a YouTube or YouTube Music link or ID points at; see `VyonEx.parse`. */
 sealed class VyonExRef {
     /** A video, possibly opened from a list ([playlistId]) at [startSeconds]. */
