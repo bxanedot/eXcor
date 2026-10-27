@@ -31,6 +31,7 @@ redacting before it writes and refusing to write anything the checks above still
 
 ```sh
 VYONEX_CAPTURE=1 ./gradlew jvmTest --tests com.vyonex.CaptureFixtures --rerun -i
+VYONEX_CAPTURE=1 VYONEX_CAPTURE_ONLY=player-multi-audio.json ./gradlew jvmTest --tests com.vyonex.CaptureFixtures --rerun -i   # just these files
 ```
 
 Run it from a home network: datacenter addresses get different answers and bot checks. It stops at

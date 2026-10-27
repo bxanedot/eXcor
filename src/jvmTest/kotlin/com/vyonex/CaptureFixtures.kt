@@ -17,6 +17,7 @@ import kotlin.test.Test
 /**
  * Opt-in capture of the logged-out YouTube responses the error, collection, search and related tests need:
  * VYONEX_CAPTURE=1 ./gradlew jvmTest --tests com.vyonex.CaptureFixtures --rerun -i
+ * (VYONEX_CAPTURE_ONLY=file1.json,file2.json sends only the requests for those files).
  * Redacts before writing into fixtures/ (fixtures/README.md) and refuses to write a file the hygiene checks
  * still flag. Stops at a bot check instead of working around it. Prints file names, HTTP codes and sizes only.
  */
@@ -26,6 +27,8 @@ class CaptureFixtures {
     private val web = Client("WEB", 1, "2.20260708.00.00", "https://www.youtube.com")
     private val music = Client("WEB_REMIX", 67, "1.20260707.12.00", "https://music.youtube.com")
     private val http = OkHttpClient()
+    private val only = System.getenv("VYONEX_CAPTURE_ONLY").orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() }
+    private fun wanted(file: String) = only.isEmpty() || file in only
 
     @Test
     fun capture() {
@@ -35,11 +38,15 @@ class CaptureFixtures {
             "age" to "qpgTC9MDx1o", "not-found" to "AAAAAAAAAAA", "live" to "jfKfPfyJRdk",
             "upcoming" to "uEMx1aH5j8k", "blocked" to "17-7M-m3YRY",
         ).forEach { (case, videoId) -> player("player-unplayable-$case.json", videoId) }
+        // A video with dubbed audio tracks (Codex's candidate, issue #3), for preferring the original track.
+        player("player-multi-audio.json", "v9QtM6qnG50")
         // A playlist with over 400 videos (yt-dlp's tests), so it has a second page.
         val playlist = call("browse", web, "browse-playlist.json") { put("browseId", "VLPLsyOSbh5bs16vubvKePAQ1x3PhKavfBIl") }
         val token = playlist?.let { Regex(""""continuationCommand":\{"token":"([^"]+)"""").find(it)?.groupValues?.get(1) }
-        if (token == null) println("browse-playlist-continuation.json: no continuation token, skipped")
-        else call("browse", web, "browse-playlist-continuation.json") { put("continuation", token) }
+        when {
+            token != null -> call("browse", web, "browse-playlist-continuation.json") { put("continuation", token) }
+            wanted("browse-playlist-continuation.json") -> println("browse-playlist-continuation.json: no continuation token, skipped")
+        }
         // An album, its track playlist and an artist page (IDs from yt-dlp's tests and the existing captures).
         call("browse", music, "browse-album-music.json") { put("browseId", "MPREb_gTAcphH99wE") }
         call("browse", web, "browse-album-playlist.json") { put("browseId", "VLOLAK5uy_l1m0thk3g31NmIIz_vMIbWtyv7eZixlH0") }
@@ -81,6 +88,7 @@ class CaptureFixtures {
     }
 
     private fun post(url: String, body: String, headers: Map<String, String>, file: String): String? {
+        if (!wanted(file)) return null
         val request = Request.Builder().url(url).post(body.toRequestBody("application/json".toMediaType()))
             .apply { headers.forEach { (name, value) -> header(name, value) } }.build()
         val (code, text) = http.newCall(request).execute().use { it.code to it.body.string() }
