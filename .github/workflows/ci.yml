@@ -54,7 +54,8 @@ jobs:
           # The runner sets XDG_CONFIG_HOME, which avdmanager follows and the emulator does not; one AVD folder for both.
           export ANDROID_AVD_HOME=$HOME/.android/avd
           mkdir -p "$ANDROID_AVD_HOME"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image"
+          # One retry: a download cut short ("Error reading Zip content") fails the install, not the test.
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image" || $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image"
           echo no | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n check -k "$image"
           $ANDROID_HOME/emulator/emulator -avd check -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect &
           # Under the timeout too, so an emulator that exits fails the step instead of holding it to the job limit.
