@@ -323,3 +323,25 @@ Each item names the reading chosen; nothing was looked up in the old code.
     it needs, because `VyonEx` itself is a per-platform class; tests use a fake. 13 tests run on the
     JVM and, in CI, on the iOS simulator. The deprecated `androidLibrary {}` block in both builds is
     now `android {}`, as AGP 9.4 asks.
+47. **App, milestone A2: the Android shell.** `android-app/` (Compose, Media3 1.11), minimum Android
+    8.0. One screen: a link field (also filled by "Share" from another app), the opened page's
+    title, byline and tracks, "Play all", and a now-playing line with previous, play/pause and next
+    that also says why a track did not play. A video, a playlist or mix (first page), an album or an
+    artist (top songs) opens; paging, search, downloads and a player screen are later milestones.
+    `PlaybackService` (a `MediaSessionService`) holds only the current track; the `app-core` queue
+    decides what comes next, and the notification's and a headset's next and previous go to it.
+    Audio is `extract(videoId, maxKbps = 160)`, fetched with the stream's own headers; a 403 from the
+    player goes to `Playback.refused`. Logged out, in the phone's language and region. When Android
+    stops the service while paused and it is created again, the current track is set but not
+    fetched until play is pressed, so a URL that expired meanwhile cannot start playback on its own
+    (the 403 retry would). Shared text keeps its first web link, since some apps add words around
+    it. Media3 marks the forwarding player, the progressive source and the data spec as APIs that
+    may still change, so a Media3 upgrade may need edits. The service is exported, as media sessions are, so the
+    system's controls, headsets and car screens can connect; any app on the phone can then pause or
+    skip, as with other music players. No notification permission is asked for: Android 13 exempts
+    media session notifications. Release signing, shrinking and an open-source licenses screen come
+    with the release milestone. CI lints the app, starts it on the API 26 and 36 emulators (no
+    crash, the media service up) and uploads the debug APK. It has not played a track
+    anywhere yet: this machine has no KVM for an emulator, and the CI emulators open no link because
+    YouTube asks the build machines to sign in (item 41). The Gradle daemon now gets 3 GB
+    (`gradle.properties`); merging the app's dex files ran out of the default 512 MB.
