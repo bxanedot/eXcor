@@ -52,7 +52,21 @@ class MergeCheck : Instrumentation() {
         val output = File(dir, "merged-mismatch")
         val error = runCatching { VyonExMerge.merge(clip("video-vp9.webm"), clip("audio-aac.m4a"), output, VyonExContainer.MP4) }.exceptionOrNull()
         check(error is IllegalArgumentException && !output.exists()) { "mismatch: $error, output left: ${output.exists()}" }
-        return lines.joinToString("\n")
+        // Audio alone: AAC into a plain MP4, Opus into Ogg (Android 10 on), every sample kept.
+        val audioLines = listOf("audio-aac.m4a", "audio-opus.webm").map { name ->
+            val remuxed = File(dir, "remuxed-$name")
+            if (name.endsWith(".webm") && !VyonExMerge.supports(VyonExContainer.WEBM)) {
+                val refused = runCatching { VyonExMerge.remuxAudio(clip(name), remuxed) }.exceptionOrNull()
+                check(refused is UnsupportedOperationException && !remuxed.exists()) { "$name: $refused, output left: ${remuxed.exists()}" }
+                return@map "$name alone: refused on API ${Build.VERSION.SDK_INT}, as expected"
+            }
+            VyonExMerge.remuxAudio(clip(name), remuxed)
+            val expected = samplesOf(clip(name))
+            val actual = samplesOf(remuxed)
+            check(actual == expected) { "$name alone: $actual, expected $expected" }
+            "$name alone: $actual"
+        }
+        return (lines + audioLines).joinToString("\n")
     }
 
     /** Each track's MIME type and sample count. */

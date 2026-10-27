@@ -97,6 +97,8 @@ func apiCheck() async throws {
         if let pair: VyonExMergePair = vyonEx.mergePair(formats: formats, maxHeight: 2160, container: .webm) {
             _ = (pair.video.itag, pair.audio.itag, pair.container == .mp4)
         }
+        let shared: VyonExMergePair? = formats.mergePair(maxHeight: 1080, container: .mp4)
+        _ = shared
     }
     if let playlist: VyonExPlaylist = try await vyonEx.playlist(playlistId: "PL") {
         _ = (playlist.playlistId, playlist.title, playlist.description_, playlist.ownerName, playlist.ownerChannelId, playlist.thumbnails)

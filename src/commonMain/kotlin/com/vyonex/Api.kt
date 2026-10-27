@@ -1,5 +1,7 @@
 package com.vyonex
 
+import com.vyonex.internal.mergePairOf
+
 data class VyonExStream(
     val videoId: String,
     val url: String,
@@ -149,6 +151,9 @@ data class VyonExFormats(
 
 /** A video format and an audio format that merge into one file without re-encoding. */
 data class VyonExMergePair(val video: VyonExFormat, val audio: VyonExFormat, val container: VyonExContainer)
+
+/** The best video and audio of these formats that merge into one [container] file, at most [maxHeight] tall; for shared code. */
+fun VyonExFormats.mergePair(maxHeight: Int, container: VyonExContainer): VyonExMergePair? = mergePairOf(formats, maxHeight, container)
 
 /** [WEBM]: VP9 + Opus, up to 4K and beyond. [MP4]: H.264 + AAC, up to 1080p (YouTube has no H.264 above it). */
 enum class VyonExContainer { WEBM, MP4 }
