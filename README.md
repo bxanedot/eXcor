@@ -13,9 +13,12 @@ val stream = vyonEx.extract("dQw4w9WgXcQ", maxKbps = 160)
 val video = vyonEx.extractVideo("dQw4w9WgXcQ", maxHeight = 1080)
 // video.url is video only; play video.audio alongside it. video.audio == null: a combined format.
 
+val ref = vyonEx.parse("https://music.youtube.com/playlist?list=OLAK5uy_…")   // no network
+// VyonExRef.Video(videoId, playlistId, startSeconds), Playlist, Album (MPREb_…) or Mix (RD…); null otherwise
+
 val info = vyonEx.metadata("dQw4w9WgXcQ")
 // title, author, channel, duration, views, likes, full description, keywords, category,
-// publish/upload dates, thumbnails, live/private/unlisted/family-safe flags, countries, captions
+// publish/upload dates, thumbnails, live status, private/unlisted/family-safe flags, countries, captions
 ```
 
 iOS apps use the same library through `VyonEx.xcframework`:
