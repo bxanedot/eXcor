@@ -73,6 +73,12 @@ class ApiCheckTest {
         listOf<Any>(candidate.url, candidate.kbps, candidate.mimeType, candidate.format)
         assertEquals(listOf("M4A", "WEBM_OPUS", "OTHER"), VyonExAudioFormat.entries.map { it.name })
         assertEquals(listOf("NOT_LIVE", "LIVE", "UPCOMING", "WAS_LIVE", "POST_LIVE"), VyonExLiveStatus.entries.map { it.name })
+        val refused: IllegalStateException = VyonExUnplayableException("v", VyonExUnplayableReason.OTHER, "UNPLAYABLE", "r")
+        listOf<Any?>(refused.videoId, refused.reason, refused.status, refused.youtubeReason)
+        assertEquals(
+            listOf("AGE_RESTRICTED", "SIGN_IN_REQUIRED", "UNAVAILABLE", "UPCOMING", "GEO_RESTRICTED", "OTHER"),
+            VyonExUnplayableReason.entries.map { it.name },
+        )
         assertEquals(listOf("DEBUG", "INFO", "WARN", "ERROR"), VyonExLogLevel.entries.map { it.name })
 
         val session: VyonExSession = host.session()

@@ -220,3 +220,12 @@ Each item names the reading chosen; nothing was looked up in the old code.
     dubbed audio tracks, the audio choice here and in `extract` ignores which track is the
     original, so it can take a dub. The fix (yt-dlp reads `audioTrack.audioIsDefault`) waits for a
     capture of such a video.
+39. **Why a video won't play.** `VyonExUnplayableException` (still an `IllegalStateException`,
+    same message) carries `reason`, YouTube's `status` and `youtubeReason`. The sorting follows
+    yt-dlp: age gate (`desktopLegacyAgeGateReason` or its age phrases), country block (the
+    `errorScreen` subreason), `LIVE_STREAM_OFFLINE` as upcoming, `ERROR` as unavailable, "sign in"
+    as sign-in required, everything else other. The five captured refusals from the owner's
+    network sort as age-restricted, unavailable, upcoming and other (twice: an ended live stream
+    without a recording, a copyright block). The country block and sign-in cases are checked
+    against response shapes taken from yt-dlp's code, not captures. The iOS `extract` now
+    rethrows the refusal when the watch-page fallback finds nothing too, instead of returning null.
