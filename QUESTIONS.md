@@ -33,8 +33,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
    age-restricted video `LOGIN_REQUIRED: Sign in to confirm your age` (reported, not bypassed); a
    24/7 live stream `UNPLAYABLE: This live stream recording is not available.`; an upcoming event
    `UNPLAYABLE: This live event will begin in 30 hours.`; a copyright-blocked video its block
-   reason. Not yet verified: a YouTube Music auto-generated track, a region lock, and a private
-   video (the chosen IDs did not fit). The run showed `isLive` reading true for past and upcoming
+   reason. A follow-up run the same day added two YouTube Music auto-generated tracks
+   (`MgNrAu2pzNs`, `DbCvuSGfR3Y`, from yt-dlp's test data): VISIONOS opus audio (itag 251) and a
+   square 1080x1080 H.264 picture (itag 137), each answering 206; and a made-up ID
+   (`AAAAAAAAAAA`): `ERROR: This video is unavailable`, metadata null. Not yet verified: a region
+   lock and a private video. The first run showed `isLive` reading true for past and upcoming
    streams and a live stream's time on air as its duration; fixed in item 32.
    Logged-in sessions remain untested live.
 
