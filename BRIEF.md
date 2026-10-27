@@ -203,6 +203,8 @@ Do not push anywhere except the repository you were given.
 
 ## 8. Second deliverable: native Swift engine `VyonExKit`
 
+> **Withdrawn by the owner on 2026-10-27.** iOS apps use the Kotlin XCFramework; VyonExKit was delivered, then removed. Do not rebuild it.
+
 A pure-Swift package with the same job and behavior as the Kotlin library, for Apple apps that don't want the Kotlin framework. Build it after the Kotlin PR is open.
 
 - **Layout:** Swift Package Manager package in `swift/`, library product and module `VyonExKit`, license Apache-2.0. The module is not named `VyonEx`, so it can't clash with the Kotlin XCFramework.
