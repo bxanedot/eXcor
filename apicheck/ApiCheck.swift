@@ -96,6 +96,14 @@ func apiCheck() async throws {
             _ = (pair.video.itag, pair.audio.itag, pair.container == .mp4)
         }
     }
+    if let playlist: VyonExPlaylist = try await vyonEx.playlist(playlistId: "PL") {
+        _ = (playlist.playlistId, playlist.title, playlist.description_, playlist.ownerName, playlist.ownerChannelId, playlist.thumbnails)
+        let page: VyonExListPage = try await vyonEx.playlistMore(continuation: playlist.firstPage.continuation ?? "")
+        for item: VyonExListItem in page.items {
+            let duration: KotlinLong? = item.durationSeconds
+            _ = (item.videoId, item.title, item.channelName, item.channelId, duration, item.thumbnails)
+        }
+    }
     let headers: [String: String]? = vyonEx.headersFor(url: "u")
     let refused: String? = vyonEx.onRefused(url: "u")
     _ = (headers, refused)

@@ -69,6 +69,14 @@ class VyonEx(host: VyonExHost) {
     fun mergePair(formats: VyonExFormats, maxHeight: Int, container: VyonExContainer): VyonExMergePair? =
         mergePairOf(formats.formats, maxHeight, container)
 
+    /** A playlist and its first page of videos; null when YouTube shows no such playlist. Logged out. */
+    @Throws(Throwable::class)
+    suspend fun playlist(playlistId: String): VyonExPlaylist? = engine.playlist(playlistId)
+
+    /** The next page of a list, from the previous page's `continuation`. */
+    @Throws(Throwable::class)
+    suspend fun playlistMore(continuation: String): VyonExListPage = engine.playlistMore(continuation)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)

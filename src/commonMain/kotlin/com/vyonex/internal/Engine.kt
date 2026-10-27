@@ -4,12 +4,14 @@ import com.vyonex.VyonExAudioCandidate
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExFormats
 import com.vyonex.VyonExHostServices
+import com.vyonex.VyonExListPage
 import com.vyonex.VyonExLogLevel
 import com.vyonex.VyonExLogLevel.DEBUG
 import com.vyonex.VyonExLogLevel.INFO
 import com.vyonex.VyonExLogLevel.WARN
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExMetadata
+import com.vyonex.VyonExPlaylist
 import com.vyonex.VyonExSink
 import com.vyonex.VyonExStream
 import com.vyonex.VyonExUnplayableException
@@ -37,8 +39,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -271,6 +275,32 @@ internal class Engine(
     } catch (e: Throwable) {
         log(WARN, "audio candidates failed: ${e.describe()}", videoId)
         emptyList()
+    }
+
+    /** A playlist and its first page; null when YouTube shows no such playlist (missing or private). */
+    suspend fun playlist(playlistId: String): VyonExPlaylist? {
+        // yt-dlp: a mix is not a playlist page; it is read from the watch-next endpoint instead.
+        require(!playlistId.startsWith("RD")) { "VyonEx: $playlistId is a mix, not a playlist" }
+        return playlistOf(playlistId, browse { put("browseId", "VL$playlistId") })
+    }
+
+    suspend fun playlistMore(continuation: String): VyonExListPage = continuationPageOf(browse { put("continuation", continuation) })
+
+    /** A logged-out WEB browse request: no cookie is sent, so lists are the public ones. */
+    private suspend fun browse(fields: JsonObjectBuilder.() -> Unit): JsonObject {
+        val id = IDENTITIES.first { it.profileId == "WEB" }
+        val session = host.session()
+        val response = http.post("$YT_ORIGIN/youtubei/v1/browse?prettyPrint=false") {
+            contentType(ContentType.Application.Json)
+            setBody(innertubeBody(id, session, fields))
+            header(HttpHeaders.UserAgent, id.userAgent)
+            header("X-YouTube-Client-Name", id.clientId.toString())
+            header("X-YouTube-Client-Version", id.clientVersion)
+            header(HttpHeaders.Origin, YT_ORIGIN)
+            session.visitorData?.let { header("X-Goog-Visitor-Id", it) }
+        }
+        check(response.status.isSuccess()) { "VyonEx: browse HTTP ${response.status.value}" }
+        return Json.parseToJsonElement(response.bodyAsText()).jsonObject
     }
 
     fun headersFor(url: String): Map<String, String>? = remembered.load()[url]?.headers

@@ -43,6 +43,14 @@ val pair = vyonEx.mergePair(formats, maxHeight = 2160, container = container)!! 
 VyonExMerge.merge(videoFile, audioFile, outputFile, pair.container)  // needs room for both inputs again
 ```
 
+Playlists (public ones; no cookie is sent):
+
+```kotlin
+val playlist = vyonEx.playlist("PLsyOSbh5bs16vubvKePAQ1x3PhKavfBIl")  // title, owner, first ~100 videos
+var page = playlist!!.firstPage
+while (page.continuation != null) page = vyonEx.playlistMore(page.continuation!!)  // the next ~100
+```
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift
@@ -81,6 +89,8 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
    `VyonExUnplayableException`: `reason` (age-restricted, sign-in required, unavailable, upcoming,
    country-blocked or other, sorted as yt-dlp does) and `youtubeReason`, YouTube's own message.
    Swift gets it as the `NSError`'s `kotlinException`.
+9. `playlist` and `playlistMore` ask the logged-out WEB `browse` endpoint and read each video
+   (`lockupViewModel`) as yt-dlp does: title, channel, duration, thumbnails.
 
 ## Build and test
 

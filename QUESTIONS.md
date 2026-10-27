@@ -221,8 +221,8 @@ Each item names the reading chosen; nothing was looked up in the old code.
     its formats (fragmented MP4, WebM) and compares every track's sample count. Its first run on
     2026-10-27 merged both on API 36 (MP4: 60 video and 88 audio samples; WebM: 60 and 101); on
     API 26 a merge failed in `MediaMuxer.addTrack` without saying which; Android 8's missing Opus
-    explains it, and the next run checks that MP4 merges there. A real 4K download has not been
-    merged yet. That needs the owner's network and device.
+    explains it. With `supports` in place, API 26 merged MP4 with every sample (60 and 88) and
+    refused WebM as intended (PR #18). A real 4K download has not been merged yet. That needs the owner's network and device.
     Merging needs free space for both inputs again until they are deleted. Open: on a video with
     dubbed audio tracks, the audio choice here and in `extract` ignores which track is the
     original, so it can take a dub. The fix (yt-dlp reads `audioTrack.audioIsDefault`) waits for a
@@ -236,3 +236,23 @@ Each item names the reading chosen; nothing was looked up in the old code.
     without a recording, a copyright block). The country block and sign-in cases are checked
     against response shapes taken from yt-dlp's code, not captures. The iOS `extract` now
     rethrows the refusal when the watch-page fallback finds nothing too, instead of returning null.
+40. **Playlists.** `playlist(playlistId)` asks the logged-out WEB `browse` endpoint for `VL` + the
+    ID and returns the title, description, owner and the first page of videos (about 100);
+    `playlistMore(continuation)` returns the next page. Each video is a `lockupViewModel`, read as
+    yt-dlp's `_extract_lockup_view_model` reads it: title, channel (the metadata part linking to a
+    channel; for collaborations, the first channel in the avatar stack's dialog, which can have no
+    channel ID), duration from the thumbnail badge, thumbnails. The owner comes from the sidebar, as
+    the header's "by …" is localized. No cookie is sent, so only public lists are seen (account
+    features come later, item 36). An album's playlist (`OLAK5uy_…`) works the same way; mixes
+    (`RD…`) are refused here, as they need the watch-next endpoint. The first page carries two
+    continuation tokens: one closing the item section and one as a section of its own. The item
+    section's is used; it is the one that fetched the captured second page. Only `lockupViewModel`
+    items are read; YouTube's older `playlistVideoRenderer` did not appear in the captures. Checked
+    against Codex's captures: 100 + 100 videos of a 1,720-video playlist, and a 50-track album
+    playlist with no owner and no next page.
+41. **Working without Codex (owner, 2026-10-27).** Claude Code works on the project alone from now
+    on. What Codex supplied from the owner's network (live surveys and captures) is no longer
+    available: from the cloud build machine YouTube answers with a bot check (the multi-audio
+    capture stopped there on 2026-10-27, as designed). Later captures and live checks need the
+    owner's own run, or they are left out and said so. The dubbed-audio fix (item 38) will be built
+    from yt-dlp's field names and marked as unchecked against a capture.
