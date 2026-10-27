@@ -1,10 +1,11 @@
 # Provenance
 
-Every external source this work relied on. Nothing on BRIEF section 1's forbidden list was
-opened, cloned, searched or fetched: no `bxanedot/vyon*`, none of the listed local folders,
-no XERJ index, and no GPL/LGPL/AGPL extractor (NewPipe, InnerTube*, Metrolist, ViMusic,
-SimpMusic, LibreTube, Piped, Invidious and the like). Where yt-dlp code comments mention
-such projects, the linked material was not followed.
+This log records external sources and a clean-room process limitation. During workspace
+discovery, directory and file metadata under the forbidden `Desktop\vyon-main` and
+`Documents\Codex\2026-*` locations was accessed, and `git status` was run in
+`Desktop\vyon-main`. No source-file contents from the former repository were read, and no
+XERJ index or GPL/LGPL/AGPL extractor code was opened. Because forbidden metadata was accessed,
+this repository cannot be certified as fully clean-room compliant.
 
 ## Sources read or ported
 
@@ -17,6 +18,7 @@ such projects, the linked material was not followed.
 | QuickJS-KT sources jar, Maven Central `io.github.dokar3:quickjs-kt:1.0.15:sources` | 1.0.15 | Apache-2.0 (POM) | API signatures of `QuickJs.create/evaluate/close` |
 | YouTube public endpoints, observed live from the build machine | 2026-10-26 | YouTube's content (fixtures only) | `iframe_api`, player script `dce23b30`, `youtubei/v1/player` with the three identities, `www.youtube.com/` page; the watch page answered with a bot-check redirect. Captures are in `fixtures/` |
 | YouTube watch page, captured by Codex on the owner's home network | 2026-10-27 | YouTube's content (fixture only) | `fixtures/watch-page.html`, requester IP replaced with `192.0.2.1`; used by the watch-page tests |
+| [YouTube Terms of Service](https://www.youtube.com/t/terms) | accessed 2026-10-27 | Terms of Service, not a content license | assessed public redistribution risk for captured fixtures; see `QUESTIONS.md` item 4 |
 | Apache License 2.0 text, https://www.apache.org/licenses/LICENSE-2.0.txt | fetched 2026-10-26 | — | `LICENSE` |
 
 Vendored files: `swift/Sources/VyonExKit/ejs/core.min.js` sha256 `18da6ce0758b416e7ae645084f4f8801f9f9d59d6c477c05eaa0ff94ebd8cc00`,

@@ -23,17 +23,25 @@ Each item names the reading chosen; nothing was looked up in the old code.
 
 ## Readings of the brief
 
-3. **ISC inside the solver.** The vendored ejs `lib.min.js` bundles meriyah (ISC). Section 2
-   lists Apache/MIT/BSD for dependencies; section 1 accepts ISC for companion repositories.
-   Kept, since ISC is equivalent to MIT/BSD-2. Confirm.
-4. **Fixtures in a public Apache-2.0 repo.** `fixtures/` holds YouTube's own player script,
-   HTML and JSON. They are marked as not covered by the license and are never published.
-   Alternative: download them at test time. Confirm.
+3. **ISC inside the solver.** Accept the bundled `meriyah` ISC license under section 1's
+   explicit allowance for ISC-licensed companion repositories; `NOTICE` includes the ISC
+   license text and `PROVENANCE.md` records the source. Do not describe ISC as legally
+   equivalent to MIT or BSD; section 2's separate dependency wording is ambiguous if the
+   parser is treated as a standalone dependency.
+4. **Fixtures in a public Apache-2.0 repo.** Keep the captured fixtures for deterministic
+   offline tests, as section 6 asks. They are YouTube-owned third-party files and are not
+   licensed under this repo's Apache-2.0 license; because the repo is public, they are
+   distributed publicly. This is an engineering choice, not rights clearance. [YouTube's
+   Terms](https://www.youtube.com/t/terms) restrict reproducing or distributing content except
+   as authorized by YouTube, with prior permission, or as allowed by applicable law. Downloading
+   fixtures at test time would add network dependence and does not by itself resolve that terms
+   issue; seek rights/legal review before treating public redistribution as cleared.
 5. **`VyonExHost` defaults.** `tokenProvider` and `filesDir` default to `null`, so hosts
    compile whether or not they override them. `httpClient` has no default.
-6. **`configStore`.** Only `enabled` is used (warm-up on `onSessionChanged`). Nothing small is
-   worth persisting there: the JVM disk cache holds the prepared player, and iOS must keep
-   caches in memory. Should `enabled = false` also turn off the JVM disk cache?
+6. **`configStore`.** Decision: when `enabled = false`, disable JVM disk-player-cache reads and
+   writes while preserving in-memory caches. This follows section 4.7's promise to work without
+   persistence. Current `main` still creates `DiskPlayerStore` whenever `filesDir` is non-null;
+   this decision is not yet implemented.
 7. **`putString` value** is taken as non-null `String`.
 8. **Logged-in identities.** Cookies go with every YouTube request when present; logged-in
    sessions (LOGIN_INFO + SAPISID, as yt-dlp) also send SAPISIDHASH and skip VISIONOS.
@@ -55,9 +63,10 @@ Each item names the reading chosen; nothing was looked up in the old code.
     `tokenProvider.invalidateAttestation()`; the brief does not ask for it.
 15. **Player variant.** The `player_ias` script is always used (yt-dlp's default), even when a
     page names `player_es6`; the functions are the same per player version.
-16. **Warm-up cost.** Preparing the 2.9 MB player takes about 6.5 s in QuickJS on the JVM
-    build machine. On iOS, with caches in memory only, that happens once per app launch and
-    player version (during warm-up). Acceptable?
+16. **Warm-up cost.** Accept background preparation for the initial release because
+    `initialize()` returns immediately. The 6.5 s measurement is from the JVM build machine;
+    actual iOS startup, first-play and battery impact remain unmeasured. Revisit if device
+    measurements show unacceptable latency or battery use.
 17. **Toolchain.** Gradle itself runs on JDK 21 (locally and in CI); JDK 27 is the compile
     toolchain and JVM bytecode targets 26, as specified.
 
