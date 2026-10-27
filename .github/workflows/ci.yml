@@ -51,11 +51,14 @@ jobs:
         run: |
           image="system-images;android-${{ matrix.api }};default;x86_64"
           adb=$ANDROID_HOME/platform-tools/adb
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image" > /dev/null
+          # The runner sets XDG_CONFIG_HOME, which avdmanager follows and the emulator does not; one AVD folder for both.
+          export ANDROID_AVD_HOME=$HOME/.android/avd
+          mkdir -p "$ANDROID_AVD_HOME"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image"
           echo no | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n check -k "$image"
           $ANDROID_HOME/emulator/emulator -avd check -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect &
-          $adb wait-for-device
-          timeout 600 sh -c "until [ \"\$($adb shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
+          # Under the timeout too, so an emulator that exits fails the step instead of holding it to the job limit.
+          timeout 600 sh -c "$adb wait-for-device && until [ \"\$($adb shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
           $adb install -r build/outputs/apk/androidTest/vyonex-androidTest.apk
           # am instrument exits 0 either way; the report says how it went.
           $adb shell am instrument -w com.vyonex.test/com.vyonex.MergeCheck | tee report.txt

@@ -87,7 +87,7 @@ func apiCheck() async throws {
             let length: KotlinLong? = format.contentLength
             let height: KotlinInt? = format.height
             _ = (format.itag, format.url, format.mimeType, format.kbps, length, format.hasAudio, format.hasVideo, format.width, height, format.fps)
-            let written: Int64 = try await vyonEx.download(format: format, headers: formats.headers, sink: ApiCheckSink(), from: 0,
+            let written: KotlinLong = try await vyonEx.download(format: format, headers: formats.headers, sink: ApiCheckSink(), from: 0,
                                                            onProgress: { (done: KotlinLong, total: KotlinLong?) in _ = (done, total) })
             _ = written
         }

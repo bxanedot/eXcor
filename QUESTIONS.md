@@ -212,10 +212,17 @@ Each item names the reading chosen; nothing was looked up in the old code.
     other codec pairs and leaves no partial file. Left out for now: AV1 (whether Android's MP4 muxer
     takes it on every supported Android version is unchecked), HDR VP9 (`vp09.02…`; its colour
     metadata would need carrying over) and iOS (no Apple devices, item 34; AVFoundation also writes
-    no WebM). Checked in CI by `MergeCheck`, a plain `Instrumentation` (androidx.test's runner needs
-    JUnit 4, EPL-1.0), on API 26 and API 36 emulators. It merges synthetic two-second clips laid out
-    the way YouTube serves its formats (fragmented MP4, WebM) and compares every track's sample
-    count. A real 4K download has not been merged yet. That needs the owner's network and device.
+    no WebM). Android 8 and 9 cannot merge WebM: their WebM writer takes VP8/VP9 with Vorbis only,
+    and Opus arrives in Android 10 (AOSP `WebmWriter.cpp` at `android-8.0.0_r1`, `9.0.0_r1`,
+    `10.0.0_r1`). YouTube offers no Vorbis, so those devices merge MP4, up to 1080p;
+    `VyonExMerge.supports(container)` says which, and `merge` refuses up front. Checked in CI by
+    `MergeCheck`, a plain `Instrumentation` (androidx.test's runner needs JUnit 4, EPL-1.0), on API
+    26 and API 36 emulators. It merges synthetic two-second clips laid out the way YouTube serves
+    its formats (fragmented MP4, WebM) and compares every track's sample count. Its first run on
+    2026-10-27 merged both on API 36 (MP4: 60 video and 88 audio samples; WebM: 60 and 101); on
+    API 26 a merge failed in `MediaMuxer.addTrack` without saying which; Android 8's missing Opus
+    explains it, and the next run checks that MP4 merges there. A real 4K download has not been
+    merged yet. That needs the owner's network and device.
     Merging needs free space for both inputs again until they are deleted. Open: on a video with
     dubbed audio tracks, the audio choice here and in `extract` ignores which track is the
     original, so it can take a dub. The fix (yt-dlp reads `audioTrack.audioIsDefault`) waits for a
