@@ -23,6 +23,7 @@ import com.vyonex.VyonExVideoStream
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -455,15 +456,17 @@ internal class Engine(
 
     /**
      * BRIEF 4.2 only counts a format "whose URL works", so the URL is probed for one byte with the
-     * stream's own headers. A refusal excludes the profile, as onRefused would.
+     * stream's own headers, and only a ranged answer counts ([probeRefusal]). The answer is streamed
+     * and its body never read: a server ignoring the range would otherwise send the whole file. A
+     * refusal excludes the profile, as onRefused would.
      */
     private suspend fun answers(url: String, headers: Map<String, String>, videoId: String, profileId: String): Boolean {
-        val status = http.get(url) {
+        val refusal = http.prepareGet(url) {
             headers.forEach { (name, value) -> header(name, value) }
             header(HttpHeaders.Range, "bytes=0-0")
-        }.status
-        if (status.isSuccess()) return true
-        log(WARN, "$profileId URL refused (HTTP ${status.value})", videoId)
+        }.execute { probeRefusal(it.status, it.headers[HttpHeaders.ContentRange], it.headers[HttpHeaders.ContentType]) }
+        if (refusal == null) return true
+        log(WARN, "$profileId URL refused ($refusal)", videoId)
         exclude(videoId, profileId)
         return false
     }
@@ -513,3 +516,22 @@ internal class Engine(
 }
 
 private fun Throwable.describe() = "${this::class.simpleName}: $message"
+
+private val FIRST_BYTE = Regex("""bytes 0-0/(\d+)""")
+
+/**
+ * Why a probe's answer does not count, or null when it does: a 206 for exactly the first byte of a
+ * file that has bytes. A 200 means the range was ignored, and an error or block page (HTML, JSON,
+ * text) can come back with a success status. Media types are not checked one by one, so an
+ * unexpected but real media type still counts.
+ */
+internal fun probeRefusal(status: HttpStatusCode, contentRange: String?, contentType: String?): String? {
+    val type = contentType?.substringBefore(';')?.trim()?.lowercase()
+    return when {
+        status != HttpStatusCode.PartialContent -> "HTTP ${status.value}"
+        (FIRST_BYTE.matchEntire(contentRange?.trim().orEmpty())?.groupValues?.get(1)?.toLongOrNull() ?: 0) <= 0 ->
+            "range not honoured: ${contentRange ?: "no Content-Range"}"
+        type != null && (type.startsWith("text/") || type == "application/json") -> "not media: $type"
+        else -> null
+    }
+}

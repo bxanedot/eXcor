@@ -110,8 +110,10 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
    formats come with the best audio up to 160 kbps. On a video with dubbed audio, every choice is
    made from the original track's formats (as yt-dlp ranks them).
 5. Allows only `https://*.googlevideo.com|youtube.com/videoplayback` URLs, never SABR or HLS, and
-   checks every returned URL answers a one-byte ranged GET with the returned headers; a refused
-   identity is excluded for 10 minutes and the next one is tried.
+   checks every returned URL answers a one-byte ranged GET with the returned headers: only a 206
+   for that byte counts (not a 200, which ignored the range, nor an HTML, JSON or text page), and
+   the answer's body is never read. A refused identity is excluded for 10 minutes and the next one
+   is tried.
 6. iOS `extract` falls back to the watch page; `audioCandidates` lists the watch page's audio.
 7. `metadata` asks `WEB` (which adds the microformat: likes, category, dates, countries), then
    `VISIONOS`; it returns null when neither reports video details.

@@ -6,6 +6,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
@@ -27,8 +28,8 @@ internal fun fixtureJson(name: String): JsonObject = Json.parseToJsonElement(fix
 
 /**
  * An engine served by the fixtures: player requests are answered by client name (WEB with [webFixture]),
- * media URLs with 206 (403 when the URL's `c` client is in [refusedClients]), and [failing] paths with 500.
- * Every request is added to [requests].
+ * media URLs with a 206 for their first byte as googlevideo sends it (403 when the URL's `c` client is in
+ * [refusedClients], [mediaAnswer] when set), and [failing] paths with 500. Every request is added to [requests].
  */
 internal fun fixtureEngine(
     host: FakeHost,
@@ -39,6 +40,8 @@ internal fun fixtureEngine(
     requests: MutableList<HttpRequestData> = mutableListOf(),
     /** When set, the one player response every client gets. */
     playerFixture: String? = null,
+    /** When set, how every media URL answers: a status and its headers. */
+    mediaAnswer: Pair<HttpStatusCode, Headers>? = null,
 ) = Engine(
     host,
     tokenProvider = tokenProvider,
@@ -60,8 +63,15 @@ internal fun fixtureEngine(
                 // The probe asks for one byte with the stream's own headers.
                 assertEquals("bytes=0-0", request.headers[HttpHeaders.Range])
                 assertNotNull(request.headers[HttpHeaders.UserAgent])
-                val refused = url.parameters["c"] in refusedClients
-                respond("x", if (refused) HttpStatusCode.Forbidden else HttpStatusCode.PartialContent)
+                when {
+                    url.parameters["c"] in refusedClients -> respond("", HttpStatusCode.Forbidden)
+                    mediaAnswer != null -> respond("x", mediaAnswer.first, mediaAnswer.second)
+                    else -> respond(
+                        "x",
+                        HttpStatusCode.PartialContent,
+                        headersOf(HttpHeaders.ContentRange to listOf("bytes 0-0/3433514"), HttpHeaders.ContentType to listOf("audio/webm")),
+                    )
+                }
             }
             else -> error("unexpected request to ${url.host}${url.encodedPath}")
         }

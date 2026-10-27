@@ -365,3 +365,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
     of the queue is marked as stopped. The choice logic is in `app-core` (`Download.kt`, tested on
     the JVM and the iOS simulator); `VyonExFormats.mergePair` makes the library's pair selection usable
     from shared code. No download has run against YouTube yet: the build machines get a bot check.
+49. **Stream probe: only a ranged media answer counts (owner's comparison report, 2026-10-27).**
+    The one-byte probe accepted any 2xx status and read the whole answer, so a server that ignored
+    the range would have sent an entire media file into memory, and an error page served as a
+    success would have passed. It now requires a 206 whose `Content-Range` is `bytes 0-0/<length>`
+    with a length above zero, turns away HTML, JSON and text answers, and streams the answer
+    without reading its body. Other content types still count, so an unexpected but real media
+    type is not refused. googlevideo's answer shape (206, `Content-Range`, a media type) is standard
+    HTTP; it has not been re-checked live since the change, as the build machines get a bot check.
