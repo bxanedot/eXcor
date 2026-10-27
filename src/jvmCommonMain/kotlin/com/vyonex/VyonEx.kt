@@ -62,6 +62,13 @@ class VyonEx(host: VyonExHost) {
 
     suspend fun metadata(videoId: String): VyonExMetadata? = engine.metadata(videoId)
 
+    /** The video's chapters (from YouTube's chapter list, else timestamps in its description); empty when it has none. */
+    suspend fun chapters(videoId: String): List<VyonExChapter> = engine.chapters(videoId)
+
+    /** The text of a caption track from [metadata] in [format], translated into [translateTo] when given. */
+    suspend fun captionText(track: VyonExCaptionTrack, format: VyonExCaptionFormat, translateTo: String? = null): String =
+        engine.captionText(track, format, translateTo)
+
     suspend fun formats(videoId: String, skipClients: Set<String> = emptySet()): VyonExFormats? = engine.formats(videoId, skipClients)
 
     /** The HLS or DASH manifest of a live stream (or of any video whose client offers one); null when none answers. */

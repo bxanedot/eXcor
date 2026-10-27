@@ -44,6 +44,8 @@ internal fun fixtureEngine(
     mediaAnswer: Pair<HttpStatusCode, Headers>? = null,
     /** When set, the player response every client gets, as text (for responses built in a test). */
     playerBody: String? = null,
+    /** When set, the watch-next (`next`) response. */
+    nextBody: String? = null,
     /** How manifest URLs answer: a status and a body. */
     manifestAnswer: Pair<HttpStatusCode, String> = HttpStatusCode.OK to "#EXTM3U\n#EXT-X-INDEPENDENT-SEGMENTS\n",
 ) = Engine(
@@ -56,6 +58,8 @@ internal fun fixtureEngine(
             url.encodedPath in failing -> respond("", HttpStatusCode.InternalServerError)
             url.encodedPath == "/watch" -> respond(fixture("watch-page.html"))
             url.encodedPath == "/iframe_api" -> respond(fixture("iframe_api.js"))
+            url.encodedPath == "/youtubei/v1/next" && nextBody != null -> respond(nextBody, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            url.encodedPath == "/api/timedtext" -> respond("WEBVTT\n\n00:00.000 --> 00:01.000\nNever gonna\n")
             url.encodedPath.startsWith("/s/player/dce23b30/") -> respond(fixture("player-dce23b30.js"))
             url.encodedPath == "/youtubei/v1/player" -> {
                 val body = (request.body as TextContent).text

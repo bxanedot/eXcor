@@ -403,3 +403,14 @@ Each item names the reading chosen; nothing was looked up in the old code.
     players do, and SABR. While looking, the fixture check learned that manifest URLs carry the
     requester's address as an `/ip/` path segment; it now redacts those as it does `ip=` (the
     existing capture's is a private address).
+52. **Captions and chapters (owner's comparison report P1).** Caption tracks now say whether YouTube
+    translates them (`isTranslatable`), the metadata lists the languages it translates into (only
+    WEB reports them; 156 in the capture), `urlFor(format, translateTo)` gives a track in each of
+    YouTube's formats (VTT, SRT, TTML, JSON3, SRV1-3), and `captionText` fetches it. As yt-dlp:
+    `xosf` is dropped (it spoils VTT and JSON positions) and "translating" into the track's own
+    language is not asked for (YouTube damages it). Tracks that need a PO token (the `xpe`/`xpv`
+    experiment) are still left out, as there is no caption token. `chapters(videoId)` reads the
+    watch-next response's player bar, else its chapters panel, else timestamps in the description
+    (time then title, or title then time), keeping chapters that start in order within the video's
+    duration; it asks the player for that duration, so it costs two requests. No watch-next
+    response with chapters was captured, so those tests use the shapes yt-dlp reads.

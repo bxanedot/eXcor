@@ -52,6 +52,15 @@ class VyonEx(host: VyonExHost) {
     @Throws(Throwable::class)
     suspend fun metadata(videoId: String): VyonExMetadata? = engine.metadata(videoId)
 
+    /** The video's chapters (from YouTube's chapter list, else timestamps in its description); empty when it has none. */
+    @Throws(Throwable::class)
+    suspend fun chapters(videoId: String): List<VyonExChapter> = engine.chapters(videoId)
+
+    /** The text of a caption track from [metadata] in [format], translated into [translateTo] when given. */
+    @Throws(Throwable::class)
+    suspend fun captionText(track: VyonExCaptionTrack, format: VyonExCaptionFormat, translateTo: String? = null): String =
+        engine.captionText(track, format, translateTo)
+
     @Throws(Throwable::class)
     suspend fun formats(videoId: String, skipClients: Set<String> = emptySet()): VyonExFormats? = engine.formats(videoId, skipClients)
 
