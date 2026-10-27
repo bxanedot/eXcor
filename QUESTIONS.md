@@ -70,3 +70,12 @@ Each item names the reading chosen; nothing was looked up in the old code.
     falls through to the watch page, and anything else returns nil.
 22. **No disk cache** in VyonExKit (optional in the brief): the player is prepared again once per
     app launch and player version, during warm-up.
+
+## After delivery
+
+23. **"Whose URL works" (4.2).** After a live run returned a URL that got HTTP 403, both engines
+    now probe the chosen URL with a one-byte ranged GET using the returned headers before
+    returning it. A refusal is logged at WARN, excludes that profile for 10 minutes (as `onRefused`
+    would) and moves on to the next identity. Cost: one small extra request per identity tried.
+    A probe cannot catch refusals that depend on how the host fetches (for example a different
+    IPv4/IPv6 route in the host's player than in its OkHttp client).
