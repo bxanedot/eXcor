@@ -32,7 +32,7 @@ class VyonEx(host: VyonExHost) {
                 socketTimeoutMillis = 20_000
             }
         },
-        store = host.filesDir?.let { DiskPlayerStore(File(it, "vyonex-players")) },
+        store = host.filesDir?.let { DiskPlayerStore(File(it, "vyonex-players")) { host.configStore.enabled } },
     )
 
     fun init() = engine.initialize()
@@ -66,13 +66,16 @@ class VyonEx(host: VyonExHost) {
     fun onSessionChanged() = engine.onSessionChanged()
 }
 
-/** Prepared players on disk: written to a temp file and renamed, newest three kept. A failing disk just means no cache. */
-internal class DiskPlayerStore(private val dir: File) : PlayerStore {
-    override suspend fun read(key: String): String? = withContext(Dispatchers.IO) {
+/**
+ * Prepared players on disk: written to a temp file and renamed, newest three kept. A failing disk just means no cache.
+ * While [enabled] is false nothing is read or written (BRIEF 4.7: everything works without persistence).
+ */
+internal class DiskPlayerStore(private val dir: File, private val enabled: () -> Boolean) : PlayerStore {
+    override suspend fun read(key: String): String? = if (!enabled()) null else withContext(Dispatchers.IO) {
         runCatching { file(key).takeIf { it.isFile }?.readText() }.getOrNull()
     }
 
-    override suspend fun write(key: String, value: String) = withContext(Dispatchers.IO) {
+    override suspend fun write(key: String, value: String) = if (!enabled()) Unit else withContext(Dispatchers.IO) {
         runCatching {
             dir.mkdirs()
             val tmp = File.createTempFile("player", ".tmp", dir)
@@ -88,6 +91,7 @@ internal class DiskPlayerStore(private val dir: File) : PlayerStore {
         Unit
     }
 
+    // Deleting even while disabled, so a refused player is not read back once the store is enabled again.
     override suspend fun delete(key: String) = withContext(Dispatchers.IO) {
         file(key).delete()
         Unit

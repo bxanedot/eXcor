@@ -60,7 +60,13 @@ Gradle 9.8.2 (wrapper), Kotlin 2.4.21, JDK 27 toolchain, JVM target 26.
 ./gradlew jvmTest jvmJar                      # any OS
 ./gradlew iosSimulatorArm64Test assembleVyonExReleaseXCFramework   # macOS
 VYONEX_LIVE=1 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # live, opt-in
+VYONEX_LIVE=1 VYONEX_LIVE_IDS=id1,id2 ./gradlew jvmTest --tests com.vyonex.LiveTest --rerun   # also surveys these videos
 ```
+
+The survey prints one line per video (profile, itag, HTTP code, or YouTube's reason; never URLs)
+and fails only if a returned URL does not answer.
+
+On the JVM the prepared player is cached under `filesDir` only while `configStore.enabled` is true.
 
 Offline tests read the captured responses in `fixtures/` (see `fixtures/README.md`).
 `apicheck/ApiCheck.swift` is type-checked against the XCFramework in CI.
