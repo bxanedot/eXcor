@@ -19,6 +19,7 @@ val ref = vyonEx.parse("https://music.youtube.com/playlist?list=OLAK5uy_…")   
 val info = vyonEx.metadata("dQw4w9WgXcQ")
 // title, author, channel, duration, views, likes, full description, keywords, category,
 // publish/upload dates, thumbnails, live status, private/unlisted/family-safe flags, countries, captions
+// and, for YouTube Music uploads, info.music: track, artists, album, release year
 ```
 
 iOS apps use the same library through `VyonEx.xcframework`:

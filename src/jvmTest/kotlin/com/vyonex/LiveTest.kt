@@ -129,7 +129,10 @@ class LiveTest {
                     (v.audio?.let { " + audio ${fetch(videoId, it.url, it.headers)}" } ?: " (combined)")
             }
             val info = vyonEx.metadata(videoId)
-                ?.let { "\"${it.title}\" ${it.durationSeconds} s live=${it.isLive} microformat=${it.category != null}" } ?: "none"
+                ?.let { m ->
+                    "\"${m.title}\" ${m.durationSeconds} s ${m.liveStatus} microformat=${m.category != null}" +
+                        (m.music?.let { " music=\"${it.track}\" by ${it.artists} on \"${it.album}\" (${it.releaseYear})" } ?: "")
+                } ?: "none"
             println("$videoId | audio: $audio | video: $video | metadata: $info")
         }
         assertTrue(broken.isEmpty(), broken.joinToString("\n"))
