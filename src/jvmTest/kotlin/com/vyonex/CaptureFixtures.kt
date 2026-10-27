@@ -2,7 +2,11 @@ package com.vyonex
 
 import com.vyonex.internal.DESKTOP_UA
 import com.vyonex.internal.IDENTITIES
+import com.vyonex.internal.at
 import com.vyonex.internal.playerRequestBody
+import com.vyonex.internal.str
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -54,6 +58,34 @@ class CaptureFixtures {
         call("next", web, "next-mix.json") { put("videoId", "dQw4w9WgXcQ"); put("playlistId", "RDdQw4w9WgXcQ") }
         call("next", web, "next-related.json") { put("videoId", "dQw4w9WgXcQ") }
         call("search", web, "search-web.json") { put("query", "rick astley") }
+        // A channel and its tabs; each tab's params come from the channel response, picked by the tab's URL.
+        val channel = call("browse", web, "browse-channel.json") { put("browseId", "UCuAXFkgsw1L7xaCfnd5JJOw") }
+        for (tab in listOf("videos", "shorts", "playlists")) {
+            val params = channel?.let { Regex(""""url":"/@[^"/]+/$tab".*?"params":"([^"]+)"""").find(it)?.groupValues?.get(1) }
+            val page = params?.let { call("browse", web, "browse-channel-$tab.json") { put("browseId", "UCuAXFkgsw1L7xaCfnd5JJOw"); put("params", it) } }
+            if (tab == "videos") {
+                // The grid's last item is its next page.
+                val grid = page?.let { Json.parseToJsonElement(it) }.at("contents", "twoColumnBrowseResultsRenderer", "tabs")
+                val more = (grid as? JsonArray).orEmpty().firstNotNullOfOrNull { t ->
+                    (t.at("tabRenderer", "content", "richGridRenderer", "contents") as? JsonArray)?.lastOrNull()
+                        ?.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str
+                }
+                more?.let { call("browse", web, "browse-channel-videos-continuation.json") { put("continuation", it) } }
+            }
+        }
+        // Comments: the watch-next response's comment section holds its first page's continuation.
+        val next = call("next", web, "next-watch.json") { put("videoId", "dQw4w9WgXcQ") }
+        val sections = next?.let { Json.parseToJsonElement(it) }
+            .at("contents", "twoColumnWatchNextResults", "results", "results", "contents")
+        val comments = (sections as? JsonArray).orEmpty().firstNotNullOfOrNull { section ->
+            section.at("itemSectionRenderer").takeIf { it.at("sectionIdentifier").str == "comment-item-section" }
+                ?.at("contents")?.let { (it as? JsonArray)?.firstOrNull() }
+                ?.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str
+        }
+        val page = comments?.let { call("next", web, "next-comments.json") { put("continuation", it) } }
+        // One thread's replies: the first thread whose replies section holds a continuation.
+        val replies = page?.let { Regex(""""commentRepliesRenderer":\{"contents":\[\{"continuationItemRenderer":\{.*?"token":"([^"]+)"""").find(it)?.groupValues?.get(1) }
+        replies?.let { call("next", web, "next-comment-replies.json") { put("continuation", it) } }
         call("search", music, "search-music.json") { put("query", "never gonna give you up") }
     }
 
@@ -97,7 +129,8 @@ class CaptureFixtures {
             println("$file: HTTP $code, skipped")
             return null
         }
-        val redacted = redactCapture(text)
+        // Comment authors are people: their names, channels and pictures are replaced, consistently, before writing.
+        val redacted = redactCapture(if (file.startsWith("next-comment")) anonymizeCommentAuthors(text) else text)
         check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted)) {
             "$file: redaction incomplete, not written"
         }
@@ -106,3 +139,18 @@ class CaptureFixtures {
         return redacted
     }
 }
+
+private val COMMENT_AUTHOR = Regex(""""author":\{"channelId":"(UC[\w-]{22})","displayName":"([^"]*)","avatarThumbnailUrl":"([^"]*)"""")
+
+/** Each comment author's channel ID, handle and picture become `UC…AUTHOR01`, `@author01` and a placeholder picture. */
+internal fun anonymizeCommentAuthors(text: String): String {
+    var out = text
+    COMMENT_AUTHOR.findAll(text).map { it.destructured }.distinctBy { it.component1() }.forEachIndexed { i, (channelId, name, avatar) ->
+        val n = (i + 1).toString().padStart(2, '0')
+        out = out.replace(channelId, "UC" + "AUTHOR$n".padStart(22, 'x'))
+        if (name.isNotEmpty()) out = out.replace(name, "@author$n")
+        if (avatar.isNotEmpty()) out = out.replace(avatar, "https://yt3.ggpht.com/author$n")
+    }
+    return out
+}
+

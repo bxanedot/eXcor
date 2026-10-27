@@ -56,6 +56,15 @@ val vtt = vyonEx.captionText(track, VyonExCaptionFormat.VTT, translateTo = "de")
 val chapters = vyonEx.chapters("dQw4w9WgXcQ")  // title, startSeconds, endSeconds; empty when there are none
 ```
 
+Comments (public, logged out):
+
+```kotlin
+val page = vyonEx.comments("dQw4w9WgXcQ")  // top first; newestFirst = true for the newest
+page.comments.forEach { println("${it.authorName}: ${it.text} (${it.likeCount} likes, ${it.replyCount} replies)") }
+val replies = page.comments.first().repliesContinuation?.let { vyonEx.commentsMore(it) }
+val next = page.continuation?.let { vyonEx.commentsMore(it) }
+```
+
 Live streams (and any video whose client offers one) come as an HLS or DASH manifest, which players read themselves:
 
 ```kotlin

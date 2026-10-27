@@ -90,6 +90,16 @@ func apiCheck() async throws {
         }
         let translations: [String: String] = metadata.translationLanguages
         _ = translations
+        let comments: VyonExCommentPage = try await vyonEx.comments(videoId: "v", newestFirst: false)
+        for comment: VyonExComment in comments.comments {
+            let likes: KotlinLong? = comment.likeCount
+            _ = (comment.commentId, comment.text, comment.authorName, comment.authorChannelId, comment.authorAvatarUrl, likes)
+            _ = (comment.authorIsUploader, comment.authorIsVerified, comment.publishedTime, comment.replyCount, comment.isPinned)
+            _ = (comment.isHearted, comment.repliesContinuation)
+        }
+        let total: KotlinLong? = comments.totalCount
+        let more: VyonExCommentPage = try await vyonEx.commentsMore(continuation: comments.continuation ?? "")
+        _ = (total, more)
         for chapter: VyonExChapter in try await vyonEx.chapters(videoId: "v") {
             let end: KotlinDouble? = chapter.endSeconds
             _ = (chapter.title, chapter.startSeconds, end)

@@ -128,6 +128,14 @@ class ApiCheckTest {
             val e: VyonExVideoStream? = vyonEx.extractVideo(videoId = "v", maxHeight = 720, skipClients = setOf("WEB"), requireAvc = true)
             val f: VyonExMetadata? = vyonEx.metadata("v")
             val g: VyonExFormats? = vyonEx.formats("v")
+            val comments: VyonExCommentPage = vyonEx.comments("v")
+            val newest: VyonExCommentPage = vyonEx.comments(videoId = "v", newestFirst = true)
+            val replies: VyonExCommentPage = vyonEx.commentsMore(continuation = "token")
+            listOf<Any?>(comments.continuation, comments.totalCount, newest, replies)
+            comments.comments.forEach {
+                listOf<Any?>(it.commentId, it.text, it.authorName, it.authorChannelId, it.authorAvatarUrl, it.authorIsUploader,
+                    it.authorIsVerified, it.publishedTime, it.likeCount, it.replyCount, it.isPinned, it.isHearted, it.repliesContinuation)
+            }
             val chapters: List<VyonExChapter> = vyonEx.chapters("v")
             val captionText: String = vyonEx.captionText(track = caption, format = VyonExCaptionFormat.VTT, translateTo = "de")
             listOf<Any?>(chapters, captionText, vyonEx.captionText(caption, VyonExCaptionFormat.JSON3))

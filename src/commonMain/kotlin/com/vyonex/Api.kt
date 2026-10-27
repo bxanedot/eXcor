@@ -94,6 +94,29 @@ fun VyonExCaptionTrack.urlFor(format: VyonExCaptionFormat, translateTo: String? 
         translateTo?.takeIf { it != languageCode }?.let { parameters.append("tlang", it) }
     }.buildString()
 
+/**
+ * A public comment or reply. [publishedTime] is YouTube's relative text ("6 years ago"); counts are read from YouTube's
+ * English wording ("220K"). [repliesContinuation]: pass to [VyonEx.commentsMore] for its replies; null without any.
+ */
+data class VyonExComment(
+    val commentId: String,
+    val text: String,
+    val authorName: String?,
+    val authorChannelId: String?,
+    val authorAvatarUrl: String?,
+    val authorIsUploader: Boolean,
+    val authorIsVerified: Boolean,
+    val publishedTime: String?,
+    val likeCount: Long?,
+    val replyCount: Long?,
+    val isPinned: Boolean,
+    val isHearted: Boolean,
+    val repliesContinuation: String?,
+)
+
+/** A page of comments; [continuation] asks for the next one. [totalCount]: the video's comment count, on the first page. */
+data class VyonExCommentPage(val comments: List<VyonExComment>, val continuation: String?, val totalCount: Long?)
+
 /** A chapter of a video; [endSeconds] is the next chapter's start, or the video's end. */
 data class VyonExChapter(val title: String, val startSeconds: Double, val endSeconds: Double?)
 

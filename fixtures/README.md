@@ -15,6 +15,7 @@ repository's Apache-2.0 license and are not part of any published artifact.
 | `watch-page.html` | `GET https://www.youtube.com/watch?v=dQw4w9WgXcQ&hl=en&gl=US` from the owner's home network on 2026-10-27 (captured by Codex). **Redacted:** the requester's IP address, which appeared 64 times in stream URLs and `remoteHost`, is replaced with the documentation address `192.0.2.1` (RFC 5737); visitor IDs replaced as described below. Logged out, player `6b2fce74`, audio formats SABR-only |
 | `challenges-dce23b30.json` | `n` and signature challenges from `player-response-tv_samsung.json` with the answers VyonEx computed; the decoded URLs answered `206`, undecoded ones `403` |
 | `player-unplayable-*.json`, `browse-*.json`, `next-*.json`, `search-*.json` (14 files) | `CaptureFixtures` (requests and IDs listed there), logged out, run by Codex on the owner's wired home network on 2026-10-27 (PR #15). Redacted by the tool before writing; `heartbeatServerData` in `player-unplayable-upcoming.json` was replaced afterwards |
+| `next-watch.json`, `next-comments.json`, `next-comment-replies.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27 (the `next` endpoint answers there; only the player gets a bot check): the watch-next response of `dQw4w9WgXcQ`, the first page of its comments (top first), and the first thread's replies. **Comment authors anonymized** by the tool: each author's channel ID, handle and picture became `UCxxxxxxxxxxxxxxAUTHOR01`, `@author01` and `https://yt3.ggpht.com/author01`, numbered in order of appearance. The comment texts are left as written |
 
 When adding captures, before committing:
 - replace the requester's IP address (`ip=` parameters, also percent-encoded inside
@@ -22,7 +23,8 @@ When adding captures, before committing:
 - replace every copy of the visitor ID (`visitorData`, `VISITOR_DATA`, `visitor_data`) with
   `REDACTED-VISITOR-DATA`;
 - replace `heartbeatServerData` (an encrypted per-request token) with `REDACTED-HEARTBEAT-DATA`;
-- capture logged out, so no cookie values are present.
+- capture logged out, so no cookie values are present;
+- for comments, replace each author's channel ID, handle and picture (the tool does this for `next-comment*` files).
 
 `FixtureHygieneTest` checks all four and fails without printing the value it found.
 

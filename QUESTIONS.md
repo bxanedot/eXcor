@@ -414,3 +414,13 @@ Each item names the reading chosen; nothing was looked up in the old code.
     (time then title, or title then time), keeping chapters that start in order within the video's
     duration; it asks the player for that duration, so it costs two requests. No watch-next
     response with chapters was captured, so those tests use the shapes yt-dlp reads.
+53. **Comments (owner's comparison report P2).** `comments(videoId, newestFirst)` and
+    `commentsMore(continuation)` read public comments logged out, as yt-dlp does: the watch-next
+    response names the comment section, whose first page holds the threads; each thread points by
+    key at entity payloads holding the text, author, counts and heart; a thread's replies and the
+    next page come from continuations. Newest-first takes the header's second sort entry, by place,
+    not by its label. Counts are read from YouTube's English wording ("220K"), so other interface
+    languages may give none. The captures come from the cloud build machine, which `next` answers
+    (only the player gets a bot check). Comment authors are people, so the capture tool replaces
+    their channel IDs, handles and pictures with numbered placeholders before writing; the texts
+    stay. Community posts are not read yet.

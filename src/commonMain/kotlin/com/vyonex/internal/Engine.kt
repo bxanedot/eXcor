@@ -4,6 +4,7 @@ import com.vyonex.VyonExAudioCandidate
 import com.vyonex.VyonExCaptionFormat
 import com.vyonex.VyonExCaptionTrack
 import com.vyonex.VyonExChapter
+import com.vyonex.VyonExCommentPage
 import com.vyonex.VyonExFormat
 import com.vyonex.VyonExFormats
 import com.vyonex.VyonExAlbum
@@ -197,6 +198,20 @@ internal class Engine(
         val duration = info.durationSeconds?.toDouble()
         return chaptersOfNext(innertube("next") { put("videoId", videoId) }, duration).ifEmpty { chaptersOfDescription(info.description, duration) }
     }
+
+    /**
+     * The first page of a video's comments, top first or [newestFirst]; empty when its comments are off. Two requests:
+     * the watch-next response names the comment section, which is then asked for (three for newest first).
+     */
+    suspend fun comments(videoId: String, newestFirst: Boolean): VyonExCommentPage {
+        val token = commentsTokenOf(innertube("next") { put("videoId", videoId) }) ?: return VyonExCommentPage(emptyList(), null, null)
+        val top = innertube("next") { put("continuation", token) }
+        val newest = if (newestFirst) newestFirstTokenOf(top) else null
+        return commentPageOf(if (newest != null) innertube("next") { put("continuation", newest) } else top)
+    }
+
+    /** The next page of comments, or a comment's replies (its [VyonExComment.repliesContinuation]). */
+    suspend fun commentsMore(continuation: String): VyonExCommentPage = commentPageOf(innertube("next") { put("continuation", continuation) })
 
     /** The text of [track] in [format], translated into [translateTo] when given. */
     suspend fun captionText(track: VyonExCaptionTrack, format: VyonExCaptionFormat, translateTo: String?): String {

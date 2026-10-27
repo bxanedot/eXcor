@@ -53,7 +53,7 @@ class ChaptersTest {
     @Test
     fun chaptersComeFromTheWatchNextResponseThroughTheEngine() = runTest {
         // dQw4w9WgXcQ is 213 s long in the WEB capture.
-        val chapters = fixtureEngine(FakeHost(), nextBody = BAR).chapters("dQw4w9WgXcQ")
+        val chapters = fixtureEngine(FakeHost(), next = { BAR }).chapters("dQw4w9WgXcQ")
         assertEquals(listOf("Intro", "Verse", "Chorus"), chapters.map { it.title })
         assertEquals(213.0, chapters.last().endSeconds)
     }
