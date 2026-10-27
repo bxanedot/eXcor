@@ -133,6 +133,7 @@ Multiplatform, so an iOS app can reuse it): the play queue and the playback cont
 val playback = Playback(source, scope, nowSeconds)  // source: VyonEx behind StreamSource
 playback.play(tracks)       // looks up the first track's stream, then the next one's ahead
 playback.state              // Idle, Loading, Ready(track, stream) or Failed(track, failure, YouTube's reason)
+                            // each Ready, a repeat too, is a new value: start the stream from the beginning
 playback.ended()            // from the platform player; follows repeat (off, all, one)
 playback.refused(url)       // the player got HTTP 403: VyonEx is told, and the track is looked up once more
 ```

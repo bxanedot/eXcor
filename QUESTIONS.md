@@ -311,7 +311,9 @@ Each item names the reading chosen; nothing was looked up in the old code.
     all, one). Shuffle reorders what comes after the current track, once. "Next" on repeat-one
     moves on; only a track that ends repeats. `Playback` looks a track's stream up when the track
     becomes current, since stream URLs expire, and the next track's while the current one plays.
-    A stream within 60 seconds of its `expire` time is looked up again, also when repeating. When
+    A stream within 60 seconds of its `expire` time is looked up again, also when repeating. Each
+    `Ready` is one start of the track, so a repeat with the same stream is still a new value of
+    `state` (`Ready` is not a data class; a `StateFlow` drops a value equal to the last). When
     the platform player is refused a URL (HTTP 403), VyonEx's `onRefused` is told and the track is
     looked up once more; a second refusal ends in `NO_STREAM`. YouTube's refusals become the
     listener's terms (`Failure`): sign-in, age, unavailable, not yet live, not in this country,
