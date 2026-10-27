@@ -47,7 +47,7 @@ internal fun durationOf(text: String?): Long? {
     return parts.fold(0L) { total, part -> total * 60 + (part.toLongOrNull() ?: return null) }
 }
 
-private fun thumbnailsOf(sources: JsonElement?) = sources.list.mapNotNull { t ->
+internal fun thumbnailsOf(sources: JsonElement?) = sources.list.mapNotNull { t ->
     t.at("url").str?.let { VyonExThumbnail(it, t.at("width").str?.toIntOrNull() ?: 0, t.at("height").str?.toIntOrNull() ?: 0) }
 }
 
@@ -268,7 +268,7 @@ private fun VyonExListItem.asResult() =
     VyonExSearchResult(VyonExResultKind.VIDEO, videoId, title, channelName, channelId, durationSeconds, thumbnails)
 
 /** A YouTube search entry: a video, or a playlist; shelves, Shorts grids and channel cards are left out. */
-private fun webResultOf(entry: JsonElement?): VyonExSearchResult? {
+internal fun webResultOf(entry: JsonElement?): VyonExSearchResult? {
     videoRendererItemOf(entry.at("videoRenderer"))?.let { return it.asResult() }
     val lockup = entry.at("lockupViewModel")
     lockupItemOf(lockup)?.let { return it.asResult() }

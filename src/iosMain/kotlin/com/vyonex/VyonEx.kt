@@ -102,6 +102,18 @@ class VyonEx(host: VyonExHost) {
     @Throws(Throwable::class)
     suspend fun album(browseId: String): VyonExAlbum? = engine.album(browseId)
 
+    /** A YouTube channel (`UC…`): title, handle, description, pictures and its tabs; null when there is none. Logged out. */
+    @Throws(Throwable::class)
+    suspend fun channel(channelId: String): VyonExChannel? = engine.channel(channelId)
+
+    /** The first page of a channel tab: its videos, Shorts, live streams or playlists. */
+    @Throws(Throwable::class)
+    suspend fun channelTab(channelId: String, tab: VyonExChannelTab): VyonExChannelPage = engine.channelTab(channelId, tab)
+
+    /** The next page of a channel tab. */
+    @Throws(Throwable::class)
+    suspend fun channelTabMore(continuation: String): VyonExChannelPage = engine.channelTabMore(continuation)
+
     /** A YouTube Music artist page (`UC…` channel ID): top songs, playlists of all songs and videos, releases. */
     @Throws(Throwable::class)
     suspend fun artist(channelId: String): VyonExArtist? = engine.artist(channelId)

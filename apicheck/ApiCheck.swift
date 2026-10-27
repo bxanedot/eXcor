@@ -90,6 +90,13 @@ func apiCheck() async throws {
         }
         let translations: [String: String] = metadata.translationLanguages
         _ = translations
+        if let channel: VyonExChannel = try await vyonEx.channel(channelId: "UC") {
+            let tabs: [VyonExChannelTab] = channel.tabs
+            _ = (channel.channelId, channel.title, channel.handle, channel.description_, channel.avatars, channel.banners, tabs)
+        }
+        let tab: VyonExChannelPage = try await vyonEx.channelTab(channelId: "UC", tab: .videos)
+        let tabMore: VyonExChannelPage = try await vyonEx.channelTabMore(continuation: tab.continuation ?? "")
+        _ = (tab.items, tabMore)
         let comments: VyonExCommentPage = try await vyonEx.comments(videoId: "v", newestFirst: false)
         for comment: VyonExComment in comments.comments {
             let likes: KotlinLong? = comment.likeCount
