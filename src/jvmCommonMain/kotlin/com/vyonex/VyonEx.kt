@@ -125,8 +125,21 @@ class VyonEx(host: VyonExHost) {
 
     suspend fun relatedMore(continuation: String): VyonExListPage = engine.relatedMore(continuation)
 
-    /** YouTube's search results (videos and playlists), then `searchMore` for more. Logged out. */
+    /**
+     * YouTube's search results (videos, playlists, channels; Shorts apart in `shorts`), then `searchMore` for more, and
+     * the filters YouTube offers for them. Logged out.
+     */
     suspend fun search(query: String): VyonExSearchPage = engine.search(query)
+
+    /** The search for one [type] of result only. */
+    suspend fun search(query: String, type: VyonExSearchType): VyonExSearchPage = engine.search(query, type.params)
+
+    /** The search with [filter], one of a page's `filters`, added to those already applied. */
+    suspend fun search(query: String, filter: VyonExSearchFilter): VyonExSearchPage =
+        engine.search(query, requireNotNull(filter.params) { "VyonEx: the filter ${filter.label} cannot be asked (selected or not available)" })
+
+    /** What YouTube's search box suggests for [query], in the session's language; empty for an empty query. */
+    suspend fun suggestions(query: String): List<String> = engine.suggestions(query)
 
     suspend fun searchMore(continuation: String): VyonExSearchPage = engine.searchMore(continuation)
 

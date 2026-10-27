@@ -430,10 +430,21 @@ internal class Engine(
 
     suspend fun relatedMore(continuation: String): VyonExListPage = continuationPageOf(innertube("next") { put("continuation", continuation) })
 
-    /** YouTube's search results for [query] (videos and playlists), logged out. */
-    suspend fun search(query: String): VyonExSearchPage {
+    /** YouTube's search results for [query] (videos, playlists and channels), logged out; [params] are a filter's. */
+    suspend fun search(query: String, params: String? = null): VyonExSearchPage {
         require(query.isNotBlank()) { "VyonEx: empty search" }
-        return webSearchOf(innertube("search") { put("query", query) })
+        return webSearchOf(innertube("search") { put("query", query); params?.let { put("params", it) } })
+    }
+
+    /** What YouTube's search box suggests for [query], asked as it asks (`SBOX_SETTINGS` of YouTube's page). */
+    suspend fun suggestions(query: String): List<String> {
+        if (query.isBlank()) return emptyList()
+        val session = host.session()
+        // ie/oe: without them the answer is in the language's legacy charset (Shift_JIS for Japanese).
+        val url = "https://suggestqueries-clients6.youtube.com/complete/search?ds=yt&client=youtube" +
+            "&hl=${session.language.encodeURLParameter()}&gl=${session.region.lowercase().encodeURLParameter()}" +
+            "&q=${query.encodeURLParameter()}&xhr=t&ie=utf-8&oe=utf-8"
+        return suggestionsOf(http.text(url) { header(HttpHeaders.UserAgent, DESKTOP_UA) })
     }
 
     suspend fun searchMore(continuation: String): VyonExSearchPage = webSearchMoreOf(innertube("search") { put("continuation", continuation) })

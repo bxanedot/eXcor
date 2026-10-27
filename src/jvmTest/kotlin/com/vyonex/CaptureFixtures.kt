@@ -58,6 +58,11 @@ class CaptureFixtures {
         call("next", web, "next-mix.json") { put("videoId", "dQw4w9WgXcQ"); put("playlistId", "RDdQw4w9WgXcQ") }
         call("next", web, "next-related.json") { put("videoId", "dQw4w9WgXcQ") }
         call("search", web, "search-web.json") { put("query", "rick astley") }
+        // Filtered searches, with the params YouTube's own search page sends for its "Type" filters.
+        call("search", web, "search-web-channels.json") { put("query", "rick astley"); put("params", VyonExSearchType.CHANNELS.params) }
+        call("search", web, "search-web-shorts.json") { put("query", "rick astley"); put("params", VyonExSearchType.SHORTS.params) }
+        // Search suggestions, asked as YouTube's own search box asks them.
+        get("https://suggestqueries-clients6.youtube.com/complete/search?ds=yt&client=youtube&hl=en&gl=us&q=rick+ast&xhr=t&ie=utf-8&oe=utf-8", "suggest-web.json")
         // A channel and its tabs; each tab's params come from the channel response, picked by the tab's URL.
         val channel = call("browse", web, "browse-channel.json") { put("browseId", "UCuAXFkgsw1L7xaCfnd5JJOw") }
         for (tab in listOf("videos", "shorts", "playlists")) {
@@ -119,10 +124,14 @@ class CaptureFixtures {
         return post("${client.origin}/youtubei/v1/$endpoint?prettyPrint=false", body, headers, file)
     }
 
-    private fun post(url: String, body: String, headers: Map<String, String>, file: String): String? {
+    private fun post(url: String, body: String, headers: Map<String, String>, file: String) =
+        send(Request.Builder().url(url).post(body.toRequestBody("application/json".toMediaType())), headers, file)
+
+    private fun get(url: String, file: String) = send(Request.Builder().url(url), mapOf("User-Agent" to DESKTOP_UA), file)
+
+    private fun send(builder: Request.Builder, headers: Map<String, String>, file: String): String? {
         if (!wanted(file)) return null
-        val request = Request.Builder().url(url).post(body.toRequestBody("application/json".toMediaType()))
-            .apply { headers.forEach { (name, value) -> header(name, value) } }.build()
+        val request = builder.apply { headers.forEach { (name, value) -> header(name, value) } }.build()
         val (code, text) = http.newCall(request).execute().use { it.code to it.body.string() }
         check("not a bot" !in text) { "$file: YouTube asked to confirm this is not a bot; stopping (not worked around)" }
         if (code != 200) {

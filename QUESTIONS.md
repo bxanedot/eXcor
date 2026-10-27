@@ -441,3 +441,17 @@ Each item names the reading chosen; nothing was looked up in the old code.
     No result is recorded yet: it has to run on a normal network. A trial from the build machine
     served the first video and then got bot checks. It never runs other extractors; comparing is a
     separate step (BENCHMARKS.md).
+56. **Search filters, channels, Shorts, suggestions (owner's comparison report P2).** `search(query,
+    type)` asks for one type (videos, Shorts, channels, playlists, movies) with the params YouTube's
+    own search page sends for its "Type" filters; every first page also carries YouTube's full list
+    of filters (type, duration, upload date, features, sort order) in the session's language, and
+    `search(query, filter)` applies one on top of those already in use, as YouTube's page does (its
+    response gives each filter's params for the combination; selected and unavailable ones have
+    none). Channels are now results (`CHANNEL`). Shorts come in `shorts`, apart from the results,
+    because YouTube sends them in grids (65 of them, in three grids, for an unfiltered "rick
+    astley"); mixing them in would push the results down. `suggestions(query)` asks the host and
+    parameters YouTube's own search box uses, in UTF-8 (`ie`/`oe`; without them Japanese comes back
+    in Shift_JIS). Not done: YouTube Music sections (songs, albums, …). With the params from
+    YouTube Music's own response, and with yt-dlp's older ones, it answered "No results" from the
+    build machine for every section, so nothing would test them; they wait for a capture from a
+    normal network.

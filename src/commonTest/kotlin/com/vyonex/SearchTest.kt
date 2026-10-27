@@ -2,10 +2,12 @@ package com.vyonex
 
 import com.vyonex.VyonExResultKind.ALBUM
 import com.vyonex.VyonExResultKind.ARTIST
+import com.vyonex.VyonExResultKind.CHANNEL
 import com.vyonex.VyonExResultKind.PLAYLIST
 import com.vyonex.VyonExResultKind.VIDEO
 import com.vyonex.internal.Engine
 import com.vyonex.internal.musicSearchOf
+import com.vyonex.internal.suggestionsOf
 import com.vyonex.internal.webSearchMoreOf
 import com.vyonex.internal.webSearchOf
 import io.ktor.client.HttpClient
@@ -51,7 +53,60 @@ class SearchTest {
         val sections = fixtureJson("search-web.json")["contents"]!!.jsonObject["twoColumnSearchResultsRenderer"]!!.jsonObject["primaryContents"]!!
             .jsonObject["sectionListRenderer"]!!.jsonObject["contents"]
         val more = Json.parseToJsonElement("""{"onResponseReceivedCommands":[{"appendContinuationItemsAction":{"continuationItems":$sections}}]}""")
-        assertEquals(VyonExSearchPage(page.results, token), webSearchMoreOf(more.jsonObject))
+        // The next page has no filters; the same Shorts are read the same way.
+        assertEquals(page.copy(filters = emptyList()), webSearchMoreOf(more.jsonObject))
+        // Three Shorts grids, one Short in two of them.
+        assertEquals(62, page.shorts.size)
+        assertEquals(VyonExSearchResult(VIDEO, "6oHkCfhlDnc", page.shorts[0].title, null, null, null, page.shorts[0].thumbnails), page.shorts[0])
+        assertTrue(page.shorts[0].title!!.startsWith("Hits for decades"))
+        assertEquals(2, page.shorts[0].thumbnails.size)
+        // YouTube's filters, group by group, with the params its own search page sends for each.
+        assertEquals(listOf("Type", "Duration", "Upload date", "Features", "Prioritize"), page.filters.mapNotNull { it.group }.distinct())
+        assertEquals(VyonExSearchFilter("Type", "Channels", VyonExSearchType.CHANNELS.params, false), page.filters.first { it.label == "Channels" })
+        assertEquals(
+            VyonExSearchType.entries.map { it.params },
+            page.filters.filter { it.group == "Type" }.map { it.params },
+        )
+        assertEquals(VyonExSearchFilter("Duration", "Under 3 minutes", "EgIYBA%3D%3D", false), page.filters.first { it.group == "Duration" })
+        assertEquals(VyonExSearchFilter("Prioritize", "Relevance", null, true), page.filters.first { it.label == "Relevance" })
+        assertEquals(1, page.filters.count { it.selected })
+    }
+
+    @Test
+    fun channelSearchFromCapture() {
+        val page = webSearchOf(fixtureJson("search-web-channels.json"))
+        assertEquals(20, page.results.size)
+        assertTrue(page.results.all { it.kind == CHANNEL && it.id.startsWith("UC") })
+        assertEquals(VyonExSearchResult(CHANNEL, "UCuAXFkgsw1L7xaCfnd5JJOw", "Rick Astley", null, null, null, page.results[0].thumbnails), page.results[0])
+        assertEquals(listOf(88, 176), page.results[0].thumbnails.map { it.width })
+        assertEquals("Rick Astley - Topic", page.results[1].title)
+        assertNotNull(page.continuation)
+        // With Channels applied: it is selected, durations do not go with it, and the sort order keeps it.
+        assertEquals(VyonExSearchFilter("Type", "Channels", null, true), page.filters.first { it.label == "Channels" })
+        assertTrue(page.filters.filter { it.group == "Duration" }.all { it.params == null && !it.selected })
+        assertEquals("CAMSAhAC", page.filters.first { it.label == "Popularity" }.params)
+    }
+
+    @Test
+    fun shortsSearchFromCapture() {
+        val page = webSearchOf(fixtureJson("search-web-shorts.json"))
+        assertEquals(25, page.shorts.size)
+        assertEquals(listOf("6oHkCfhlDnc", "5Dj2DppA4aI"), page.shorts.take(2).map { it.id })
+        assertTrue(page.shorts.all { it.kind == VIDEO && it.title != null })
+        // Besides the grids, one mix (a playlist).
+        assertEquals(listOf(PLAYLIST to "RDEMt6MUSQI0t_Ts2EDUDWGRhQ"), page.results.map { it.kind to it.id })
+    }
+
+    @Test
+    fun suggestionsFromCapture() {
+        val text = fixture("suggest-web.json")
+        val suggestions = suggestionsOf(text)
+        assertEquals(14, suggestions.size)
+        assertEquals(listOf("rick astley never gonna give you up", "rick astley", "rick astley together forever"), suggestions.take(3))
+        // The JSONP form YouTube's search box gets without xhr=t reads the same.
+        assertEquals(suggestions, suggestionsOf("window.google.ac.h($text)"))
+        assertEquals(emptyList(), suggestionsOf("""["q",[],{}]"""))
+        assertEquals(emptyList(), suggestionsOf("{}"))
     }
 
     @Test
@@ -89,6 +144,29 @@ class SearchTest {
         assertTrue("\"query\":\"never gonna give you up\"" in bodies[1] && "\"clientName\":\"WEB_REMIX\"" in bodies[1], bodies[1])
         assertTrue(requests.all { it.headers[HttpHeaders.Cookie] == null })
         assertFailsWith<IllegalArgumentException> { engine.search("  ") }
+        assertEquals(2, requests.size)
+    }
+
+    @Test
+    fun filteredSearchesAndSuggestionsAreLoggedOutCalls() = runTest {
+        val requests = mutableListOf<HttpRequestData>()
+        val engine = Engine(FakeHost().apply { cookie = "SID=secret"; language = "ja"; region = "JP" }, tokenProvider = null, store = null, http = HttpClient(MockEngine { request ->
+            requests += request
+            val file = if (request.url.host == "suggestqueries-clients6.youtube.com") "suggest-web.json" else "search-web-channels.json"
+            respond(fixture(file), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }))
+        assertEquals(20, engine.search("rick astley", VyonExSearchType.CHANNELS.params).results.size)
+        assertTrue("\"params\":\"EgIQAg%3D%3D\"" in (requests[0].body as TextContent).text)
+        assertEquals(14, engine.suggestions("東京 タワー").size)
+        val url = requests[1].url
+        assertEquals("https://suggestqueries-clients6.youtube.com/complete/search", url.toString().substringBefore('?'))
+        assertEquals(
+            mapOf("ds" to "yt", "client" to "youtube", "hl" to "ja", "gl" to "jp", "q" to "東京 タワー", "xhr" to "t", "ie" to "utf-8", "oe" to "utf-8"),
+            url.parameters.entries().associate { it.key to it.value.single() },
+        )
+        assertTrue(requests.all { it.headers[HttpHeaders.Cookie] == null })
+        // No question, no request.
+        assertEquals(emptyList(), engine.suggestions(" "))
         assertEquals(2, requests.size)
     }
 }

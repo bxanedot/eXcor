@@ -294,12 +294,13 @@ data class VyonExArtist(
 /** A mix (`RD…`) and its first videos. Mixes do not end: `VyonEx.mixMore(continuation)` keeps going from the last one. */
 data class VyonExMix(val playlistId: String, val title: String?, val firstPage: VyonExListPage)
 
-/** What a search result opens: a video or song to play, or a playlist, album or artist page. */
-enum class VyonExResultKind { VIDEO, PLAYLIST, ALBUM, ARTIST }
+/** What a search result opens: a video or song to play, or a playlist, album, artist or channel page. */
+enum class VyonExResultKind { VIDEO, PLAYLIST, ALBUM, ARTIST, CHANNEL }
 
 /**
  * One search result. [id] is a video ID, a playlist ID (`VyonEx.playlist`), an album page (`MPREb_…`, `VyonEx.album`)
- * or a channel (`UC…`, `VyonEx.artist`). [channelName] is the credited channel or artist; artists have none.
+ * or a channel (`UC…`: `VyonEx.artist` for an artist, `VyonEx.channel` for a channel). [channelName] is the credited
+ * channel or artist; artists and channels have none.
  */
 data class VyonExSearchResult(
     val kind: VyonExResultKind,
@@ -328,8 +329,37 @@ data class VyonExChannel(
 /** A page of a channel tab: videos (also Shorts and live streams) or playlists; [continuation] asks for the next page. */
 data class VyonExChannelPage(val items: List<VyonExSearchResult>, val continuation: String?)
 
-/** A page of search results; [continuation] asks for the next one and is null on the last. */
-data class VyonExSearchPage(val results: List<VyonExSearchResult>, val continuation: String?)
+/**
+ * What a YouTube search looks for. The params are the ones YouTube's own search page sends for its "Type" filters
+ * (its response of 2026-10-27; `VyonExSearchPage.filters` has the current ones, and the other groups).
+ */
+enum class VyonExSearchType(internal val params: String) {
+    VIDEOS("EgIQAQ%3D%3D"),
+
+    /** Shorts come in `VyonExSearchPage.shorts`, as YouTube sends them: in grids, apart from the results. */
+    SHORTS("EgIQCQ%3D%3D"),
+    CHANNELS("EgIQAg%3D%3D"),
+    PLAYLISTS("EgIQAw%3D%3D"),
+    MOVIES("EgIQBA%3D%3D"),
+}
+
+/**
+ * One of the filters YouTube offers for a search (type, duration, upload date, features, sort order), in YouTube's
+ * words in the session's language. [params] asks for the search with it and with the filters already applied; it is
+ * null when it cannot be asked: one already [selected], or one that does not go with them (durations for channels).
+ */
+data class VyonExSearchFilter(val group: String?, val label: String, val params: String?, val selected: Boolean)
+
+/**
+ * A page of search results; [continuation] asks for the next one and is null on the last. [shorts] are the Shorts
+ * YouTube put in grids beside the results; [filters] are offered on the first page of a YouTube search only.
+ */
+data class VyonExSearchPage(
+    val results: List<VyonExSearchResult>,
+    val continuation: String?,
+    val shorts: List<VyonExSearchResult> = emptyList(),
+    val filters: List<VyonExSearchFilter> = emptyList(),
+)
 
 /** What a YouTube or YouTube Music link or ID points at; see `VyonEx.parse`. */
 sealed class VyonExRef {
