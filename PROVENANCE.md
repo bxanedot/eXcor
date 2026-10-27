@@ -61,6 +61,7 @@ All from Maven Central; licenses as declared in each POM.
 | QuickJS-KT (bundles QuickJS natives, MIT) | 1.0.15 | Apache-2.0 | main |
 | org.jetbrains:annotations | 13.0, 23.0.0 | Apache-2.0 | main |
 | slf4j-api (via Ktor) | 2.0.19 | MIT | main (JVM) |
+| ktor-client-mock (serves fixtures to the engine in tests) | 3.6.0 | Apache-2.0 | test |
 | TestNG | 7.0.0 | Apache-2.0 | test (JVM) |
 | JCommander (via TestNG) | 1.72 | Apache-2.0 | test (JVM) |
 | Gradle wrapper | 9.8.2 | Apache-2.0 | build |

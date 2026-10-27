@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 
@@ -118,6 +119,7 @@ internal class AudioFormat(json: JsonObject, val url: String) {
     val averageBitrate = json["averageBitrate"].int
     val channels = json["audioChannels"].int
     val sampleRate = json["audioSampleRate"].int
+    val loudnessDb = (json["loudnessDb"] as? JsonPrimitive)?.doubleOrNull
 }
 
 internal fun audioFormatsOf(playerResponse: JsonObject): List<JsonObject> {

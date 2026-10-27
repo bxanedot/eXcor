@@ -103,7 +103,9 @@ public final class VyonExKit: @unchecked Sendable {
                     log(.debug, "\(id.profileId) has no usable audio format", videoId)
                     continue
                 }
-                return remember(stream(videoId, format, pr, id.clientName, id.profileId, mediaHeaders(id.userAgent, session)))
+                if let stream = try await accept(videoId, format, pr, id.clientName, id.profileId, mediaHeaders(id.userAgent, session)) {
+                    return stream
+                }
             } catch {
                 try rethrowIfCancelled(error)
                 log(.warn, "\(id.profileId) failed: \(error)", videoId)
@@ -120,7 +122,7 @@ public final class VyonExKit: @unchecked Sendable {
             guard let page = try await watchPage(videoId, session),
                   let format = selectFormat(page.formats, maxKbps: maxKbps, requireM4a: requireM4a)
             else { return nil }
-            return remember(stream(videoId, format, page.playerResponse, "WEB", "WEB_WATCH_PAGE", watchHeaders(session)))
+            return try await accept(videoId, format, page.playerResponse, "WEB", "WEB_WATCH_PAGE", watchHeaders(session))
         } catch {
             try rethrowIfCancelled(error)
             log(.warn, "watch page failed: \(error)", videoId)
@@ -232,16 +234,29 @@ public final class VyonExKit: @unchecked Sendable {
         return result
     }
 
-    private func stream(
+    /// BRIEF 4.2 only counts a format "whose URL works", so the URL is probed for one byte with the
+    /// stream's own headers. A refusal excludes the profile, as onRefused would, and returns nil.
+    private func accept(
         _ videoId: String, _ format: AudioFormat, _ pr: JSONObject, _ clientName: String, _ profileId: String, _ headers: [String: String]
-    ) -> VyonExStream {
-        let stream = VyonExStream(
+    ) async throws -> VyonExStream? {
+        guard let url = URL(string: format.url) else { return nil }
+        var request = URLRequest(url: url)
+        for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
+        request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
+        let (_, response) = try await http.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(status) else {
+            log(.warn, "\(profileId) URL refused (HTTP \(status))", videoId)
+            exclude(videoId: videoId, profileId: profileId)
+            return nil
+        }
+        log(.info, "chose \(profileId) itag \(format.itag.map { String($0) } ?? "?") (\(format.mimeType), \(format.bitrate / 1000) kbps)", videoId)
+        return remember(VyonExStream(
             videoId: videoId, url: format.url, kbps: format.bitrate / 1000, mimeType: format.mimeType,
-            loudnessDb: at(pr, "playerConfig", "audioConfig", "loudnessDb") as? Double,
+            // Formats carry their own value (enablePerFormatLoudness); VISIONOS has no response-wide one.
+            loudnessDb: format.loudnessDb ?? at(pr, "playerConfig", "audioConfig", "loudnessDb") as? Double,
             clientName: clientName, profileId: profileId, headers: headers
-        )
-        log(.info, "chose \(profileId) itag \(format.itag.map { String($0) } ?? "?") (\(stream.mimeType), \(stream.kbps) kbps)", videoId)
-        return stream
+        ))
     }
 
     private func mediaHeaders(_ userAgent: String, _ session: VyonExSession) -> [String: String] {

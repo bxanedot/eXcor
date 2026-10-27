@@ -20,7 +20,9 @@ val stream = vyonEx.extract("dQw4w9WgXcQ", maxKbps = 160)
    yt-dlp's EJS solver (`swift/Sources/VyonExKit/ejs`, shared with VyonExKit). The prepared player is cached per player version
    (JVM: `filesDir/vyonex-players`, three newest; iOS: memory).
 4. Picks a format (`requireM4a`, `maxKbps <= 64`, or AUTO), allows only
-   `https://*.googlevideo.com|youtube.com/videoplayback` URLs, never SABR or HLS.
+   `https://*.googlevideo.com|youtube.com/videoplayback` URLs, never SABR or HLS, and checks the URL
+   answers a one-byte ranged GET with the returned headers; a refused identity is excluded for 10
+   minutes and the next one is tried.
 5. iOS `extract` falls back to the watch page; `audioCandidates` lists the watch page's audio.
 
 ## Build and test

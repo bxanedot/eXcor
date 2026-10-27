@@ -10,6 +10,7 @@ import com.vyonex.VyonExSession
 import com.vyonex.VyonExStream
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -107,7 +108,7 @@ internal class Engine(
                     log(DEBUG, "${id.profileId} has no usable audio format", videoId)
                     continue
                 }
-                return remember(stream(videoId, format, pr, id.clientName, id.profileId, mediaHeaders(id.userAgent, session)))
+                accept(videoId, format, pr, id.clientName, id.profileId, mediaHeaders(id.userAgent, session))?.let { return it }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -137,7 +138,7 @@ internal class Engine(
             val session = host.session()
             val (pr, formats) = watchPage(videoId, session) ?: return null
             val format = selectFormat(formats, maxKbps, requireM4a) ?: return null
-            remember(stream(videoId, format, pr, "WEB", "WEB_WATCH_PAGE", watchHeaders(session)))
+            accept(videoId, format, pr, "WEB", "WEB_WATCH_PAGE", watchHeaders(session))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -245,23 +246,42 @@ internal class Engine(
             full?.takeIf(::isAllowedUrl)?.let { AudioFormat(json, it) }
         }
 
-    private fun stream(
+    /**
+     * BRIEF 4.2 only counts a format "whose URL works", so the URL is probed for one byte with the
+     * stream's own headers. A refusal excludes the profile, as onRefused would, and returns null.
+     */
+    private suspend fun accept(
         videoId: String,
         format: AudioFormat,
         pr: JsonObject,
         clientName: String,
         profileId: String,
         headers: Map<String, String>,
-    ) = VyonExStream(
-        videoId = videoId,
-        url = format.url,
-        kbps = format.bitrate / 1000,
-        mimeType = format.mimeType,
-        loudnessDb = (pr.at("playerConfig", "audioConfig", "loudnessDb") as? JsonPrimitive)?.doubleOrNull,
-        clientName = clientName,
-        profileId = profileId,
-        headers = headers,
-    ).also { log(INFO, "chose $profileId itag ${format.itag} (${it.mimeType}, ${it.kbps} kbps)", videoId) }
+    ): VyonExStream? {
+        val status = http.get(format.url) {
+            headers.forEach { (name, value) -> header(name, value) }
+            header(HttpHeaders.Range, "bytes=0-0")
+        }.status
+        if (!status.isSuccess()) {
+            log(WARN, "$profileId URL refused (HTTP ${status.value})", videoId)
+            exclude(videoId, profileId)
+            return null
+        }
+        log(INFO, "chose $profileId itag ${format.itag} (${format.mimeType}, ${format.bitrate / 1000} kbps)", videoId)
+        return remember(
+            VyonExStream(
+                videoId = videoId,
+                url = format.url,
+                kbps = format.bitrate / 1000,
+                mimeType = format.mimeType,
+                // Formats carry their own value (enablePerFormatLoudness); VISIONOS has no response-wide one.
+                loudnessDb = format.loudnessDb ?: (pr.at("playerConfig", "audioConfig", "loudnessDb") as? JsonPrimitive)?.doubleOrNull,
+                clientName = clientName,
+                profileId = profileId,
+                headers = headers,
+            ),
+        )
+    }
 
     private fun mediaHeaders(userAgent: String, session: VyonExSession) = buildMap {
         put("User-Agent", userAgent)

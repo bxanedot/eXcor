@@ -11,8 +11,12 @@ Each item names the reading chosen; nothing was looked up in the old code.
 2. **Live test.** `VYONEX_LIVE=1` passed for `dQw4w9WgXcQ` (TV_SAMSUNG, signature and `n`
    decoded, ranged GET 206). `kJQP7kiw5Fk` then got "This video is not available" from both
    TVHTML5 and VISIONOS, and afterwards every request from this IP got
-   `LOGIN_REQUIRED: Sign in to confirm you're not a bot`. The live test needs a run from a
-   normal network; CI does not run it.
+   `LOGIN_REQUIRED: Sign in to confirm you're not a bot`. CI does not run the live test.
+   **Update 2026-10-27, owner's home network:** before item 23, `extract` returned a TV_SAMSUNG
+   stream whose ranged GET got 403. With item 23, all three videos returned VISIONOS streams
+   (itag 251). TV_SAMSUNG's URL for `dQw4w9WgXcQ` was refused by the probe (403), and its player
+   requests for the other two got `LOGIN_REQUIRED` (bot check), so YouTube was refusing that
+   client on this network.
 
 ## Readings of the brief
 
@@ -70,3 +74,12 @@ Each item names the reading chosen; nothing was looked up in the old code.
     falls through to the watch page, and anything else returns nil.
 22. **No disk cache** in VyonExKit (optional in the brief): the player is prepared again once per
     app launch and player version, during warm-up.
+
+## After delivery
+
+23. **"Whose URL works" (4.2).** After a live run returned a URL that got HTTP 403, both engines
+    now probe the chosen URL with a one-byte ranged GET using the returned headers before
+    returning it. A refusal is logged at WARN, excludes that profile for 10 minutes (as `onRefused`
+    would) and moves on to the next identity. Cost: one small extra request per identity tried.
+    A probe cannot catch refusals that depend on how the host fetches (for example a different
+    IPv4/IPv6 route in the host's player than in its OkHttp client).
