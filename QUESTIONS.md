@@ -1,4 +1,6 @@
-# Open questions
+# eXcor open questions
+
+> Historical VyonEx names in the items below refer to the earlier API, fixtures or test harness. The clean-room deliverables use eXcor naming per the amendment in `BRIEF.md`.
 
 Each item names the reading chosen; nothing was looked up in the old code.
 

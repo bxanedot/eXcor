@@ -1,6 +1,8 @@
-# VyonEx clean-room rewrite — brief for the implementing agent
+# eXcor clean-room rewrite — original source brief
 
-You are writing **VyonEx**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **VyonExKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier VyonEx exists, but it contains GPL-licensed code. Your job is to write new ones from scratch, from this brief and from permissively licensed public sources only, so they can be released under **Apache-2.0**.
+> **Owner naming amendment (2026-10-28):** The original contract below uses VyonEx names. The deliverable names are `eXcor`, Kotlin package `com.excor`, Maven artifact `com.excor:eXcor`, XCFramework `eXcor`, and the separately requested native Swift package/module `eXcorKit`. This amendment controls names; it does not change the functional requirements or clean-room rules. Historical names in the original contract are retained for traceability.
+
+You are writing **eXcor**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **eXcorKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier VyonEx implementation exists, but it contains GPL-licensed code. Write the new deliverables from scratch, from this brief and permissively licensed public sources only, so they can be released under **Apache-2.0**.
 
 This brief tells you **what** the library must do. It deliberately does not tell you how the old one did it. Do not try to find out.
 

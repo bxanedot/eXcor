@@ -107,11 +107,14 @@ internal suspend fun runEjs(input: String): String {
         "globalThis.require = name => { if (name === 'meriyah' || name === 'astring') return lib.lib[name]; throw new Error('Unsupported EJS dependency'); };\n" +
         "$URL_SHIM\n$EJS_CORE\nJSON.stringify(jsc.default(JSON.parse($inputLiteral)))"
     return withContext(Dispatchers.Default) {
-        QuickJs.create(Dispatchers.Default).use { runtime ->
+        val runtime = QuickJs.create(Dispatchers.Default)
+        try {
             runtime.memoryLimit = 64L * 1024 * 1024
             runtime.maxStackSize = 1024L * 1024
             runtime.evaluationTimeoutMillis = 10_000
             runtime.evaluate<String>(program)
+        } finally {
+            runtime.close()
         }
     }
 }

@@ -1,3 +1,7 @@
+# eXcor test fixtures
+
+> The captured files documented below belong to the preserved earlier implementation. They are third-party service content, are not covered by the repository license, and are not used by the clean-room engine. The clean-room suite uses synthetic fixtures under `fixtures/cleanroom/`.
+
 # Test fixtures
 
 Responses captured from YouTube on 2026-10-26 for the offline tests. They

@@ -1,4 +1,6 @@
-# Provenance
+# eXcor provenance
+
+> This file preserves historical provenance records for the existing implementation and includes a separate clean-room section for eXcor. The opening contribution note describes the earlier source tree; it is not a legal determination for the clean-room addition.
 
 The library code was written by Claude in a separate cloud environment with no access to the
 owner's PC. Codex contributed the watch-page capture, live-test runs and results, and
