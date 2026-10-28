@@ -496,3 +496,15 @@ Each item names the reading chosen; nothing was looked up in the old code.
     the signed stream URLs (`bcbits.com/stream/…token=…`) before writing; `FixtureHygieneTest` fails
     on any left in. Needed: a run of `VYONEX_CAPTURE=1 VYONEX_CAPTURE_ONLY=bandcamp-track.html,bandcamp-album.html`
     from a normal network; the parser (yt-dlp's `data-tralbum` reading) follows on those captures.
+60. **Audio language for dubbed videos (owner's comparison report P1).** `VyonExMetadata.audioTracks`
+    lists a video's audio tracks (language code, YouTube's name, original, default, descriptive), and
+    `preferAudioLanguage(code)` makes `extract`, `extractVideo`, `formats` and the watch-page fallback
+    take that language's track. The descriptive track is never taken for a language, and a video
+    without the language keeps its original track (item 45). It is a preference on the VyonEx object
+    rather than a new argument, so the Swift API keeps its signatures. Read as yt-dlp's
+    `get_language_code_and_preference` reads it (the `audioTrack.id` before the dot). Unchecked against
+    a capture: no dubbed video's response could be captured from the build machine (item 41).
+61. **YouTube HLS variants (for recording live streams).** Not built: it needs a real master playlist,
+    and from the build machine VISIONOS answers the 24/7 live stream with "This live stream recording is
+    not available." while other clients' player requests get bot checks (2026-10-28). The HLS reader
+    of item 57 refuses master and live playlists by name in the meantime.

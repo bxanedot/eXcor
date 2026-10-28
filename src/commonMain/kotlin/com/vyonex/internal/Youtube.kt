@@ -1,6 +1,7 @@
 package com.vyonex.internal
 
 import com.vyonex.VyonExAudioFormat
+import com.vyonex.VyonExAudioTrack
 import com.vyonex.VyonExCaptionTrack
 import com.vyonex.VyonExChapter
 import com.vyonex.VyonExContainer
@@ -139,11 +140,35 @@ internal class AudioFormat(json: JsonObject, val url: String) {
  * The audio formats, of one language: a video with dubbed tracks lists each format once per track, and only the
  * best-ranked track's are kept, so every choice made from them plays the original.
  */
-internal fun audioFormatsOf(playerResponse: JsonObject): List<JsonObject> {
+/**
+ * The audio formats of one track. A video with dubbed audio lists each format once per track: [language] (a code such
+ * as "en" or "es-US") picks that track when there is one, never its descriptive version; otherwise, and when none is
+ * asked for, the original track is kept.
+ */
+internal fun audioFormatsOf(playerResponse: JsonObject, language: String? = null): List<JsonObject> {
     val formats = formatsOf(playerResponse, "audio/")
+    language?.let { wanted ->
+        formats.filter { audioLanguageOf(it).equals(wanted, ignoreCase = true) && audioTrackRank(it) > -10 }.ifEmpty { null }?.let { return it }
+    }
     val best = formats.maxOfOrNull(::audioTrackRank) ?: return formats
     return formats.filter { audioTrackRank(it) == best }
 }
+
+/** yt-dlp get_language_code_and_preference: a track's language is its `audioTrack.id` before the dot ("en.4" is "en"). */
+private fun audioLanguageOf(format: JsonObject) = format.at("audioTrack", "id").str?.substringBefore('.')?.takeIf { it.isNotEmpty() }
+
+/** A video's audio tracks, once each, in YouTube's order; empty for a video with one track. */
+internal fun audioTracksOf(playerResponse: JsonObject): List<VyonExAudioTrack> =
+    formatsOf(playerResponse, "audio/").filter { it["audioTrack"] != null }.distinctBy { it.at("audioTrack", "id").str }.mapNotNull { format ->
+        val rank = audioTrackRank(format)
+        VyonExAudioTrack(
+            languageCode = audioLanguageOf(format) ?: return@mapNotNull null,
+            name = format.at("audioTrack", "displayName").str,
+            isOriginal = rank == 10,
+            isDefault = format.at("audioTrack", "audioIsDefault").bool == true,
+            isDescriptive = rank == -10,
+        )
+    }
 
 // yt-dlp get_language_code_and_preference: descriptive tracks last, then the original, then YouTube's default.
 // The display name is in the session's language, so "original" may not match; the default then decides.
@@ -288,6 +313,7 @@ internal fun metadataOf(videoId: String, playerResponse: JsonObject): VyonExMeta
         music = (details.at("shortDescription").str ?: textOf(micro.at("description")))?.let(::musicInfoOf),
         translationLanguages = (playerResponse.at("captions", "playerCaptionsTracklistRenderer", "translationLanguages") as? JsonArray).orEmpty()
             .mapNotNull { language -> language.at("languageCode").str?.let { code -> textOf(language.at("languageName"))?.let { code to it } } }.toMap(),
+        audioTracks = audioTracksOf(playerResponse),
     )
 }
 
