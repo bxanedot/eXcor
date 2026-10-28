@@ -191,7 +191,9 @@ or artist), see its tracks, and play them in the background with the system's me
 or the whole page, can be downloaded: audio (AAC or Opus, every bitrate YouTube offers) or video (every height,
 merged into one MP4 or WebM file), into Music/VyonEx and Movies/VyonEx, with progress in a notification.
 SoundCloud links (a track or a set) open, play and download too: the best audio that is not encrypted (DRM), saved
-as `.m4a`, `.mp3` or `.opus`; a track SoundCloud only offers encrypted says so. No search or player screen yet.
+as `.m4a`, `.mp3` or `.opus`; a track SoundCloud only offers encrypted says so. Anything typed that is not a link
+is searched on YouTube, with YouTube's suggestions while typing: a video plays (and the videos after it in the
+results), a playlist, album, artist or channel opens as a page with a way back to the results. No player screen yet.
 
 ```kotlin
 val playback = Playback(source, scope, nowSeconds)  // source: VyonEx behind StreamSource
