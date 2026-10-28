@@ -135,6 +135,23 @@ class ApiCheckTest {
             val g: VyonExFormats? = vyonEx.formats("v")
             val channel: VyonExChannel? = vyonEx.channel("UC")
             listOf<Any?>(channel?.channelId, channel?.title, channel?.handle, channel?.description, channel?.avatars, channel?.banners, channel?.tabs)
+            val apple: VyonExAppleMusic = vyonEx.appleMusic
+            val ref: AppleMusicRef? = apple.parse("https://music.apple.com/us/album/x/1?i=2")
+            listOf<Any?>(ref?.id, ref?.country, ref is AppleMusicRef.Song, ref is AppleMusicRef.Album, ref is AppleMusicRef.Artist)
+            val song: AppleMusicSong? = apple.song(1, "us")
+            song?.let {
+                listOf<Any?>(it.id, it.title, it.artist, it.artistId, it.album, it.albumId, it.durationMs, it.trackNumber, it.trackCount)
+                listOf<Any?>(it.discNumber, it.discCount, it.releaseDate, it.genre, it.isExplicit, it.artwork, it.url)
+            }
+            val album: AppleMusicAlbum? = apple.album(1, null)
+            album?.let { listOf<Any?>(it.id, it.title, it.artist, it.artistId, it.trackCount, it.releaseDate, it.genre, it.copyright, it.isExplicit, it.artwork, it.url, it.songs) }
+            val artist: AppleMusicArtist? = apple.artist(1, null, 5)
+            artist?.let { listOf<Any?>(it.id, it.name, it.genre, it.url, it.albums) }
+            val pictures: List<VyonExThumbnail> = apple.artistImages(1, "us")
+            listOf(pictures)
+            val songs: List<AppleMusicSong> = apple.searchSongs("q", null, 5)
+            val albums: List<AppleMusicAlbum> = apple.searchAlbums("q", null, 5)
+            listOf(songs, albums)
             val posts: VyonExPostPage = vyonEx.channelPosts("UC")
             val morePosts: VyonExPostPage = vyonEx.channelPostsMore("token")
             (posts.posts + morePosts.posts).forEach {
@@ -220,6 +237,7 @@ class ApiCheckTest {
         assertFailsWith<IllegalArgumentException> { vyonEx.search("q", VyonExSearchFilter("Type", "Channels", null, true)) }
         assertEquals(emptyList(), vyonEx.suggestions(""))
         assertEquals(listOf(true, false), listOf("https://soundcloud.com/a/b", "https://youtu.be/dQw4w9WgXcQ").map(vyonEx.soundCloud::isLink))
+        assertEquals(AppleMusicRef.Artist(669771, "us"), vyonEx.appleMusic.parse("https://music.apple.com/us/artist/rick-astley/669771"))
         vyonEx.preferAudioLanguage("es-US")
         vyonEx.preferAudioLanguage(null)
         val track = VyonExAudioTrack("en", "English original", isOriginal = true, isDefault = false, isDescriptive = false)

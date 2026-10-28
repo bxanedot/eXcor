@@ -24,6 +24,8 @@ class FixtureHygieneTest {
         assertFalse(hasHeartbeatData(text), "${it.name}: heartbeat data is left in (not printed)")
         assertFalse(hasSoundCloudSecrets(text), "${it.name}: a SoundCloud client ID or track authorization is left in (not printed)")
         assertFalse(hasBandcampStreamUrl(text), "${it.name}: a signed Bandcamp stream URL is left in (not printed)")
+        assertFalse(hasAudioPreview(text), "${it.name}: an Apple song preview URL is left in (not printed)")
+        assertFalse(hasSignedToken(text), "${it.name}: a signed token (JWT) is in it (not printed)")
     }
 
     @Test
@@ -61,6 +63,21 @@ class FixtureHygieneTest {
     }
 
     @Test
+    fun signedTokensAreFound() {
+        assertTrue(hasSignedToken("""content="eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJBQkMxMjM0NTYifQ.c2lnbmF0dXJlLXZhbHVlLWhlcmU""""))
+        assertFalse(hasSignedToken("""{"thumbnail":"https://i.ytimg.com/vi/x/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg=="}"""))
+    }
+
+    @Test
+    fun redactionRemovesApplePreviews() {
+        val capture = """{"trackId":1,"previewUrl":"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview/a.m4a","trackName":"x"}"""
+        assertTrue(hasAudioPreview(capture))
+        val redacted = redactCapture(capture)
+        assertFalse(hasAudioPreview(redacted) || "audio-ssl" in redacted, redacted)
+        assertTrue("\"trackName\":\"x\"" in redacted)
+    }
+
+    @Test
     fun publicMeansRoutableAndNotForDocumentation() {
         assertTrue(isPublic("8.8.8.8"))
         assertTrue(isPublic("2a00:1450::1"))
@@ -93,6 +110,17 @@ private const val REDACTED_BANDCAMP_STREAM = "https://t4.bcbits.com/stream/REDAC
 
 internal fun hasBandcampStreamUrl(text: String) = BANDCAMP_STREAM.findAll(text).any { it.value != REDACTED_BANDCAMP_STREAM }
 
+// Apple's 30-second song previews are audio; captures keep metadata only.
+private val AUDIO_PREVIEW = Regex(""""previewUrl"\s*:\s*"([^"]*)"""")
+private const val REDACTED_PREVIEW = "REDACTED-PREVIEW"
+
+// A JSON Web Token (header.payload.signature, base64url): web players can embed one in their pages.
+private val SIGNED_TOKEN = Regex("""eyJ[\w-]{10,}\.[\w-]{10,}\.[\w-]{10,}""")
+
+internal fun hasSignedToken(text: String) = SIGNED_TOKEN.containsMatchIn(text)
+
+internal fun hasAudioPreview(text: String) = AUDIO_PREVIEW.findAll(text).any { it.groupValues[1] != REDACTED_PREVIEW }
+
 internal fun hasSoundCloudSecrets(text: String) =
     CLIENT_ID.containsMatchIn(text) || TRACK_AUTHORIZATION.findAll(text).any { it.groupValues[1] != REDACTED_TRACK_AUTHORIZATION }
 
@@ -119,12 +147,13 @@ internal fun isPublic(literal: String): Boolean {
 
 /**
  * fixtures/README.md: public addresses become 192.0.2.1, every copy of a visitor ID, heartbeat data, SoundCloud track
- * authorization and signed Bandcamp stream URL a placeholder.
+ * authorization, signed Bandcamp stream URL and Apple song preview a placeholder.
  */
 internal fun redactCapture(text: String): String {
     var out = HEARTBEAT.replace(text) { it.value.replace(it.groupValues[1], REDACTED_HEARTBEAT) }
     out = TRACK_AUTHORIZATION.replace(out) { it.value.replace(it.groupValues[1], REDACTED_TRACK_AUTHORIZATION) }
     out = BANDCAMP_STREAM.replace(out, REDACTED_BANDCAMP_STREAM)
+    out = AUDIO_PREVIEW.replace(out) { it.value.replace(it.groupValues[1], REDACTED_PREVIEW) }
     VISITOR_ID.findAll(out).map { it.groupValues[1] }.filter { it != REDACTED_VISITOR }.toSet().forEach { id ->
         listOf(id, URLEncoder.encode(id, Charsets.UTF_8)).forEach { out = out.replace(it, REDACTED_VISITOR) }
     }

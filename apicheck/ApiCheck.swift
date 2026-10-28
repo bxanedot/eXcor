@@ -92,6 +92,26 @@ func apiCheck() async throws {
         let audioTracks: [VyonExAudioTrack] = metadata.audioTracks
         _ = audioTracks
         _ = translations
+        let apple: VyonExAppleMusic = vyonEx.appleMusic
+        if let ref: AppleMusicRef = apple.parse(url: "https://music.apple.com/us/album/x/1?i=2") {
+            _ = (ref.id, ref.country, ref is AppleMusicRef.Song, ref is AppleMusicRef.Album, ref is AppleMusicRef.Artist)
+        }
+        if let song: AppleMusicSong = try await apple.song(id: 1, country: "us") {
+            let duration: KotlinLong? = song.durationMs
+            let number: KotlinInt? = song.trackNumber
+            _ = (song.id, song.title, song.artist, song.album, duration, number, song.releaseDate, song.genre, song.isExplicit, song.artwork, song.url)
+        }
+        if let album: AppleMusicAlbum = try await apple.album(id: 1, country: nil) {
+            _ = (album.id, album.title, album.artist, album.copyright, album.isExplicit, album.artwork, album.url, album.songs)
+        }
+        if let artist: AppleMusicArtist = try await apple.artist(id: 1, country: nil, albumLimit: 5) {
+            _ = (artist.id, artist.name, artist.genre, artist.url, artist.albums)
+        }
+        let pictures: [VyonExThumbnail] = try await apple.artistImages(id: 1, country: "us")
+        _ = pictures
+        let appleSongs: [AppleMusicSong] = try await apple.searchSongs(term: "q", country: nil, limit: 5)
+        let appleAlbums: [AppleMusicAlbum] = try await apple.searchAlbums(term: "q", country: nil, limit: 5)
+        _ = (appleSongs, appleAlbums)
         let posts: VyonExPostPage = try await vyonEx.channelPosts(channelId: "UC")
         let morePosts: VyonExPostPage = try await vyonEx.channelPostsMore(continuation: posts.continuation ?? "")
         for post: VyonExPost in posts.posts + morePosts.posts {

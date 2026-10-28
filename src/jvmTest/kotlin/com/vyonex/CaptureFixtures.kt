@@ -103,10 +103,32 @@ class CaptureFixtures {
         replies?.let { call("next", web, "next-comment-replies.json") { put("continuation", it) } }
         call("search", music, "search-music.json") { put("query", "never gonna give you up") }
         soundCloud()
+        appleMusic()
         // Bandcamp: a track page and an album page from yt-dlp's tests. Bandcamp answers some networks (the cloud build
         // machine, 2026-10-28) with a "Client Challenge" page instead; that is a bot check, so the capture stops there.
         bandcamp("bandcamp-track.html", "https://relapsealumni.bandcamp.com/track/hail-to-fire")
         bandcamp("bandcamp-album.html", "https://jstrecords.bandcamp.com/album/entropy-ep")
+    }
+
+    /**
+     * Apple's iTunes Search API (documented, no key), metadata only: a song, an album with its tracks, an artist with
+     * albums, a song search. Song previews (audio) are replaced before writing.
+     */
+    private fun appleMusic() {
+        val api = "https://itunes.apple.com"
+        get("$api/lookup?id=1773293184&country=us", "apple-song.json")
+        get("$api/lookup?id=1773292758&entity=song&country=us", "apple-album.json")
+        get("$api/lookup?id=669771&entity=album&limit=5&country=us", "apple-artist.json")
+        get("$api/search?term=never+gonna+give+you+up&media=music&entity=song&limit=5&country=us", "apple-search.json")
+        // The artist's page, for its share image: only its <head> is kept.
+        val file = "apple-artist-page-head.html"
+        if (!wanted(file)) return
+        val page = http.newCall(Request.Builder().url("https://music.apple.com/us/artist/rick-astley/669771").header("User-Agent", DESKTOP_UA).build())
+            .execute().use { it.body.string() }
+        val head = page.substringBefore("</head>", "") + "</head>"
+        check(head.length > 7 && !hasPublicAddress(head) && !hasCookieValue(head) && !hasSignedToken(head)) { "$file: no head, or redaction incomplete; not written" }
+        File(FIXTURES, file).writeText(head)
+        println("$file: ${head.length} chars")
     }
 
     private fun bandcamp(file: String, url: String) {
@@ -186,7 +208,10 @@ class CaptureFixtures {
         }
         // Comment authors are people: their names, channels and pictures are replaced, consistently, before writing.
         val redacted = redactCapture(if (file.startsWith("next-comment")) anonymizeCommentAuthors(text) else text)
-        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted) && !hasSoundCloudSecrets(redacted)) {
+        check(
+            !hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted) &&
+                !hasSoundCloudSecrets(redacted) && !hasAudioPreview(redacted),
+        ) {
             "$file: redaction incomplete, not written"
         }
         File(FIXTURES, file).writeText(redacted)
