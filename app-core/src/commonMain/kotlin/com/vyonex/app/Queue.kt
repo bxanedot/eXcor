@@ -83,3 +83,9 @@ data class Queue(val tracks: List<Track> = emptyList(), val index: Int = -1, val
     fun shuffled(random: Random = Random): Queue =
         copy(tracks = tracks.take(index + 1) + tracks.drop(index + 1).shuffled(random))
 }
+
+/**
+ * [loaded] with the [next] page's tracks after it, each track once: a mix comes round to videos it has shown, and
+ * playlist pages can overlap when the playlist changes between them.
+ */
+fun appendPage(loaded: List<Track>, next: List<Track>): List<Track> = (loaded + next).distinctBy { it.source to it.id }
