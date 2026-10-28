@@ -9,10 +9,15 @@ import com.vyonex.VyonExThumbnail
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.readBuffer
+import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -31,6 +36,14 @@ private val COUNTRY = Regex("""[A-Za-z]{2}""")
 // The size part of Apple's artwork URLs ("…/100x100bb.jpg"); its image server makes other sizes from the same URL.
 private val ARTWORK_SIZE = Regex("""/100x100bb\.(jpg|png)$""")
 private val ARTWORK_SIZES = listOf(100, 600, 1200, 3000)
+// An artist page's share image (og:image), on Apple's image server: its last part is the size and crop ("1200x630cw.png").
+private val OG_IMAGE = Regex("""<meta property="og:image" content="([^"]+)"""")
+private val OG_IMAGE_WIDTH = Regex("""<meta property="og:image:width" content="(\d+)"""")
+private val OG_IMAGE_HEIGHT = Regex("""<meta property="og:image:height" content="(\d+)"""")
+private val ARTIST_IMAGE = Regex("""https://is\d+-ssl\.mzstatic\.com/image/thumb/[^"\s?#]+/\d+x\d+[a-z]{2}\.(?:png|jpg)""")
+private val ARTIST_IMAGE_SIZES = listOf(600, 1200, 3000)
+// The page's head holds its meta tags (about 6 KB); the rest (over 500 KB) is not read.
+private const val ARTIST_PAGE_HEAD_MAX = 256 * 1024
 
 internal fun appleMusicRefOf(url: String): AppleMusicRef? {
     val m = APPLE_MUSIC_LINK.matchEntire(url.trim()) ?: return null
@@ -114,7 +127,36 @@ internal fun appleArtistOf(results: List<JsonElement>): AppleMusicArtist? {
     )
 }
 
+/**
+ * An artist's picture from their Apple Music page's share image (`og:image`): as the page gives it (a wide crop) and as
+ * squares at 600, 1200 and 3000 px made from the same URL. Empty when the page has none on Apple's image server.
+ */
+internal fun artistImagesOf(head: String): List<VyonExThumbnail> {
+    val url = OG_IMAGE.find(head)?.groupValues?.get(1)?.replace("&amp;", "&")?.takeIf { ARTIST_IMAGE.matches(it) } ?: return emptyList()
+    val width = OG_IMAGE_WIDTH.find(head)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+    val height = OG_IMAGE_HEIGHT.find(head)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+    val base = url.substringBeforeLast('/')
+    return listOf(VyonExThumbnail(url, width, height)) + ARTIST_IMAGE_SIZES.map { VyonExThumbnail("$base/${it}x${it}cc.jpg", it, it) }
+}
+
 internal class AppleMusicEngine(private val host: VyonExHostServices, private val http: HttpClient) {
+    /** An artist's picture, from their Apple Music page (see [artistImagesOf]); empty for an unknown artist. */
+    suspend fun artistImages(id: Long, country: String?): List<VyonExThumbnail> {
+        require(id > 0) { "VyonEx: not an Apple Music ID" }
+        val store = storeOf(country)
+        val head = http.prepareGet("https://music.apple.com/$store/artist/$id") { header(HttpHeaders.UserAgent, DESKTOP_UA) }.execute { response ->
+            if (response.status == HttpStatusCode.NotFound) return@execute null
+            check(response.status.isSuccess()) { "VyonEx: Apple Music page HTTP ${response.status.value}" }
+            val channel = response.bodyAsChannel()
+            val text = StringBuilder()
+            while (!channel.isClosedForRead && "</head>" !in text && text.length < ARTIST_PAGE_HEAD_MAX) {
+                text.append(channel.readBuffer(16L * 1024).readByteArray().decodeToString())
+            }
+            text.toString()
+        } ?: return emptyList()
+        return artistImagesOf(head)
+    }
+
     suspend fun song(id: Long, country: String?): AppleMusicSong? =
         lookup(id, country, emptyList()).firstNotNullOfOrNull(::appleSongOf)
 
@@ -143,10 +185,15 @@ internal class AppleMusicEngine(private val host: VyonExHostServices, private va
         return call("search", listOf("term" to term.trim(), "media" to "music", "entity" to entity, "limit" to limit.toString()), country)
     }
 
-    /** One API call's `results`. A refusal (Apple allows about 20 calls a minute) throws with its status only. */
-    private suspend fun call(endpoint: String, params: List<Pair<String, String>>, country: String?): List<JsonElement> {
+    private suspend fun storeOf(country: String?): String {
         val store = (country ?: host.session().region).lowercase()
         require(COUNTRY.matches(store)) { "VyonEx: $store is not a two-letter country code" }
+        return store
+    }
+
+    /** One API call's `results`. A refusal (Apple allows about 20 calls a minute) throws with its status only. */
+    private suspend fun call(endpoint: String, params: List<Pair<String, String>>, country: String?): List<JsonElement> {
+        val store = storeOf(country)
         val query = (params + ("country" to store)).joinToString("&") { (k, v) -> "$k=${v.encodeURLParameter()}" }
         val response = http.get("$ITUNES_API/$endpoint?$query") { header(HttpHeaders.UserAgent, DESKTOP_UA) }
         check(response.status.isSuccess()) { "VyonEx: Apple's Search API HTTP ${response.status.value}" }

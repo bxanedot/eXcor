@@ -120,6 +120,15 @@ class CaptureFixtures {
         get("$api/lookup?id=1773292758&entity=song&country=us", "apple-album.json")
         get("$api/lookup?id=669771&entity=album&limit=5&country=us", "apple-artist.json")
         get("$api/search?term=never+gonna+give+you+up&media=music&entity=song&limit=5&country=us", "apple-search.json")
+        // The artist's page, for its share image: only its <head> is kept.
+        val file = "apple-artist-page-head.html"
+        if (!wanted(file)) return
+        val page = http.newCall(Request.Builder().url("https://music.apple.com/us/artist/rick-astley/669771").header("User-Agent", DESKTOP_UA).build())
+            .execute().use { it.body.string() }
+        val head = page.substringBefore("</head>", "") + "</head>"
+        check(head.length > 7 && !hasPublicAddress(head) && !hasCookieValue(head) && !hasSignedToken(head)) { "$file: no head, or redaction incomplete; not written" }
+        File(FIXTURES, file).writeText(head)
+        println("$file: ${head.length} chars")
     }
 
     private fun bandcamp(file: String, url: String) {

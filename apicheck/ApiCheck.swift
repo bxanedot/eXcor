@@ -107,6 +107,8 @@ func apiCheck() async throws {
         if let artist: AppleMusicArtist = try await apple.artist(id: 1, country: nil, albumLimit: 5) {
             _ = (artist.id, artist.name, artist.genre, artist.url, artist.albums)
         }
+        let pictures: [VyonExThumbnail] = try await apple.artistImages(id: 1, country: "us")
+        _ = pictures
         let appleSongs: [AppleMusicSong] = try await apple.searchSongs(term: "q", country: nil, limit: 5)
         let appleAlbums: [AppleMusicAlbum] = try await apple.searchAlbums(term: "q", country: nil, limit: 5)
         _ = (appleSongs, appleAlbums)

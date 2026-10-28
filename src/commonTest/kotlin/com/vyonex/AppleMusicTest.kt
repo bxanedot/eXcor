@@ -5,6 +5,7 @@ import com.vyonex.internal.appleAlbumWithSongsOf
 import com.vyonex.internal.appleArtistOf
 import com.vyonex.internal.appleMusicRefOf
 import com.vyonex.internal.appleSongOf
+import com.vyonex.internal.artistImagesOf
 import com.vyonex.internal.appleArtworkOf
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -145,5 +146,34 @@ class AppleMusicTest {
         assertNull(empty.song(1, null))
         assertNull(empty.album(1, null))
         assertNull(empty.artist(1, null, 5))
+    }
+
+    @Test
+    fun artistImagesFromThePagesShareImage() {
+        val images = artistImagesOf(fixture("apple-artist-page-head.html"))
+        assertEquals(listOf(1200 to 630, 600 to 600, 1200 to 1200, 3000 to 3000), images.map { it.width to it.height })
+        assertTrue(images[0].url.endsWith("/1200x630cw.png"))
+        assertTrue(images.drop(1).all { it.url.endsWith("/${it.width}x${it.width}cc.jpg") })
+        assertTrue(images.all { it.url.startsWith("https://is1-ssl.mzstatic.com/image/thumb/AMCArtistImages") })
+        // Only Apple's image server is taken; a page without a share image has no pictures.
+        assertEquals(emptyList(), artistImagesOf("""<meta property="og:image" content="https://evil.example/image/thumb/a/1200x630cw.png">"""))
+        assertEquals(emptyList(), artistImagesOf("""<head><title>x</title></head>"""))
+    }
+
+    @Test
+    fun artistImagesReadOnlyThePagesHead() = runTest {
+        val requests = mutableListOf<HttpRequestData>()
+        // The head, then a large body that must not be needed.
+        val page = fixture("apple-artist-page-head.html") + "<body>" + "x".repeat(400_000) + "</body>"
+        val engine = AppleMusicEngine(FakeHost(), HttpClient(MockEngine { request ->
+            requests += request
+            if (request.url.encodedPath.endsWith("/1")) respond("", HttpStatusCode.NotFound) else respond(page)
+        }))
+        assertEquals(4, engine.artistImages(669771, "us").size)
+        assertEquals("https://music.apple.com/us/artist/669771", requests.single().url.toString())
+        assertNull(requests.single().headers[HttpHeaders.Cookie])
+        // An artist Apple has no page for has no pictures.
+        assertEquals(emptyList(), engine.artistImages(1, "us"))
+        assertFailsWith<IllegalArgumentException> { engine.artistImages(0, "us") }
     }
 }

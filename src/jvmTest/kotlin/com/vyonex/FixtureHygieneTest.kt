@@ -25,6 +25,7 @@ class FixtureHygieneTest {
         assertFalse(hasSoundCloudSecrets(text), "${it.name}: a SoundCloud client ID or track authorization is left in (not printed)")
         assertFalse(hasBandcampStreamUrl(text), "${it.name}: a signed Bandcamp stream URL is left in (not printed)")
         assertFalse(hasAudioPreview(text), "${it.name}: an Apple song preview URL is left in (not printed)")
+        assertFalse(hasSignedToken(text), "${it.name}: a signed token (JWT) is in it (not printed)")
     }
 
     @Test
@@ -59,6 +60,12 @@ class FixtureHygieneTest {
         val redacted = redactCapture(page)
         assertFalse(hasBandcampStreamUrl(redacted) || "token" in redacted, redacted)
         assertTrue("&quot;https://t4.bcbits.com/stream/REDACTED&quot;}}" in redacted, redacted)
+    }
+
+    @Test
+    fun signedTokensAreFound() {
+        assertTrue(hasSignedToken("""content="eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJBQkMxMjM0NTYifQ.c2lnbmF0dXJlLXZhbHVlLWhlcmU""""))
+        assertFalse(hasSignedToken("""{"thumbnail":"https://i.ytimg.com/vi/x/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg=="}"""))
     }
 
     @Test
@@ -106,6 +113,11 @@ internal fun hasBandcampStreamUrl(text: String) = BANDCAMP_STREAM.findAll(text).
 // Apple's 30-second song previews are audio; captures keep metadata only.
 private val AUDIO_PREVIEW = Regex(""""previewUrl"\s*:\s*"([^"]*)"""")
 private const val REDACTED_PREVIEW = "REDACTED-PREVIEW"
+
+// A JSON Web Token (header.payload.signature, base64url): web players can embed one in their pages.
+private val SIGNED_TOKEN = Regex("""eyJ[\w-]{10,}\.[\w-]{10,}\.[\w-]{10,}""")
+
+internal fun hasSignedToken(text: String) = SIGNED_TOKEN.containsMatchIn(text)
 
 internal fun hasAudioPreview(text: String) = AUDIO_PREVIEW.findAll(text).any { it.groupValues[1] != REDACTED_PREVIEW }
 

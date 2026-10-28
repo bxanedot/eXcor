@@ -526,7 +526,13 @@ Each item names the reading chosen; nothing was looked up in the old code.
     comes at 100 px, as the documentation gives it, and at 600, 1200 and 3000 px, made by changing the
     size in its URL as Apple's image server serves them; checked from the build machine on 2026-10-28
     (each answered a JPEG of that size), but not documented by Apple, so a size can stop answering.
-    Artists have no picture in this API. Apple's playlist links (`pl.…`) are not in it. Apple allows
+    Artists have no picture in this API (owner, 2026-10-28: "Artists images?"): `artistImages(id)`
+    takes it from the artist's own Apple Music page, its share image (`og:image`, 1200 × 630 as the page
+    states), and makes 600, 1200 and 3000 px squares from the same URL, each checked to answer a JPEG
+    of that size on 2026-10-28. Only the page's `<head>` is read (about 6 KB of 570 KB), only an image
+    on Apple's image server (`is*-ssl.mzstatic.com`) is taken, and an unknown artist (404) has none.
+    The capture keeps only the head, and the hygiene test now refuses any signed token (JWT) in a
+    fixture, as web players can embed one. Apple's playlist links (`pl.…`) are not in it. Apple allows
     about 20 calls a minute; a refusal throws with its HTTP status. Its terms say promotional content
     (previews, album art) is only to promote store content: what an app shows or saves is the app's
     call, not a clearance given here.

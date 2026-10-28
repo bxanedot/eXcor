@@ -52,7 +52,7 @@ data class AppleMusicAlbum(
     val songs: List<AppleMusicSong>,
 )
 
-/** An artist and albums they are on, theirs or others' (Apple's API gives artists no picture). */
+/** An artist and albums they are on, theirs or others' (pictures: `VyonExAppleMusic.artistImages`). */
 data class AppleMusicArtist(val id: Long, val name: String?, val genre: String?, val url: String?, val albums: List<AppleMusicAlbum>)
 
 /**
@@ -75,6 +75,13 @@ class VyonExAppleMusic internal constructor(private val engine: AppleMusicEngine
     /** An artist with up to [albumLimit] albums (1 to 200). */
     @Throws(Throwable::class)
     suspend fun artist(id: Long, country: String?, albumLimit: Int): AppleMusicArtist? = engine.artist(id, country, albumLimit)
+
+    /**
+     * An artist's picture (the search API has none): from their Apple Music page's share image, as the page gives it
+     * (a wide crop, 1200 × 630) and as squares at 600, 1200 and 3000 px. Empty for an artist without one or unknown.
+     */
+    @Throws(Throwable::class)
+    suspend fun artistImages(id: Long, country: String?): List<VyonExThumbnail> = engine.artistImages(id, country)
 
     /** Songs matching [term], best first; [limit] is 1 to 200. */
     @Throws(Throwable::class)

@@ -147,6 +147,8 @@ class ApiCheckTest {
             album?.let { listOf<Any?>(it.id, it.title, it.artist, it.artistId, it.trackCount, it.releaseDate, it.genre, it.copyright, it.isExplicit, it.artwork, it.url, it.songs) }
             val artist: AppleMusicArtist? = apple.artist(1, null, 5)
             artist?.let { listOf<Any?>(it.id, it.name, it.genre, it.url, it.albums) }
+            val pictures: List<VyonExThumbnail> = apple.artistImages(1, "us")
+            listOf(pictures)
             val songs: List<AppleMusicSong> = apple.searchSongs("q", null, 5)
             val albums: List<AppleMusicAlbum> = apple.searchAlbums("q", null, 5)
             listOf(songs, albums)
