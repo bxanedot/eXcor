@@ -190,6 +190,8 @@ class ApiCheckTest {
             val suggestions: List<String> = vyonEx.suggestions("q")
             listOf(suggestions)
             val soundCloud: VyonExSoundCloud = vyonEx.soundCloud
+            val isLink: Boolean = soundCloud.isLink("https://soundcloud.com/a/b")
+            listOf(isLink)
             val track: SoundCloudTrack? = soundCloud.track("https://soundcloud.com/a/b")
             val set: SoundCloudPlaylist? = soundCloud.playlist("https://soundcloud.com/a/sets/b")
             listOf<Any?>(set?.id, set?.title, set?.uploader, set?.setType, set?.artworkUrl, set?.permalinkUrl, set?.tracks)
@@ -209,6 +211,7 @@ class ApiCheckTest {
         // A filter without params (the one in use) is refused before any request.
         assertFailsWith<IllegalArgumentException> { vyonEx.search("q", VyonExSearchFilter("Type", "Channels", null, true)) }
         assertEquals(emptyList(), vyonEx.suggestions(""))
+        assertEquals(listOf(true, false), listOf("https://soundcloud.com/a/b", "https://youtu.be/dQw4w9WgXcQ").map(vyonEx.soundCloud::isLink))
         vyonEx.initializeFallback()
         assertNull(vyonEx.headersFor("u"))
         assertNull(vyonEx.onRefused("u"))

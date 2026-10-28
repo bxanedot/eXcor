@@ -31,6 +31,7 @@ import com.vyonex.VyonEx
 import com.vyonex.VyonExUnplayableException
 import com.vyonex.app.Choice
 import com.vyonex.app.Option
+import com.vyonex.app.Source
 import com.vyonex.app.Track
 import com.vyonex.app.VIDEO_CAPS
 import com.vyonex.app.audioOptions
@@ -38,8 +39,8 @@ import com.vyonex.app.videoOptions
 import kotlinx.coroutines.CancellationException
 
 /**
- * Audio or video, then a quality. For one track the list is what YouTube offers for it (asked when the dialog opens);
- * for many it is "the best of each", up to a height.
+ * Audio or video, then a quality. For one YouTube track the list is what YouTube offers for it (asked when the dialog
+ * opens); for many it is "the best of each", up to a height. SoundCloud has audio only, and VyonEx picks the best.
  */
 @Composable
 fun DownloadDialog(tracks: List<Track>, vyonEx: VyonEx, writesOpus: Boolean, onDismiss: () -> Unit, onDownload: (Choice, String) -> Unit) {
@@ -48,6 +49,10 @@ fun DownloadDialog(tracks: List<Track>, vyonEx: VyonEx, writesOpus: Boolean, onD
     var problem by remember { mutableStateOf<String?>(null) }
     var picked by remember { mutableStateOf<Option?>(null) }
     LaunchedEffect(tracks) {
+        if (tracks.all { it.source == Source.SOUNDCLOUD }) {
+            options = listOf(Option(Choice.Audio(null), "Best audio")) to emptyList()
+            return@LaunchedEffect
+        }
         if (tracks.size > 1) {
             // Above 1080p YouTube has only VP9, which needs Opus beside it (Android 10 and later).
             val caps = VIDEO_CAPS.filter { writesOpus || it <= 1080 }
@@ -55,7 +60,7 @@ fun DownloadDialog(tracks: List<Track>, vyonEx: VyonEx, writesOpus: Boolean, onD
             return@LaunchedEffect
         }
         try {
-            val formats = vyonEx.formats(tracks.single().videoId)
+            val formats = vyonEx.formats(tracks.single().id)
             if (formats == null) problem = "YouTube offers no download for this one." else options = audioOptions(formats, writesOpus) to videoOptions(formats, writesOpus)
         } catch (e: CancellationException) {
             throw e
@@ -80,7 +85,7 @@ fun DownloadDialog(tracks: List<Track>, vyonEx: VyonEx, writesOpus: Boolean, onD
                 when {
                     problem != null -> Text(problem.orEmpty(), color = MaterialTheme.colorScheme.error)
                     shown == null -> CircularProgressIndicator()
-                    shown.isEmpty() -> Text("YouTube offers nothing of this kind that can be saved here.")
+                    shown.isEmpty() -> Text("Nothing of this kind can be saved here.")
                     else -> LazyColumn(Modifier.heightIn(max = 320.dp)) {
                         items(shown) { option ->
                             Row(Modifier.fillMaxWidth().clickable { picked = option }, verticalAlignment = Alignment.CenterVertically) {
@@ -113,7 +118,7 @@ fun DownloadList(jobs: List<Downloads.Job>, onClear: () -> Unit) {
         LazyColumn(Modifier.heightIn(max = 160.dp)) {
             items(jobs.asReversed(), key = { it.id }) { job ->
                 Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("${job.track.title ?: job.track.videoId} · ${job.label}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${job.track.title ?: job.track.id} · ${job.label}", maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val small = MaterialTheme.typography.bodySmall
                     when (val state = job.state) {
                         Downloads.State.Queued -> Text("Waiting", style = small)

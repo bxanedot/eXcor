@@ -172,6 +172,8 @@ func apiCheck() async throws {
     let suggestions: [String] = try await vyonEx.suggestions(query: "q")
     _ = suggestions
     let soundCloud: VyonExSoundCloud = vyonEx.soundCloud
+    let isLink: Bool = soundCloud.isLink(url: "https://soundcloud.com/a/b")
+    _ = isLink
     if let set: SoundCloudPlaylist = try await soundCloud.playlist(url: "https://soundcloud.com/a/sets/b") {
         let setType: String? = set.setType
         _ = (set.id, set.title, set.uploader, setType, set.artworkUrl, set.permalinkUrl, set.tracks)

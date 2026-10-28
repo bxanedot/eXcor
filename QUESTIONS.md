@@ -471,7 +471,12 @@ Each item names the reading chosen; nothing was looked up in the old code.
     byte ranges. Live from the build machine on 2026-10-28, yt-dlp's test track (143 s, `aac_96k`)
     came out as 1,747,394 bytes: `ftyp`, `moov`, then 15 fragments. There is no resuming (a failure
     starts again). Logged-in (Go+) playback, comments, user pages, search and the app's SoundCloud
-    screen are not done; the app's queue and downloads take YouTube video IDs only.
+    screen were not done at first. Since 2026-10-28 the app opens SoundCloud links (a track or a set),
+    plays them (a fresh stream per play, HLS through the player's HLS source) and downloads them: the
+    best transcoding (a whole track over a preview, then AAC over MP3 over Opus, then the bitrate),
+    HLS joined and AAC remuxed into a plain `.m4a`. `MergeCheck` proves that remux on the emulators with
+    a synthetic clip laid out as SoundCloud's joined segments. A track only offered encrypted fails
+    with its own message ("only offers this one encrypted (DRM)") instead of a generic error.
 58. **SABR from yt-dlp's development work (owner: "yt-dlp dev work").** yt-dlp's SABR downloader is
     in its pull request 13515 (not merged, updated 2026-10-27): `downloader/sabr/`, protobuf
     messages under `extractor/youtube/_proto/`, and `_streaming/sabr/`; the 2026.10.26 release has

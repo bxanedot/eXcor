@@ -10,7 +10,7 @@ internal fun track(id: String) = Track(id, "title $id", "artist", 200, null)
 
 class QueueTest {
     private val abc = Queue(listOf(track("a"), track("b"), track("c")), index = 0)
-    private fun Queue.ids() = tracks.map { it.videoId }
+    private fun Queue.ids() = tracks.map { it.id }
 
     @Test
     fun whereNextGoesWithEachRepeatMode() {
@@ -39,13 +39,13 @@ class QueueTest {
         assertEquals(listOf("x", "a", "b", "c"), Queue(abc.tracks).playNext(track("x")).ids())
         assertEquals(listOf("a", "b", "c", "x", "y"), b.add(listOf(track("x"), track("y"))).ids())
         // Moving tracks around the current one, or the current one itself.
-        b.move(0, 2).let { assertEquals(listOf("b", "c", "a"), it.ids()); assertEquals("b", it.current?.videoId) }
-        b.move(2, 0).let { assertEquals(listOf("c", "a", "b"), it.ids()); assertEquals("b", it.current?.videoId) }
+        b.move(0, 2).let { assertEquals(listOf("b", "c", "a"), it.ids()); assertEquals("b", it.current?.id) }
+        b.move(2, 0).let { assertEquals(listOf("c", "a", "b"), it.ids()); assertEquals("b", it.current?.id) }
         b.move(1, 0).let { assertEquals(listOf("b", "a", "c"), it.ids()); assertEquals(0, it.index) }
         // Removing: before the current one, the current one (its next becomes current), the last current one.
-        assertEquals("b", b.remove(0).current?.videoId)
-        assertEquals("c", b.remove(1).current?.videoId)
-        assertEquals("b", abc.skipTo(2).remove(2).current?.videoId)
+        assertEquals("b", b.remove(0).current?.id)
+        assertEquals("c", b.remove(1).current?.id)
+        assertEquals("b", abc.skipTo(2).remove(2).current?.id)
         assertEquals(-1, Queue(listOf(track("a")), 0).remove(0).index)
     }
 

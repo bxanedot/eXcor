@@ -32,7 +32,8 @@ private class FakeSource : StreamSource {
 
     fun answer(videoId: String, vararg next: () -> VyonExStream?) = answers.getOrPut(videoId) { ArrayDeque() }.addAll(next)
 
-    override suspend fun stream(videoId: String): VyonExStream? {
+    override suspend fun stream(track: Track): VyonExStream? {
+        val videoId = track.id
         lookups += videoId
         gates[videoId]?.await()
         val scripted = answers[videoId]?.removeFirstOrNull() ?: return streamOf(videoId)
@@ -199,6 +200,6 @@ class PlaybackTest {
         playback.remove(0)
         advanceUntilIdle()
         assertReady(abc[1], streamOf("b"), playback.state.value)
-        assertEquals(listOf("b", "c"), playback.queue.value.tracks.map { it.videoId })
+        assertEquals(listOf("b", "c"), playback.queue.value.tracks.map { it.id })
     }
 }

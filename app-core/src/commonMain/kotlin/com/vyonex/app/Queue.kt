@@ -2,13 +2,20 @@ package com.vyonex.app
 
 import kotlin.random.Random
 
-/** A track to play, with what its list showed, so it can be shown before it plays. */
+/** Where a track comes from. */
+enum class Source { YOUTUBE, SOUNDCLOUD }
+
+/**
+ * A track to play, with what its list showed, so it can be shown before it plays. [id] is a YouTube video ID, or a
+ * SoundCloud track's page URL.
+ */
 data class Track(
-    val videoId: String,
+    val id: String,
     val title: String?,
     val artist: String?,
     val durationSeconds: Long?,
     val artworkUrl: String?,
+    val source: Source = Source.YOUTUBE,
 )
 
 /** [ONE] repeats the current track when it ends; [ALL] starts again from the first after the last. */

@@ -14,10 +14,15 @@ import com.vyonex.VyonExFormat
 import com.vyonex.VyonExMerge
 import com.vyonex.VyonExUnplayableException
 import com.vyonex.app.Choice
+import com.vyonex.app.Failure
 import com.vyonex.app.Plan
+import com.vyonex.app.Refused
+import com.vyonex.app.Source
 import com.vyonex.app.Track
+import com.vyonex.app.bestTranscoding
 import com.vyonex.app.fileNameOf
 import com.vyonex.app.planOf
+import com.vyonex.app.soundCloudExtensionOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -35,6 +40,8 @@ import java.io.IOException
  * to Music/VyonEx (audio) and Movies/VyonEx (video), where music and gallery apps find them. The queue lives in memory:
  * if Android ends the app, unfinished downloads are gone.
  */
+private const val DRM_ONLY = "SoundCloud only offers this one encrypted (DRM), which VyonEx does not save."
+
 class Downloads(private val context: Context, private val vyonEx: VyonEx) {
     data class Job(val id: Int, val track: Track, val choice: Choice, val label: String, val state: State)
 
@@ -87,7 +94,8 @@ class Downloads(private val context: Context, private val vyonEx: VyonEx) {
         val dir = File(context.cacheDir, "downloads").apply { mkdirs() }
         val parts = mutableListOf<File>()
         try {
-            val formats = vyonEx.formats(job.track.videoId) ?: return report(State.Failed("YouTube offers no download for this one."))
+            if (job.track.source == Source.SOUNDCLOUD) return soundCloud(job, dir, parts, report)
+            val formats = vyonEx.formats(job.track.id) ?: return report(State.Failed("YouTube offers no download for this one."))
             val plan = planOf(formats, job.choice, writesOpus) ?: return report(State.Failed("Not offered in this quality."))
             val output = File(dir, "${job.id}.${plan.extension}").also(parts::add)
             when (plan) {
@@ -109,22 +117,48 @@ class Downloads(private val context: Context, private val vyonEx: VyonEx) {
                     withContext(Dispatchers.IO) { VyonExMerge.merge(video, audio, output, plan.pair.container) }
                 }
             }
-            val name = fileNameOf(job.track.title ?: job.track.videoId, plan.extension)
-            report(State.Saved(withContext(Dispatchers.IO) { save(output, name, plan) }))
+            val name = fileNameOf(job.track.title ?: job.track.id, plan.extension)
+            report(State.Saved(withContext(Dispatchers.IO) { save(output, name, plan is Plan.Audio, plan.extension) }))
         } catch (e: CancellationException) {
             throw e
         } catch (e: VyonExUnplayableException) {
             report(State.Failed(e.youtubeReason ?: "YouTube does not allow this one."))
+        } catch (e: Refused) {
+            report(State.Failed(if (e.failure == Failure.DRM) DRM_ONLY else "SoundCloud does not stream this one here."))
         } catch (e: Exception) {
             // The library's own messages carry no URL and are shown; other messages (the network's) can, so only the class
             // is logged.
             val said = e.message?.takeIf { it.startsWith("VyonEx: ") }?.removePrefix("VyonEx: ")?.replaceFirstChar(Char::uppercaseChar)
-            Log.w("VyonEx", "${job.track.videoId} download failed: ${e.javaClass.simpleName}")
+            // A SoundCloud ID is its page URL: only the source is logged.
+            Log.w("VyonEx", "${if (job.track.source == Source.YOUTUBE) job.track.id else "SoundCloud track"} download failed: ${e.javaClass.simpleName}")
             report(State.Failed(said ?: if (e is IOException) "Could not download. Check the connection." else "Could not save this one."))
         } finally {
             // Also when cancelled (the service stopped), which withContext alone would refuse.
             withContext(NonCancellable + Dispatchers.IO) { parts.forEach(File::delete) }
         }
+    }
+
+    /**
+     * A SoundCloud track: its best transcoding as one file (HLS segments joined), AAC remuxed from fragmented MP4 into a
+     * plain `.m4a` as YouTube's audio is.
+     */
+    private suspend fun soundCloud(job: Job, dir: File, parts: MutableList<File>, report: (State) -> Unit) {
+        val track = vyonEx.soundCloud.track(job.track.id) ?: return report(State.Failed("SoundCloud has nothing at that link any more."))
+        if (track.isBlocked) throw Refused(Failure.NOT_IN_COUNTRY)
+        val transcoding = bestTranscoding(track.transcodings) ?: throw Refused(if (track.hasDrm) Failure.DRM else Failure.NO_STREAM)
+        val extension = soundCloudExtensionOf(transcoding)
+        val raw = File(dir, "${job.id}-audio").also(parts::add)
+        withContext(Dispatchers.IO) {
+            FileOutputStream(raw).buffered().use { out -> vyonEx.soundCloud.download(transcoding, { out.write(it) }) { report(State.Fetching(it)) } }
+        }
+        val output = if (extension == "m4a") {
+            report(State.Merging)
+            File(dir, "${job.id}.m4a").also(parts::add).also { withContext(Dispatchers.IO) { VyonExMerge.remuxAudio(raw, it) } }
+        } else {
+            raw
+        }
+        val name = fileNameOf(job.track.title ?: "SoundCloud track", extension)
+        report(State.Saved(withContext(Dispatchers.IO) { save(output, name, isAudio = true, extension) }))
     }
 
     /** Downloads [format] into [file], resuming twice after a dropped connection; progress over [total] bytes from [before]. */
@@ -150,10 +184,10 @@ class Downloads(private val context: Context, private val vyonEx: VyonEx) {
     }
 
     /** Copies [file] to where music and gallery apps look, under [name]; returns where it went, for the screen. */
-    private fun save(file: File, name: String, plan: Plan): String {
-        val isAudio = plan is Plan.Audio
-        val mime = when (plan.extension) {
+    private fun save(file: File, name: String, isAudio: Boolean, extension: String): String {
+        val mime = when (extension) {
             "m4a" -> "audio/mp4"
+            "mp3" -> "audio/mpeg"
             "opus" -> "audio/ogg"
             "mp4" -> "video/mp4"
             else -> "video/webm"
@@ -189,7 +223,7 @@ class Downloads(private val context: Context, private val vyonEx: VyonEx) {
         val dir = File(Environment.getExternalStoragePublicDirectory(if (isAudio) Environment.DIRECTORY_MUSIC else Environment.DIRECTORY_MOVIES), "VyonEx")
         if (!dir.isDirectory && !dir.mkdirs()) throw IOException("Could not create $folder")
         val base = name.substringBeforeLast('.')
-        val target = generateSequence(1) { it + 1 }.map { n -> File(dir, if (n == 1) name else "$base ($n).${plan.extension}") }.first { !it.exists() }
+        val target = generateSequence(1) { it + 1 }.map { n -> File(dir, if (n == 1) name else "$base ($n).$extension") }.first { !it.exists() }
         file.copyTo(target)
         MediaScannerConnection.scanFile(context, arrayOf(target.path), arrayOf(mime), null)
         return "$folder/${target.name}"

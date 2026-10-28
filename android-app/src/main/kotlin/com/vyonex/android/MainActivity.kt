@@ -56,6 +56,7 @@ import com.vyonex.app.Failure
 import com.vyonex.app.PlayState
 import com.vyonex.app.Playback
 import com.vyonex.app.Track
+import com.vyonex.app.toTrack
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -87,6 +88,14 @@ private suspend fun VyonEx.pageOf(ref: VyonExRef): Page? = when (ref) {
     is VyonExRef.Channel -> artist(ref.channelId)?.let { Page(it.name, "Top songs", it.topSongs.map(::trackOf)) }
 }
 
+/** The page for a SoundCloud link: a set and its tracks, or one track; null when SoundCloud has none. */
+private suspend fun VyonEx.soundCloudPageOf(url: String): Page? =
+    if ("/sets/" in url) {
+        soundCloud.playlist(url)?.let { set -> Page(set.title, set.uploader, set.tracks.mapNotNull { it.toTrack() }) }
+    } else {
+        soundCloud.track(url)?.let { track -> Page(track.title, track.uploader, listOfNotNull(track.toTrack())) }
+    }
+
 private fun messageOf(failure: Failure) = when (failure) {
     Failure.SIGN_IN_REQUIRED -> "YouTube wants you signed in for this one, which VyonEx does not do."
     Failure.AGE_RESTRICTED -> "This is age-restricted, which needs a signed-in account."
@@ -96,7 +105,8 @@ private fun messageOf(failure: Failure) = when (failure) {
     Failure.BLOCKED -> "YouTube does not play this one."
     Failure.BOT_CHECK -> "YouTube asked to confirm you are not a bot. Try again later or on another network."
     Failure.NO_STREAM -> "No stream that plays was found."
-    Failure.NETWORK -> "Could not reach YouTube. Check the connection."
+    Failure.NETWORK -> "Could not reach it. Check the connection."
+    Failure.DRM -> "SoundCloud only offers this one encrypted (DRM), which VyonEx does not play."
 }
 
 class MainActivity : ComponentActivity() {
@@ -194,8 +204,10 @@ class MainActivity : ComponentActivity() {
         val jobs by downloads.jobs.collectAsStateWithLifecycle()
         var downloading by remember { mutableStateOf<List<Track>?>(null) }
         fun open() {
-            val ref = vyonEx.parse(link) ?: run {
-                opened = Opened.Problem("That is not a YouTube or YouTube Music link.")
+            val url = link.trim()
+            val ref = vyonEx.parse(url)
+            if (ref == null && !vyonEx.soundCloud.isLink(url)) {
+                opened = Opened.Problem("That is not a YouTube, YouTube Music or SoundCloud link.")
                 return
             }
             opened = Opened.Loading
@@ -203,7 +215,8 @@ class MainActivity : ComponentActivity() {
             opening?.cancel()
             opening = scope.launch {
                 opened = try {
-                    vyonEx.pageOf(ref)?.let { Opened.Shown(it) } ?: Opened.Problem("YouTube has nothing at that link.")
+                    val page = if (ref != null) vyonEx.pageOf(ref) else vyonEx.soundCloudPageOf(url)
+                    page?.let { Opened.Shown(it) } ?: Opened.Problem("There is nothing at that link.")
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: VyonExUnplayableException) {
@@ -217,7 +230,7 @@ class MainActivity : ComponentActivity() {
             OutlinedTextField(
                 value = link,
                 onValueChange = { link = it },
-                label = { Text("YouTube or YouTube Music link") },
+                label = { Text("YouTube, YouTube Music or SoundCloud link") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -237,7 +250,7 @@ class MainActivity : ComponentActivity() {
                         itemsIndexed(now.page.tracks) { index, track ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f).clickable { playback.play(now.page.tracks, index) }.padding(vertical = 8.dp)) {
-                                    Text(track.title ?: track.videoId, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(track.title ?: track.id, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Text(
                                         listOfNotNull(track.artist, track.durationSeconds?.let { "%d:%02d".format(it / 60, it % 60) }).joinToString(" · "),
                                         style = MaterialTheme.typography.bodySmall,
@@ -265,9 +278,9 @@ class MainActivity : ComponentActivity() {
     private fun NowPlaying(state: PlayState, playback: Playback) {
         val line = when (state) {
             PlayState.Idle -> return
-            is PlayState.Loading -> "Loading ${state.track.title ?: state.track.videoId}…"
+            is PlayState.Loading -> "Loading ${state.track.title ?: state.track.id}…"
             is PlayState.Ready -> listOfNotNull(state.track.title, state.track.artist).joinToString(" · ")
-            is PlayState.Failed -> "${state.track.title ?: state.track.videoId}: ${messageOf(state.failure)}"
+            is PlayState.Failed -> "${state.track.title ?: state.track.id}: ${messageOf(state.failure)}"
         }
         Column {
             Text(line, maxLines = 2, overflow = TextOverflow.Ellipsis)
