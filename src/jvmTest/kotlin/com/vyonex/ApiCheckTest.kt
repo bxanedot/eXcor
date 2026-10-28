@@ -198,6 +198,9 @@ class ApiCheckTest {
                 val transcoding: SoundCloudTranscoding = it.transcodings.first()
                 val protocol: SoundCloudProtocol = transcoding.protocol
                 val stream: SoundCloudStream = soundCloud.stream(transcoding)
+                val written: Long = soundCloud.download(transcoding, { _: ByteArray -> }) { _: Float -> }
+                val plain: Long = soundCloud.download(transcoding, {})
+                listOf(written, plain)
                 listOf<Any?>(transcoding.preset, transcoding.mimeType, transcoding.isPreview, protocol, stream.url, stream.protocol, stream.mimeType, stream.isPreview)
             }
             listOf(a, b, c, d, e, f, init)

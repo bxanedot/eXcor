@@ -93,6 +93,21 @@ class CaptureFixtures {
         replies?.let { call("next", web, "next-comment-replies.json") { put("continuation", it) } }
         call("search", music, "search-music.json") { put("query", "never gonna give you up") }
         soundCloud()
+        // Bandcamp: a track page and an album page from yt-dlp's tests. Bandcamp answers some networks (the cloud build
+        // machine, 2026-10-28) with a "Client Challenge" page instead; that is a bot check, so the capture stops there.
+        bandcamp("bandcamp-track.html", "https://relapsealumni.bandcamp.com/track/hail-to-fire")
+        bandcamp("bandcamp-album.html", "https://jstrecords.bandcamp.com/album/entropy-ep")
+    }
+
+    private fun bandcamp(file: String, url: String) {
+        if (!wanted(file)) return
+        val (code, page) = http.newCall(Request.Builder().url(url).header("User-Agent", DESKTOP_UA).build()).execute().use { it.code to it.body.string() }
+        check("<title>Client Challenge" !in page) { "$file: Bandcamp answered with a client challenge (a bot check); stopping (not worked around)" }
+        if (code != 200) return println("$file: HTTP $code, skipped")
+        val redacted = redactCapture(page)
+        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasBandcampStreamUrl(redacted)) { "$file: redaction incomplete, not written" }
+        File(FIXTURES, file).writeText(redacted)
+        println("$file: ${redacted.length} chars")
     }
 
     /**

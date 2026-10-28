@@ -464,8 +464,14 @@ Each item names the reading chosen; nothing was looked up in the old code.
     Encrypted transcodings (`ctr-`, `cbc-`, `encrypted-hls`) are DRM: they are left out and the
     track says `hasDrm`; nothing tries to decrypt them. In the captured set, three of six tracks are
     only offered encrypted. Public tracks currently come as HLS (fragmented MP4 AAC), which the app's
-    player plays; downloading HLS needs segment downloads, which are not done yet. Logged-in (Go+)
-    playback, comments, user pages, search and the app's SoundCloud screen are not done.
+    player plays. `soundCloud.download` writes one file: a progressive stream as it comes, an HLS one
+    as its init segment and segments in order (one fragmented MP4, an `.m4a`), every URL checked to be
+    on SoundCloud's media hosts. The HLS reader takes only a finished media playlist and refuses by
+    name a master playlist, a live one, encrypted segments (any `#EXT-X-KEY` but `METHOD=NONE`) and
+    byte ranges. Live from the build machine on 2026-10-28, yt-dlp's test track (143 s, `aac_96k`)
+    came out as 1,747,394 bytes: `ftyp`, `moov`, then 15 fragments. There is no resuming (a failure
+    starts again). Logged-in (Go+) playback, comments, user pages, search and the app's SoundCloud
+    screen are not done; the app's queue and downloads take YouTube video IDs only.
 58. **SABR from yt-dlp's development work (owner: "yt-dlp dev work").** yt-dlp's SABR downloader is
     in its pull request 13515 (not merged, updated 2026-10-27): `downloader/sabr/`, protobuf
     messages under `extractor/youtube/_proto/`, and `_streaming/sabr/`; the 2026.10.26 release has
@@ -477,3 +483,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
     mention of googlevideo or YouTube.js as a source, and a decision. SABR also cannot be tried from
     the build machine (YouTube bot-checks its player requests), and WEB's SABR formats need a PO
     token, which VyonEx only takes from the host.
+59. **Bandcamp (owner: SoundCloud, then Bandcamp).** Bandcamp answers the cloud build machine with a
+    "Client Challenge" page for every track and album page (2026-10-28). That is a bot check: yt-dlp
+    retries it with browser impersonation, which this project does not do, so nothing was worked
+    around and no Bandcamp code was written blind. `CaptureFixtures` now asks for yt-dlp's test track
+    and album pages (`bandcamp-track.html`, `bandcamp-album.html`), stops at a challenge, and redacts
+    the signed stream URLs (`bcbits.com/stream/…token=…`) before writing; `FixtureHygieneTest` fails
+    on any left in. Needed: a run of `VYONEX_CAPTURE=1 VYONEX_CAPTURE_ONLY=bandcamp-track.html,bandcamp-album.html`
+    from a normal network; the parser (yt-dlp's `data-tralbum` reading) follows on those captures.
