@@ -1,6 +1,7 @@
 package com.vyonex
 
 import com.vyonex.internal.AppleMusicEngine
+import com.vyonex.internal.MusicCatalogEngine
 import com.vyonex.internal.Engine
 import com.vyonex.internal.SoundCloudEngine
 import com.vyonex.internal.mergePairOf
@@ -30,6 +31,9 @@ class VyonEx(host: VyonExHost) {
 
     /** Apple Music metadata (songs, albums, artists, search) from Apple's iTunes Search API; no audio. */
     val appleMusic = VyonExAppleMusic(AppleMusicEngine(host, http))
+
+    /** Metadata and artwork from Spotify (oEmbed or authenticated Web API) and Deezer (public catalog). */
+    val musicCatalog = VyonExMusicCatalog(MusicCatalogEngine(http))
 
     fun initialize() = engine.initialize()
 

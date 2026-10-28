@@ -253,3 +253,59 @@ Offline tests read the captured responses in `fixtures/` (see `fixtures/README.m
 
 
 Gonna be renamed to Excor
+
+## Cross-platform shells and the shared engine
+
+This repository is a **single Kotlin Multiplatform extractor and metadata engine** used on
+Android, Windows/macOS/Linux (JVM), and iOS. Each operating system has its own UI and
+media/storage integration. The Android app is the most mature. The new desktop Swing
+catalog browser and iOS SwiftUI catalog browser are initial shells; neither has feature
+parity with Android or a production native playback/download backend yet.
+
+- **Android:** `./gradlew :android-app:assembleDebug` (API 26+).
+- **Desktop:** `./gradlew :desktop-app:run` or `./gradlew :desktop-app:distZip`
+  (JDK 27 required; the archive contains startup scripts for the host OS).
+- **iOS:** on macOS, `./gradlew assembleVyonExReleaseXCFramework`, then
+  `xcodegen generate --spec ios-app/project.yml --project ios-app/VyonExIOS.xcodeproj`;
+  open the generated project in Xcode. CI builds an unsigned simulator app.
+  Real-device deployment requires Apple signing.
+
+These use the same `VyonEx` APIs; do not fork extraction logic into the UI apps.
+The shared `app-core/` already contains queue/playback logic used by Android and
+available as Kotlin on JVM and iOS; connecting it to desktop/iOS native players is
+a separate, tracked deliverable in `CODEX_HANDOFF.md`.
+
+## Spotify and Deezer catalog metadata
+
+`vyonEx.musicCatalog` provides **metadata only**: no Spotify/Deezer audio streams,
+previews, DRM bypass, or media downloads.
+
+```kotlin
+val track = vyonEx.musicCatalog.lookup("https://www.deezer.com/track/3135556")
+val album = vyonEx.musicCatalog.lookup("https://www.deezer.com/album/302127")
+val artists = vyonEx.musicCatalog.searchDeezer("Daft Punk", MusicCatalogKind.ARTIST, limit = 10)
+
+// Spotify's keyless official oEmbed: title + thumbnail (fullyEnriched=false).
+val preview = vyonEx.musicCatalog.lookup("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC")
+
+// Full Spotify catalog access requires an OAuth token, obtained by the host application.
+val full = vyonEx.musicCatalog.lookup("spotify:track:4uLU6hMCjMI75M1A2tKUQC", spotifyAccessToken = token)
+val matches = vyonEx.musicCatalog.searchSpotify("Never Gonna Give You Up", MusicCatalogKind.TRACK, token, limit = 10)
+```
+
+- Spotify links/URIs: tracks, albums, artists, playlists, shows, episodes.
+  oEmbed supports documented types (playlists may yield 404); authenticated
+  detailed lookup currently covers tracks, albums, artists only.
+- Deezer links: tracks, albums, artists, playlists. Public catalog lookups
+  and search for tracks/albums/artists do not require OAuth.
+- Returned fields: title, album, artists, available artist/cover image URLs,
+  image dimensions **only where the provider reports them**, track/disc
+  numbers, duration, release date, ISRC, UPC, genres, copyright, labels, and
+  track-list portions when available. Unknown fields remain empty/null.
+- This API does not resolve shortened URLs, follow track pagination, or join
+  Spotify/Deezer releases to YouTube audio. Cross-catalog matching based on
+  title alone is not reliable; use authorized identifiers and user confirmation.
+- Show provider attribution and source links with artwork. Spotify explicitly
+  forbids artwork modifications, facilitating Spotify content downloading, and
+  using Spotify content to train AI models. Ensure the host app complies with
+  applicable catalog terms.

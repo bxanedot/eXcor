@@ -122,3 +122,21 @@ From Maven Central, and the AndroidX ones from Google's Maven; licenses as decla
 | Android Emulator and AOSP x86_64 system images (API 26, 36), installed by `sdkmanager` on the CI runner | current at run time | Android SDK License Agreement (Google) | CI only (`MergeCheck`, the app start check), not redistributed |
 
 The JVM tests run on TestNG rather than kotlin-test's default JUnit 4, which is EPL-1.0.
+
+## Additional catalog adapters and platform shells (2026-10-28)
+
+These additions were implemented from the public API descriptions and the
+repository's existing interfaces without consulting any forbidden legacy code.
+
+| Source | Accessed | Nature | Scope |
+|---|---|---|---|
+| [Spotify oEmbed API](https://developer.spotify.com/documentation/embeds/reference/oembed) | 2026-10-28 | Public API documentation, not copied code | `MusicCatalog.kt` keyless link previews: title, image and dimensions, optional missing fields |
+| [Spotify Web API](https://developer.spotify.com/documentation/web-api/reference/search) and [Get Track](https://developer.spotify.com/documentation/web-api/reference/get-track) | 2026-10-28 | API documentation, not copied code | OAuth bearer catalog lookup/search, JSON model, limit 10, attribution requirements |
+| [Deezer API](https://developers.deezer.com/api) | 2026-10-28 | Public API documentation, not copied code | Track/album/artist/playlist links, catalog search and response fields |
+| Kotlin JVM/Swing and existing Kotlin Multiplatform API | 2026-10-28 | JDK standard library and local project API | Desktop catalog browser, no third-party desktop extraction code |
+| Apple SwiftUI and existing `VyonEx.xcframework` API | 2026-10-28 | Platform framework and local project API | iOS catalog browser, no independent iOS extraction implementation |
+
+Tests use compact synthetic JSON, not copyrighted API capture payloads.
+No Spotify or Deezer audio URLs, previews, access tokens or protected content
+are stored in fixtures or log messages. Verify external API changes and any
+additional dependencies before releasing.

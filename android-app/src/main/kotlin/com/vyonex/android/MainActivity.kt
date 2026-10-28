@@ -6,10 +6,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -44,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,6 +57,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import com.vyonex.MusicCatalogItem
 import com.vyonex.VyonEx
 import com.vyonex.VyonExListItem
 import com.vyonex.VyonExListPage
@@ -82,6 +88,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.URL
 
 /** What a link opened: a title, who it is by, and its tracks. */
 private data class Page(
@@ -116,6 +125,7 @@ private sealed interface Opened {
         /** Only this type of result; null for all of them. */
         val type: VyonExSearchType? = null,
     ) : Opened
+    data class Catalog(val item: MusicCatalogItem) : Opened
     data class Problem(val message: String) : Opened
 }
 
@@ -316,12 +326,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        // A YouTube or SoundCloud link opens; anything else is searched on YouTube.
+        // Spotify/Deezer links show metadata; audio is never fetched from those catalogs.
+        // YouTube and SoundCloud links retain their existing playback behavior.
         fun open() {
             val text = link.trim()
             asked = text
             val ref = vyonEx.parse(text)
             show {
+                val catalog = vyonEx.musicCatalog.parse(text)
+                if (catalog != null) {
+                    val result = vyonEx.musicCatalog.get(catalog)
+                    return@show result?.let { Opened.Catalog(it) } ?: Opened.Problem("No catalog record found.")
+                }
                 val page = when {
                     ref != null -> vyonEx.pageOf(ref)
                     vyonEx.soundCloud.isLink(text) -> vyonEx.soundCloudPageOf(text)
@@ -353,7 +369,7 @@ class MainActivity : ComponentActivity() {
             OutlinedTextField(
                 value = link,
                 onValueChange = { link = it },
-                label = { Text("Search, or a YouTube, YouTube Music or SoundCloud link") },
+                label = { Text("Search, or paste a YouTube, SoundCloud, Spotify or Deezer link") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -373,6 +389,48 @@ class MainActivity : ComponentActivity() {
                 Opened.Nothing -> Unit
                 Opened.Loading -> CircularProgressIndicator()
                 is Opened.Problem -> Text(now.message, color = MaterialTheme.colorScheme.error)
+                is Opened.Catalog -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val item = now.item
+                    Text(item.title ?: item.id, style = MaterialTheme.typography.titleLarge)
+                    Text(item.provider.name + " · " + item.kind.name, style = MaterialTheme.typography.labelMedium)
+                    val photoUrl = item.images.firstOrNull()?.url
+                    var artwork by remember(photoUrl) { mutableStateOf<android.graphics.Bitmap?>(null) }
+                    LaunchedEffect(photoUrl) {
+                        artwork = null
+                        if (photoUrl != null) {
+                            artwork = withContext(Dispatchers.IO) {
+                                runCatching {
+                                    val uri = Uri.parse(photoUrl)
+                                    val host = uri.host.orEmpty()
+                                    if (uri.scheme != "https" || !(
+                                            host == "i.scdn.co" || host.endsWith(".scdn.co") ||
+                                            host == "cdn-images.dzcdn.net"
+                                        )) return@runCatching null
+                                    val connection = URL(photoUrl).openConnection().apply {
+                                        connectTimeout = 5000
+                                        readTimeout = 7000
+                                    }
+                                    connection.getInputStream().use { BitmapFactory.decodeStream(it) }
+                                }.getOrNull()
+                            }
+                        }
+                    }
+                    artwork?.let {
+                        Image(it.asImageBitmap(), contentDescription = "Album or artist artwork", modifier = Modifier.size(180.dp))
+                    }
+                    Text(item.artists.mapNotNull { it.name }.joinToString(", "))
+                    item.album?.let { Text("Album: $it") }
+                    item.releaseDate?.let { Text("Released: $it") }
+                    item.durationMs?.let { Text("Duration: ${it / 1000} seconds") }
+                    item.isrc?.let { Text("ISRC: $it") }
+                    item.upc?.let { Text("UPC: $it") }
+                    item.genres.takeIf { it.isNotEmpty() }?.let { Text("Genres: ${it.joinToString()}") }
+                    if (!item.fullyEnriched) Text("Spotify basic link preview. Full details require OAuth access.")
+                    TextButton(onClick = {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(item.url)))
+                    }) { Text("Open in ${item.provider}") }
+                    Text("Catalog metadata only — no audio is extracted from this provider.", style = MaterialTheme.typography.bodySmall)
+                }
                 is Opened.Results -> LazyColumn(Modifier.weight(1f)) {
                     item {
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

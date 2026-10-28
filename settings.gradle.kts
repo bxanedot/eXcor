@@ -16,3 +16,6 @@ rootProject.name = "vyonex"
 include(":app-core")
 // The Android app itself.
 include(":android-app")
+
+// JVM desktop shell: Windows, macOS and Linux use the same Kotlin engine.
+include(":desktop-app")

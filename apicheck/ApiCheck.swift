@@ -36,6 +36,16 @@ final class ApiCheckHost: NSObject, VyonExHost {
 
 func apiCheck() async throws {
     let vyonEx = VyonEx(host: ApiCheckHost())
+    // Compile-time check for the cross-platform Spotify/Deezer metadata API.
+    let catalog: VyonExMusicCatalog = vyonEx.musicCatalog
+    if let catalogRef: MusicCatalogRef = catalog.parse(url: "https://www.deezer.com/track/3135556") {
+        let item: MusicCatalogItem? = try await catalog.get(ref: catalogRef, spotifyAccessToken: nil)
+        _ = (item?.title, item?.images, item?.artists, item?.isrc)
+    }
+    let deezerResults: [MusicCatalogItem] = try await catalog.searchDeezer(term: "example", kind: .artist, limit: 1)
+    let spotifyResults: [MusicCatalogItem] = try await catalog.searchSpotify(term: "example", kind: .track, accessToken: "example", limit: 1)
+    _ = (deezerResults, spotifyResults)
+
     vyonEx.initialize()
     vyonEx.initializeFallback()
     let ref: VyonExRef? = vyonEx.parse(input: "u")

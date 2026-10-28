@@ -20,7 +20,7 @@ jobs:
             27
             21
       # The runner image ships an Android SDK; AGP fetches a missing platform itself.
-      - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar assembleAndroidMain :android-app:lintDebug
+      - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar assembleAndroidMain :app-core:jvmTest :desktop-app:distZip :android-app:lintDebug
         shell: bash
 
   # VyonExMerge runs on Android's own MediaExtractor and MediaMuxer, so MergeCheck runs on emulators: the
@@ -98,8 +98,33 @@ jobs:
             21
       - name: JVM tests, iOS simulator tests, framework links, XCFramework
         run: ./gradlew $GRADLE_ARGS jvmTest iosSimulatorArm64Test linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosSimulatorArm64 linkReleaseFrameworkIosX64 assembleVyonExReleaseXCFramework
+      - name: Build desktop distribution
+        run: ./gradlew $GRADLE_ARGS :desktop-app:distZip
       - name: Swift type-check of the public API
         run: >
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
           -F build/XCFrameworks/release/VyonEx.xcframework/ios-arm64_x86_64-simulator
           apicheck/ApiCheck.swift
+
+      - name: Generate iOS SwiftUI application project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec ios-app/project.yml --project ios-app/VyonExIOS.xcodeproj
+      - name: Build iOS application for simulator (unsigned)
+        run: >
+          xcodebuild -project ios-app/VyonExIOS.xcodeproj
+          -scheme VyonExIOS -configuration Debug -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+  linux-desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - name: Build desktop distribution
+        run: ./gradlew $GRADLE_ARGS :desktop-app:distZip
