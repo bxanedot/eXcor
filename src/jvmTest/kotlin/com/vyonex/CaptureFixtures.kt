@@ -92,6 +92,27 @@ class CaptureFixtures {
         val replies = page?.let { Regex(""""commentRepliesRenderer":\{"contents":\[\{"continuationItemRenderer":\{.*?"token":"([^"]+)"""").find(it)?.groupValues?.get(1) }
         replies?.let { call("next", web, "next-comment-replies.json") { put("continuation", it) } }
         call("search", music, "search-music.json") { put("query", "never gonna give you up") }
+        soundCloud()
+    }
+
+    /**
+     * SoundCloud, as yt-dlp asks it: the web client's ID from the home page's scripts (kept in memory only), a track and
+     * a set through `resolve`, and the set's tracks it sent without details through `tracks?ids=`. No stream URL.
+     */
+    private fun soundCloud() {
+        val files = listOf("soundcloud-track.json", "soundcloud-playlist.json", "soundcloud-playlist-tracks.json")
+        if (files.none(::wanted)) return
+        fun text(url: String) = http.newCall(Request.Builder().url(url).header("User-Agent", DESKTOP_UA).build()).execute().use { it.body.string() }
+        val home = text("https://soundcloud.com/")
+        val clientId = Regex("""<script[^>]+src="([^"]+)"""").findAll(home).map { it.groupValues[1] }.toList().asReversed()
+            .firstNotNullOfOrNull { Regex("""client_id\s*:\s*"([0-9a-zA-Z]{32})"""").find(text(it))?.groupValues?.get(1) }
+            ?: return println("soundcloud: no client ID in the home page's scripts, skipped")
+        val api = "https://api-v2.soundcloud.com"
+        get("$api/resolve?url=https%3A%2F%2Fsoundcloud.com%2Fethmusic%2Flostin-powers-she-so-heavy&client_id=$clientId", "soundcloud-track.json")
+        val set = get("$api/resolve?url=https%3A%2F%2Fsoundcloud.com%2Fthe-concept-band%2Fsets%2Fthe-royal-concept-ep&client_id=$clientId", "soundcloud-playlist.json")
+        val bare = (set?.let { Json.parseToJsonElement(it) }.at("tracks") as? JsonArray).orEmpty()
+            .filter { it.at("permalink_url") == null }.mapNotNull { it.at("id").str }
+        if (bare.isNotEmpty()) get("$api/tracks?ids=${bare.joinToString("%2C")}&client_id=$clientId", "soundcloud-playlist-tracks.json")
     }
 
     private fun player(file: String, videoId: String) {
@@ -140,7 +161,7 @@ class CaptureFixtures {
         }
         // Comment authors are people: their names, channels and pictures are replaced, consistently, before writing.
         val redacted = redactCapture(if (file.startsWith("next-comment")) anonymizeCommentAuthors(text) else text)
-        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted)) {
+        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted) && !hasSoundCloudSecrets(redacted)) {
             "$file: redaction incomplete, not written"
         }
         File(FIXTURES, file).writeText(redacted)

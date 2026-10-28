@@ -117,6 +117,15 @@ val ideas = vyonEx.suggestions("rick ast")                 // what YouTube's sea
 val music = vyonEx.searchMusic("never gonna give you up")   // YouTube Music top results: songs, albums, artists…
 ```
 
+SoundCloud's public tracks and sets (logged out, as yt-dlp reads them), on the same host and network client. Encrypted
+(DRM) streams are not played: a track that only has those says so with `hasDrm` and has no transcodings.
+
+```kotlin
+val track = vyonEx.soundCloud.track("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy")
+val stream = vyonEx.soundCloud.stream(track!!.transcodings.first())  // a fresh signed URL: HLS or one file
+val set = vyonEx.soundCloud.playlist("https://soundcloud.com/the-concept-band/sets/the-royal-concept-ep")
+```
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift

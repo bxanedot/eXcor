@@ -79,6 +79,7 @@ class ApiCheckTest {
         assertEquals(listOf("NOT_LIVE", "LIVE", "UPCOMING", "WAS_LIVE", "POST_LIVE"), VyonExLiveStatus.entries.map { it.name })
         assertEquals(listOf("VIDEO", "PLAYLIST", "ALBUM", "ARTIST", "CHANNEL"), VyonExResultKind.entries.map { it.name })
         assertEquals(listOf("VIDEOS", "SHORTS", "CHANNELS", "PLAYLISTS", "MOVIES"), VyonExSearchType.entries.map { it.name })
+        assertEquals(listOf("PROGRESSIVE", "HLS"), SoundCloudProtocol.entries.map { it.name })
         val refused = VyonExUnplayableException("v", VyonExUnplayableReason.OTHER, "UNPLAYABLE", "r")
         // Still an IllegalStateException, so callers that caught that keep working.
         val stillState: IllegalStateException = refused
@@ -188,6 +189,17 @@ class ApiCheckTest {
             listOf<Any?>(s.continuation, filter.group, filter.label, filter.params, filter.selected)
             val suggestions: List<String> = vyonEx.suggestions("q")
             listOf(suggestions)
+            val soundCloud: VyonExSoundCloud = vyonEx.soundCloud
+            val track: SoundCloudTrack? = soundCloud.track("https://soundcloud.com/a/b")
+            val set: SoundCloudPlaylist? = soundCloud.playlist("https://soundcloud.com/a/sets/b")
+            listOf<Any?>(set?.id, set?.title, set?.uploader, set?.setType, set?.artworkUrl, set?.permalinkUrl, set?.tracks)
+            track?.let {
+                listOf<Any?>(it.id, it.title, it.uploader, it.uploaderUrl, it.artist, it.durationMs, it.artworkUrl, it.permalinkUrl, it.genre, it.isBlocked, it.hasDrm)
+                val transcoding: SoundCloudTranscoding = it.transcodings.first()
+                val protocol: SoundCloudProtocol = transcoding.protocol
+                val stream: SoundCloudStream = soundCloud.stream(transcoding)
+                listOf<Any?>(transcoding.preset, transcoding.mimeType, transcoding.isPreview, protocol, stream.url, stream.protocol, stream.mimeType, stream.isPreview)
+            }
             listOf(a, b, c, d, e, f, init)
         }
         listOf(network)

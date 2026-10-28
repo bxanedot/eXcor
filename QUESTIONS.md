@@ -455,3 +455,25 @@ Each item names the reading chosen; nothing was looked up in the old code.
     YouTube Music's own response, and with yt-dlp's older ones, it answered "No results" from the
     build machine for every section, so nothing would test them; they wait for a capture from a
     normal network.
+57. **SoundCloud (owner, 2026-10-27: "Other sites, no DRM", SoundCloud first).** `vyonEx.soundCloud`
+    reads public tracks and sets logged out, as yt-dlp's extractor does: the web client's ID from
+    SoundCloud's own scripts on its home page (only `a-v2.sndcdn.com` assets are fetched; the ID is
+    kept in memory and, when the host allows it, in the config store; a 401 or 403 looks it up again
+    once), `resolve` for a link, `tracks?ids=` for a set's tracks that come without details, and a
+    transcoding's own URL for a fresh signed stream (accepted only from SoundCloud's media hosts).
+    Encrypted transcodings (`ctr-`, `cbc-`, `encrypted-hls`) are DRM: they are left out and the
+    track says `hasDrm`; nothing tries to decrypt them. In the captured set, three of six tracks are
+    only offered encrypted. Public tracks currently come as HLS (fragmented MP4 AAC), which the app's
+    player plays; downloading HLS needs segment downloads, which are not done yet. Logged-in (Go+)
+    playback, comments, user pages, search and the app's SoundCloud screen are not done.
+58. **SABR from yt-dlp's development work (owner: "yt-dlp dev work").** yt-dlp's SABR downloader is
+    in its pull request 13515 (not merged, updated 2026-10-27): `downloader/sabr/`, protobuf
+    messages under `extractor/youtube/_proto/`, and `_streaming/sabr/`; the 2026.10.26 release has
+    none of it. Before porting, its origin has to be clear, because LuanRT/googlevideo, a SABR
+    library, is on this project's forbidden list. The code and commit messages credit no other
+    project, but the pull request's description and discussion, where such a credit would usually
+    be, cannot be read from the build machine (only git is open to it, not GitHub's pages or API).
+    Nothing was ported. Needed from the owner: a look at that pull request's description for any
+    mention of googlevideo or YouTube.js as a source, and a decision. SABR also cannot be tried from
+    the build machine (YouTube bot-checks its player requests), and WEB's SABR formats need a PO
+    token, which VyonEx only takes from the host.

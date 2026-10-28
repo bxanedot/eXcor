@@ -171,6 +171,20 @@ func apiCheck() async throws {
     }
     let suggestions: [String] = try await vyonEx.suggestions(query: "q")
     _ = suggestions
+    let soundCloud: VyonExSoundCloud = vyonEx.soundCloud
+    if let set: SoundCloudPlaylist = try await soundCloud.playlist(url: "https://soundcloud.com/a/sets/b") {
+        let setType: String? = set.setType
+        _ = (set.id, set.title, set.uploader, setType, set.artworkUrl, set.permalinkUrl, set.tracks)
+    }
+    if let track: SoundCloudTrack = try await soundCloud.track(url: "https://soundcloud.com/a/b") {
+        let duration: KotlinLong? = track.durationMs
+        _ = (track.id, track.title, track.uploader, track.uploaderUrl, track.artist, duration, track.artworkUrl, track.permalinkUrl, track.genre, track.isBlocked, track.hasDrm)
+        if let transcoding: SoundCloudTranscoding = track.transcodings.first {
+            let protocols: [SoundCloudProtocol] = [.progressive, .hls]
+            let stream: SoundCloudStream = try await soundCloud.stream(transcoding: transcoding)
+            _ = (transcoding.preset, transcoding.mimeType, transcoding.isPreview, transcoding.protocol == protocols[1], stream.url, stream.protocol, stream.mimeType, stream.isPreview)
+        }
+    }
     for result: VyonExSearchResult in search.results + searchMore.results + music.results + channels.results + search.shorts {
         let kind: VyonExResultKind = result.kind
         let duration: KotlinLong? = result.durationSeconds

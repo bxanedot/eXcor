@@ -1,6 +1,7 @@
 package com.vyonex
 
 import com.vyonex.internal.Engine
+import com.vyonex.internal.SoundCloudEngine
 import com.vyonex.internal.mergePairOf
 import com.vyonex.internal.parseRef
 import com.vyonex.internal.primary.extraction.TokenProvider
@@ -22,6 +23,9 @@ class VyonEx(host: VyonExHost) {
         }
     }
     private val engine = Engine(host = host, tokenProvider = host.tokenProvider, http = http, store = null)
+
+    /** SoundCloud's public tracks and sets, on the same host and network client. */
+    val soundCloud = VyonExSoundCloud(SoundCloudEngine(host, http))
 
     fun initialize() = engine.initialize()
 
