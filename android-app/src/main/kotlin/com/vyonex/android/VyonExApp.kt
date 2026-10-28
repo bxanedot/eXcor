@@ -29,10 +29,29 @@ class VyonExApp : Application() {
         private set
     lateinit var downloads: Downloads
         private set
+    private val settings by lazy { getSharedPreferences("vyonex-settings", MODE_PRIVATE) }
+
+    /**
+     * The audio language for videos with dubbed audio (`VyonEx.preferAudioLanguage`), kept across launches; null keeps
+     * each video's original track. A code VyonEx refuses is not kept: the original track it is.
+     */
+    var audioLanguage: String?
+        get() = settings.getString(AUDIO_LANGUAGE, null)
+        set(code) {
+            val kept = try {
+                vyonEx.preferAudioLanguage(code)
+                code
+            } catch (e: IllegalArgumentException) {
+                vyonEx.preferAudioLanguage(null)
+                null
+            }
+            settings.edit().apply { if (kept == null) remove(AUDIO_LANGUAGE) else putString(AUDIO_LANGUAGE, kept) }.apply()
+        }
 
     override fun onCreate() {
         super.onCreate()
         vyonEx = VyonEx(AndroidHost(this)).apply { init() }
+        audioLanguage = audioLanguage
         playback = Playback(
             object : StreamSource {
                 override suspend fun stream(track: Track): VyonExStream? = when (track.source) {
@@ -57,6 +76,8 @@ class VyonExApp : Application() {
         downloads = Downloads(this, vyonEx)
     }
 }
+
+private const val AUDIO_LANGUAGE = "audioLanguage"
 
 /** The MIME types the player picks its HLS or DASH source by. */
 internal val MANIFEST_TYPES = mapOf(VyonExManifestKind.HLS to HLS_MIME_TYPE, VyonExManifestKind.DASH to "application/dash+xml")

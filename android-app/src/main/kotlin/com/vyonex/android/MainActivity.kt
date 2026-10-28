@@ -11,6 +11,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +25,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -58,14 +61,17 @@ import com.vyonex.VyonExRef
 import com.vyonex.VyonExResultKind
 import com.vyonex.VyonExSearchResult
 import com.vyonex.VyonExUnplayableException
+import com.vyonex.app.AudioChoice
 import com.vyonex.app.Failure
 import com.vyonex.app.PlayState
 import com.vyonex.app.Playback
 import com.vyonex.app.Track
 import com.vyonex.app.appendPage
+import com.vyonex.app.audioChoicesOf
 import com.vyonex.app.bylineOf
 import com.vyonex.app.clockOf
 import com.vyonex.app.queueFrom
+import com.vyonex.app.selectedChoice
 import com.vyonex.app.suggestsFor
 import com.vyonex.app.toTrack
 import kotlinx.coroutines.CancellationException
@@ -74,7 +80,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** What a link opened: a title, who it is by, and its tracks. */
-private data class Page(val title: String?, val byline: String?, val tracks: List<Track>, val more: (suspend () -> Page)? = null)
+private data class Page(
+    val title: String?,
+    val byline: String?,
+    val tracks: List<Track>,
+    val more: (suspend () -> Page)? = null,
+    /** A video's audio languages, when it has dubbed audio. */
+    val audioChoices: List<AudioChoice> = emptyList(),
+)
 
 /** A page of a playlist or mix, and the pages after it while YouTube has more. */
 private fun VyonEx.listPage(title: String?, byline: String?, page: VyonExListPage, next: suspend VyonEx.(String) -> VyonExListPage): Page =
@@ -102,7 +115,10 @@ private fun trackOf(item: VyonExListItem, artwork: String? = null) =
 /** The page for [ref]: a video, a playlist, an album, a mix or an artist's top songs; null when YouTube has none. */
 private suspend fun VyonEx.pageOf(ref: VyonExRef): Page? = when (ref) {
     is VyonExRef.Video -> metadata(ref.videoId)?.let { m ->
-        Page(m.title, m.author, listOf(Track(ref.videoId, m.title, m.author, m.durationSeconds, m.thumbnails.maxByOrNull { it.width }?.url)))
+        Page(
+            m.title, m.author, listOf(Track(ref.videoId, m.title, m.author, m.durationSeconds, m.thumbnails.maxByOrNull { it.width }?.url)),
+            audioChoices = audioChoicesOf(m.audioTracks),
+        )
     }
     is VyonExRef.Playlist -> playlist(ref.playlistId)?.let { listPage(it.title, it.ownerName, it.firstPage, VyonEx::playlistMore) }
     is VyonExRef.Album -> album(ref.browseId)?.let { album ->
@@ -191,7 +207,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
                 Surface(Modifier.fillMaxSize()) {
-                    Screen(app.vyonEx, app.playback, app.downloads)
+                    Screen(app, app.vyonEx, app.playback, app.downloads)
                 }
             }
         }
@@ -237,12 +253,13 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Screen(vyonEx: VyonEx, playback: Playback, downloads: Downloads) {
+    private fun Screen(app: VyonExApp, vyonEx: VyonEx, playback: Playback, downloads: Downloads) {
         val scope = rememberCoroutineScope()
         val state by playback.state.collectAsStateWithLifecycle()
         val jobs by downloads.jobs.collectAsStateWithLifecycle()
         var downloading by remember { mutableStateOf<List<Track>?>(null) }
         var suggestions by remember { mutableStateOf(emptyList<String>()) }
+        var audioLanguage by remember { mutableStateOf(app.audioLanguage) }
         // What was last opened or searched, so its own suggestions do not come back over its results.
         var asked by remember { mutableStateOf("") }
         /** Shows Loading, then what [load] finds; a load started before this one and still running is dropped. */
@@ -376,6 +393,23 @@ class MainActivity : ComponentActivity() {
                     now.back?.let { results -> TextButton(onClick = { opened = results }) { Text("Back to results for \"${results.query}\"") } }
                     Text(now.page.title ?: "", style = MaterialTheme.typography.titleLarge)
                     now.page.byline?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    if (now.page.audioChoices.isNotEmpty()) {
+                        // Kept for every dubbed video from now on; what already plays keeps its track.
+                        Text("Audio", style = MaterialTheme.typography.labelMedium)
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val selected = selectedChoice(now.page.audioChoices, audioLanguage)
+                            now.page.audioChoices.forEach { choice ->
+                                FilterChip(
+                                    selected = choice == selected,
+                                    onClick = {
+                                        app.audioLanguage = choice.code
+                                        audioLanguage = app.audioLanguage
+                                    },
+                                    label = { Text(choice.label) },
+                                )
+                            }
+                        }
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // With more pages to load, the buttons take what is loaded and say so.
                         val which = if (now.page.more == null) "all" else "${now.page.tracks.size} loaded"
