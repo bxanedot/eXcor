@@ -164,6 +164,12 @@ class VyonEx(host: VyonExHost) {
     @Throws(Throwable::class)
     suspend fun searchMusic(query: String): VyonExSearchPage = engine.searchMusic(query)
 
+    /**
+     * For videos with dubbed audio, the track to play and list: a language code from `VyonExMetadata.audioTracks`
+     * ("en", "es-US"). Videos without it keep their original track, as does null (the default).
+     */
+    fun preferAudioLanguage(code: String?) = engine.preferAudioLanguage(code)
+
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
 
     fun onRefused(url: String): String? = engine.onRefused(url)

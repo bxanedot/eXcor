@@ -71,6 +71,8 @@ internal const val EXCLUSION_MS = 10 * 60 * 1000L
 // yt-dlp _video.py CHUNK_SIZE.
 internal const val DOWNLOAD_CHUNK_BYTES = 10L shl 20
 private val WATCH_PAGE_PROFILES = listOf("WEB", "WEB_WATCH_PAGE")
+// BCP 47 as YouTube's audio track IDs use it: "en", "es-US", "zh-Hans".
+private val LANGUAGE_CODE = Regex("""[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*""")
 
 /** Everything behind the platform `VyonEx` classes. */
 @OptIn(ExperimentalAtomicApi::class)
@@ -86,6 +88,13 @@ internal class Engine(
     private val exclusions = AtomicReference(emptyMap<String, Long>())
     internal val health = ClientHealth(host::nowMs)
     private val tabParams = AtomicReference(emptyMap<String, Map<VyonExChannelTab, String>>())
+    private val audioLanguage = AtomicReference<String?>(null)
+
+    /** The audio track to pick for videos with dubbed audio, by language code; null keeps the original track. */
+    fun preferAudioLanguage(code: String?) {
+        require(code == null || LANGUAGE_CODE.matches(code)) { "VyonEx: $code is not a language code" }
+        audioLanguage.store(code)
+    }
 
     fun initialize() {
         scope.launch {
@@ -124,7 +133,7 @@ internal class Engine(
     /** Player API extraction. Throws when YouTube says the video cannot be played. */
     suspend fun extract(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): VyonExStream? =
         viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
-            val format = selectFormat(playableFormats(audioFormatsOf(pr), poToken, null, ::AudioFormat), maxKbps, requireM4a)
+            val format = selectFormat(playableFormats(audioFormatsOf(pr, audioLanguage.load()), poToken, null, ::AudioFormat), maxKbps, requireM4a)
             if (format == null) log(DEBUG, "${id.profileId} has no usable audio format", videoId)
             format?.let { accept(videoId, it, pr, id.clientName, id.profileId, headers) }
         }
@@ -132,7 +141,7 @@ internal class Engine(
     /** A video stream and, for video-only formats, the audio to play with it. Throws like [extract]. */
     suspend fun extractVideo(videoId: String, maxHeight: Int, skipClients: Set<String>, requireAvc: Boolean): VyonExVideoStream? =
         viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
-            val audio = selectFormat(playableFormats(audioFormatsOf(pr), poToken, null, ::AudioFormat), 160, requireAvc)
+            val audio = selectFormat(playableFormats(audioFormatsOf(pr, audioLanguage.load()), poToken, null, ::AudioFormat), 160, requireAvc)
             val videos = playableFormats(videoFormatsOf(pr), poToken, null, ::VideoFormat)
             // Video-only formats need an audio track; without one only combined formats can play.
             val video = selectVideo(if (audio == null) videos.filter { it.muxed } else videos, maxHeight, requireAvc)
@@ -154,7 +163,7 @@ internal class Engine(
     /** Every playable format of the first identity whose URLs answer, for downloads. Throws like [extract]. */
     suspend fun formats(videoId: String, skipClients: Set<String>): VyonExFormats? =
         viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
-            val all = playableFormats(audioFormatsOf(pr) + videoFormatsOf(pr), poToken, null, ::formatOf)
+            val all = playableFormats(audioFormatsOf(pr, audioLanguage.load()) + videoFormatsOf(pr), poToken, null, ::formatOf)
             if (all.isEmpty()) log(DEBUG, "${id.profileId} has no usable format", videoId)
             // One probe stands for the list: a response's formats share its signature and address checks.
             all.firstOrNull()?.takeIf { answers(it.url, headers, videoId, id.profileId) }
@@ -546,7 +555,7 @@ internal class Engine(
         }
         val page = parseWatchPage(html) ?: return null
         if (page.playerResponse.at("playabilityStatus", "status").str != "OK") return null
-        return page.playerResponse to playableFormats(audioFormatsOf(page.playerResponse), null, page.playerId, ::AudioFormat)
+        return page.playerResponse to playableFormats(audioFormatsOf(page.playerResponse, audioLanguage.load()), null, page.playerId, ::AudioFormat)
     }
 
     private suspend fun <F> playableFormats(

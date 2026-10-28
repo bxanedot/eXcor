@@ -130,6 +130,8 @@ class ApiCheckTest {
             val d: VyonExVideoStream? = vyonEx.extractVideo("v")
             val e: VyonExVideoStream? = vyonEx.extractVideo(videoId = "v", maxHeight = 720, skipClients = setOf("WEB"), requireAvc = true)
             val f: VyonExMetadata? = vyonEx.metadata("v")
+            val audioTracks: List<VyonExAudioTrack>? = f?.audioTracks
+            listOf(audioTracks)
             val g: VyonExFormats? = vyonEx.formats("v")
             val channel: VyonExChannel? = vyonEx.channel("UC")
             listOf<Any?>(channel?.channelId, channel?.title, channel?.handle, channel?.description, channel?.avatars, channel?.banners, channel?.tabs)
@@ -212,6 +214,10 @@ class ApiCheckTest {
         assertFailsWith<IllegalArgumentException> { vyonEx.search("q", VyonExSearchFilter("Type", "Channels", null, true)) }
         assertEquals(emptyList(), vyonEx.suggestions(""))
         assertEquals(listOf(true, false), listOf("https://soundcloud.com/a/b", "https://youtu.be/dQw4w9WgXcQ").map(vyonEx.soundCloud::isLink))
+        vyonEx.preferAudioLanguage("es-US")
+        vyonEx.preferAudioLanguage(null)
+        val track = VyonExAudioTrack("en", "English original", isOriginal = true, isDefault = false, isDescriptive = false)
+        listOf<Any?>(track.languageCode, track.name, track.isOriginal, track.isDefault, track.isDescriptive)
         vyonEx.initializeFallback()
         assertNull(vyonEx.headersFor("u"))
         assertNull(vyonEx.onRefused("u"))

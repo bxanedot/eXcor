@@ -89,6 +89,8 @@ func apiCheck() async throws {
             _ = (vtt, text)
         }
         let translations: [String: String] = metadata.translationLanguages
+        let audioTracks: [VyonExAudioTrack] = metadata.audioTracks
+        _ = audioTracks
         _ = translations
         if let channel: VyonExChannel = try await vyonEx.channel(channelId: "UC") {
             let tabs: [VyonExChannelTab] = channel.tabs
@@ -197,6 +199,10 @@ func apiCheck() async throws {
     let headers: [String: String]? = vyonEx.headersFor(url: "u")
     let refused: String? = vyonEx.onRefused(url: "u")
     _ = (headers, refused)
+    vyonEx.preferAudioLanguage(code: "es-US")
+    vyonEx.preferAudioLanguage(code: nil)
+    let audioTrack = VyonExAudioTrack(languageCode: "en", name: nil, isOriginal: true, isDefault: false, isDescriptive: false)
+    _ = (audioTrack.languageCode, audioTrack.name, audioTrack.isOriginal, audioTrack.isDefault, audioTrack.isDescriptive)
     vyonEx.exclude(videoId: "v", profileId: "p")
     vyonEx.onSessionChanged()
     vyonEx.close()

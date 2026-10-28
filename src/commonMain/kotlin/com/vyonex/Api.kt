@@ -154,6 +154,21 @@ data class VyonExMetadata(
     val music: VyonExMusicInfo?,
     /** The languages caption tracks can be translated into: language code to its name. Only WEB reports them. */
     val translationLanguages: Map<String, String> = emptyMap(),
+    /** The audio tracks of a video with dubbed audio (empty with one track); `VyonEx.preferAudioLanguage` picks one. */
+    val audioTracks: List<VyonExAudioTrack> = emptyList(),
+)
+
+/**
+ * One audio track of a video with dubbed audio. [languageCode] is what `VyonEx.preferAudioLanguage` takes ("en",
+ * "es-US"); [name] is YouTube's, in the session's language. A [isDescriptive] track describes the picture for blind
+ * listeners.
+ */
+data class VyonExAudioTrack(
+    val languageCode: String,
+    val name: String?,
+    val isOriginal: Boolean,
+    val isDefault: Boolean,
+    val isDescriptive: Boolean,
 )
 
 /** [releaseDate] is `YYYY-MM-DD` as YouTube writes it. */
