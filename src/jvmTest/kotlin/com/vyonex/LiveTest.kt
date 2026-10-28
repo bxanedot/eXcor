@@ -70,6 +70,26 @@ class LiveTest {
         }
     }
 
+    /** VYONEX_LIVE_SOUNDCLOUD=1 (SoundCloud answers where YouTube's player asks for a bot check). No URL is printed. */
+    @Test
+    fun downloadsASoundCloudTrackAsOneFile() = runBlocking {
+        if (System.getenv("VYONEX_LIVE_SOUNDCLOUD") != "1") return@runBlocking
+        val soundCloud = VyonEx(host).soundCloud
+        val track = assertNotNull(soundCloud.track("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy"))
+        println("track -> $track")
+        val transcoding = track.transcodings.first()
+        val out = java.io.ByteArrayOutputStream()
+        val written = soundCloud.download(transcoding, { out.write(it) })
+        val bytes = out.toByteArray()
+        // Fragmented MP4: the init segment's ftyp first, then a segment type box and a movie fragment per segment.
+        val boxes = generateSequence(0) { at -> (at + java.nio.ByteBuffer.wrap(bytes, at, 4).int).takeIf { it in 8..<bytes.size } }
+            .map { String(bytes, it + 4, 4) }.toList()
+        println("${transcoding.preset}: $written bytes, boxes ${boxes.groupingBy { it }.eachCount()}")
+        assertTrue(written == bytes.size.toLong() && boxes.first() == "ftyp" && "moof" in boxes && "mdat" in boxes)
+        val set = assertNotNull(soundCloud.playlist("https://soundcloud.com/the-concept-band/sets/the-royal-concept-ep"))
+        println("set -> ${set.tracks.size} tracks, ${set.tracks.count { it.hasDrm }} DRM-only")
+    }
+
     @Test
     fun extractsVideoAndMetadata() = runBlocking {
         if (System.getenv("VYONEX_LIVE") != "1") return@runBlocking

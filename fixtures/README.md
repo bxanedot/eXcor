@@ -28,7 +28,9 @@ When adding captures, before committing:
 - replace `heartbeatServerData` (an encrypted per-request token) with `REDACTED-HEARTBEAT-DATA`;
 - capture logged out, so no cookie values are present;
 - for comments, replace each author's channel ID, handle and picture (the tool does this for `next-comment*` files);
-- for SoundCloud, replace `track_authorization` with `REDACTED-TRACK-AUTHORIZATION` and keep `client_id` out.
+- for SoundCloud, replace `track_authorization` with `REDACTED-TRACK-AUTHORIZATION` and keep `client_id` out;
+- for Bandcamp pages, replace signed stream URLs (`https://t4.bcbits.com/stream/…`) with
+  `https://t4.bcbits.com/stream/REDACTED`.
 
 `FixtureHygieneTest` checks all of these and fails without printing the value it found.
 

@@ -123,6 +123,7 @@ SoundCloud's public tracks and sets (logged out, as yt-dlp reads them), on the s
 ```kotlin
 val track = vyonEx.soundCloud.track("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy")
 val stream = vyonEx.soundCloud.stream(track!!.transcodings.first())  // a fresh signed URL: HLS or one file
+vyonEx.soundCloud.download(track.transcodings.first(), sink) { done -> }  // one file; HLS segments joined (.m4a)
 val set = vyonEx.soundCloud.playlist("https://soundcloud.com/the-concept-band/sets/the-royal-concept-ep")
 ```
 

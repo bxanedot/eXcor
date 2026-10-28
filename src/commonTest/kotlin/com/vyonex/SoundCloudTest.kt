@@ -107,7 +107,12 @@ class SoundCloudTest {
             .forEach { assertFalse(isAllowedSoundCloudStream(it), it) }
     }
 
-    private fun engine(requests: MutableList<HttpRequestData>, refuseFirstCall: Boolean = false, stream: String = streamUrl): SoundCloudEngine {
+    private fun engine(
+        requests: MutableList<HttpRequestData>,
+        refuseFirstCall: Boolean = false,
+        stream: String = streamUrl,
+        media: Map<String, String> = emptyMap(),
+    ): SoundCloudEngine {
         var refused = !refuseFirstCall
         val json = headersOf(HttpHeaders.ContentType, "application/json")
         return SoundCloudEngine(FakeHost().apply { cookie = "SID=secret" }, HttpClient(MockEngine { request ->
@@ -120,6 +125,9 @@ class SoundCloudTest {
                 )
                 url.encodedPath.endsWith("2-bb.js") -> respond("""var a={b:1}""")
                 url.encodedPath.endsWith("1-aa.js") -> respond("""x={client_id:"$clientId",env:"production"}""")
+                url.host != "api-v2.soundcloud.com" && url.encodedPath in media -> media.getValue(url.encodedPath).let {
+                    respond(it, headers = headersOf(HttpHeaders.ContentLength, it.length.toString()))
+                }
                 url.host != "api-v2.soundcloud.com" -> error("unexpected host ${url.host}")
                 !refused -> respond("", HttpStatusCode.Unauthorized).also { refused = true }
                 url.encodedPath == "/resolve" -> when {
@@ -169,6 +177,49 @@ class SoundCloudTest {
         assertNotNull(engine(requests, refuseFirstCall = true).track("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy"))
         assertEquals(2, requests.count { it.url.host == "soundcloud.com" })
         assertEquals(2, requests.count { it.url.encodedPath == "/resolve" })
+    }
+
+    @Test
+    fun anHlsStreamIsDownloadedAsItsSegmentsInOrder() = runTest {
+        val requests = mutableListOf<HttpRequestData>()
+        val playlist = "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-MAP:URI=\"init.mp4\"\n" +
+            "#EXTINF:10.0,\nhttps://playback.media-streaming.soundcloud.cloud/x1/aac_96k/y2/s0.m4s?a=1\n#EXTINF:3.1,\ns1.m4s\n#EXT-X-ENDLIST\n"
+        val engine = engine(
+            requests,
+            media = mapOf(
+                "/x1/aac_96k/y2/playlist.m3u8" to playlist,
+                "/x1/aac_96k/y2/init.mp4" to "INIT",
+                "/x1/aac_96k/y2/s0.m4s" to "-S0",
+                "/x1/aac_96k/y2/s1.m4s" to "-S1",
+            ),
+        )
+        val track = assertNotNull(engine.track("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy"))
+        val out = StringBuilder()
+        val progress = mutableListOf<Float>()
+        assertEquals(10L, engine.download(track.transcodings.single(), { out.append(it.decodeToString()) }) { progress += it })
+        assertEquals("INIT-S0-S1", out.toString())
+        assertEquals(listOf(1f / 3, 2f / 3, 1f), progress)
+        assertTrue(requests.all { it.headers[HttpHeaders.Cookie] == null })
+    }
+
+    @Test
+    fun aProgressiveStreamIsCopiedAndAPlaylistPointingElsewhereIsRefused() = runTest {
+        val file = "https://cf-media.sndcdn.com/abc.128.mp3?Policy=x"
+        val engine = engine(mutableListOf(), stream = file, media = mapOf("/abc.128.mp3" to "ID3-and-the-rest"))
+        val mp3 = soundCloudTrackOf(fixtureJson("soundcloud-track.json"))!!.transcodings.single()
+            .copy(protocol = SoundCloudProtocol.PROGRESSIVE)
+        val out = StringBuilder()
+        val progress = mutableListOf<Float>()
+        assertEquals(16L, engine.download(mp3, { out.append(it.decodeToString()) }) { progress += it })
+        assertEquals("ID3-and-the-rest", out.toString())
+        assertEquals(1f, progress.last())
+        val elsewhere = engine(
+            mutableListOf(),
+            media = mapOf("/x1/aac_96k/y2/playlist.m3u8" to "#EXTM3U\n#EXTINF:1,\nhttps://evil.example/s0.m4s\n#EXT-X-ENDLIST\n"),
+        )
+        val track = assertNotNull(elsewhere.track("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy"))
+        val e = assertFailsWith<IllegalStateException> { elsewhere.download(track.transcodings.single(), {}, null) }
+        assertEquals("VyonEx: SoundCloud's playlist points elsewhere", e.message)
     }
 
     @Test

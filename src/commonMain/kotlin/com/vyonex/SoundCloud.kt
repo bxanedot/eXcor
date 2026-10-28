@@ -75,4 +75,13 @@ class VyonExSoundCloud internal constructor(private val engine: SoundCloudEngine
     /** A fresh URL for [transcoding]. */
     @Throws(Throwable::class)
     suspend fun stream(transcoding: SoundCloudTranscoding): SoundCloudStream = engine.stream(transcoding)
+
+    /**
+     * Downloads [transcoding] into [sink] as one file and returns the bytes written. HLS comes as its segments joined:
+     * fragmented MP4 for AAC (an `.m4a`; `VyonExMerge.remuxAudio` makes it a plain one on Android). [onProgress] runs
+     * from 0 to 1. A failure means starting again: there is no resuming.
+     */
+    @Throws(Throwable::class)
+    suspend fun download(transcoding: SoundCloudTranscoding, sink: VyonExSink, onProgress: ((Float) -> Unit)? = null): Long =
+        engine.download(transcoding, sink, onProgress)
 }

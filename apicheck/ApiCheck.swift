@@ -182,6 +182,8 @@ func apiCheck() async throws {
         if let transcoding: SoundCloudTranscoding = track.transcodings.first {
             let protocols: [SoundCloudProtocol] = [.progressive, .hls]
             let stream: SoundCloudStream = try await soundCloud.stream(transcoding: transcoding)
+            let downloaded: KotlinLong = try await soundCloud.download(transcoding: transcoding, sink: ApiCheckSink(), onProgress: { (_: KotlinFloat) in })
+            _ = downloaded
             _ = (transcoding.preset, transcoding.mimeType, transcoding.isPreview, transcoding.protocol == protocols[1], stream.url, stream.protocol, stream.mimeType, stream.isPreview)
         }
     }

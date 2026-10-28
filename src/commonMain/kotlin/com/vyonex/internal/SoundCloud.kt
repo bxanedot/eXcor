@@ -6,15 +6,20 @@ import com.vyonex.SoundCloudStream
 import com.vyonex.SoundCloudTrack
 import com.vyonex.SoundCloudTranscoding
 import com.vyonex.VyonExHostServices
+import com.vyonex.VyonExSink
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.readBuffer
 import kotlinx.coroutines.CancellationException
+import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -26,6 +31,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 internal const val SOUNDCLOUD_API = "https://api-v2.soundcloud.com"
 private const val CLIENT_ID_KEY = "soundcloud.clientId"
+private const val COPY_BYTES = 256L * 1024
 
 private val JsonElement?.items get() = (this as? JsonArray).orEmpty()
 
@@ -124,6 +130,43 @@ internal class SoundCloudEngine(private val host: VyonExHostServices, private va
         check(url != null && isAllowedSoundCloudStream(url)) { "VyonEx: SoundCloud gave no stream" }
         return SoundCloudStream(url, transcoding.protocol, transcoding.mimeType, transcoding.isPreview)
     }
+
+    /**
+     * Writes [transcoding] to [sink] as one file, from a fresh stream: a progressive one as it comes, an HLS one as its
+     * init segment and then its segments in order (for fragmented MP4, an `.m4a` file). [onProgress] runs from 0 to 1:
+     * by bytes, or by segments for HLS. Returns the bytes written. Every URL must be on SoundCloud's media hosts.
+     */
+    suspend fun download(transcoding: SoundCloudTranscoding, sink: VyonExSink, onProgress: ((Float) -> Unit)?): Long {
+        val stream = stream(transcoding)
+        if (stream.protocol == SoundCloudProtocol.PROGRESSIVE) return copy(stream.url, sink, onProgress)
+        val playlist = mediaPlaylistOf(http.text(stream.url) { header(HttpHeaders.UserAgent, DESKTOP_UA) }, stream.url)
+        val parts = listOfNotNull(playlist.init) + playlist.segments
+        check(parts.all(::isAllowedSoundCloudStream)) { "VyonEx: SoundCloud's playlist points elsewhere" }
+        var written = 0L
+        parts.forEachIndexed { i, part ->
+            written += copy(part, sink, null)
+            onProgress?.invoke((i + 1).toFloat() / parts.size)
+        }
+        return written
+    }
+
+    /** Streams [url] into [sink] in pieces, so a long file is never held whole. */
+    private suspend fun copy(url: String, sink: VyonExSink, onProgress: ((Float) -> Unit)?): Long =
+        http.prepareGet(url) { header(HttpHeaders.UserAgent, DESKTOP_UA) }.execute { response ->
+            check(response.status == HttpStatusCode.OK) { "VyonEx: SoundCloud stream HTTP ${response.status.value}" }
+            val total = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+            val channel = response.bodyAsChannel()
+            var written = 0L
+            while (!channel.isClosedForRead) {
+                val piece = channel.readBuffer(COPY_BYTES).readByteArray()
+                if (piece.isEmpty()) continue
+                sink.write(piece)
+                written += piece.size
+                if (total != null && total > 0) onProgress?.invoke((written.toFloat() / total).coerceAtMost(1f))
+            }
+            check(total == null || written == total) { "VyonEx: SoundCloud stream ended early" }
+            written
+        }
 
     /** What a page link is (`resolve`), or null when SoundCloud has nothing there. */
     private suspend fun resolve(url: String): JsonElement? {

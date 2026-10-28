@@ -23,6 +23,7 @@ class FixtureHygieneTest {
         assertFalse(hasVisitorId(text), "${it.name}: a visitor ID is left in (not printed)")
         assertFalse(hasHeartbeatData(text), "${it.name}: heartbeat data is left in (not printed)")
         assertFalse(hasSoundCloudSecrets(text), "${it.name}: a SoundCloud client ID or track authorization is left in (not printed)")
+        assertFalse(hasBandcampStreamUrl(text), "${it.name}: a signed Bandcamp stream URL is left in (not printed)")
     }
 
     @Test
@@ -47,6 +48,16 @@ class FixtureHygieneTest {
         assertFalse(hasPublicAddress(redacted) || hasVisitorId(redacted) || hasHeartbeatData(redacted) || "Cgt0ZXN0" in redacted || "GAEgALIB" in redacted, redacted)
         listOf("?ip=192.0.2.1&id=1", "\\u0026ip=192.0.2.1\\u0026", "%26ip%3D192.0.2.1%26ipbits", "ip=0.0.0.0&x", "\"remoteHost\":\"192.0.2.1\"", "/ip/192.0.2.1/id/x")
             .forEach { assertTrue(it in redacted, it) }
+    }
+
+    @Test
+    fun redactionRemovesBandcampStreamUrls() {
+        // As in a track page's data-tralbum attribute: HTML-escaped JSON.
+        val page = """data-tralbum="{&quot;file&quot;:{&quot;mp3-128&quot;:&quot;https://t4.bcbits.com/stream/0a1b/mp3-128/123?p=0&amp;ts=1&amp;t=f00&amp;token=1_ab&quot;}}""""
+        assertTrue(hasBandcampStreamUrl(page))
+        val redacted = redactCapture(page)
+        assertFalse(hasBandcampStreamUrl(redacted) || "token" in redacted, redacted)
+        assertTrue("&quot;https://t4.bcbits.com/stream/REDACTED&quot;}}" in redacted, redacted)
     }
 
     @Test
@@ -76,6 +87,12 @@ private val TRACK_AUTHORIZATION = Regex(""""track_authorization"\s*:\s*"([^"]+)"
 private const val REDACTED_TRACK_AUTHORIZATION = "REDACTED-TRACK-AUTHORIZATION"
 private val CLIENT_ID = Regex("""client_id=[0-9a-zA-Z]{32}""")
 
+// Bandcamp's signed stream URLs (in pages' data-tralbum, HTML-escaped), up to the closing quote.
+private val BANDCAMP_STREAM = Regex("""https:(?:\\?/){2}t\d+\.bcbits\.com(?:\\?/)stream(?:\\?/)(?:[^"&\s\\]|&amp;|\\/)*""")
+private const val REDACTED_BANDCAMP_STREAM = "https://t4.bcbits.com/stream/REDACTED"
+
+internal fun hasBandcampStreamUrl(text: String) = BANDCAMP_STREAM.findAll(text).any { it.value != REDACTED_BANDCAMP_STREAM }
+
 internal fun hasSoundCloudSecrets(text: String) =
     CLIENT_ID.containsMatchIn(text) || TRACK_AUTHORIZATION.findAll(text).any { it.groupValues[1] != REDACTED_TRACK_AUTHORIZATION }
 
@@ -101,12 +118,13 @@ internal fun isPublic(literal: String): Boolean {
 }
 
 /**
- * fixtures/README.md: public addresses become 192.0.2.1, every copy of a visitor ID, heartbeat data and SoundCloud track
- * authorization a placeholder.
+ * fixtures/README.md: public addresses become 192.0.2.1, every copy of a visitor ID, heartbeat data, SoundCloud track
+ * authorization and signed Bandcamp stream URL a placeholder.
  */
 internal fun redactCapture(text: String): String {
     var out = HEARTBEAT.replace(text) { it.value.replace(it.groupValues[1], REDACTED_HEARTBEAT) }
     out = TRACK_AUTHORIZATION.replace(out) { it.value.replace(it.groupValues[1], REDACTED_TRACK_AUTHORIZATION) }
+    out = BANDCAMP_STREAM.replace(out, REDACTED_BANDCAMP_STREAM)
     VISITOR_ID.findAll(out).map { it.groupValues[1] }.filter { it != REDACTED_VISITOR }.toSet().forEach { id ->
         listOf(id, URLEncoder.encode(id, Charsets.UTF_8)).forEach { out = out.replace(it, REDACTED_VISITOR) }
     }
