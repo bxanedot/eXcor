@@ -1,7 +1,9 @@
 package com.vyonex.app
 
 import com.vyonex.VyonExResultKind
+import com.vyonex.VyonExSearchPage
 import com.vyonex.VyonExSearchResult
+import com.vyonex.VyonExSearchType
 import com.vyonex.VyonExThumbnail
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -49,5 +51,22 @@ class SearchTest {
         assertTrue(suggestsFor("ri"))
         assertTrue(suggestsFor("東京"))
         listOf("", "r", " r ", "https://youtu.be/x", "www.youtube.com").forEach { assertFalse(suggestsFor(it), it) }
+    }
+
+    @Test
+    fun aShortsSearchListsItsShortsFirst() {
+        val short = result(VyonExResultKind.VIDEO, "6oHkCfhlDnc")
+        val page = VyonExSearchPage(results = results.take(2), continuation = null, shorts = listOf(short))
+        assertEquals(listOf("6oHkCfhlDnc", "dQw4w9WgXcQ", "PL1"), resultsOf(page, VyonExSearchType.SHORTS).map { it.id })
+        assertEquals(listOf("dQw4w9WgXcQ", "PL1"), resultsOf(page, null).map { it.id })
+        assertEquals(listOf("dQw4w9WgXcQ", "PL1"), resultsOf(page, VyonExSearchType.VIDEOS).map { it.id })
+        assertEquals(listOf("Videos", "Shorts", "Channels", "Playlists"), SEARCH_TYPES.map { it.second })
+    }
+
+    @Test
+    fun aNextPageAddsOnlyResultsNotShownYet() {
+        // The same ID as another kind (a channel and an artist) is another result.
+        val artist = results[3].copy(kind = VyonExResultKind.ARTIST)
+        assertEquals(results + artist, appendResults(results, listOf(results[1], artist)))
     }
 }
