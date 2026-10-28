@@ -33,6 +33,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,15 +51,23 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.vyonex.VyonEx
 import com.vyonex.VyonExListItem
+import com.vyonex.VyonExChannelTab
 import com.vyonex.VyonExRef
+import com.vyonex.VyonExResultKind
+import com.vyonex.VyonExSearchResult
 import com.vyonex.VyonExUnplayableException
 import com.vyonex.app.Failure
 import com.vyonex.app.PlayState
 import com.vyonex.app.Playback
 import com.vyonex.app.Track
+import com.vyonex.app.bylineOf
+import com.vyonex.app.clockOf
+import com.vyonex.app.queueFrom
+import com.vyonex.app.suggestsFor
 import com.vyonex.app.toTrack
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** What a link opened: a title, who it is by, and its tracks. */
@@ -67,7 +76,12 @@ private data class Page(val title: String?, val byline: String?, val tracks: Lis
 private sealed interface Opened {
     data object Nothing : Opened
     data object Loading : Opened
-    data class Shown(val page: Page) : Opened
+
+    /** A page; [back] is the search it was opened from, to go back to. */
+    data class Shown(val page: Page, val back: Results? = null) : Opened
+
+    /** YouTube's results for [query]; [continuation] asks for more. */
+    data class Results(val query: String, val results: List<VyonExSearchResult>, val continuation: String?) : Opened
     data class Problem(val message: String) : Opened
 }
 
@@ -86,6 +100,20 @@ private suspend fun VyonEx.pageOf(ref: VyonExRef): Page? = when (ref) {
     }
     is VyonExRef.Mix -> mix(ref.playlistId)?.let { Page(it.title, null, it.firstPage.items.map(::trackOf)) }
     is VyonExRef.Channel -> artist(ref.channelId)?.let { Page(it.name, "Top songs", it.topSongs.map(::trackOf)) }
+}
+
+/** A channel's page: its videos tab, first page. */
+private suspend fun VyonEx.channelPageOf(channelId: String): Page? = channel(channelId)?.let { channel ->
+    Page(channel.title, channel.handle, channelTab(channelId, VyonExChannelTab.VIDEOS).items.mapNotNull { it.toTrack() })
+}
+
+/** The page a search result opens: a playlist, album, artist or channel; videos play instead. */
+private suspend fun VyonEx.pageOf(result: VyonExSearchResult): Page? = when (result.kind) {
+    VyonExResultKind.VIDEO -> null
+    VyonExResultKind.PLAYLIST -> pageOf(VyonExRef.Playlist(result.id))
+    VyonExResultKind.ALBUM -> pageOf(VyonExRef.Album(result.id))
+    VyonExResultKind.ARTIST -> pageOf(VyonExRef.Channel(result.id))
+    VyonExResultKind.CHANNEL -> channelPageOf(result.id)
 }
 
 /** The page for a SoundCloud link: a set and its tracks, or one track; null when SoundCloud has none. */
@@ -203,43 +231,117 @@ class MainActivity : ComponentActivity() {
         val state by playback.state.collectAsStateWithLifecycle()
         val jobs by downloads.jobs.collectAsStateWithLifecycle()
         var downloading by remember { mutableStateOf<List<Track>?>(null) }
-        fun open() {
-            val url = link.trim()
-            val ref = vyonEx.parse(url)
-            if (ref == null && !vyonEx.soundCloud.isLink(url)) {
-                opened = Opened.Problem("That is not a YouTube, YouTube Music or SoundCloud link.")
-                return
-            }
+        var suggestions by remember { mutableStateOf(emptyList<String>()) }
+        // What was last opened or searched, so its own suggestions do not come back over its results.
+        var asked by remember { mutableStateOf("") }
+        /** Shows Loading, then what [load] finds; a load started before this one and still running is dropped. */
+        fun show(load: suspend () -> Opened) {
+            suggestions = emptyList()
             opened = Opened.Loading
-            // A link opened before this one and still loading would otherwise replace it when it arrives.
             opening?.cancel()
             opening = scope.launch {
                 opened = try {
-                    val page = if (ref != null) vyonEx.pageOf(ref) else vyonEx.soundCloudPageOf(url)
-                    page?.let { Opened.Shown(it) } ?: Opened.Problem("There is nothing at that link.")
+                    load()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: VyonExUnplayableException) {
                     Opened.Problem(e.youtubeReason ?: "YouTube does not show this.")
                 } catch (e: Exception) {
-                    Opened.Problem("Could not load that link. Check the connection.")
+                    Opened.Problem("Could not load that. Check the connection.")
                 }
+            }
+        }
+        // A YouTube or SoundCloud link opens; anything else is searched on YouTube.
+        fun open() {
+            val text = link.trim()
+            asked = text
+            val ref = vyonEx.parse(text)
+            show {
+                val page = when {
+                    ref != null -> vyonEx.pageOf(ref)
+                    vyonEx.soundCloud.isLink(text) -> vyonEx.soundCloudPageOf(text)
+                    else -> null
+                }
+                when {
+                    page != null -> Opened.Shown(page)
+                    "://" in text -> Opened.Problem("There is nothing at that link.")
+                    // Words, or a bare ID YouTube has nothing for: a search.
+                    else -> vyonEx.search(text).let { found ->
+                        if (found.results.isEmpty()) Opened.Problem("Nothing found for \"$text\".") else Opened.Results(text, found.results, found.continuation)
+                    }
+                }
+            }
+        }
+        // What YouTube's search box would suggest, once typing pauses.
+        LaunchedEffect(link) {
+            suggestions = emptyList()
+            val text = link.trim()
+            if (!suggestsFor(text) || text == asked) return@LaunchedEffect
+            delay(300)
+            suggestions = try {
+                vyonEx.suggestions(text).take(5)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                emptyList()
             }
         }
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = link,
                 onValueChange = { link = it },
-                label = { Text("YouTube, YouTube Music or SoundCloud link") },
+                label = { Text("Search, or a YouTube, YouTube Music or SoundCloud link") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
-            Button(onClick = ::open, enabled = link.isNotBlank()) { Text("Open") }
+            Button(onClick = ::open, enabled = link.isNotBlank()) { Text("Go") }
+            suggestions.forEach { suggestion ->
+                Text(
+                    suggestion,
+                    Modifier.fillMaxWidth().clickable {
+                        link = suggestion
+                        open()
+                    }.padding(vertical = 4.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             when (val now = opened) {
                 Opened.Nothing -> Unit
                 Opened.Loading -> CircularProgressIndicator()
                 is Opened.Problem -> Text(now.message, color = MaterialTheme.colorScheme.error)
+                is Opened.Results -> LazyColumn(Modifier.weight(1f)) {
+                    itemsIndexed(now.results) { index, result ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(
+                                Modifier.weight(1f).clickable {
+                                    if (result.kind == VyonExResultKind.VIDEO) {
+                                        playback.play(queueFrom(now.results, index))
+                                    } else {
+                                        show { vyonEx.pageOf(result)?.let { Opened.Shown(it, back = now) } ?: Opened.Problem("YouTube has nothing there.") }
+                                    }
+                                }.padding(vertical = 8.dp),
+                            ) {
+                                Text(result.title ?: result.id, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(bylineOf(result), style = MaterialTheme.typography.bodySmall)
+                            }
+                            result.toTrack()?.let { track -> TextButton(onClick = { downloading = listOf(track) }) { Text("Download") } }
+                        }
+                    }
+                    now.continuation?.let { token ->
+                        item {
+                            TextButton(onClick = {
+                                show {
+                                    val more = vyonEx.searchMore(token)
+                                    // Pages can repeat a result; each shows once.
+                                    now.copy(results = (now.results + more.results).distinctBy { it.kind to it.id }, continuation = more.continuation)
+                                }
+                            }) { Text("More results") }
+                        }
+                    }
+                }
                 is Opened.Shown -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    now.back?.let { results -> TextButton(onClick = { opened = results }) { Text("Back to results for \"${results.query}\"") } }
                     Text(now.page.title ?: "", style = MaterialTheme.typography.titleLarge)
                     now.page.byline?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -252,7 +354,7 @@ class MainActivity : ComponentActivity() {
                                 Column(Modifier.weight(1f).clickable { playback.play(now.page.tracks, index) }.padding(vertical = 8.dp)) {
                                     Text(track.title ?: track.id, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Text(
-                                        listOfNotNull(track.artist, track.durationSeconds?.let { "%d:%02d".format(it / 60, it % 60) }).joinToString(" · "),
+                                        listOfNotNull(track.artist, track.durationSeconds?.let(::clockOf)).joinToString(" · "),
                                         style = MaterialTheme.typography.bodySmall,
                                     )
                                 }
