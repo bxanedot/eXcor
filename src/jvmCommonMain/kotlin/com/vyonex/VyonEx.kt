@@ -116,6 +116,11 @@ class VyonEx(host: VyonExHost) {
     /** The next page of a channel tab. */
     suspend fun channelTabMore(continuation: String): VyonExChannelPage = engine.channelTabMore(continuation)
 
+    /** A channel's community posts, first page (logged out); empty when it has none. Then `channelPostsMore`. */
+    suspend fun channelPosts(channelId: String): VyonExPostPage = engine.channelPosts(channelId)
+
+    suspend fun channelPostsMore(continuation: String): VyonExPostPage = engine.channelPostsMore(continuation)
+
     /** A YouTube Music artist page (`UC…` channel ID): top songs, playlists of all songs and videos, releases. */
     suspend fun artist(channelId: String): VyonExArtist? = engine.artist(channelId)
 

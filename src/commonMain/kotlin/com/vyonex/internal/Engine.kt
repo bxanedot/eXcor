@@ -24,6 +24,7 @@ import com.vyonex.VyonExSession
 import com.vyonex.VyonExMetadata
 import com.vyonex.VyonExMix
 import com.vyonex.VyonExPlaylist
+import com.vyonex.VyonExPostPage
 import com.vyonex.VyonExSearchPage
 import com.vyonex.VyonExSink
 import com.vyonex.VyonExStream
@@ -87,7 +88,8 @@ internal class Engine(
     private val remembered = AtomicReference(emptyMap<String, VyonExStream>())
     private val exclusions = AtomicReference(emptyMap<String, Long>())
     internal val health = ClientHealth(host::nowMs)
-    private val tabParams = AtomicReference(emptyMap<String, Map<VyonExChannelTab, String>>())
+    // Each channel's tab params by tab path ("videos", "posts").
+    private val tabParams = AtomicReference(emptyMap<String, Map<String, String>>())
     private val audioLanguage = AtomicReference<String?>(null)
 
     /** The audio track to pick for videos with dubbed audio, by language code; null keeps the original track. */
@@ -393,7 +395,7 @@ internal class Engine(
     suspend fun channel(channelId: String): VyonExChannel? {
         require(channelId.startsWith("UC")) { "VyonEx: $channelId is not a channel ID" }
         val response = innertube("browse") { put("browseId", channelId) }
-        val params = channelTabParamsOf(response)
+        val params = channelTabPathsOf(response)
         tabParams.update { all -> (if (all.size >= MAX_REMEMBERED) emptyMap() else all) + (channelId to params) }
         return channelOf(response)
     }
@@ -403,11 +405,21 @@ internal class Engine(
      * `params` its channel page gives (one more request the first time, for the channel page).
      */
     suspend fun channelTab(channelId: String, tab: VyonExChannelTab): VyonExChannelPage {
-        val params = tabParams.load()[channelId]?.get(tab)
-            ?: run { channel(channelId); tabParams.load()[channelId]?.get(tab) }
-            ?: return VyonExChannelPage(emptyList(), null)
+        val params = tabParamsOf(channelId, tab.path) ?: return VyonExChannelPage(emptyList(), null)
         return channelPageOf(innertube("browse") { put("browseId", channelId); put("params", params) })
     }
+
+    /** The first page of a channel's community posts; empty when it has no Posts tab. */
+    suspend fun channelPosts(channelId: String): VyonExPostPage {
+        val params = tabParamsOf(channelId, "posts") ?: return VyonExPostPage(emptyList(), null)
+        return postPageOf(innertube("browse") { put("browseId", channelId); put("params", params) })
+    }
+
+    suspend fun channelPostsMore(continuation: String): VyonExPostPage = postPageMoreOf(innertube("browse") { put("continuation", continuation) })
+
+    /** The params of a channel's tab at [path], from its channel page (asked for once, then kept). */
+    private suspend fun tabParamsOf(channelId: String, path: String): String? =
+        tabParams.load()[channelId]?.get(path) ?: run { channel(channelId); tabParams.load()[channelId]?.get(path) }
 
     suspend fun channelTabMore(continuation: String): VyonExChannelPage = channelPageMoreOf(innertube("browse") { put("continuation", continuation) })
 

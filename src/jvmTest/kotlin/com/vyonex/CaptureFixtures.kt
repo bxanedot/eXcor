@@ -65,7 +65,7 @@ class CaptureFixtures {
         get("https://suggestqueries-clients6.youtube.com/complete/search?ds=yt&client=youtube&hl=en&gl=us&q=rick+ast&xhr=t&ie=utf-8&oe=utf-8", "suggest-web.json")
         // A channel and its tabs; each tab's params come from the channel response, picked by the tab's URL.
         val channel = call("browse", web, "browse-channel.json") { put("browseId", "UCuAXFkgsw1L7xaCfnd5JJOw") }
-        for (tab in listOf("videos", "shorts", "playlists")) {
+        for (tab in listOf("videos", "shorts", "playlists", "posts")) {
             val params = channel?.let { Regex(""""url":"/@[^"/]+/$tab".*?"params":"([^"]+)"""").find(it)?.groupValues?.get(1) }
             val page = params?.let { call("browse", web, "browse-channel-$tab.json") { put("browseId", "UCuAXFkgsw1L7xaCfnd5JJOw"); put("params", it) } }
             if (tab == "videos") {
@@ -76,6 +76,16 @@ class CaptureFixtures {
                         ?.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str
                 }
                 more?.let { call("browse", web, "browse-channel-videos-continuation.json") { put("continuation", it) } }
+            }
+            if (tab == "posts") {
+                // The posts list (not the channel header) ends in its next page's token.
+                val tabs = page?.let { Json.parseToJsonElement(it) }.at("contents", "twoColumnBrowseResultsRenderer", "tabs")
+                val more = (tabs as? JsonArray).orEmpty().firstNotNullOfOrNull { t ->
+                    ((t.at("tabRenderer", "content", "sectionListRenderer", "contents") as? JsonArray)?.firstOrNull()
+                        ?.at("itemSectionRenderer", "contents") as? JsonArray)?.lastOrNull()
+                        ?.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str
+                }
+                more?.let { call("browse", web, "browse-channel-posts-continuation.json") { put("continuation", it) } }
             }
         }
         // Comments: the watch-next response's comment section holds its first page's continuation.

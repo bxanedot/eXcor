@@ -92,6 +92,13 @@ func apiCheck() async throws {
         let audioTracks: [VyonExAudioTrack] = metadata.audioTracks
         _ = audioTracks
         _ = translations
+        let posts: VyonExPostPage = try await vyonEx.channelPosts(channelId: "UC")
+        let morePosts: VyonExPostPage = try await vyonEx.channelPostsMore(continuation: posts.continuation ?? "")
+        for post: VyonExPost in posts.posts + morePosts.posts {
+            let likes: KotlinLong? = post.likeCount
+            let video: VyonExSearchResult? = post.video
+            _ = (post.postId, post.text, post.links, post.publishedText, likes, post.images, video, post.playlistId)
+        }
         if let channel: VyonExChannel = try await vyonEx.channel(channelId: "UC") {
             let tabs: [VyonExChannelTab] = channel.tabs
             _ = (channel.channelId, channel.title, channel.handle, channel.description_, channel.avatars, channel.banners, tabs)

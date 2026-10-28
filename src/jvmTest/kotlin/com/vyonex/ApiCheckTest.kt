@@ -135,6 +135,12 @@ class ApiCheckTest {
             val g: VyonExFormats? = vyonEx.formats("v")
             val channel: VyonExChannel? = vyonEx.channel("UC")
             listOf<Any?>(channel?.channelId, channel?.title, channel?.handle, channel?.description, channel?.avatars, channel?.banners, channel?.tabs)
+            val posts: VyonExPostPage = vyonEx.channelPosts("UC")
+            val morePosts: VyonExPostPage = vyonEx.channelPostsMore("token")
+            (posts.posts + morePosts.posts).forEach {
+                listOf<Any?>(it.postId, it.text, it.links, it.publishedText, it.likeCount, it.images, it.video, it.playlistId)
+            }
+            listOf(posts.continuation)
             val tab: VyonExChannelPage = vyonEx.channelTab(channelId = "UC", tab = VyonExChannelTab.SHORTS)
             val tabMore: VyonExChannelPage = vyonEx.channelTabMore("token")
             listOf<Any?>(tab.items, tab.continuation, tabMore, VyonExChannelTab.entries.toList())
