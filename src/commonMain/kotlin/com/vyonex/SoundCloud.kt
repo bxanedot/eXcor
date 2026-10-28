@@ -1,6 +1,7 @@
 package com.vyonex
 
 import com.vyonex.internal.SoundCloudEngine
+import com.vyonex.internal.isSoundCloudPage
 
 /** How SoundCloud delivers a stream: one file, or an HLS playlist of segments. */
 enum class SoundCloudProtocol { PROGRESSIVE, HLS }
@@ -64,6 +65,9 @@ data class SoundCloudStream(val url: String, val protocol: SoundCloudProtocol, v
  * links with their token.
  */
 class VyonExSoundCloud internal constructor(private val engine: SoundCloudEngine) {
+    /** Whether [url] is a SoundCloud page `track` and `playlist` take. Makes no request. */
+    fun isLink(url: String): Boolean = isSoundCloudPage(url)
+
     /** The track a link points at; null when SoundCloud has none there or the link is a set or a profile. */
     @Throws(Throwable::class)
     suspend fun track(url: String): SoundCloudTrack? = engine.track(url)

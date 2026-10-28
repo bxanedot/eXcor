@@ -11,7 +11,8 @@ import java.io.File
 /**
  * Runs [VyonExMerge] on a device or emulator: `adb shell am instrument -w com.vyonex.test/com.vyonex.MergeCheck`
  * prints "MergeCheck: OK" or the failure. A plain Instrumentation, as androidx.test's runner needs JUnit 4 (EPL-1.0).
- * The clips are synthetic and laid out as YouTube serves its formats (fragmented MP4, WebM); see PROVENANCE.md.
+ * The clips are synthetic and laid out as YouTube serves its formats (fragmented MP4, WebM) and as SoundCloud's HLS
+ * downloads come out (joined fMP4 segments); see PROVENANCE.md.
  */
 class MergeCheck : Instrumentation() {
     override fun onCreate(arguments: Bundle?) {
@@ -52,8 +53,9 @@ class MergeCheck : Instrumentation() {
         val output = File(dir, "merged-mismatch")
         val error = runCatching { VyonExMerge.merge(clip("video-vp9.webm"), clip("audio-aac.m4a"), output, VyonExContainer.MP4) }.exceptionOrNull()
         check(error is IllegalArgumentException && !output.exists()) { "mismatch: $error, output left: ${output.exists()}" }
-        // Audio alone: AAC into a plain MP4, Opus into Ogg (Android 10 on), every sample kept.
-        val audioLines = listOf("audio-aac.m4a", "audio-opus.webm").map { name ->
+        // Audio alone: AAC into a plain MP4, Opus into Ogg (Android 10 on), every sample kept. audio-aac-hls.m4a is HLS
+        // segments joined as SoundCloud's downloads are: an init segment, then styp, sidx, moof and mdat per segment.
+        val audioLines = listOf("audio-aac.m4a", "audio-aac-hls.m4a", "audio-opus.webm").map { name ->
             val remuxed = File(dir, "remuxed-$name")
             if (name.endsWith(".webm") && !VyonExMerge.supports(VyonExContainer.WEBM)) {
                 val refused = runCatching { VyonExMerge.remuxAudio(clip(name), remuxed) }.exceptionOrNull()

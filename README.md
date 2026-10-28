@@ -188,8 +188,9 @@ Multiplatform, so an iOS app can reuse it): the play queue and the playback cont
 Android shell (Compose, Media3): paste or share a YouTube or YouTube Music link (a video, playlist, album, mix
 or artist), see its tracks, and play them in the background with the system's media notification. Each track,
 or the whole page, can be downloaded: audio (AAC or Opus, every bitrate YouTube offers) or video (every height,
-merged into one MP4 or WebM file), into Music/VyonEx and Movies/VyonEx, with progress in a notification. No search
-or player screen yet.
+merged into one MP4 or WebM file), into Music/VyonEx and Movies/VyonEx, with progress in a notification.
+SoundCloud links (a track or a set) open, play and download too: the best audio that is not encrypted (DRM), saved
+as `.m4a`, `.mp3` or `.opus`; a track SoundCloud only offers encrypted says so. No search or player screen yet.
 
 ```kotlin
 val playback = Playback(source, scope, nowSeconds)  // source: VyonEx behind StreamSource

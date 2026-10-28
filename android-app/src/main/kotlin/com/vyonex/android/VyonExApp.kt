@@ -10,8 +10,12 @@ import com.vyonex.VyonExLogLevel
 import com.vyonex.VyonExManifestKind
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExStream
+import com.vyonex.app.HLS_MIME_TYPE
 import com.vyonex.app.Playback
+import com.vyonex.app.Source
 import com.vyonex.app.StreamSource
+import com.vyonex.app.Track
+import com.vyonex.app.soundCloudStreamOf
 import kotlinx.coroutines.MainScope
 import okhttp3.OkHttpClient
 import java.io.File
@@ -31,14 +35,17 @@ class VyonExApp : Application() {
         vyonEx = VyonEx(AndroidHost(this)).apply { init() }
         playback = Playback(
             object : StreamSource {
-                // The best audio; VyonEx picks the format. A live stream has no single file, so its manifest plays.
-                override suspend fun stream(videoId: String): VyonExStream? =
-                    vyonEx.extract(videoId, maxKbps = 160) ?: vyonEx.manifest(videoId)?.let { manifest ->
+                override suspend fun stream(track: Track): VyonExStream? = when (track.source) {
+                    // The best audio; VyonEx picks the format. A live stream has no single file, so its manifest plays.
+                    Source.YOUTUBE -> vyonEx.extract(track.id, maxKbps = 160) ?: vyonEx.manifest(track.id)?.let { manifest ->
                         VyonExStream(
                             manifest.videoId, manifest.url, 0, MANIFEST_TYPES.getValue(manifest.kind), null,
                             manifest.profileId, manifest.profileId, manifest.headers,
                         )
                     }
+                    // Looked up again by its page: the signed stream URL is fresh when it plays.
+                    Source.SOUNDCLOUD -> soundCloudStreamOf(vyonEx.soundCloud.track(track.id), vyonEx.soundCloud::stream)
+                }
 
                 override fun refused(url: String) {
                     vyonEx.onRefused(url)
@@ -52,7 +59,7 @@ class VyonExApp : Application() {
 }
 
 /** The MIME types the player picks its HLS or DASH source by. */
-internal val MANIFEST_TYPES = mapOf(VyonExManifestKind.HLS to "application/x-mpegURL", VyonExManifestKind.DASH to "application/dash+xml")
+internal val MANIFEST_TYPES = mapOf(VyonExManifestKind.HLS to HLS_MIME_TYPE, VyonExManifestKind.DASH to "application/dash+xml")
 
 /** Logged out (no cookie), in the phone's language and region. */
 private class AndroidHost(context: Context) : VyonExHost {

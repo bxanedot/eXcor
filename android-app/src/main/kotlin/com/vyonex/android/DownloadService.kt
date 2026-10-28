@@ -40,7 +40,7 @@ class DownloadService : Service() {
             running = scope.launch {
                 (application as VyonExApp).downloads.runQueued { job, position, count ->
                     val done = (job.state as? Downloads.State.Fetching)?.done
-                    notifications.notify(ID, notification("Downloading $position of $count", job.track.title ?: job.track.videoId, done))
+                    notifications.notify(ID, notification("Downloading $position of $count", job.track.title ?: job.track.id, done))
                 }
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf(lastStart)

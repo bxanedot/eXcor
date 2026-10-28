@@ -15,8 +15,11 @@ import kotlinx.coroutines.launch
 
 /** What playback needs from VyonEx; the app passes VyonEx in, tests a fake. */
 interface StreamSource {
-    /** The audio stream for [videoId] (`VyonEx.extract`); throws `VyonExUnplayableException` when YouTube refuses. */
-    suspend fun stream(videoId: String): VyonExStream?
+    /**
+     * The audio stream for [track] (`VyonEx.extract` for YouTube); throws `VyonExUnplayableException` when YouTube
+     * refuses, [Refused] when another source does.
+     */
+    suspend fun stream(track: Track): VyonExStream?
 
     /** The player was refused [url] (HTTP 403): `VyonEx.onRefused`, so the next lookup avoids that client. */
     fun refused(url: String)
@@ -34,7 +37,13 @@ enum class Failure {
 
     /** The lookup itself failed: no connection, an unexpected answer. */
     NETWORK,
+
+    /** The source only offers this one encrypted (DRM), which VyonEx does not play. */
+    DRM,
 }
+
+/** A source other than YouTube refused a track, for [failure]. */
+class Refused(val failure: Failure) : Exception("refused: $failure")
 
 sealed interface PlayState {
     data object Idle : PlayState
@@ -61,6 +70,7 @@ internal fun failureOf(error: Throwable): Pair<Failure, String?> = when (error) 
         VyonExUnplayableReason.GEO_RESTRICTED -> Failure.NOT_IN_COUNTRY
         VyonExUnplayableReason.OTHER -> Failure.BLOCKED
     } to error.youtubeReason
+    is Refused -> error.failure to null
     else -> Failure.NETWORK to null
 }
 
@@ -161,7 +171,7 @@ class Playback(
             return
         }
         // Repeating a track that still plays reuses its stream.
-        val playing = (_state.value as? PlayState.Ready)?.takeIf { !retry && it.track.videoId == track.videoId && fresh(it.stream) }
+        val playing = (_state.value as? PlayState.Ready)?.takeIf { !retry && it.track.id == track.id && fresh(it.stream) }
         if (playing != null) {
             _state.value = PlayState.Ready(track, playing.stream)
             return
@@ -169,9 +179,9 @@ class Playback(
         _state.value = PlayState.Loading(track)
         loading = scope.launch {
             // A stream fetched ahead is used while fresh; anything else (a failure, no stream) is looked up again now.
-            val looked = ahead?.takeIf { (videoId, _) -> !retry && videoId == track.videoId }?.second?.await()?.getOrNull()
+            val looked = ahead?.takeIf { (id, _) -> !retry && id == track.id }?.second?.await()?.getOrNull()
             ahead = null
-            val result = looked?.takeIf(::fresh)?.let { Result.success(it) } ?: lookUp(track.videoId)
+            val result = looked?.takeIf(::fresh)?.let { Result.success(it) } ?: lookUp(track)
             val stream = result.getOrElse { error ->
                 val (failure, reason) = failureOf(error)
                 _state.value = PlayState.Failed(track, failure, reason)
@@ -190,12 +200,12 @@ class Playback(
     private fun fetchAhead() {
         val queue = _queue.value
         val next = queue.nextIndex(ended = true)?.takeIf { it != queue.index }?.let { queue.tracks[it] } ?: return
-        if (ahead?.first == next.videoId) return
-        ahead = next.videoId to scope.async { lookUp(next.videoId) }
+        if (ahead?.first == next.id) return
+        ahead = next.id to scope.async { lookUp(next) }
     }
 
-    private suspend fun lookUp(videoId: String): Result<VyonExStream?> = try {
-        Result.success(source.stream(videoId))
+    private suspend fun lookUp(track: Track): Result<VyonExStream?> = try {
+        Result.success(source.stream(track))
     } catch (e: CancellationException) {
         throw e
     } catch (e: Throwable) {
