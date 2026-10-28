@@ -250,3 +250,6 @@ Offline tests read the captured responses in `fixtures/` (see `fixtures/README.m
 - `ejs/`: the vendored yt-dlp/ejs solver, compiled into the library.
 - `app-core/`: the app's shared logic (queue, playback controller); `android-app/`: the Android app.
 - `PROVENANCE.md`: every source used. `QUESTIONS.md`: open questions. `NOTICE`: third-party notices.
+
+
+Gonna be renamed to Excor
