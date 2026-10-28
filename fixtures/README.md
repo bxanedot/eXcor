@@ -19,6 +19,7 @@ repository's Apache-2.0 license and are not part of any published artifact.
 | `search-web-channels.json`, `search-web-shorts.json`, `suggest-web.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27: the search for "rick astley" with the Channels and Shorts filters (params from YouTube's own filter list), and the search box's suggestions for "rick ast" (`suggestqueries-clients6.youtube.com/complete/search?ds=yt&client=youtube…`, as YouTube's page asks) |
 | `soundcloud-track.json`, `soundcloud-playlist.json`, `soundcloud-playlist-tracks.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27, asked as yt-dlp asks: `api-v2.soundcloud.com/resolve` for yt-dlp's test track (`ethmusic/lostin-powers-she-so-heavy`) and test set (`the-concept-band/sets/the-royal-concept-ep`), and `tracks?ids=` for the set's track that came without details. **Redacted:** `track_authorization` (a per-track playback token) became `REDACTED-TRACK-AUTHORIZATION`. The web client's ID is in the request URLs only and is never written; no stream URL is captured |
 | `browse-channel-posts.json`, `browse-channel-posts-continuation.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-28: Rick Astley's Posts tab (asked with the `params` the channel page gives for `…/posts`) and its second page. The posts are the channel's own; no comments are in them |
+| `apple-song.json`, `apple-album.json`, `apple-artist.json`, `apple-search.json` | `CaptureFixtures`, from the cloud build machine on 2026-10-28: Apple's iTunes Search API lookups of "Never Gonna Give You Up" (song `1773293184`), its album with songs (`1773292758`), Rick Astley with five albums (`669771`), and a song search. Metadata only: every `previewUrl` (a 30-second audio preview) became `REDACTED-PREVIEW` |
 | `browse-channel.json`, `browse-channel-videos.json`, `browse-channel-videos-continuation.json`, `browse-channel-shorts.json`, `browse-channel-playlists.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27: Rick Astley's channel page (`UCuAXFkgsw1L7xaCfnd5JJOw`), its Videos tab and that tab's second page, its Shorts and its Playlists, each tab asked with the `params` the channel page gives |
 
 When adding captures, before committing:
@@ -30,6 +31,7 @@ When adding captures, before committing:
 - capture logged out, so no cookie values are present;
 - for comments, replace each author's channel ID, handle and picture (the tool does this for `next-comment*` files);
 - for SoundCloud, replace `track_authorization` with `REDACTED-TRACK-AUTHORIZATION` and keep `client_id` out;
+- for Apple's iTunes Search API, replace song previews (`previewUrl`) with `REDACTED-PREVIEW`;
 - for Bandcamp pages, replace signed stream URLs (`https://t4.bcbits.com/stream/…`) with
   `https://t4.bcbits.com/stream/REDACTED`.
 

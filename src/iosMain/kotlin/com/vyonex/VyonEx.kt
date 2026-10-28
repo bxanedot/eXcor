@@ -1,5 +1,6 @@
 package com.vyonex
 
+import com.vyonex.internal.AppleMusicEngine
 import com.vyonex.internal.Engine
 import com.vyonex.internal.SoundCloudEngine
 import com.vyonex.internal.mergePairOf
@@ -26,6 +27,9 @@ class VyonEx(host: VyonExHost) {
 
     /** SoundCloud's public tracks and sets, on the same host and network client. */
     val soundCloud = VyonExSoundCloud(SoundCloudEngine(host, http))
+
+    /** Apple Music metadata (songs, albums, artists, search) from Apple's iTunes Search API; no audio. */
+    val appleMusic = VyonExAppleMusic(AppleMusicEngine(host, http))
 
     fun initialize() = engine.initialize()
 

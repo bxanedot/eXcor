@@ -129,6 +129,17 @@ vyonEx.soundCloud.download(track.transcodings.first(), sink) { done -> }  // one
 val set = vyonEx.soundCloud.playlist("https://soundcloud.com/the-concept-band/sets/the-royal-concept-ep")
 ```
 
+Apple Music metadata (no audio), from Apple's documented iTunes Search API: songs, albums with their songs, artists,
+and search, by ID or `music.apple.com` link. Artwork comes at 100 px and at 600, 1200 and 3000 px. Apple allows about
+20 calls a minute.
+
+```kotlin
+val ref = vyonEx.appleMusic.parse("https://music.apple.com/us/album/never-gonna-give-you-up/1773292758?i=1773293184")
+val song = vyonEx.appleMusic.song(ref!!.id, ref.country)  // title, artist, album, duration, track/disc, date, genre, artwork
+val album = vyonEx.appleMusic.album(1773292758, country = null)  // null: the session's region; songs in disc and track order
+val found = vyonEx.appleMusic.searchSongs("never gonna give you up", country = null, limit = 5)
+```
+
 iOS apps use the same library through `VyonEx.xcframework`:
 
 ```swift

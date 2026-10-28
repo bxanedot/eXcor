@@ -516,3 +516,17 @@ Each item names the reading chosen; nothing was looked up in the old code.
     by its URL ("…/posts") among the params the channel page gives, as the other tabs are, so it needs
     no public tab value of its own. The next page comes under `onResponseReceivedEndpoints`. Captured
     from the build machine, which `browse` answers. Polls, quizzes and a post's comments are not read.
+63. **Apple Music metadata (owner, 2026-10-28: "Apple Music metadata fetching", "Only metadata", "Image
+    metadata?").** `vyonEx.appleMusic` reads songs, albums (with their songs, in disc and track order),
+    artists (with the albums they are on, also under other artists' names, as Apple lists them) and
+    song and album search from Apple's documented iTunes Search API (`itunes.apple.com/lookup` and
+    `/search`; no key, no account), and parses `music.apple.com` song, album and artist links.
+    Metadata only, as asked: song previews (`previewUrl`, 30-second audio) are not read, and the capture
+    tool replaces them before writing (`FixtureHygieneTest` refuses any left in). Images: the cover
+    comes at 100 px, as the documentation gives it, and at 600, 1200 and 3000 px, made by changing the
+    size in its URL as Apple's image server serves them; checked from the build machine on 2026-10-28
+    (each answered a JPEG of that size), but not documented by Apple, so a size can stop answering.
+    Artists have no picture in this API. Apple's playlist links (`pl.…`) are not in it. Apple allows
+    about 20 calls a minute; a refusal throws with its HTTP status. Its terms say promotional content
+    (previews, album art) is only to promote store content: what an app shows or saves is the app's
+    call, not a clearance given here.
