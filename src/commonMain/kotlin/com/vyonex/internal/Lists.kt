@@ -8,10 +8,12 @@ import com.vyonex.VyonExMix
 import com.vyonex.VyonExPlaylist
 import com.vyonex.VyonExRelease
 import com.vyonex.VyonExResultKind
+import com.vyonex.VyonExSearchFilter
 import com.vyonex.VyonExSearchPage
 import com.vyonex.VyonExSearchResult
 import com.vyonex.VyonExSession
 import com.vyonex.VyonExThumbnail
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -267,9 +269,21 @@ private fun JsonElement?.moreEndpoint() =
 private fun VyonExListItem.asResult() =
     VyonExSearchResult(VyonExResultKind.VIDEO, videoId, title, channelName, channelId, durationSeconds, thumbnails)
 
-/** A YouTube search entry: a video, or a playlist; shelves, Shorts grids and channel cards are left out. */
+/** A channel in YouTube's search results (yt-dlp _extract_channel_renderer). */
+private fun channelResultOf(renderer: JsonElement?): VyonExSearchResult? = VyonExSearchResult(
+    kind = VyonExResultKind.CHANNEL,
+    id = renderer.at("channelId").str?.takeIf { it.startsWith("UC") } ?: return null,
+    title = textOf(renderer.at("title")),
+    channelName = null,
+    channelId = null,
+    durationSeconds = null,
+    thumbnails = thumbnailsOf(renderer.at("thumbnail", "thumbnails")),
+)
+
+/** A YouTube search entry: a video, a playlist or a channel; shelves, Shorts grids and the artist card are left out. */
 internal fun webResultOf(entry: JsonElement?): VyonExSearchResult? {
     videoRendererItemOf(entry.at("videoRenderer"))?.let { return it.asResult() }
+    channelResultOf(entry.at("channelRenderer"))?.let { return it }
     val lockup = entry.at("lockupViewModel")
     lockupItemOf(lockup)?.let { return it.asResult() }
     if (lockup.at("contentType").str != "LOCKUP_CONTENT_TYPE_PLAYLIST") return null
@@ -286,14 +300,47 @@ internal fun webResultOf(entry: JsonElement?): VyonExSearchResult? {
     )
 }
 
-private fun webSearchPageOf(sections: List<JsonElement>) = VyonExSearchPage(
-    results = sections.flatMap { it.at("itemSectionRenderer", "contents").list }.mapNotNull(::webResultOf),
-    continuation = sections.firstNotNullOfOrNull { it.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str },
-)
+private fun webSearchPageOf(sections: List<JsonElement>, filters: List<VyonExSearchFilter> = emptyList()): VyonExSearchPage {
+    val entries = sections.flatMap { it.at("itemSectionRenderer", "contents").list }
+    return VyonExSearchPage(
+        results = entries.mapNotNull(::webResultOf),
+        continuation = sections.firstNotNullOfOrNull { it.at("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token").str },
+        // A video can be in more than one grid ("Latest Shorts from …", "Shorts").
+        shorts = entries.flatMap { it.at("gridShelfViewModel", "contents").list }.mapNotNull { shortOf(it.at("shortsLockupViewModel")) }.distinctBy { it.id },
+        filters = filters,
+    )
+}
+
+/** The filters of YouTube's search page, group by group, from the popup its "Filters" button opens. */
+private fun searchFiltersOf(response: JsonObject) =
+    response.at("header", "searchHeaderRenderer", "searchFilterButton", "buttonRenderer", "command", "openPopupAction", "popup", "searchFilterOptionsDialogRenderer", "groups")
+        .list.flatMap { item ->
+            val group = item.at("searchFilterGroupRenderer")
+            group.at("filters").list.mapNotNull { f ->
+                val filter = f.at("searchFilterRenderer")
+                VyonExSearchFilter(
+                    group = textOf(group.at("title")),
+                    label = textOf(filter.at("label")) ?: return@mapNotNull null,
+                    params = filter.at("navigationEndpoint", "searchEndpoint", "params").str,
+                    selected = filter.at("status").str == "FILTER_STATUS_SELECTED",
+                )
+            }
+        }
 
 /** A YouTube search response (WEB `search`). */
-internal fun webSearchOf(response: JsonObject) =
-    webSearchPageOf(response.at("contents", "twoColumnSearchResultsRenderer", "primaryContents", "sectionListRenderer", "contents").list)
+internal fun webSearchOf(response: JsonObject) = webSearchPageOf(
+    response.at("contents", "twoColumnSearchResultsRenderer", "primaryContents", "sectionListRenderer", "contents").list,
+    searchFiltersOf(response),
+)
+
+/**
+ * YouTube's search suggestions: `["query", [["suggestion", 0, [...]], ...], {...}]`. A JSONP wrapper, which YouTube's
+ * own search box strips the same way, is taken off first.
+ */
+internal fun suggestionsOf(text: String): List<String> {
+    val json = text.trim().let { if (it.startsWith("[")) it else it.substringAfter('(').substringBeforeLast(')') }
+    return (Json.parseToJsonElement(json) as? JsonArray)?.getOrNull(1).list.mapNotNull { it.list.firstOrNull().str }
+}
 
 /** The next page of a YouTube search; yt-dlp finds it under onResponseReceivedCommands. */
 internal fun webSearchMoreOf(response: JsonObject) =

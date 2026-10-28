@@ -22,6 +22,16 @@ class FixtureHygieneTest {
         assertFalse(hasCookieValue(text), "${it.name}: a cookie value is left in (not printed)")
         assertFalse(hasVisitorId(text), "${it.name}: a visitor ID is left in (not printed)")
         assertFalse(hasHeartbeatData(text), "${it.name}: heartbeat data is left in (not printed)")
+        assertFalse(hasSoundCloudSecrets(text), "${it.name}: a SoundCloud client ID or track authorization is left in (not printed)")
+    }
+
+    @Test
+    fun redactionRemovesSoundCloudTrackAuthorization() {
+        val capture = """{"id":1,"track_authorization":"eyJ0eXAiOiJKV1Qi.abc","media":{}}"""
+        assertTrue(hasSoundCloudSecrets(capture))
+        assertFalse(hasSoundCloudSecrets(redactCapture(capture)))
+        assertTrue(hasSoundCloudSecrets("https://api-v2.soundcloud.com/resolve?client_id=abcdefghijABCDEFGHIJ0123456789ab"))
+        assertFalse(hasSoundCloudSecrets("""{"url":"https://api-v2.soundcloud.com/media/soundcloud:tracks:1/x/stream/hls"}"""))
     }
 
     @Test
@@ -61,6 +71,14 @@ internal const val REDACTED_VISITOR = "REDACTED-VISITOR-DATA"
 private val HEARTBEAT = Regex(""""heartbeatServerData"\s*:\s*"([^"]+)"""")
 private const val REDACTED_HEARTBEAT = "REDACTED-HEARTBEAT-DATA"
 
+// SoundCloud's per-track playback token, and its web client's ID in a request URL.
+private val TRACK_AUTHORIZATION = Regex(""""track_authorization"\s*:\s*"([^"]+)"""")
+private const val REDACTED_TRACK_AUTHORIZATION = "REDACTED-TRACK-AUTHORIZATION"
+private val CLIENT_ID = Regex("""client_id=[0-9a-zA-Z]{32}""")
+
+internal fun hasSoundCloudSecrets(text: String) =
+    CLIENT_ID.containsMatchIn(text) || TRACK_AUTHORIZATION.findAll(text).any { it.groupValues[1] != REDACTED_TRACK_AUTHORIZATION }
+
 internal fun addressOf(value: String) =
     URLDecoder.decode(URLDecoder.decode(value, Charsets.UTF_8), Charsets.UTF_8).substringBefore('&')
 
@@ -82,9 +100,13 @@ internal fun isPublic(literal: String): Boolean {
         address.isSiteLocalAddress || address.isMulticastAddress || documentation || uniqueLocal)
 }
 
-/** fixtures/README.md: public addresses become 192.0.2.1, every copy of a visitor ID and heartbeat data a placeholder. */
+/**
+ * fixtures/README.md: public addresses become 192.0.2.1, every copy of a visitor ID, heartbeat data and SoundCloud track
+ * authorization a placeholder.
+ */
 internal fun redactCapture(text: String): String {
     var out = HEARTBEAT.replace(text) { it.value.replace(it.groupValues[1], REDACTED_HEARTBEAT) }
+    out = TRACK_AUTHORIZATION.replace(out) { it.value.replace(it.groupValues[1], REDACTED_TRACK_AUTHORIZATION) }
     VISITOR_ID.findAll(out).map { it.groupValues[1] }.filter { it != REDACTED_VISITOR }.toSet().forEach { id ->
         listOf(id, URLEncoder.encode(id, Charsets.UTF_8)).forEach { out = out.replace(it, REDACTED_VISITOR) }
     }

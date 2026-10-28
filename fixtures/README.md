@@ -14,8 +14,10 @@ repository's Apache-2.0 license and are not part of any published artifact.
 | `watch-page-blocked.html` | `GET https://www.youtube.com/watch?v=dQw4w9WgXcQ` from the build machine: a redirect to Google's bot check |
 | `watch-page.html` | `GET https://www.youtube.com/watch?v=dQw4w9WgXcQ&hl=en&gl=US` from the owner's home network on 2026-10-27 (captured by Codex). **Redacted:** the requester's IP address, which appeared 64 times in stream URLs and `remoteHost`, is replaced with the documentation address `192.0.2.1` (RFC 5737); visitor IDs replaced as described below. Logged out, player `6b2fce74`, audio formats SABR-only |
 | `challenges-dce23b30.json` | `n` and signature challenges from `player-response-tv_samsung.json` with the answers VyonEx computed; the decoded URLs answered `206`, undecoded ones `403` |
-| `player-unplayable-*.json`, `browse-*.json`, `next-*.json`, `search-*.json` (14 files) | `CaptureFixtures` (requests and IDs listed there), logged out, run by Codex on the owner's wired home network on 2026-10-27 (PR #15). Redacted by the tool before writing; `heartbeatServerData` in `player-unplayable-upcoming.json` was replaced afterwards |
+| `player-unplayable-*.json`, `browse-*.json`, `next-*.json`, `search-web.json`, `search-music.json` (14 files; the later cloud captures are listed below) | `CaptureFixtures` (requests and IDs listed there), logged out, run by Codex on the owner's wired home network on 2026-10-27 (PR #15). Redacted by the tool before writing; `heartbeatServerData` in `player-unplayable-upcoming.json` was replaced afterwards |
 | `next-watch.json`, `next-comments.json`, `next-comment-replies.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27 (the `next` endpoint answers there; only the player gets a bot check): the watch-next response of `dQw4w9WgXcQ`, the first page of its comments (top first), and the first thread's replies. **Comment authors anonymized** by the tool: each author's channel ID, handle and picture became `UCxxxxxxxxxxxxxxAUTHOR01`, `@author01` and `https://yt3.ggpht.com/author01`, numbered in order of appearance. The comment texts are left as written |
+| `search-web-channels.json`, `search-web-shorts.json`, `suggest-web.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27: the search for "rick astley" with the Channels and Shorts filters (params from YouTube's own filter list), and the search box's suggestions for "rick ast" (`suggestqueries-clients6.youtube.com/complete/search?ds=yt&client=youtube…`, as YouTube's page asks) |
+| `soundcloud-track.json`, `soundcloud-playlist.json`, `soundcloud-playlist-tracks.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27, asked as yt-dlp asks: `api-v2.soundcloud.com/resolve` for yt-dlp's test track (`ethmusic/lostin-powers-she-so-heavy`) and test set (`the-concept-band/sets/the-royal-concept-ep`), and `tracks?ids=` for the set's track that came without details. **Redacted:** `track_authorization` (a per-track playback token) became `REDACTED-TRACK-AUTHORIZATION`. The web client's ID is in the request URLs only and is never written; no stream URL is captured |
 | `browse-channel.json`, `browse-channel-videos.json`, `browse-channel-videos-continuation.json`, `browse-channel-shorts.json`, `browse-channel-playlists.json` | `CaptureFixtures`, logged out, from the cloud build machine on 2026-10-27: Rick Astley's channel page (`UCuAXFkgsw1L7xaCfnd5JJOw`), its Videos tab and that tab's second page, its Shorts and its Playlists, each tab asked with the `params` the channel page gives |
 
 When adding captures, before committing:
@@ -25,9 +27,10 @@ When adding captures, before committing:
   `REDACTED-VISITOR-DATA`;
 - replace `heartbeatServerData` (an encrypted per-request token) with `REDACTED-HEARTBEAT-DATA`;
 - capture logged out, so no cookie values are present;
-- for comments, replace each author's channel ID, handle and picture (the tool does this for `next-comment*` files).
+- for comments, replace each author's channel ID, handle and picture (the tool does this for `next-comment*` files);
+- for SoundCloud, replace `track_authorization` with `REDACTED-TRACK-AUTHORIZATION` and keep `client_id` out.
 
-`FixtureHygieneTest` checks all four and fails without printing the value it found.
+`FixtureHygieneTest` checks all of these and fails without printing the value it found.
 
 `CaptureFixtures` makes the logged-out captures for errors, collections, search and related videos,
 redacting before it writes and refusing to write anything the checks above still flag:

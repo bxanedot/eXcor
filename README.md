@@ -104,12 +104,26 @@ val more = vyonEx.mixMore(mix!!.firstPage.continuation!!)  // mixes go on; conti
 val related = vyonEx.related("dQw4w9WgXcQ")           // then relatedMore(related.continuation!!)
 ```
 
-Search (logged out). Each result says what it opens (`VIDEO`, `PLAYLIST`, `ALBUM`, `ARTIST`) and carries the ID
-for `extract`, `playlist`, `album` or `artist`:
+Search (logged out). Each result says what it opens (`VIDEO`, `PLAYLIST`, `ALBUM`, `ARTIST`, `CHANNEL`) and carries
+the ID for `extract`, `playlist`, `album`, `artist` or `channel`:
 
 ```kotlin
-val videos = vyonEx.search("rick astley")                  // YouTube: videos and playlists; searchMore for more
+val videos = vyonEx.search("rick astley")                  // YouTube: videos, playlists, channels; searchMore for more
+val shorts = videos.shorts                                 // the Shorts YouTube puts in grids beside the results
+val channels = vyonEx.search("rick astley", VyonExSearchType.CHANNELS)
+val longest = videos.filters.first { it.group == "Duration" }  // YouTube's own filters, in the session's language
+val filtered = vyonEx.search("rick astley", longest)       // with that filter, and any already applied
+val ideas = vyonEx.suggestions("rick ast")                 // what YouTube's search box suggests
 val music = vyonEx.searchMusic("never gonna give you up")   // YouTube Music top results: songs, albums, artists…
+```
+
+SoundCloud's public tracks and sets (logged out, as yt-dlp reads them), on the same host and network client. Encrypted
+(DRM) streams are not played: a track that only has those says so with `hasDrm` and has no transcodings.
+
+```kotlin
+val track = vyonEx.soundCloud.track("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy")
+val stream = vyonEx.soundCloud.stream(track!!.transcodings.first())  // a fresh signed URL: HLS or one file
+val set = vyonEx.soundCloud.playlist("https://soundcloud.com/the-concept-band/sets/the-royal-concept-ep")
 ```
 
 iOS apps use the same library through `VyonEx.xcframework`:
@@ -163,7 +177,8 @@ Swift sees no Kotlin default arguments, so it passes every parameter. A `suspend
 11. `mix`, `mixMore`, `related` and `relatedMore` ask the logged-out WEB `next` (watch-next)
     endpoint: the mix panel's videos and the related videos beside the player.
 12. `search` asks the WEB `search` endpoint and `searchMusic` YouTube Music's; results are classified
-    by what they link to, never by localized labels such as "Song" or "Album".
+    by what they link to, never by localized labels such as "Song" or "Album". Filters are the params
+    YouTube's own response offers; `suggestions` asks the host YouTube's search box asks.
 
 ## The app (in progress)
 

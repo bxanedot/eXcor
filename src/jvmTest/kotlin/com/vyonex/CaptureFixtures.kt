@@ -58,6 +58,11 @@ class CaptureFixtures {
         call("next", web, "next-mix.json") { put("videoId", "dQw4w9WgXcQ"); put("playlistId", "RDdQw4w9WgXcQ") }
         call("next", web, "next-related.json") { put("videoId", "dQw4w9WgXcQ") }
         call("search", web, "search-web.json") { put("query", "rick astley") }
+        // Filtered searches, with the params YouTube's own search page sends for its "Type" filters.
+        call("search", web, "search-web-channels.json") { put("query", "rick astley"); put("params", VyonExSearchType.CHANNELS.params) }
+        call("search", web, "search-web-shorts.json") { put("query", "rick astley"); put("params", VyonExSearchType.SHORTS.params) }
+        // Search suggestions, asked as YouTube's own search box asks them.
+        get("https://suggestqueries-clients6.youtube.com/complete/search?ds=yt&client=youtube&hl=en&gl=us&q=rick+ast&xhr=t&ie=utf-8&oe=utf-8", "suggest-web.json")
         // A channel and its tabs; each tab's params come from the channel response, picked by the tab's URL.
         val channel = call("browse", web, "browse-channel.json") { put("browseId", "UCuAXFkgsw1L7xaCfnd5JJOw") }
         for (tab in listOf("videos", "shorts", "playlists")) {
@@ -87,6 +92,27 @@ class CaptureFixtures {
         val replies = page?.let { Regex(""""commentRepliesRenderer":\{"contents":\[\{"continuationItemRenderer":\{.*?"token":"([^"]+)"""").find(it)?.groupValues?.get(1) }
         replies?.let { call("next", web, "next-comment-replies.json") { put("continuation", it) } }
         call("search", music, "search-music.json") { put("query", "never gonna give you up") }
+        soundCloud()
+    }
+
+    /**
+     * SoundCloud, as yt-dlp asks it: the web client's ID from the home page's scripts (kept in memory only), a track and
+     * a set through `resolve`, and the set's tracks it sent without details through `tracks?ids=`. No stream URL.
+     */
+    private fun soundCloud() {
+        val files = listOf("soundcloud-track.json", "soundcloud-playlist.json", "soundcloud-playlist-tracks.json")
+        if (files.none(::wanted)) return
+        fun text(url: String) = http.newCall(Request.Builder().url(url).header("User-Agent", DESKTOP_UA).build()).execute().use { it.body.string() }
+        val home = text("https://soundcloud.com/")
+        val clientId = Regex("""<script[^>]+src="([^"]+)"""").findAll(home).map { it.groupValues[1] }.toList().asReversed()
+            .firstNotNullOfOrNull { Regex("""client_id\s*:\s*"([0-9a-zA-Z]{32})"""").find(text(it))?.groupValues?.get(1) }
+            ?: return println("soundcloud: no client ID in the home page's scripts, skipped")
+        val api = "https://api-v2.soundcloud.com"
+        get("$api/resolve?url=https%3A%2F%2Fsoundcloud.com%2Fethmusic%2Flostin-powers-she-so-heavy&client_id=$clientId", "soundcloud-track.json")
+        val set = get("$api/resolve?url=https%3A%2F%2Fsoundcloud.com%2Fthe-concept-band%2Fsets%2Fthe-royal-concept-ep&client_id=$clientId", "soundcloud-playlist.json")
+        val bare = (set?.let { Json.parseToJsonElement(it) }.at("tracks") as? JsonArray).orEmpty()
+            .filter { it.at("permalink_url") == null }.mapNotNull { it.at("id").str }
+        if (bare.isNotEmpty()) get("$api/tracks?ids=${bare.joinToString("%2C")}&client_id=$clientId", "soundcloud-playlist-tracks.json")
     }
 
     private fun player(file: String, videoId: String) {
@@ -119,10 +145,14 @@ class CaptureFixtures {
         return post("${client.origin}/youtubei/v1/$endpoint?prettyPrint=false", body, headers, file)
     }
 
-    private fun post(url: String, body: String, headers: Map<String, String>, file: String): String? {
+    private fun post(url: String, body: String, headers: Map<String, String>, file: String) =
+        send(Request.Builder().url(url).post(body.toRequestBody("application/json".toMediaType())), headers, file)
+
+    private fun get(url: String, file: String) = send(Request.Builder().url(url), mapOf("User-Agent" to DESKTOP_UA), file)
+
+    private fun send(builder: Request.Builder, headers: Map<String, String>, file: String): String? {
         if (!wanted(file)) return null
-        val request = Request.Builder().url(url).post(body.toRequestBody("application/json".toMediaType()))
-            .apply { headers.forEach { (name, value) -> header(name, value) } }.build()
+        val request = builder.apply { headers.forEach { (name, value) -> header(name, value) } }.build()
         val (code, text) = http.newCall(request).execute().use { it.code to it.body.string() }
         check("not a bot" !in text) { "$file: YouTube asked to confirm this is not a bot; stopping (not worked around)" }
         if (code != 200) {
@@ -131,7 +161,7 @@ class CaptureFixtures {
         }
         // Comment authors are people: their names, channels and pictures are replaced, consistently, before writing.
         val redacted = redactCapture(if (file.startsWith("next-comment")) anonymizeCommentAuthors(text) else text)
-        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted)) {
+        check(!hasPublicAddress(redacted) && !hasCookieValue(redacted) && !hasVisitorId(redacted) && !hasHeartbeatData(redacted) && !hasSoundCloudSecrets(redacted)) {
             "$file: redaction incomplete, not written"
         }
         File(FIXTURES, file).writeText(redacted)

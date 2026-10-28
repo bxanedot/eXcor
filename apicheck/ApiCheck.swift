@@ -161,10 +161,34 @@ func apiCheck() async throws {
     let search: VyonExSearchPage = try await vyonEx.search(query: "q")
     let searchMore: VyonExSearchPage = try await vyonEx.searchMore(continuation: search.continuation ?? "")
     let music: VyonExSearchPage = try await vyonEx.searchMusic(query: "q")
-    for result: VyonExSearchResult in search.results + searchMore.results + music.results {
+    let channels: VyonExSearchPage = try await vyonEx.search(query: "q", type: .channels)
+    let types: [VyonExSearchType] = [.videos, .shorts, .channels, .playlists, .movies]
+    if let filter: VyonExSearchFilter = search.filters.first {
+        let filtered: VyonExSearchPage = try await vyonEx.search(query: "q", filter: filter)
+        let group: String? = filter.group
+        let params: String? = filter.params
+        _ = (filtered.shorts, group, filter.label, params, filter.selected, types)
+    }
+    let suggestions: [String] = try await vyonEx.suggestions(query: "q")
+    _ = suggestions
+    let soundCloud: VyonExSoundCloud = vyonEx.soundCloud
+    if let set: SoundCloudPlaylist = try await soundCloud.playlist(url: "https://soundcloud.com/a/sets/b") {
+        let setType: String? = set.setType
+        _ = (set.id, set.title, set.uploader, setType, set.artworkUrl, set.permalinkUrl, set.tracks)
+    }
+    if let track: SoundCloudTrack = try await soundCloud.track(url: "https://soundcloud.com/a/b") {
+        let duration: KotlinLong? = track.durationMs
+        _ = (track.id, track.title, track.uploader, track.uploaderUrl, track.artist, duration, track.artworkUrl, track.permalinkUrl, track.genre, track.isBlocked, track.hasDrm)
+        if let transcoding: SoundCloudTranscoding = track.transcodings.first {
+            let protocols: [SoundCloudProtocol] = [.progressive, .hls]
+            let stream: SoundCloudStream = try await soundCloud.stream(transcoding: transcoding)
+            _ = (transcoding.preset, transcoding.mimeType, transcoding.isPreview, transcoding.protocol == protocols[1], stream.url, stream.protocol, stream.mimeType, stream.isPreview)
+        }
+    }
+    for result: VyonExSearchResult in search.results + searchMore.results + music.results + channels.results + search.shorts {
         let kind: VyonExResultKind = result.kind
         let duration: KotlinLong? = result.durationSeconds
-        _ = (kind == .video || kind == .playlist || kind == .album || kind == .artist, result.id, result.title, result.channelName, result.channelId, duration, result.thumbnails)
+        _ = (kind == .video || kind == .playlist || kind == .album || kind == .artist || kind == .channel, result.id, result.title, result.channelName, result.channelId, duration, result.thumbnails)
     }
     let headers: [String: String]? = vyonEx.headersFor(url: "u")
     let refused: String? = vyonEx.onRefused(url: "u")

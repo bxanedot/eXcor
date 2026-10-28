@@ -41,8 +41,8 @@ internal fun channelOf(response: JsonObject): VyonExChannel? {
     )
 }
 
-/** A Short in a channel's Shorts grid (yt-dlp _rich_entries' shortsLockupViewModel case). */
-private fun shortOf(lockup: JsonElement?): VyonExSearchResult? {
+/** A Short in a channel's Shorts grid or a search's Shorts grid (yt-dlp _rich_entries' shortsLockupViewModel case). */
+internal fun shortOf(lockup: JsonElement?): VyonExSearchResult? {
     val videoId = lockup.at("onTap", "innertubeCommand", "reelWatchEndpoint", "videoId").str ?: return null
     val title = lockup.at("overlayMetadata", "primaryText", "content").str
         ?: lockup.at("accessibilityText").str?.let { SHORT_LABEL.matchEntire(it)?.groupValues?.get(1) }

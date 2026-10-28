@@ -4,6 +4,7 @@ import com.vyonex.internal.Engine
 import com.vyonex.internal.mergePairOf
 import com.vyonex.internal.parseRef
 import com.vyonex.internal.PlayerStore
+import com.vyonex.internal.SoundCloudEngine
 import com.vyonex.internal.primary.extraction.TokenProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -22,20 +23,24 @@ interface VyonExHost : VyonExHostServices {
 }
 
 class VyonEx(host: VyonExHost) {
+    // Built on the host's client so cookies, proxies and interceptors are shared.
+    private val http = HttpClient(OkHttp) {
+        engine { preconfigured = host.httpClient }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 15_000
+            socketTimeoutMillis = 20_000
+        }
+    }
     private val engine = Engine(
         host = host,
         tokenProvider = host.tokenProvider,
-        // Built on the host's client so cookies, proxies and interceptors are shared.
-        http = HttpClient(OkHttp) {
-            engine { preconfigured = host.httpClient }
-            install(HttpTimeout) {
-                requestTimeoutMillis = 30_000
-                connectTimeoutMillis = 15_000
-                socketTimeoutMillis = 20_000
-            }
-        },
+        http = http,
         store = host.filesDir?.let { DiskPlayerStore(File(it, "vyonex-players")) { host.configStore.enabled } },
     )
+
+    /** SoundCloud's public tracks and sets, on the same host and network client. */
+    val soundCloud = VyonExSoundCloud(SoundCloudEngine(host, http))
 
     fun init() = engine.initialize()
 
@@ -125,8 +130,21 @@ class VyonEx(host: VyonExHost) {
 
     suspend fun relatedMore(continuation: String): VyonExListPage = engine.relatedMore(continuation)
 
-    /** YouTube's search results (videos and playlists), then `searchMore` for more. Logged out. */
+    /**
+     * YouTube's search results (videos, playlists, channels; Shorts apart in `shorts`), then `searchMore` for more, and
+     * the filters YouTube offers for them. Logged out.
+     */
     suspend fun search(query: String): VyonExSearchPage = engine.search(query)
+
+    /** The search for one [type] of result only. */
+    suspend fun search(query: String, type: VyonExSearchType): VyonExSearchPage = engine.search(query, type.params)
+
+    /** The search with [filter], one of a page's `filters`, added to those already applied. */
+    suspend fun search(query: String, filter: VyonExSearchFilter): VyonExSearchPage =
+        engine.search(query, requireNotNull(filter.params) { "VyonEx: the filter ${filter.label} cannot be asked (selected or not available)" })
+
+    /** What YouTube's search box suggests for [query], in the session's language; empty for an empty query. */
+    suspend fun suggestions(query: String): List<String> = engine.suggestions(query)
 
     suspend fun searchMore(continuation: String): VyonExSearchPage = engine.searchMore(continuation)
 

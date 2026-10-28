@@ -101,13 +101,15 @@ internal class FakeHost : VyonExHostServices {
     var failSession = false
     var cookie: String? = null
     var visitorData: String? = null
+    var region = "US"
+    var language = "en"
     val sessionCalls = Channel<Unit>(Channel.UNLIMITED)
     val logs = mutableListOf<Pair<VyonExLogLevel, String>>()
 
     override suspend fun session(): VyonExSession {
         sessionCalls.trySend(Unit)
         check(!failSession) { "offline test" }
-        return VyonExSession(cookie = cookie, visitorData = visitorData, region = "US", language = "en")
+        return VyonExSession(cookie = cookie, visitorData = visitorData, region = region, language = language)
     }
 
     override val configStore = object : VyonExConfigStore {
