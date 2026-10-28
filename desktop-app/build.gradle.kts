@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Native Swing shell backed by the SAME VyonEx JVM engine used by Android and iOS.
 plugins {
-    kotlin("jvm") version "2.4.21"
+    kotlin("jvm")
     application
 }
 
