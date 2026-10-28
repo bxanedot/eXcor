@@ -118,6 +118,13 @@ class VyonEx(host: VyonExHost) {
     @Throws(Throwable::class)
     suspend fun channelTabMore(continuation: String): VyonExChannelPage = engine.channelTabMore(continuation)
 
+    /** A channel's community posts, first page (logged out); empty when it has none. Then `channelPostsMore`. */
+    @Throws(Throwable::class)
+    suspend fun channelPosts(channelId: String): VyonExPostPage = engine.channelPosts(channelId)
+
+    @Throws(Throwable::class)
+    suspend fun channelPostsMore(continuation: String): VyonExPostPage = engine.channelPostsMore(continuation)
+
     /** A YouTube Music artist page (`UC…` channel ID): top songs, playlists of all songs and videos, releases. */
     @Throws(Throwable::class)
     suspend fun artist(channelId: String): VyonExArtist? = engine.artist(channelId)

@@ -508,3 +508,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
     and from the build machine VISIONOS answers the 24/7 live stream with "This live stream recording is
     not available." while other clients' player requests get bot checks (2026-10-28). The HLS reader
     of item 57 refuses master and live playlists by name in the meantime.
+62. **Community posts (owner's comparison report P2; item 54 left them out).** `channelPosts(UC…)`
+    and `channelPostsMore(continuation)` read a channel's Posts tab logged out: each post's text (link
+    texts included), where its links go (YouTube's redirect taken off; a video link as its watch URL),
+    YouTube's "1 month ago", its like count (from the "4.5K likes" label), its images at their largest,
+    and an attached video or playlist, as yt-dlp's `_post_thread_entries` reads posts. The tab is found
+    by its URL ("…/posts") among the params the channel page gives, as the other tabs are, so it needs
+    no public tab value of its own. The next page comes under `onResponseReceivedEndpoints`. Captured
+    from the build machine, which `browse` answers. Polls, quizzes and a post's comments are not read.

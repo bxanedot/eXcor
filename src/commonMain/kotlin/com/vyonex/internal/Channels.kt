@@ -17,14 +17,17 @@ private val JsonElement?.items get() = (this as? JsonArray).orEmpty()
 private fun tabsOf(response: JsonObject) =
     response.at("contents", "twoColumnBrowseResultsRenderer", "tabs").items.mapNotNull { it.at("tabRenderer") ?: it.at("expandableTabRenderer") }
 
-/** Each tab VyonEx can list, with the `params` that ask for it; tabs are told apart by their URL, not their localized title. */
-internal fun channelTabParamsOf(response: JsonObject): Map<VyonExChannelTab, String> =
+/** Every tab's `params` by the last part of its URL ("videos", "posts"): tabs are told apart by URL, not localized title. */
+internal fun channelTabPathsOf(response: JsonObject): Map<String, String> =
     tabsOf(response).mapNotNull { tab ->
         val endpoint = tab.at("endpoint")
         val path = endpoint.at("commandMetadata", "webCommandMetadata", "url").str?.substringAfterLast('/') ?: return@mapNotNull null
-        val kind = VyonExChannelTab.entries.firstOrNull { it.path == path } ?: return@mapNotNull null
-        endpoint.at("browseEndpoint", "params").str?.let { kind to it }
+        endpoint.at("browseEndpoint", "params").str?.let { path to it }
     }.toMap()
+
+/** Each tab VyonEx lists as a [VyonExChannelTab], with the `params` that ask for it. */
+internal fun channelTabParamsOf(response: JsonObject): Map<VyonExChannelTab, String> =
+    channelTabPathsOf(response).mapNotNull { (path, params) -> VyonExChannelTab.entries.firstOrNull { it.path == path }?.let { it to params } }.toMap()
 
 /** A channel's browse response; null when YouTube sent no channel (a wrong ID). */
 internal fun channelOf(response: JsonObject): VyonExChannel? {

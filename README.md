@@ -63,6 +63,7 @@ Channels (logged out):
 val channel = vyonEx.channel("UCuAXFkgsw1L7xaCfnd5JJOw")  // title, handle, description, avatars, banners, tabs
 val videos = vyonEx.channelTab(channel!!.channelId, VyonExChannelTab.VIDEOS)  // also SHORTS, LIVE, PLAYLISTS
 val more = videos.continuation?.let { vyonEx.channelTabMore(it) }
+val posts = vyonEx.channelPosts("UCuAXFkgsw1L7xaCfnd5JJOw")  // community posts: text, links, images, video; channelPostsMore
 ```
 
 Comments (public, logged out):

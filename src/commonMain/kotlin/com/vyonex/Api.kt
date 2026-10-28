@@ -341,6 +341,26 @@ data class VyonExChannel(
     val tabs: List<VyonExChannelTab>,
 )
 
+/**
+ * A channel's community post. [text] is as written, links as their text; [links] are where they go (YouTube's redirect
+ * taken off). [publishedText] is YouTube's "1 month ago", in the session's language. [images] holds each attached
+ * image at its largest; [video] is an attached video, [playlistId] an attached playlist. Polls and quizzes are not
+ * read.
+ */
+data class VyonExPost(
+    val postId: String,
+    val text: String?,
+    val links: List<String>,
+    val publishedText: String?,
+    val likeCount: Long?,
+    val images: List<VyonExThumbnail>,
+    val video: VyonExSearchResult?,
+    val playlistId: String?,
+)
+
+/** A page of community posts; [continuation] asks for the next one (`VyonEx.channelPostsMore`). */
+data class VyonExPostPage(val posts: List<VyonExPost>, val continuation: String?)
+
 /** A page of a channel tab: videos (also Shorts and live streams) or playlists; [continuation] asks for the next page. */
 data class VyonExChannelPage(val items: List<VyonExSearchResult>, val continuation: String?)
 
