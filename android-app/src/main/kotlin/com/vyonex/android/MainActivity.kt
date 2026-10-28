@@ -51,6 +51,8 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.vyonex.VyonEx
 import com.vyonex.VyonExListItem
+import com.vyonex.VyonExListPage
+import com.vyonex.VyonExChannelPage
 import com.vyonex.VyonExChannelTab
 import com.vyonex.VyonExRef
 import com.vyonex.VyonExResultKind
@@ -60,6 +62,7 @@ import com.vyonex.app.Failure
 import com.vyonex.app.PlayState
 import com.vyonex.app.Playback
 import com.vyonex.app.Track
+import com.vyonex.app.appendPage
 import com.vyonex.app.bylineOf
 import com.vyonex.app.clockOf
 import com.vyonex.app.queueFrom
@@ -71,7 +74,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** What a link opened: a title, who it is by, and its tracks. */
-private data class Page(val title: String?, val byline: String?, val tracks: List<Track>)
+private data class Page(val title: String?, val byline: String?, val tracks: List<Track>, val more: (suspend () -> Page)? = null)
+
+/** A page of a playlist or mix, and the pages after it while YouTube has more. */
+private fun VyonEx.listPage(title: String?, byline: String?, page: VyonExListPage, next: suspend VyonEx.(String) -> VyonExListPage): Page =
+    Page(title, byline, page.items.map(::trackOf), page.continuation?.let { token -> { listPage(title, byline, next(token), next) } })
+
+/** A page of a channel's videos, and the pages after it. */
+private fun VyonEx.channelVideosPage(title: String?, byline: String?, page: VyonExChannelPage): Page =
+    Page(title, byline, page.items.mapNotNull { it.toTrack() }, page.continuation?.let { token -> { channelVideosPage(title, byline, channelTabMore(token)) } })
 
 private sealed interface Opened {
     data object Nothing : Opened
@@ -93,18 +104,18 @@ private suspend fun VyonEx.pageOf(ref: VyonExRef): Page? = when (ref) {
     is VyonExRef.Video -> metadata(ref.videoId)?.let { m ->
         Page(m.title, m.author, listOf(Track(ref.videoId, m.title, m.author, m.durationSeconds, m.thumbnails.maxByOrNull { it.width }?.url)))
     }
-    is VyonExRef.Playlist -> playlist(ref.playlistId)?.let { Page(it.title, it.ownerName, it.firstPage.items.map(::trackOf)) }
+    is VyonExRef.Playlist -> playlist(ref.playlistId)?.let { listPage(it.title, it.ownerName, it.firstPage, VyonEx::playlistMore) }
     is VyonExRef.Album -> album(ref.browseId)?.let { album ->
         val cover = album.thumbnails.maxByOrNull { it.width }?.url
         Page(album.title, listOfNotNull(album.artist, album.year?.toString()).joinToString(" · "), album.tracks.map { trackOf(it, cover) })
     }
-    is VyonExRef.Mix -> mix(ref.playlistId)?.let { Page(it.title, null, it.firstPage.items.map(::trackOf)) }
+    is VyonExRef.Mix -> mix(ref.playlistId)?.let { listPage(it.title, null, it.firstPage, VyonEx::mixMore) }
     is VyonExRef.Channel -> artist(ref.channelId)?.let { Page(it.name, "Top songs", it.topSongs.map(::trackOf)) }
 }
 
 /** A channel's page: its videos tab, first page. */
 private suspend fun VyonEx.channelPageOf(channelId: String): Page? = channel(channelId)?.let { channel ->
-    Page(channel.title, channel.handle, channelTab(channelId, VyonExChannelTab.VIDEOS).items.mapNotNull { it.toTrack() })
+    channelVideosPage(channel.title, channel.handle, channelTab(channelId, VyonExChannelTab.VIDEOS))
 }
 
 /** The page a search result opens: a playlist, album, artist or channel; videos play instead. */
@@ -251,6 +262,27 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        var loadingMore by remember { mutableStateOf(false) }
+        /**
+         * Appends what [load] fetches to what is shown, in place, so the list keeps its place. Only while [shown] is
+         * still what is shown; a failure leaves it as it was and says so.
+         */
+        fun <T : Opened> more(shown: T, load: suspend () -> T) {
+            if (loadingMore) return
+            loadingMore = true
+            scope.launch {
+                try {
+                    val next = load()
+                    if (opened == shown) opened = next
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Could not load more. Check the connection.", Toast.LENGTH_SHORT).show()
+                } finally {
+                    loadingMore = false
+                }
+            }
+        }
         // A YouTube or SoundCloud link opens; anything else is searched on YouTube.
         fun open() {
             val text = link.trim()
@@ -330,13 +362,13 @@ class MainActivity : ComponentActivity() {
                     }
                     now.continuation?.let { token ->
                         item {
-                            TextButton(onClick = {
-                                show {
-                                    val more = vyonEx.searchMore(token)
+                            TextButton(enabled = !loadingMore, onClick = {
+                                more(now) {
+                                    val found = vyonEx.searchMore(token)
                                     // Pages can repeat a result; each shows once.
-                                    now.copy(results = (now.results + more.results).distinctBy { it.kind to it.id }, continuation = more.continuation)
+                                    now.copy(results = (now.results + found.results).distinctBy { it.kind to it.id }, continuation = found.continuation)
                                 }
-                            }) { Text("More results") }
+                            }) { Text(if (loadingMore) "Loading…" else "More results") }
                         }
                     }
                 }
@@ -345,8 +377,10 @@ class MainActivity : ComponentActivity() {
                     Text(now.page.title ?: "", style = MaterialTheme.typography.titleLarge)
                     now.page.byline?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { playback.play(now.page.tracks) }, enabled = now.page.tracks.isNotEmpty()) { Text("Play all") }
-                        OutlinedButton(onClick = { downloading = now.page.tracks }, enabled = now.page.tracks.isNotEmpty()) { Text("Download all") }
+                        // With more pages to load, the buttons take what is loaded and say so.
+                        val which = if (now.page.more == null) "all" else "${now.page.tracks.size} loaded"
+                        Button(onClick = { playback.play(now.page.tracks) }, enabled = now.page.tracks.isNotEmpty()) { Text("Play $which") }
+                        OutlinedButton(onClick = { downloading = now.page.tracks }, enabled = now.page.tracks.isNotEmpty()) { Text("Download $which") }
                     }
                     LazyColumn(Modifier.weight(1f)) {
                         itemsIndexed(now.page.tracks) { index, track ->
@@ -359,6 +393,16 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 TextButton(onClick = { downloading = listOf(track) }) { Text("Download") }
+                            }
+                        }
+                        now.page.more?.let { load ->
+                            item {
+                                TextButton(enabled = !loadingMore, onClick = {
+                                    more(now) {
+                                        val next = load()
+                                        now.copy(page = now.page.copy(tracks = appendPage(now.page.tracks, next.tracks), more = next.more))
+                                    }
+                                }) { Text(if (loadingMore) "Loading…" else "Load more") }
                             }
                         }
                     }

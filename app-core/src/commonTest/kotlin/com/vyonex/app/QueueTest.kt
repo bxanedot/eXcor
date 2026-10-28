@@ -63,4 +63,14 @@ class QueueTest {
     fun theIndexMustPointIntoTheQueue() {
         assertFailsWith<IllegalArgumentException> { Queue(listOf(track("a")), index = 1) }
     }
+
+    @Test
+    fun aNextPageAddsOnlyTracksNotLoadedYet() {
+        val loaded = listOf(track("a"), track("b"))
+        assertEquals(listOf("a", "b", "c"), appendPage(loaded, listOf(track("b"), track("c"))).map { it.id })
+        assertEquals(loaded, appendPage(loaded, emptyList()))
+        // The same ID from another source is another track.
+        val other = track("a").copy(source = Source.SOUNDCLOUD)
+        assertEquals(3, appendPage(loaded, listOf(other)).size)
+    }
 }
