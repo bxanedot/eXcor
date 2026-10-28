@@ -60,17 +60,21 @@ import com.vyonex.VyonExChannelTab
 import com.vyonex.VyonExRef
 import com.vyonex.VyonExResultKind
 import com.vyonex.VyonExSearchResult
+import com.vyonex.VyonExSearchType
 import com.vyonex.VyonExUnplayableException
 import com.vyonex.app.AudioChoice
 import com.vyonex.app.Failure
+import com.vyonex.app.SEARCH_TYPES
 import com.vyonex.app.PlayState
 import com.vyonex.app.Playback
 import com.vyonex.app.Track
 import com.vyonex.app.appendPage
+import com.vyonex.app.appendResults
 import com.vyonex.app.audioChoicesOf
 import com.vyonex.app.bylineOf
 import com.vyonex.app.clockOf
 import com.vyonex.app.queueFrom
+import com.vyonex.app.resultsOf
 import com.vyonex.app.selectedChoice
 import com.vyonex.app.suggestsFor
 import com.vyonex.app.toTrack
@@ -105,7 +109,13 @@ private sealed interface Opened {
     data class Shown(val page: Page, val back: Results? = null) : Opened
 
     /** YouTube's results for [query]; [continuation] asks for more. */
-    data class Results(val query: String, val results: List<VyonExSearchResult>, val continuation: String?) : Opened
+    data class Results(
+        val query: String,
+        val results: List<VyonExSearchResult>,
+        val continuation: String?,
+        /** Only this type of result; null for all of them. */
+        val type: VyonExSearchType? = null,
+    ) : Opened
     data class Problem(val message: String) : Opened
 }
 
@@ -127,6 +137,12 @@ private suspend fun VyonEx.pageOf(ref: VyonExRef): Page? = when (ref) {
     }
     is VyonExRef.Mix -> mix(ref.playlistId)?.let { listPage(it.title, null, it.firstPage, VyonEx::mixMore) }
     is VyonExRef.Channel -> artist(ref.channelId)?.let { Page(it.name, "Top songs", it.topSongs.map(::trackOf)) }
+}
+
+/** YouTube's results for [query], of [type] only when given. */
+private suspend fun VyonEx.searchOf(query: String, type: VyonExSearchType?): Opened.Results {
+    val page = if (type == null) search(query) else search(query, type)
+    return Opened.Results(query, resultsOf(page, type), page.continuation, type)
 }
 
 /** A channel's page: its videos tab, first page. */
@@ -315,9 +331,7 @@ class MainActivity : ComponentActivity() {
                     page != null -> Opened.Shown(page)
                     "://" in text -> Opened.Problem("There is nothing at that link.")
                     // Words, or a bare ID YouTube has nothing for: a search.
-                    else -> vyonEx.search(text).let { found ->
-                        if (found.results.isEmpty()) Opened.Problem("Nothing found for \"$text\".") else Opened.Results(text, found.results, found.continuation)
-                    }
+                    else -> vyonEx.searchOf(text, null).takeIf { it.results.isNotEmpty() } ?: Opened.Problem("Nothing found for \"$text\".")
                 }
             }
         }
@@ -360,6 +374,18 @@ class MainActivity : ComponentActivity() {
                 Opened.Loading -> CircularProgressIndicator()
                 is Opened.Problem -> Text(now.message, color = MaterialTheme.colorScheme.error)
                 is Opened.Results -> LazyColumn(Modifier.weight(1f)) {
+                    item {
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            (listOf(null to "All") + SEARCH_TYPES).forEach { (type, label) ->
+                                FilterChip(
+                                    selected = now.type == type,
+                                    onClick = { if (now.type != type) show { vyonEx.searchOf(now.query, type) } },
+                                    label = { Text(label) },
+                                )
+                            }
+                        }
+                    }
+                    if (now.results.isEmpty()) item { Text("Nothing of this kind.") }
                     itemsIndexed(now.results) { index, result ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(
@@ -382,8 +408,7 @@ class MainActivity : ComponentActivity() {
                             TextButton(enabled = !loadingMore, onClick = {
                                 more(now) {
                                     val found = vyonEx.searchMore(token)
-                                    // Pages can repeat a result; each shows once.
-                                    now.copy(results = (now.results + found.results).distinctBy { it.kind to it.id }, continuation = found.continuation)
+                                    now.copy(results = appendResults(now.results, resultsOf(found, now.type)), continuation = found.continuation)
                                 }
                             }) { Text(if (loadingMore) "Loading…" else "More results") }
                         }
