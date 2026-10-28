@@ -253,3 +253,17 @@ Offline tests read the captured responses in `fixtures/` (see `fixtures/README.m
 
 
 Gonna be renamed to Excor
+
+## eXcor clean-room media library
+
+The clean-room Kotlin Multiplatform library is the root Gradle artifact `com.excor:eXcor:0.2.0`. Its public API is in package `com.excor`; the JVM and Android host supplies an OkHttp client and storage directory, while the iOS host uses Ktor Darwin and an in-memory player cache. The library accepts YouTube video IDs and returns directly fetchable audio URLs. It does not mint PO tokens; a host can provide a `TokenProvider`.
+
+The library validates direct playback URLs against the HTTPS YouTube/GoogleVideo `/videoplayback` allowlist, preserves YouTube query parameters such as `c`, and returns the headers needed by the host. A returned stream should be fetched with `headersFor(url)` or the stream's `headers` map; `onRefused(url)` forgets a refused URL and excludes its client profile for ten minutes.
+
+Build the Kotlin library with JDK 27:
+
+```sh
+./gradlew :jvmTest :jvmJar :assembleAndroidMain
+```
+
+On macOS, the CI workflow also runs iOS simulator tests, links the iOS frameworks and assembles the `eXcor.xcframework`. Set `EXCOR_LIVE=1` to enable the opt-in live ranged-download test. See `PROVENANCE.md` for source and license records and `QUESTIONS.md` for environment and scope limits.

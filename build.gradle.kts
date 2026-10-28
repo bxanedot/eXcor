@@ -9,7 +9,7 @@ plugins {
     `maven-publish`
 }
 
-group = "com.vyonex"
+group = "com.excor"
 version = "0.2.0"
 
 repositories {
@@ -20,7 +20,7 @@ repositories {
 // The challenge solver scripts must reach every target, and Kotlin/Native has no resource
 // loading, so they are compiled in as string constants.
 val generateEjs = tasks.register("generateEjs") {
-    val input = layout.projectDirectory.dir("ejs")
+    val input = layout.projectDirectory.dir("cleanroom-src/ejs")
     val output = layout.buildDirectory.dir("generated/ejs")
     inputs.dir(input)
     outputs.dir(output)
@@ -38,11 +38,11 @@ val generateEjs = tasks.register("generateEjs") {
             }
         }
         val dir = input.asFile
-        val file = output.get().file("com/vyonex/internal/Ejs.kt").asFile
+        val file = output.get().file("com/excor/internal/Ejs.kt").asFile
         file.parentFile.mkdirs()
         file.writeText(
-            "package com.vyonex.internal\n\n" +
-                "// Generated from ejs/ (yt-dlp/ejs 0.8.0, Unlicense; bundles meriyah ISC and astring MIT).\n" +
+            "package com.excor.internal\n\n" +
+                "// Generated from yt-dlp/ejs commit d48c6303a5a6455a42ef9e0b445149cadea51279 (Unlicense; bundled dependencies retain their licenses).\n" +
                 "internal val EJS_LIB: String =\n${literal(dir.resolve("lib.min.js").readText())}\n\n" +
                 "internal val EJS_CORE: String =\n${literal(dir.resolve("core.min.js").readText())}\n",
         )
@@ -60,12 +60,10 @@ kotlin {
     // For the Android app (owner's decision, QUESTIONS item 31). API 26 is where java.nio.file, used by the
     // disk cache, starts.
     android {
-        namespace = "com.vyonex"
+        namespace = "com.excor"
         compileSdk = 37
         minSdk = 26
         compilerOptions { jvmTarget = JvmTarget.JVM_17 }
-        // MergeCheck runs VyonExMerge on an emulator in CI; see the android-device job.
-        withDeviceTest { instrumentationRunner = "com.vyonex.MergeCheck" }
     }
 
     // The default hierarchy (iosMain and friends) plus jvmCommonMain: the OkHttp and java.io.File host API that
@@ -80,16 +78,20 @@ kotlin {
         }
     }
 
-    val xcf = XCFramework("VyonEx")
+    val xcf = XCFramework("eXcor")
     listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
         target.binaries.framework {
-            baseName = "VyonEx"
+            baseName = "eXcor"
             isStatic = true
             xcf.add(this)
         }
     }
 
     sourceSets {
+        // Keep this library build isolated from the existing application implementation.
+        configureEach {
+            kotlin.setSrcDirs(listOf("cleanroom-src/$name"))
+        }
         commonMain {
             kotlin.srcDir(generateEjs)
             dependencies {
@@ -111,20 +113,20 @@ kotlin {
 
 // Tests read the shared top-level fixtures/ folder by absolute path, which also works from the iOS simulator.
 val generateFixturesPath = tasks.register("generateFixturesPath") {
-    val path = file("fixtures").absolutePath
+    val path = file("fixtures/cleanroom").absolutePath
     val output = layout.buildDirectory.dir("generated/fixtures")
     inputs.property("path", path)
     outputs.dir(output)
     doLast {
-        output.get().file("com/vyonex/FixturesPath.kt").asFile.apply { parentFile.mkdirs() }
-            .writeText("package com.vyonex\n\ninternal const val FIXTURES = \"${path.replace("\\", "/")}\"\n")
+        output.get().file("com/excor/FixturesPath.kt").asFile.apply { parentFile.mkdirs() }
+            .writeText("package com.excor\n\ninternal const val FIXTURES = \"${path.replace("\\", "/")}\"\n")
     }
 }
 kotlin.sourceSets.commonTest { kotlin.srcDir(generateFixturesPath) }
 
-// Declared so that changing VYONEX_LIVE or VYONEX_LIVE_IDS re-runs the tests instead of reusing results.
+// Declared so that changing EXCOR_LIVE or EXCOR_LIVE_IDS re-runs the tests instead of reusing results.
 tasks.withType<Test>().configureEach {
-    listOf("VYONEX_LIVE", "VYONEX_LIVE_IDS").forEach { environment(it, System.getenv(it) ?: "") }
+    listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS").forEach { environment(it, System.getenv(it) ?: "") }
 }
 tasks.withType<AbstractTestTask>().configureEach {
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
