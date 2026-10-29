@@ -12,10 +12,10 @@ repositories {
 }
 
 android {
-    namespace = "com.vyonex.android"
+    namespace = "com.bxane.excor.android"
     compileSdk = 37
     defaultConfig {
-        applicationId = "com.vyonex.android"
+        applicationId = "com.bxane.excor.android"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
