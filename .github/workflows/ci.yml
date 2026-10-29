@@ -53,13 +53,9 @@ jobs:
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
           -F build/XCFrameworks/release/eXcor.xcframework/ios-arm64_x86_64-simulator
           apicheck/ExcorApiCheck.swift
-
-  swift:
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
       - name: Swift package tests
         shell: bash
+        working-directory: swift
         run: |
           set +e
           swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
@@ -75,7 +71,6 @@ jobs:
             printf '::error title=Swift test log::%s\n' "$details"
           fi
           exit "$result"
-        working-directory: swift
       - name: Swift package iOS Simulator build
         run: xcodebuild -scheme eXcorKit -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
         working-directory: swift
