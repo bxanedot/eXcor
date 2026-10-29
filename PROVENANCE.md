@@ -131,8 +131,8 @@ This addition is independently implemented under the repository's Apache-2.0 lic
 
 | Source | Version / date | License | Use |
 | --- | --- | --- | --- |
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp/tree/f264a6cbd1f630894da0f368df00f8aae50140e0), especially `yt_dlp/extractor/youtube/_base.py` and `_video.py` | Commit `f264a6cbd1f630894da0f368df00f8aae50140e0` | Unlicense (verified at that commit) | Current unauthenticated and authenticated client order, client IDs/versions/user agents, web PO-token requirement, player request fields, `pot` media parameter and the five-digit signature timestamp pattern. These rules were independently implemented from the documented behavior; no extractor source was copied. |
-| [yt-dlp/ejs](https://github.com/yt-dlp/ejs/tree/d48c6303a5a6455a42ef9e0b445149cadea51279) | Commit `d48c6303a5a6455a42ef9e0b445149cadea51279` | Unlicense (verified at that commit) | The generated `cleanroom-src/ejs/core.min.js` and `lib.min.js` challenge solver bundles; the Kotlin adapter follows the public JSON input/output shape and bootstrap documented in `src/yt/solver/main.ts` and yt-dlp's EJS runtime adapter. Both bundles retain their upstream license banners. |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp/tree/f264a6cbd1f630894da0f368df00f8aae50140e0), especially `yt_dlp/extractor/youtube/_base.py` and `_video.py` | Commit `f264a6cbd1f630894da0f368df00f8aae50140e0` | Unlicense (verified at that commit) | Current unauthenticated and authenticated client order, client IDs/versions/user agents, web PO-token requirement, player request fields, `pot` media parameter and the five-digit signature timestamp pattern. Kotlin and Swift behavior was independently implemented from the documented rules; no extractor source was copied. |
+| [yt-dlp/ejs](https://github.com/yt-dlp/ejs/tree/d48c6303a5a6455a42ef9e0b445149cadea51279) | Commit `d48c6303a5a6455a42ef9e0b445149cadea51279` | Unlicense (verified at that commit) | The generated `cleanroom-src/ejs/core.min.js` and `lib.min.js` and Swift `swift/Sources/eXcorKit/Resources/ExcorEjsCore.js` and `ExcorEjsLib.js` challenge-solver bundles. The adapters follow the public JSON input/output shape and bootstrap documented in `src/yt/solver/main.ts` and yt-dlp's EJS runtime adapter. Bundles retain upstream license banners. |
 | [astring](https://github.com/davidbonnet/astring) | `1.9.0` | MIT | Bundled by the EJS library; its copyright and license text remain in `lib.min.js`. |
 | [meriyah](https://github.com/meriyah/meriyah) | `6.1.4` | ISC | Bundled by the EJS library; its license text remains in `lib.min.js`. |
 | [esbuild](https://github.com/evanw/esbuild) and `@esbuild/linux-x64` | `0.28.1` | MIT | Build-time bundler used to regenerate the checked-in EJS bundles; neither package is a runtime dependency. npm registry integrity recorded during generation: `esbuild` `HrJrvZv5ayxBzPfwphOoNzkzOIIlifzk0KJrGK2c8R4+LKpMtpYLQeUdjnwjWv/LZlkH2laZk+4w78pi99D4Vw==`; Linux binary `u/anNYF2mmVOEDwLtnQ1wOr3EZ9sTNGLWrsYGYwHWzGA3Si84IOkHXlbWTD1NB+9/1lcnweYKO54uhxZydNzfA==`. |
@@ -151,3 +151,12 @@ This addition is independently implemented under the repository's Apache-2.0 lic
 | [actions/checkout](https://github.com/actions/checkout) / [actions/setup-java](https://github.com/actions/setup-java) | `v4` / `v4` | MIT | CI checkout and JDK setup. |
 
 The format ranking and exact HTTPS `/videoplayback` allowlist follow `BRIEF.md` sections 4.2 and 4.4. Watch-page parsing, stream remembering, exclusions, redaction and disk-cache behavior are original implementations of the brief. Fixtures in `fixtures/cleanroom/` are synthetic test inputs, not captured YouTube responses. A direct capture attempt is documented in `QUESTIONS.md`.
+
+## Native Swift eXcorKit addition (2026-10-29)
+
+The `swift/` package independently implements section 8 under the repository's Apache-2.0 license. The Swift source and `ExcorURLShim.js` are original work; no YouTubeKit source was read or copied. It uses the Apple SDK frameworks below and the EJS bundles documented above.
+
+| Source | Version / date | License | Use |
+| --- | --- | --- | --- |
+| Swift Package Manager and Swift compiler from Xcode | Apple Xcode toolchain on macOS CI | Apache-2.0 with Runtime Library Exception | Package manifest, compilation and XCTest invocation. |
+| Apple Foundation (`URLSession`), JavaScriptCore and XCTest | Apple SDK supplied by macOS/iOS | Apple SDK terms; system frameworks, not redistributed | HTTP transport, player-script execution and offline tests. No third-party Swift package dependencies are declared. |

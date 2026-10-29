@@ -3,10 +3,12 @@ Copyright 2026 bxane
 
 Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-The clean-room eXcor Kotlin library includes the unmodified JavaScript challenge
-solver from yt-dlp/ejs 0.8.0 (https://github.com/yt-dlp/ejs) in cleanroom-src/ejs/.
-It is released into the public domain under the Unlicense. The root ejs/ directory
-is retained for the earlier implementation and is not compiled into this artifact.
+The clean-room eXcor Kotlin and native eXcorKit Swift packages include the
+unmodified JavaScript challenge solver from yt-dlp/ejs 0.8.0
+(https://github.com/yt-dlp/ejs) in cleanroom-src/ejs/ and
+swift/Sources/eXcorKit/Resources/. It is released into the public domain under
+the Unlicense. The root ejs/ directory is retained for the earlier implementation
+and is not compiled into these artifacts.
 The solver's lib.min.js bundles:
 
 ---

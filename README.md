@@ -42,7 +42,7 @@ Use the Gradle wrapper and JDK 27. The Kotlin, Ktor, coroutine, serialization an
 ./gradlew :jvmTest :jvmJar :assembleAndroidMain
 ```
 
-The macOS workflow additionally runs iOS simulator tests, links the iOS frameworks, builds the XCFramework, and type-checks the published Kotlin API from Swift. Live tests are opt-in and should run only where YouTube access is permitted:
+The macOS workflow additionally runs iOS simulator tests, links the iOS frameworks, builds the XCFramework, type-checks the published Kotlin API from Swift, and tests/builds the native `eXcorKit` Swift package. Live tests are opt-in and should run only where YouTube access is permitted:
 
 ```sh
 EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest --rerun
@@ -58,3 +58,7 @@ Offline clean-room tests use synthetic fixtures under `fixtures/cleanroom/`. The
 - [Dependency licenses](docs/DEPENDENCY_LICENSES.md), [third-party notices](docs/THIRD_PARTY_NOTICES.md), and [open questions](QUESTIONS.md)
 
 The approved names are eXcor for Kotlin and eXcorKit for the separate Swift package; [BRIEF.md](BRIEF.md) uses those names throughout its active API contract. Historical app and implementation files now carry the eXcor naming, but their older API shapes remain unintegrated with the clean-room library.
+
+## Native Swift package: eXcorKit
+
+The separate Swift Package Manager product in [`swift/`](swift/) provides the section 8 API for iOS 15 and macOS 12. It uses Foundation and JavaScriptCore, with no third-party package dependencies. On macOS, run `swift test --package-path swift`; GitHub Actions also builds the package for the iOS Simulator.
