@@ -23,7 +23,7 @@ jobs:
       - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar assembleAndroidMain :android-app:lintDebug
         shell: bash
 
-  # VyonExMerge runs on Android's own MediaExtractor and MediaMuxer, so MergeCheck runs on emulators: the
+  # ExcorMerge runs on Android's own MediaExtractor and MediaMuxer, so MergeCheck runs on emulators: the
   # library's minimum API and a current one. GitHub's Linux runners offer KVM once its device is opened up.
   # The app is started on the same emulators.
   android-device:
@@ -61,29 +61,29 @@ jobs:
           $ANDROID_HOME/emulator/emulator -avd check -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect &
           # Under the timeout too, so an emulator that exits fails the step instead of holding it to the job limit.
           timeout 600 sh -c "$adb wait-for-device && until [ \"\$($adb shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
-          $adb install -r build/outputs/apk/androidTest/vyonex-androidTest.apk
+          $adb install -r build/outputs/apk/androidTest/excor-androidTest.apk
           # am instrument exits 0 either way; the report says how it went.
-          $adb shell am instrument -w com.vyonex.test/com.vyonex.MergeCheck | tee report.txt
+          $adb shell am instrument -w com.bxane.excor.test/com.bxane.excor.MergeCheck | tee report.txt
           grep -q 'MergeCheck: OK' report.txt
       # Opens no link, so it makes no request beyond the library's background warm-up.
       - name: App starts on the API ${{ matrix.api }} emulator
         run: |
           adb=$ANDROID_HOME/platform-tools/adb
           $adb install -r android-app/build/outputs/apk/debug/android-app-debug.apk
-          $adb shell am start -W -n com.vyonex.android/.MainActivity
+          $adb shell am start -W -n com.bxane.excor.android/.MainActivity
           # A shared text reaches the running screen (it fills the link field).
-          $adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT not-a-link -n com.vyonex.android/.MainActivity
+          $adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT not-a-link -n com.bxane.excor.android/.MainActivity
           sleep 10
           # Still running, with the media service the screen connects to, and nothing in the crash log.
-          $adb shell pidof com.vyonex.android
-          $adb shell dumpsys activity services com.vyonex.android | grep -q PlaybackService
+          $adb shell pidof com.bxane.excor.android
+          $adb shell dumpsys activity services com.bxane.excor.android | grep -q PlaybackService
           $adb logcat -d -b crash > crash.txt
-          if grep -q com.vyonex.android crash.txt; then cat crash.txt; exit 1; fi
+          if grep -q com.bxane.excor.android crash.txt; then cat crash.txt; exit 1; fi
       # A debug build signed with this run's throwaway key, for trying the app on a phone.
       - if: matrix.api == 36
         uses: actions/upload-artifact@v4
         with:
-          name: vyonex-android-debug
+          name: excor-android-debug
           path: android-app/build/outputs/apk/debug/android-app-debug.apk
 
   macos:
@@ -97,9 +97,9 @@ jobs:
             27
             21
       - name: JVM tests, iOS simulator tests, framework links, XCFramework
-        run: ./gradlew $GRADLE_ARGS jvmTest iosSimulatorArm64Test linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosSimulatorArm64 linkReleaseFrameworkIosX64 assembleVyonExReleaseXCFramework
+        run: ./gradlew $GRADLE_ARGS jvmTest iosSimulatorArm64Test linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosSimulatorArm64 linkReleaseFrameworkIosX64 assembleExcorReleaseXCFramework
       - name: Swift type-check of the public API
         run: >
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
-          -F build/XCFrameworks/release/VyonEx.xcframework/ios-arm64_x86_64-simulator
+          -F build/XCFrameworks/release/Excor.xcframework/ios-arm64_x86_64-simulator
           apicheck/ApiCheck.swift

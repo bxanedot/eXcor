@@ -1,8 +1,8 @@
-// Type-checked by CI against VyonEx.xcframework: every member the host app uses (BRIEF section 3).
+// Type-checked by CI against Excor.xcframework: every member the host app uses (BRIEF section 3).
 import Foundation
-import VyonEx
+import Excor
 
-final class ApiCheckStore: NSObject, VyonExConfigStore {
+final class ApiCheckStore: NSObject, ExcorConfigStore {
     var enabled: Bool { false }
     func getString(key: String) -> String? { nil }
     func getLong(key: String) -> KotlinLong? { nil }
@@ -20,52 +20,52 @@ final class ApiCheckTokens: NSObject, TokenProvider {
     func close() async throws {}
 }
 
-final class ApiCheckSink: NSObject, VyonExSink {
+final class ApiCheckSink: NSObject, ExcorSink {
     func write(bytes: KotlinByteArray) {}
 }
 
-final class ApiCheckHost: NSObject, VyonExHost {
-    let configStore: VyonExConfigStore = ApiCheckStore()
+final class ApiCheckHost: NSObject, ExcorHost {
+    let configStore: ExcorConfigStore = ApiCheckStore()
     let tokenProvider: TokenProvider? = ApiCheckTokens()
-    func session() async throws -> VyonExSession {
-        VyonExSession(cookie: nil, visitorData: nil, region: "US", language: "en")
+    func session() async throws -> ExcorSession {
+        ExcorSession(cookie: nil, visitorData: nil, region: "US", language: "en")
     }
     func nowMs() -> Int64 { 0 }
-    func log(level: VyonExLogLevel, message: String, trackId: String?) {}
+    func log(level: ExcorLogLevel, message: String, trackId: String?) {}
 }
 
 func apiCheck() async throws {
-    let vyonEx = VyonEx(host: ApiCheckHost())
-    vyonEx.initialize()
-    vyonEx.initializeFallback()
-    let ref: VyonExRef? = vyonEx.parse(input: "u")
-    if let video = ref as? VyonExRef.Video {
+    let excor = Excor(host: ApiCheckHost())
+    excor.initialize()
+    excor.initializeFallback()
+    let ref: ExcorRef? = excor.parse(input: "u")
+    if let video = ref as? ExcorRef.Video {
         let start: KotlinInt? = video.startSeconds
         _ = (video.videoId, video.playlistId, start)
-    } else if let playlist = ref as? VyonExRef.Playlist {
+    } else if let playlist = ref as? ExcorRef.Playlist {
         _ = playlist.playlistId
-    } else if let album = ref as? VyonExRef.Album {
+    } else if let album = ref as? ExcorRef.Album {
         _ = album.browseId
-    } else if let mix = ref as? VyonExRef.Mix {
+    } else if let mix = ref as? ExcorRef.Mix {
         _ = mix.playlistId
-    } else if let channel = ref as? VyonExRef.Channel {
+    } else if let channel = ref as? ExcorRef.Channel {
         _ = channel.channelId
     }
-    let candidates: [VyonExAudioCandidate] = try await vyonEx.audioCandidates(videoId: "v")
+    let candidates: [ExcorAudioCandidate] = try await excor.audioCandidates(videoId: "v")
     for candidate in candidates {
-        let format: VyonExAudioFormat = candidate.format
+        let format: ExcorAudioFormat = candidate.format
         _ = (candidate.url, candidate.kbps, candidate.mimeType, format == .m4a || format == .webmOpus || format == .other)
     }
-    if let stream: VyonExStream = try await vyonEx.extract(videoId: "v", maxKbps: 128, skipClients: ["WEB"], requireM4a: false) {
+    if let stream: ExcorStream = try await excor.extract(videoId: "v", maxKbps: 128, skipClients: ["WEB"], requireM4a: false) {
         let headers: [String: String] = stream.headers
         _ = (stream.videoId, stream.url, stream.kbps, stream.mimeType, stream.loudnessDb, stream.clientName, stream.profileId, headers)
     }
-    if let video: VyonExVideoStream = try await vyonEx.extractVideo(videoId: "v", maxHeight: 1080, skipClients: [], requireAvc: false) {
-        let audio: VyonExStream? = video.audio
+    if let video: ExcorVideoStream = try await excor.extractVideo(videoId: "v", maxHeight: 1080, skipClients: [], requireAvc: false) {
+        let audio: ExcorStream? = video.audio
         let size: (Int32, Int32, Int32) = (video.width, video.height, video.fps)
         _ = (video.videoId, video.url, video.kbps, video.mimeType, audio, size, video.clientName, video.profileId, video.headers)
     }
-    if let metadata: VyonExMetadata = try await vyonEx.metadata(videoId: "v") {
+    if let metadata: ExcorMetadata = try await excor.metadata(videoId: "v") {
         // Kotlin/Native renames `description`, which NSObject already has.
         let description: String? = metadata.description_
         let duration: KotlinLong? = metadata.durationSeconds
@@ -74,25 +74,25 @@ func apiCheck() async throws {
         _ = (metadata.videoId, metadata.title, metadata.author, metadata.channelId, metadata.channelUrl, duration, metadata.viewCount)
         _ = (metadata.likeCount, description, keywords, metadata.category, metadata.publishDate, metadata.uploadDate, live)
         _ = (metadata.isPrivate, metadata.isUnlisted, metadata.isFamilySafe, metadata.isShortsEligible, metadata.allowRatings)
-        let liveStatus: VyonExLiveStatus? = metadata.liveStatus
-        if let music: VyonExMusicInfo = metadata.music {
+        let liveStatus: ExcorLiveStatus? = metadata.liveStatus
+        if let music: ExcorMusicInfo = metadata.music {
             let year: KotlinInt? = music.releaseYear
             let artists: [String] = music.artists
             _ = (music.track, artists, music.album, year, music.releaseDate)
         }
         _ = (metadata.availableCountries, metadata.canonicalUrl, liveStatus == .live || liveStatus == .upcoming || liveStatus == .wasLive || liveStatus == .postLive || liveStatus == .notLive)
-        for thumbnail: VyonExThumbnail in metadata.thumbnails { _ = (thumbnail.url, thumbnail.width, thumbnail.height) }
-        for caption: VyonExCaptionTrack in metadata.captions {
+        for thumbnail: ExcorThumbnail in metadata.thumbnails { _ = (thumbnail.url, thumbnail.width, thumbnail.height) }
+        for caption: ExcorCaptionTrack in metadata.captions {
             _ = (caption.url, caption.languageCode, caption.name, caption.autoGenerated, caption.isTranslatable)
             let vtt: String = caption.urlFor(format: .vtt, translateTo: nil)
-            let text: String = try await vyonEx.captionText(track: caption, format: .srt, translateTo: "de")
+            let text: String = try await excor.captionText(track: caption, format: .srt, translateTo: "de")
             _ = (vtt, text)
         }
         let translations: [String: String] = metadata.translationLanguages
-        let audioTracks: [VyonExAudioTrack] = metadata.audioTracks
+        let audioTracks: [ExcorAudioTrack] = metadata.audioTracks
         _ = audioTracks
         _ = translations
-        let apple: VyonExAppleMusic = vyonEx.appleMusic
+        let apple: ExcorAppleMusic = excor.appleMusic
         if let ref: AppleMusicRef = apple.parse(url: "https://music.apple.com/us/album/x/1?i=2") {
             _ = (ref.id, ref.country, ref is AppleMusicRef.Song, ref is AppleMusicRef.Album, ref is AppleMusicRef.Artist)
         }
@@ -107,100 +107,100 @@ func apiCheck() async throws {
         if let artist: AppleMusicArtist = try await apple.artist(id: 1, country: nil, albumLimit: 5) {
             _ = (artist.id, artist.name, artist.genre, artist.url, artist.albums)
         }
-        let pictures: [VyonExThumbnail] = try await apple.artistImages(id: 1, country: "us")
+        let pictures: [ExcorThumbnail] = try await apple.artistImages(id: 1, country: "us")
         _ = pictures
         let appleSongs: [AppleMusicSong] = try await apple.searchSongs(term: "q", country: nil, limit: 5)
         let appleAlbums: [AppleMusicAlbum] = try await apple.searchAlbums(term: "q", country: nil, limit: 5)
         _ = (appleSongs, appleAlbums)
-        let posts: VyonExPostPage = try await vyonEx.channelPosts(channelId: "UC")
-        let morePosts: VyonExPostPage = try await vyonEx.channelPostsMore(continuation: posts.continuation ?? "")
-        for post: VyonExPost in posts.posts + morePosts.posts {
+        let posts: ExcorPostPage = try await excor.channelPosts(channelId: "UC")
+        let morePosts: ExcorPostPage = try await excor.channelPostsMore(continuation: posts.continuation ?? "")
+        for post: ExcorPost in posts.posts + morePosts.posts {
             let likes: KotlinLong? = post.likeCount
-            let video: VyonExSearchResult? = post.video
+            let video: ExcorSearchResult? = post.video
             _ = (post.postId, post.text, post.links, post.publishedText, likes, post.images, video, post.playlistId)
         }
-        if let channel: VyonExChannel = try await vyonEx.channel(channelId: "UC") {
-            let tabs: [VyonExChannelTab] = channel.tabs
+        if let channel: ExcorChannel = try await excor.channel(channelId: "UC") {
+            let tabs: [ExcorChannelTab] = channel.tabs
             _ = (channel.channelId, channel.title, channel.handle, channel.description_, channel.avatars, channel.banners, tabs)
         }
-        let tab: VyonExChannelPage = try await vyonEx.channelTab(channelId: "UC", tab: .videos)
-        let tabMore: VyonExChannelPage = try await vyonEx.channelTabMore(continuation: tab.continuation ?? "")
+        let tab: ExcorChannelPage = try await excor.channelTab(channelId: "UC", tab: .videos)
+        let tabMore: ExcorChannelPage = try await excor.channelTabMore(continuation: tab.continuation ?? "")
         _ = (tab.items, tabMore)
-        let comments: VyonExCommentPage = try await vyonEx.comments(videoId: "v", newestFirst: false)
-        for comment: VyonExComment in comments.comments {
+        let comments: ExcorCommentPage = try await excor.comments(videoId: "v", newestFirst: false)
+        for comment: ExcorComment in comments.comments {
             let likes: KotlinLong? = comment.likeCount
             _ = (comment.commentId, comment.text, comment.authorName, comment.authorChannelId, comment.authorAvatarUrl, likes)
             _ = (comment.authorIsUploader, comment.authorIsVerified, comment.publishedTime, comment.replyCount, comment.isPinned)
             _ = (comment.isHearted, comment.repliesContinuation)
         }
         let total: KotlinLong? = comments.totalCount
-        let more: VyonExCommentPage = try await vyonEx.commentsMore(continuation: comments.continuation ?? "")
+        let more: ExcorCommentPage = try await excor.commentsMore(continuation: comments.continuation ?? "")
         _ = (total, more)
-        for chapter: VyonExChapter in try await vyonEx.chapters(videoId: "v") {
+        for chapter: ExcorChapter in try await excor.chapters(videoId: "v") {
             let end: KotlinDouble? = chapter.endSeconds
             _ = (chapter.title, chapter.startSeconds, end)
         }
     }
-    if let manifest: VyonExManifest = try await vyonEx.manifest(videoId: "v", skipClients: []) {
+    if let manifest: ExcorManifest = try await excor.manifest(videoId: "v", skipClients: []) {
         let isHls: Bool = manifest.kind == .hls
         _ = (manifest.videoId, isHls, manifest.url, manifest.headers, manifest.profileId, manifest.isLive)
     }
-    if let formats: VyonExFormats = try await vyonEx.formats(videoId: "v", skipClients: []) {
-        for format: VyonExFormat in formats.formats {
+    if let formats: ExcorFormats = try await excor.formats(videoId: "v", skipClients: []) {
+        for format: ExcorFormat in formats.formats {
             let length: KotlinLong? = format.contentLength
             let height: KotlinInt? = format.height
             _ = (format.itag, format.url, format.mimeType, format.kbps, length, format.hasAudio, format.hasVideo, format.width, height, format.fps)
-            let written: KotlinLong = try await vyonEx.download(format: format, headers: formats.headers, sink: ApiCheckSink(), from: 0,
+            let written: KotlinLong = try await excor.download(format: format, headers: formats.headers, sink: ApiCheckSink(), from: 0,
                                                            onProgress: { (done: KotlinLong, total: KotlinLong?) in _ = (done, total) })
             _ = written
         }
         _ = (formats.videoId, formats.clientName, formats.profileId)
-        if let pair: VyonExMergePair = vyonEx.mergePair(formats: formats, maxHeight: 2160, container: .webm) {
+        if let pair: ExcorMergePair = excor.mergePair(formats: formats, maxHeight: 2160, container: .webm) {
             _ = (pair.video.itag, pair.audio.itag, pair.container == .mp4)
         }
-        let shared: VyonExMergePair? = formats.mergePair(maxHeight: 1080, container: .mp4)
+        let shared: ExcorMergePair? = formats.mergePair(maxHeight: 1080, container: .mp4)
         _ = shared
     }
-    if let playlist: VyonExPlaylist = try await vyonEx.playlist(playlistId: "PL") {
+    if let playlist: ExcorPlaylist = try await excor.playlist(playlistId: "PL") {
         _ = (playlist.playlistId, playlist.title, playlist.description_, playlist.ownerName, playlist.ownerChannelId, playlist.thumbnails)
-        let page: VyonExListPage = try await vyonEx.playlistMore(continuation: playlist.firstPage.continuation ?? "")
-        for item: VyonExListItem in page.items {
+        let page: ExcorListPage = try await excor.playlistMore(continuation: playlist.firstPage.continuation ?? "")
+        for item: ExcorListItem in page.items {
             let duration: KotlinLong? = item.durationSeconds
             _ = (item.videoId, item.title, item.channelName, item.channelId, duration, item.thumbnails)
         }
     }
-    if let album: VyonExAlbum = try await vyonEx.album(browseId: "MPREb_x") {
+    if let album: ExcorAlbum = try await excor.album(browseId: "MPREb_x") {
         let year: KotlinInt? = album.year
         _ = (album.browseId, album.playlistId, album.title, album.artist, album.artistChannelId, year, album.thumbnails, album.tracks)
     }
-    if let artist: VyonExArtist = try await vyonEx.artist(channelId: "UC") {
+    if let artist: ExcorArtist = try await excor.artist(channelId: "UC") {
         _ = (artist.channelId, artist.name, artist.description_, artist.thumbnails, artist.topSongs, artist.songsPlaylistId, artist.videosPlaylistId)
-        for release: VyonExRelease in artist.releases {
+        for release: ExcorRelease in artist.releases {
             let year: KotlinInt? = release.year
             _ = (release.browseId, release.title, year, release.thumbnails)
         }
     }
-    if let mix: VyonExMix = try await vyonEx.mix(playlistId: "RD", videoId: nil) {
-        let more: VyonExListPage = try await vyonEx.mixMore(continuation: mix.firstPage.continuation ?? "")
+    if let mix: ExcorMix = try await excor.mix(playlistId: "RD", videoId: nil) {
+        let more: ExcorListPage = try await excor.mixMore(continuation: mix.firstPage.continuation ?? "")
         _ = (mix.playlistId, mix.title, more.items)
     }
-    let related: VyonExListPage = try await vyonEx.related(videoId: "v")
-    let relatedMore: VyonExListPage = try await vyonEx.relatedMore(continuation: related.continuation ?? "")
+    let related: ExcorListPage = try await excor.related(videoId: "v")
+    let relatedMore: ExcorListPage = try await excor.relatedMore(continuation: related.continuation ?? "")
     _ = relatedMore.items
-    let search: VyonExSearchPage = try await vyonEx.search(query: "q")
-    let searchMore: VyonExSearchPage = try await vyonEx.searchMore(continuation: search.continuation ?? "")
-    let music: VyonExSearchPage = try await vyonEx.searchMusic(query: "q")
-    let channels: VyonExSearchPage = try await vyonEx.search(query: "q", type: .channels)
-    let types: [VyonExSearchType] = [.videos, .shorts, .channels, .playlists, .movies]
-    if let filter: VyonExSearchFilter = search.filters.first {
-        let filtered: VyonExSearchPage = try await vyonEx.search(query: "q", filter: filter)
+    let search: ExcorSearchPage = try await excor.search(query: "q")
+    let searchMore: ExcorSearchPage = try await excor.searchMore(continuation: search.continuation ?? "")
+    let music: ExcorSearchPage = try await excor.searchMusic(query: "q")
+    let channels: ExcorSearchPage = try await excor.search(query: "q", type: .channels)
+    let types: [ExcorSearchType] = [.videos, .shorts, .channels, .playlists, .movies]
+    if let filter: ExcorSearchFilter = search.filters.first {
+        let filtered: ExcorSearchPage = try await excor.search(query: "q", filter: filter)
         let group: String? = filter.group
         let params: String? = filter.params
         _ = (filtered.shorts, group, filter.label, params, filter.selected, types)
     }
-    let suggestions: [String] = try await vyonEx.suggestions(query: "q")
+    let suggestions: [String] = try await excor.suggestions(query: "q")
     _ = suggestions
-    let soundCloud: VyonExSoundCloud = vyonEx.soundCloud
+    let soundCloud: ExcorSoundCloud = excor.soundCloud
     let isLink: Bool = soundCloud.isLink(url: "https://soundcloud.com/a/b")
     _ = isLink
     if let set: SoundCloudPlaylist = try await soundCloud.playlist(url: "https://soundcloud.com/a/sets/b") {
@@ -218,37 +218,37 @@ func apiCheck() async throws {
             _ = (transcoding.preset, transcoding.mimeType, transcoding.isPreview, transcoding.protocol == protocols[1], stream.url, stream.protocol, stream.mimeType, stream.isPreview)
         }
     }
-    for result: VyonExSearchResult in search.results + searchMore.results + music.results + channels.results + search.shorts {
-        let kind: VyonExResultKind = result.kind
+    for result: ExcorSearchResult in search.results + searchMore.results + music.results + channels.results + search.shorts {
+        let kind: ExcorResultKind = result.kind
         let duration: KotlinLong? = result.durationSeconds
         _ = (kind == .video || kind == .playlist || kind == .album || kind == .artist || kind == .channel, result.id, result.title, result.channelName, result.channelId, duration, result.thumbnails)
     }
-    let headers: [String: String]? = vyonEx.headersFor(url: "u")
-    let refused: String? = vyonEx.onRefused(url: "u")
+    let headers: [String: String]? = excor.headersFor(url: "u")
+    let refused: String? = excor.onRefused(url: "u")
     _ = (headers, refused)
-    vyonEx.preferAudioLanguage(code: "es-US")
-    vyonEx.preferAudioLanguage(code: nil)
-    let audioTrack = VyonExAudioTrack(languageCode: "en", name: nil, isOriginal: true, isDefault: false, isDescriptive: false)
+    excor.preferAudioLanguage(code: "es-US")
+    excor.preferAudioLanguage(code: nil)
+    let audioTrack = ExcorAudioTrack(languageCode: "en", name: nil, isOriginal: true, isDefault: false, isDescriptive: false)
     _ = (audioTrack.languageCode, audioTrack.name, audioTrack.isOriginal, audioTrack.isDefault, audioTrack.isDescriptive)
-    vyonEx.exclude(videoId: "v", profileId: "p")
-    vyonEx.onSessionChanged()
-    vyonEx.close()
+    excor.exclude(videoId: "v", profileId: "p")
+    excor.onSessionChanged()
+    excor.close()
 
-    let levels: [VyonExLogLevel] = [.debug, .info, .warn, .error]
+    let levels: [ExcorLogLevel] = [.debug, .info, .warn, .error]
     let kinds: [PoTokenProviderKind] = [.webBotguard, .webpageAttestation, .androidDroidguard, .iosAttestation, .external]
     let token = PoTokenResult(playerRequestToken: "a", streamingDataToken: "b", visitorData: "c")
-    let session = VyonExSession(cookie: "c", visitorData: "v", region: "US", language: "en")
+    let session = ExcorSession(cookie: "c", visitorData: "v", region: "US", language: "en")
     let capabilities = TokenProviderCapabilities(providers: Set(kinds), usesWebView: true)
     _ = (levels, token.playerRequestToken, token.streamingDataToken, token.visitorData)
     _ = (session.cookie, session.visitorData, session.region, session.language, capabilities.providers, capabilities.usesWebView)
-    _ = VyonExAudioCandidate(url: "u", kbps: 1, mimeType: "m", format: .m4a)
-    _ = VyonExStream(videoId: "v", url: "u", kbps: 1, mimeType: "m", loudnessDb: nil, clientName: "c", profileId: "p", headers: [:])
+    _ = ExcorAudioCandidate(url: "u", kbps: 1, mimeType: "m", format: .m4a)
+    _ = ExcorStream(videoId: "v", url: "u", kbps: 1, mimeType: "m", loudnessDb: nil, clientName: "c", profileId: "p", headers: [:])
 }
 
 // How an app reads YouTube's refusal from a thrown error.
-func refusalOf(_ error: Error) -> VyonExUnplayableReason? {
-    guard let refused = (error as NSError).kotlinException as? VyonExUnplayableException else { return nil }
-    let reasons: [VyonExUnplayableReason] = [.ageRestricted, .signInRequired, .unavailable, .upcoming, .geoRestricted, .other]
+func refusalOf(_ error: Error) -> ExcorUnplayableReason? {
+    guard let refused = (error as NSError).kotlinException as? ExcorUnplayableException else { return nil }
+    let reasons: [ExcorUnplayableReason] = [.ageRestricted, .signInRequired, .unavailable, .upcoming, .geoRestricted, .other]
     let status: String? = refused.status
     let said: String? = refused.youtubeReason
     _ = (reasons, refused.videoId, status, said)

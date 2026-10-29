@@ -19,7 +19,7 @@ kotlin {
         testRuns.named("test") { executionTask.configure { useTestNG() } }
     }
     android {
-        namespace = "com.vyonex.app.core"
+        namespace = "com.bxane.excor.app.core"
         compileSdk = 37
         minSdk = 26
         compilerOptions { jvmTarget = JvmTarget.JVM_17 }
@@ -30,7 +30,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // Its types (VyonExStream, VyonExUnplayableException) are part of this module's API.
+            // Its types (ExcorStream, ExcorUnplayableException) are part of this module's API.
             api(project(":"))
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
         }

@@ -10,7 +10,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-rootProject.name = "vyonex"
+rootProject.name = "excor"
 
 // The Android app's shared logic; the library itself is the root project.
 include(":app-core")

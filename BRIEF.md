@@ -1,6 +1,6 @@
-# VyonEx clean-room rewrite — brief for the implementing agent
+# Excor clean-room rewrite — brief for the implementing agent
 
-You are writing **VyonEx**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **VyonExKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier VyonEx exists, but it contains GPL-licensed code. Your job is to write new ones from scratch, from this brief and from permissively licensed public sources only, so they can be released under **Apache-2.0**.
+You are writing **Excor**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **VyonExKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier VyonEx exists, but it contains GPL-licensed code. Your job is to write new ones from scratch, from this brief and from permissively licensed public sources only, so they can be released under **Apache-2.0**.
 
 This brief tells you **what** the library must do. It deliberately does not tell you how the old one did it. Do not try to find out.
 
@@ -9,9 +9,9 @@ This brief tells you **what** the library must do. It deliberately does not tell
 ## 1. Clean-room rules (read first, follow throughout)
 
 1. **Never open the old code.** Off limits, in every form (web, clone, local copy, search index, cache):
-   - GitHub `bxanedot/vyonex` and `bxanedot/vyon`, all branches and history, including `player_configs.json`.
-   - Local folders `Desktop\vyon-main`, `Desktop\vyon`, `Documents\Codex\vyonex`, any `Documents\Codex\2026-*` folder, and `~/.gradle/caches/vyon-extractor`.
-   - The XERJ index `vyonex-current`. Disable the `xerj` MCP server for this work.
+   - GitHub `bxanedot/excor` and `bxanedot/vyon`, all branches and history, including `player_configs.json`.
+   - Local folders `Desktop\vyon-main`, `Desktop\vyon`, `Documents\Codex\eXcor`, any `Documents\Codex\2026-*` folder, and `~/.gradle/caches/vyon-extractor`.
+   - The XERJ index `excor-current`. Disable the `xerj` MCP server for this work.
 2. **Never read GPL, LGPL or AGPL extractor code**, not even "for the idea". That includes NewPipe / NewPipe Extractor, InnerTubeX, Metrolist, InnerTune, OuterTune, ViMusic, SimpMusic, LibreTube, Piped and Invidious.
 3. **Allowed sources:**
    - **yt-dlp** (`github.com/yt-dlp/yt-dlp`) is released under the Unlicense (public domain). You may read it and port its logic. Check the `LICENSE` file at the commit you use.
@@ -29,8 +29,8 @@ This brief tells you **what** the library must do. It deliberately does not tell
 
 ## 2. Deliverable
 
-- Gradle project, group `com.vyonex`, artifact `vyonex`, version `0.2.0`, license Apache-2.0.
-- Kotlin Multiplatform targets: `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64`. Static iOS framework and an XCFramework, both named `VyonEx`.
+- Gradle project, group `com.bxane.excor`, artifact `excor`, version `0.2.0`, license Apache-2.0.
+- Kotlin Multiplatform targets: `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64`. Static iOS framework and an XCFramework, both named `Excor`.
 - Toolchain: Gradle 9.8.2, Kotlin 2.4.21, JDK 27 toolchain, JVM bytecode target 26.
 - Dependencies, matched to the host app (all permissively licensed):
   - Ktor 3.6.0: OkHttp engine on JVM, Darwin engine on iOS.
@@ -48,35 +48,35 @@ This brief tells you **what** the library must do. It deliberately does not tell
 
 The host app compiles against these exact names, packages and members. Keep them. You may add members, but don't rename or remove any.
 
-### Package `com.vyonex`, shared
+### Package `com.bxane.excor`, shared
 
 | Type | Kind | Members |
 |---|---|---|
-| `VyonExStream` | data class | `videoId: String`, `url: String`, `kbps: Int`, `mimeType: String`, `loudnessDb: Double?`, `clientName: String`, `profileId: String`, `headers: Map<String, String>` |
-| `VyonExAudioFormat` | enum | `M4A`, `WEBM_OPUS`, `OTHER` |
-| `VyonExAudioCandidate` | data class | `url: String`, `kbps: Int`, `mimeType: String`, `format: VyonExAudioFormat` |
-| `VyonExSession` | data class | `cookie: String?`, `visitorData: String?`, `region: String`, `language: String` |
-| `VyonExLogLevel` | enum | `DEBUG`, `INFO`, `WARN`, `ERROR` |
-| `VyonExConfigStore` | interface | `enabled: Boolean`, `getString(key): String?`, `getLong(key): Long?`, `putString(key, value)`, `putLong(key, value)` |
-| `VyonExHostServices` | interface | `suspend session(): VyonExSession`, `configStore: VyonExConfigStore`, `nowMs(): Long`, `log(level: VyonExLogLevel, message: String, trackId: String? = null)` |
+| `ExcorStream` | data class | `videoId: String`, `url: String`, `kbps: Int`, `mimeType: String`, `loudnessDb: Double?`, `clientName: String`, `profileId: String`, `headers: Map<String, String>` |
+| `ExcorAudioFormat` | enum | `M4A`, `WEBM_OPUS`, `OTHER` |
+| `ExcorAudioCandidate` | data class | `url: String`, `kbps: Int`, `mimeType: String`, `format: ExcorAudioFormat` |
+| `ExcorSession` | data class | `cookie: String?`, `visitorData: String?`, `region: String`, `language: String` |
+| `ExcorLogLevel` | enum | `DEBUG`, `INFO`, `WARN`, `ERROR` |
+| `ExcorConfigStore` | interface | `enabled: Boolean`, `getString(key): String?`, `getLong(key): Long?`, `putString(key, value)`, `putLong(key, value)` |
+| `ExcorHostServices` | interface | `suspend session(): ExcorSession`, `configStore: ExcorConfigStore`, `nowMs(): Long`, `log(level: ExcorLogLevel, message: String, trackId: String? = null)` |
 
-### Package `com.vyonex`, per platform
+### Package `com.bxane.excor`, per platform
 
 | Type | JVM | iOS |
 |---|---|---|
-| `VyonExHost : VyonExHostServices` | adds `tokenProvider: TokenProvider?`, `filesDir: java.io.File?`, `httpClient: okhttp3.OkHttpClient` | adds `tokenProvider: TokenProvider?` |
-| `VyonEx(host: VyonExHost)` | `init()` | `initialize()` (Swift reserves `init`) |
+| `ExcorHost : ExcorHostServices` | adds `tokenProvider: TokenProvider?`, `filesDir: java.io.File?`, `httpClient: okhttp3.OkHttpClient` | adds `tokenProvider: TokenProvider?` |
+| `Excor(host: ExcorHost)` | `init()` | `initialize()` (Swift reserves `init`) |
 
-On **both** platforms `VyonEx` also has: `initializeFallback()`, `suspend audioCandidates(videoId: String): List<VyonExAudioCandidate>`, `suspend extract(videoId: String, maxKbps: Int, skipClients: Set<String> = emptySet(), requireM4a: Boolean = false): VyonExStream?`, `headersFor(url: String): Map<String, String>?`, `onRefused(url: String): String?`, `exclude(videoId: String, profileId: String)`, `onSessionChanged()`.
+On **both** platforms `Excor` also has: `initializeFallback()`, `suspend audioCandidates(videoId: String): List<ExcorAudioCandidate>`, `suspend extract(videoId: String, maxKbps: Int, skipClients: Set<String> = emptySet(), requireM4a: Boolean = false): ExcorStream?`, `headersFor(url: String): Map<String, String>?`, `onRefused(url: String): String?`, `exclude(videoId: String, profileId: String)`, `onSessionChanged()`.
 
 ### PO token types (the host app imports these exact paths)
 
 | Fully qualified name | Shape |
 |---|---|
-| `com.vyonex.internal.primary.extraction.TokenProvider` | interface: `capabilities: TokenProviderCapabilities` (default: empty), `suspend getPoToken(videoId: String, visitorData: String, cookie: String? = null): PoTokenResult?`, `suspend prewarm(cookie: String? = null)`, `suspend invalidateAttestation()`, `suspend close()`; the last three default to doing nothing |
-| `com.vyonex.internal.primary.extraction.TokenProviderCapabilities` | data class: `providers: Set<PoTokenProviderKind> = emptySet()`, `usesWebView: Boolean = false` |
-| `com.vyonex.internal.primary.extraction.PoTokenResult` | data class: `playerRequestToken: String`, `streamingDataToken: String`, `visitorData: String`; `toString()` must print only present/missing, never the values |
-| `com.vyonex.internal.primary.extraction.strategy.PoTokenProviderKind` | enum: `WEB_BOTGUARD`, `WEBPAGE_ATTESTATION`, `ANDROID_DROIDGUARD`, `IOS_ATTESTATION`, `EXTERNAL` |
+| `com.bxane.excor.internal.primary.extraction.TokenProvider` | interface: `capabilities: TokenProviderCapabilities` (default: empty), `suspend getPoToken(videoId: String, visitorData: String, cookie: String? = null): PoTokenResult?`, `suspend prewarm(cookie: String? = null)`, `suspend invalidateAttestation()`, `suspend close()`; the last three default to doing nothing |
+| `com.bxane.excor.internal.primary.extraction.TokenProviderCapabilities` | data class: `providers: Set<PoTokenProviderKind> = emptySet()`, `usesWebView: Boolean = false` |
+| `com.bxane.excor.internal.primary.extraction.PoTokenResult` | data class: `playerRequestToken: String`, `streamingDataToken: String`, `visitorData: String`; `toString()` must print only present/missing, never the values |
+| `com.bxane.excor.internal.primary.extraction.strategy.PoTokenProviderKind` | enum: `WEB_BOTGUARD`, `WEBPAGE_ATTESTATION`, `ANDROID_DROIDGUARD`, `IOS_ATTESTATION`, `EXTERNAL` |
 
 ---
 
@@ -151,7 +151,7 @@ On **both** platforms `VyonEx` also has: `initializeFallback()`, `suspend audioC
 
 ### 4.6 Logging and secrets
 
-- Log only through `host.log`. Prefix messages with `VyonEx`. Use DEBUG, INFO and WARN; never ERROR.
+- Log only through `host.log`. Prefix messages with `Excor`. Use DEBUG, INFO and WARN; never ERROR.
 - **Never** log or `toString()` cookies, visitor data, PO tokens or authorization headers.
 
 ### 4.7 Platform specifics
@@ -159,7 +159,7 @@ On **both** platforms `VyonEx` also has: `initializeFallback()`, `suspend audioC
 - **JVM:**
   - Build the Ktor client on the host's `OkHttpClient`, so cookies, proxies and interceptors are shared. Timeouts: request 30 s, connect 15 s, socket 20 s.
   - Cache prepared player data under a folder in `filesDir` (skip the cache if `filesDir` is null). Write to a temp file and then rename. Keep only the 3 newest entries.
-- **iOS:** VyonEx creates its own Darwin client and keeps caches in memory only.
+- **iOS:** Excor creates its own Darwin client and keeps caches in memory only.
 - **`configStore`:** may hold small cached values. When `enabled` is false, everything still works, just without persistence.
 
 ---
@@ -185,7 +185,7 @@ Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, playlists, search,
   - watch-page parsing
   - signature and `n` decoding against a captured player script
   - secrets redaction in `toString()`
-- **Opt-in live test** (runs only when `VYONEX_LIVE=1`): for 3 public music videos, `extract` returns a stream, and a ranged GET (`Range: bytes=0-1023`) with the returned headers gets 200 or 206.
+- **Opt-in live test** (runs only when `EXCOR_LIVE=1`): for 3 public music videos, `extract` returns a stream, and a ranged GET (`Range: bytes=0-1023`) with the returned headers gets 200 or 206.
 - **API check:**
   - A JVM test that compiles against every member in section 3.
   - A Swift file the macOS CI type-checks against the XCFramework.
@@ -211,16 +211,16 @@ Do not push anywhere except the repository you were given.
 
 A pure-Swift package with the same job and behavior as the Kotlin library, for Apple apps that don't want the Kotlin framework. Build it after the Kotlin PR is open.
 
-- **Layout:** Swift Package Manager package in `swift/`, library product and module `VyonExKit`, license Apache-2.0. The module is not named `VyonEx`, so it can't clash with the Kotlin XCFramework.
+- **Layout:** Swift Package Manager package in `swift/`, library product and module `VyonExKit`, license Apache-2.0. The module is not named `Excor`, so it can't clash with the Kotlin XCFramework.
 - **Platforms:** iOS 15 and macOS 12 (needed to run tests on the CI machine). Add tvOS, watchOS and visionOS only if they compile without extra code.
 - **Dependencies:** none. Use `URLSession` for HTTP and `JavaScriptCore` to run the player script's functions.
 - **Concurrency:** Swift `async`/`await`. The main type is an `actor` or otherwise `Sendable`, and everything is safe to call from any thread.
 - **API.** Same concepts and member names as section 3, in Swift style:
-  - Value types (`struct`/`enum`): `VyonExStream`, `VyonExAudioCandidate`, `VyonExAudioFormat`, `VyonExSession`, `VyonExLogLevel`, `PoTokenResult`, `PoTokenProviderKind`.
-  - Protocols: `VyonExConfigStore`; `VyonExKitHost` (`session() async -> VyonExSession`, `configStore`, `now`, `log(_:_:trackId:)`, optional `tokenProvider`); `PoTokenProvider` (`capabilities`, `poToken(videoId:visitorData:cookie:) async throws -> PoTokenResult?`, `prewarm`, `invalidateAttestation`, `close`).
-  - Main type `VyonExKit(host:)`: `initialize()`, `audioCandidates(videoId:) async -> [VyonExAudioCandidate]`, `extract(videoId:maxKbps:skipClients:requireM4a:) async throws -> VyonExStream?`, `headers(for:)`, `onRefused(url:) -> String?`, `exclude(videoId:profileId:)`, `onSessionChanged()`.
+  - Value types (`struct`/`enum`): `ExcorStream`, `ExcorAudioCandidate`, `ExcorAudioFormat`, `ExcorSession`, `ExcorLogLevel`, `PoTokenResult`, `PoTokenProviderKind`.
+  - Protocols: `ExcorConfigStore`; `ExcorKitHost` (`session() async -> ExcorSession`, `configStore`, `now`, `log(_:_:trackId:)`, optional `tokenProvider`); `PoTokenProvider` (`capabilities`, `poToken(videoId:visitorData:cookie:) async throws -> PoTokenResult?`, `prewarm`, `invalidateAttestation`, `close`).
+  - Main type `VyonExKit(host:)`: `initialize()`, `audioCandidates(videoId:) async -> [ExcorAudioCandidate]`, `extract(videoId:maxKbps:skipClients:requireM4a:) async throws -> ExcorStream?`, `headers(for:)`, `onRefused(url:) -> String?`, `exclude(videoId:profileId:)`, `onSessionChanged()`.
   - The host may pass its own `URLSession`; otherwise use a dedicated one with the section 4.7 JVM timeouts.
 - **Behavior:** exactly section 4, with `extract` working like the **iOS** version (primary clients, then the watch-page fallback). Caches stay in memory; an on-disk cache in the app's Caches folder is optional.
 - **Parity:** put the captured YouTube fixtures in a top-level `fixtures/` folder that both the Kotlin and Swift tests read, so both engines are checked against the same inputs.
-- **Tests:** offline XCTest or Swift Testing cases covering the same list as section 6, plus the opt-in live test under `VYONEX_LIVE=1`.
+- **Tests:** offline XCTest or Swift Testing cases covering the same list as section 6, plus the opt-in live test under `EXCOR_LIVE=1`.
 - **CI:** add to the macOS job `swift test` in `swift/`, and an `xcodebuild` build of `VyonExKit` for the iOS Simulator.

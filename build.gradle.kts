@@ -9,8 +9,8 @@ plugins {
     `maven-publish`
 }
 
-group = "com.vyonex"
-version = "0.2.0"
+group = "com.bxane.excor"
+version = "1.0.0"
 
 repositories {
     google()
@@ -38,10 +38,10 @@ val generateEjs = tasks.register("generateEjs") {
             }
         }
         val dir = input.asFile
-        val file = output.get().file("com/vyonex/internal/Ejs.kt").asFile
+        val file = output.get().file("com/bxane/excor/internal/Ejs.kt").asFile
         file.parentFile.mkdirs()
         file.writeText(
-            "package com.vyonex.internal\n\n" +
+            "package com.bxane.excor.internal\n\n" +
                 "// Generated from ejs/ (yt-dlp/ejs 0.8.0, Unlicense; bundles meriyah ISC and astring MIT).\n" +
                 "internal val EJS_LIB: String =\n${literal(dir.resolve("lib.min.js").readText())}\n\n" +
                 "internal val EJS_CORE: String =\n${literal(dir.resolve("core.min.js").readText())}\n",
@@ -60,12 +60,12 @@ kotlin {
     // For the Android app (owner's decision, QUESTIONS item 31). API 26 is where java.nio.file, used by the
     // disk cache, starts.
     android {
-        namespace = "com.vyonex"
+        namespace = "com.bxane.excor"
         compileSdk = 37
         minSdk = 26
         compilerOptions { jvmTarget = JvmTarget.JVM_17 }
-        // MergeCheck runs VyonExMerge on an emulator in CI; see the android-device job.
-        withDeviceTest { instrumentationRunner = "com.vyonex.MergeCheck" }
+        // MergeCheck runs ExcorMerge on an emulator in CI; see the android-device job.
+        withDeviceTest { instrumentationRunner = "com.bxane.excor.MergeCheck" }
     }
 
     // The default hierarchy (iosMain and friends) plus jvmCommonMain: the OkHttp and java.io.File host API that
@@ -80,10 +80,10 @@ kotlin {
         }
     }
 
-    val xcf = XCFramework("VyonEx")
+    val xcf = XCFramework("Excor")
     listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
         target.binaries.framework {
-            baseName = "VyonEx"
+            baseName = "Excor"
             isStatic = true
             xcf.add(this)
         }
@@ -116,15 +116,15 @@ val generateFixturesPath = tasks.register("generateFixturesPath") {
     inputs.property("path", path)
     outputs.dir(output)
     doLast {
-        output.get().file("com/vyonex/FixturesPath.kt").asFile.apply { parentFile.mkdirs() }
-            .writeText("package com.vyonex\n\ninternal const val FIXTURES = \"${path.replace("\\", "/")}\"\n")
+        output.get().file("com/bxane/excor/FixturesPath.kt").asFile.apply { parentFile.mkdirs() }
+            .writeText("package com.bxane.excor\n\ninternal const val FIXTURES = \"${path.replace("\\", "/")}\"\n")
     }
 }
 kotlin.sourceSets.commonTest { kotlin.srcDir(generateFixturesPath) }
 
-// Declared so that changing VYONEX_LIVE or VYONEX_LIVE_IDS re-runs the tests instead of reusing results.
+// Declared so that changing EXCOR_LIVE or EXCOR_LIVE_IDS re-runs the tests instead of reusing results.
 tasks.withType<Test>().configureEach {
-    listOf("VYONEX_LIVE", "VYONEX_LIVE_IDS").forEach { environment(it, System.getenv(it) ?: "") }
+    listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS").forEach { environment(it, System.getenv(it) ?: "") }
 }
 tasks.withType<AbstractTestTask>().configureEach {
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }

@@ -14,9 +14,9 @@
         android:maxSdkVersion="28" />
 
     <application
-        android:name=".VyonExApp"
+        android:name=".ExcorApp"
         android:icon="@mipmap/ic_launcher"
-        android:label="VyonEx"
+        android:label="eXcor"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
             android:name=".MainActivity"
