@@ -74,8 +74,9 @@ SHA3-512 values equal the allowlist in yt-dlp 2026.10.21 `yt_dlp/extractor/youtu
 | `_video.py` `_extract_formats_and_subtitles` (`CHUNK_SIZE = 10 << 20`, `http_chunk_size`) | `Engine.download` | ranged requests of 10 MiB |
 | `extractor/youtube/jsc/_builtin/ejs.py` `_construct_stdin` | `PlayerJs.kt` `preparePlayer` | how the scripts are run: lib, `Object.assign(globalThis, lib)`, core, `jsc({type:'player', …, output_preprocessed:true})` |
 
-VyonExKit, a Swift port of this code, was removed on 2026-10-27 at the owner's request (iOS apps
-use the Kotlin XCFramework); it is in the git history up to that date.
+The historical VyonExKit Swift port of this code was removed on 2026-10-27; it remains only in the
+git history. The separately requested native Swift deliverable is named eXcorKit and is not that
+historical source.
 YouTubeKit (MIT) was **not** read or used, so `NOTICE` carries no YouTubeKit entry.
 
 Written from the brief without an outside source: format selection, URL allowlist, remembered

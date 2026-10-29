@@ -93,10 +93,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
 17. **Toolchain.** Gradle itself runs on JDK 21 (locally and in CI); JDK 27 is the compile
     toolchain and JVM bytecode targets 26, as specified.
 
-## VyonExKit (Swift)
+## eXcorKit (Swift)
 
-18–22. VyonExKit's questions (platforms, timeouts, API spelling, errors, caching) were dropped with
-    the package on 2026-10-27: the owner chose one engine, and iOS apps use the Kotlin XCFramework.
+18–22. The historical VyonExKit questions (platforms, timeouts, API spelling, errors, caching) were
+    dropped with that package on 2026-10-27. The owner later requested the distinct native eXcorKit
+    deliverable; its API follows the amended names in `BRIEF.md`.
 
 ## After delivery
 
@@ -543,6 +544,6 @@ Each item names the reading chosen; nothing was looked up in the old code.
 
 1. **Live capture blocked by this cloud network.** A direct request to `https://www.youtube.com/watch?v=dQw4w9WgXcQ` failed with `CONNECT tunnel failed, response 403` before receiving an HTTP response. No live watch page or player script was captured, and the opt-in live playback checks were not run. Offline tests use explicitly synthetic fixtures authored for this rewrite. Re-run capture and `EXCOR_LIVE=1` tests from a network that permits YouTube before release.
 2. **Amended section 5 features need API contracts.** Video formats, captions, links, playlists, albums, mixes, metadata, search and downloads were added to section 5, but section 3 defines only the video-ID-to-audio-stream API. This implementation follows the smallest defined API and does not invent public signatures for those additions. Specify their public types and behavior before they are added.
-3. **Swift deliverable is an explicit owner-request override.** Section 8 says the old `VyonExKit` was withdrawn, while the current task explicitly asks for a native Swift package. The new package uses the requested name `eXcorKit` and remains separate from the Kotlin XCFramework.
-4. **Naming follows the owner's rename.** The new API/package/artifact use `com.excor`, `Excor*`, `eXcor` and `eXcorKit` instead of the historical `VyonEx` names in the brief. The existing tracked application files are preserved; only the new clean-room deliverables and their build/CI metadata are renamed.
+3. **Swift deliverable is an explicit owner-request override.** The historical withdrawal note for VyonExKit is superseded by the owner's request for a distinct native Swift package, `eXcorKit`, separate from the Kotlin XCFramework.
+4. **Naming follows the owner's amendment.** The clean-room contract uses `com.excor`, `Excor*`, `eXcor` and `eXcorKit`. Preserved historical implementation sources may still use VyonEx identifiers and are not integrated with the clean-room API.
 5. **Ponytail ultra unavailable here.** The `ponytail:ponytail` skill is not present in the available skill catalog. The implementation continues under the user's ultra-style constraints; each PR description will disclose this.

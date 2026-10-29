@@ -1,13 +1,13 @@
-name: VyonExIOS
+name: eXcorIOS
 options:
-  bundleIdPrefix: com.vyonex
+  bundleIdPrefix: com.excor
 settings:
   base:
     SWIFT_VERSION: "5.10"
     IPHONEOS_DEPLOYMENT_TARGET: "15.0"
     TARGETED_DEVICE_FAMILY: "1,2"
 targets:
-  VyonExIOS:
+  eXcorIOS:
     type: application
     platform: iOS
     deploymentTarget: "15.0"
@@ -15,11 +15,11 @@ targets:
       - path: Sources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.vyonex.ios
+        PRODUCT_BUNDLE_IDENTIFIER: com.excor.ios
         PRODUCT_NAME: eXcor
         INFOPLIST_FILE: Sources/Info.plist
         CODE_SIGNING_ALLOWED: "NO"
         GENERATE_INFOPLIST_FILE: "NO"
     dependencies:
-      - framework: ../build/XCFrameworks/release/VyonEx.xcframework
+      - framework: ../build/XCFrameworks/release/eXcor.xcframework
         embed: false

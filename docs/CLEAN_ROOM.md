@@ -19,4 +19,4 @@ The old captured responses in `fixtures/` are not used by the clean-room tests. 
 
 ## Naming amendment
 
-The source brief originally names the product VyonEx. The owner's later request controls deliverable naming: Kotlin package `com.excor`, artifact `com.excor:eXcor`, XCFramework `eXcor`, and separate Swift package/module `eXcorKit`. The brief keeps its original names in its detailed contract for traceability and has an amendment at its top.
+The source brief's naming amendment controls the new deliverables: Kotlin package `com.excor`, artifact `com.excor:eXcor`, XCFramework `eXcor`, and separate Swift package/module `eXcorKit`. API names in sections 2–8 use this mapping. Section 1 retains exact identifiers for forbidden historical sources. Existing historical implementations remain separate and are not thereby API-compatible with the clean-room deliverables.
