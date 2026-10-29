@@ -1,6 +1,6 @@
 # eXcor open questions
 
-> Historical VyonEx names in the items below refer to the earlier API, fixtures or test harness. The clean-room deliverables use eXcor naming per the amendment in `BRIEF.md`.
+> Earlier items record pre-amendment API shapes, fixtures and test results. The owner-approved deliverables use eXcor names as mapped in `BRIEF.md`.
 
 Each item names the reading chosen; nothing was looked up in the old code.
 
@@ -13,7 +13,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
    `signatureCipher`), so by the brief's no-SABR rule the iOS watch-page fallback returns nil and
    `audioCandidates` returns an empty list for logged-out sessions. Logged-in pages may differ;
    untested.
-2. **Live test.** `VYONEX_LIVE=1` passed for `dQw4w9WgXcQ` (TV_SAMSUNG, signature and `n`
+2. **Live test.** `EXCOR_LIVE=1` passed for `dQw4w9WgXcQ` (TV_SAMSUNG, signature and `n`
    decoded, ranged GET 206). `kJQP7kiw5Fk` then got "This video is not available" from both
    TVHTML5 and VISIONOS, and afterwards every request from this IP got
    `LOGIN_REQUIRED: Sign in to confirm you're not a bot`. CI does not run the live test.
@@ -26,7 +26,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
    reported, both 2 tests and 0 failures: `extractsRangeFetchableStreams`
    (audio for the three videos) and `extractsVideoAndMetadata` (video + audio streams answering a
    ranged GET, and metadata). Which network adapter carried the traffic was not recorded.
-   The same day, the new `VYONEX_LIVE_IDS` survey for `dQw4w9WgXcQ` from the cloud build machine
+   The same day, the new `EXCOR_LIVE_IDS` survey for `dQw4w9WgXcQ` from the cloud build machine
    got TV_SAMSUNG streams (audio itag 251; video itag 137 + audio 251; each ranged GET 206) and
    WEB metadata, so TV_SAMSUNG answered there while it was refused on the owner's network.
    **Survey on `77054a1`, owner's network (wired), logged out, reported by Codex:** 0 failures; every
@@ -58,7 +58,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
    as authorized by YouTube, with prior permission, or as allowed by applicable law. Downloading
    fixtures at test time would add network dependence and does not by itself resolve that terms
    issue; seek rights/legal review before treating public redistribution as cleared.
-5. **`VyonExHost` defaults.** `tokenProvider` and `filesDir` default to `null`, so hosts
+5. **`ExcorHost` defaults.** `tokenProvider` and `filesDir` default to `null`, so hosts
    compile whether or not they override them. `httpClient` has no default.
 6. **`configStore`.** Decision: when `enabled = false`, disable JVM disk-player-cache reads and
    writes while preserving in-memory caches. This follows section 4.7's promise to work without
@@ -75,7 +75,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
    watch-page streams use the headers listed in 4.3.
 10. **`audioCandidates`** has no `skipClients`, so it does not apply the skip/exclusion rule of
     4.3; "as in 4.3" is read as "load the page the same way".
-11. **JVM failure.** `extract` throws `IllegalStateException("VyonEx: video … is unplayable
+11. **JVM failure.** `extract` throws `IllegalStateException("eXcor: video … is unplayable
     (STATUS: reason)")` with the first non-OK playability status when no identity succeeded,
     and returns null otherwise (network errors, no usable format).
 12. **"Stereo"** is read as exactly 2 channels; more channels get no bonus.
@@ -95,9 +95,9 @@ Each item names the reading chosen; nothing was looked up in the old code.
 
 ## eXcorKit (Swift)
 
-18–22. The historical VyonExKit questions (platforms, timeouts, API spelling, errors, caching) were
-    dropped with that package on 2026-10-27. The owner later requested the distinct native eXcorKit
-    deliverable; its API follows the amended names in `BRIEF.md`.
+18–22. Questions for the previous native Swift port (platforms, timeouts, API spelling, errors,
+    caching) were dropped when it was removed on 2026-10-27. The owner later requested a separate
+    eXcorKit deliverable; its API follows section 8 of `BRIEF.md`.
 
 ## After delivery
 
@@ -130,7 +130,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     are not probed. Dislikes, comments and chapters are not in the player response and are not
     fetched.
 27. **iOS names.** Swift does not see Kotlin default arguments, so it passes every parameter of
-    `extractVideo`; and Kotlin/Native renames `VyonExMetadata.description` to `description_`,
+    `extractVideo`; and Kotlin/Native renames `ExcorMetadata.description` to `description_`,
     since `NSObject` already has `description`.
 28. **`configStore.enabled` and the disk cache (owner's decision, 2026-10-27; settles item 6).**
     While `enabled` is false the JVM disk cache reads and writes nothing, so nothing persists
@@ -138,7 +138,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     access, so switching it takes effect at once. Deleting a refused player still happens while
     disabled, so it cannot come back once the cache is enabled again.
 29. **`close()`** (added for the app, milestone L0). It stops background work and frees the
-    loaded player; the instance must not be used afterwards. On iOS it also closes VyonEx's own
+    loaded player; the instance must not be used afterwards. On iOS it also closes Excor's own
     HTTP client. On the JVM the Ktor client stays open: Ktor 3.6.0's OkHttp engine, when closed,
     evicts the connection pool and shuts down the dispatcher of the clients it built, and those
     are shared with the host's `OkHttpClient`.
@@ -152,19 +152,19 @@ Each item names the reading chosen; nothing was looked up in the old code.
     albums, mixes, music metadata, then search); YouTube captures move out of public view by making
     the repository private (owner's action); the app targets Android + iOS, so the library gains an
     Android target later; search lives in the library, after collections. **Link parsing**
-    (`VyonEx.parse`, no network) ports yt-dlp's URL forms for YouTube's own hosts only
+    (`Excor.parse`, no network) ports yt-dlp's URL forms for YouTube's own hosts only
     (`youtube.com`, `www.`/`m.`/`music.youtube.com`, `youtube-nocookie.com`, `youtu.be`; no mirrors,
     ports or userinfo). A watch link with `list=` is a video opened from that list; a list without a
     usable video is the list; `RD…` lists are mixes; `/browse/VL…` is the playlist after `VL`;
     `/browse/MPREb_…` and bare `MPREb_…` IDs are albums. Personal lists (`WL`, `LL`, `LM`, `RDMM`)
     parse but will need a login to resolve. Channel and search links return null. `t`/`start`
     accept seconds, `[h:]m:s` and `1h2m3s`.
-32. **Live status.** `VyonExMetadata.liveStatus` follows yt-dlp's reading of `isPostLiveDvr`,
+32. **Live status.** `ExcorMetadata.liveStatus` follows yt-dlp's reading of `isPostLiveDvr`,
     `isLive` (or the microformat's `isLiveNow`), `isUpcoming` and `isLiveContent`. `isLive` now means
     live right now. `durationSeconds` is null for live-now and upcoming streams, and for a zero
-    length. `liveStatus` was appended to `VyonExMetadata`, a type added after BRIEF section 3, so
+    length. `liveStatus` was appended to `ExcorMetadata`, a type added after BRIEF section 3, so
     code constructing it must pass the new field.
-33. **YouTube Music track info.** `VyonExMetadata.music` (track, artists, album, release year and
+33. **YouTube Music track info.** `ExcorMetadata.music` (track, artists, album, release year and
     date) is read from the description of auto-generated YouTube Music uploads, with yt-dlp's
     pattern, so it matches yt-dlp's results, quirks included: an `Artist:` line counts only when
     more lines follow it, and a release date needs a `℗` line before it. Other videos get null.
@@ -193,7 +193,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     since VISIONOS takes no cookies and TV_SAMSUNG is refused on the owner's network, likely PO
     tokens from the app. (d) Captures go into the public repository after all (reversing item
     31's "private"); the terms question in item 4 stays open. **Capture tool:** `CaptureFixtures`
-    (opt-in, `VYONEX_CAPTURE=1`) sends the logged-out requests, redacts and checks before writing,
+    (opt-in, `EXCOR_CAPTURE=1`) sends the logged-out requests, redacts and checks before writing,
     and stops at a bot check. A run from the cloud build machine wrote four player responses and
     then hit a bot check; those were discarded because that network answered differently (the
     age-restricted video came back as `UNPLAYABLE: This video is not available` instead of the
@@ -210,7 +210,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
 38. **Merging into one file (Android).** `mergePair(formats, maxHeight, container)` picks the tallest
     video (then frame rate, then bitrate) and the best audio of one codec family: `WEBM` is VP9 +
     Opus, which is how YouTube offers 4K; `MP4` is H.264 + AAC, which stops at 1080p.
-    `VyonExMerge.merge` (Android only) copies the encoded samples into one file with Android's
+    `ExcorMerge.merge` (Android only) copies the encoded samples into one file with Android's
     `MediaExtractor` and `MediaMuxer`, interleaved by time, so nothing is re-encoded. It refuses
     other codec pairs and leaves no partial file. Left out for now: AV1 (whether Android's MP4 muxer
     takes it on every supported Android version is unchecked), HDR VP9 (`vp09.02…`; its colour
@@ -218,7 +218,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     no WebM). Android 8 and 9 cannot merge WebM: their WebM writer takes VP8/VP9 with Vorbis only,
     and Opus arrives in Android 10 (AOSP `WebmWriter.cpp` at `android-8.0.0_r1`, `9.0.0_r1`,
     `10.0.0_r1`). YouTube offers no Vorbis, so those devices merge MP4, up to 1080p;
-    `VyonExMerge.supports(container)` says which, and `merge` refuses up front. Checked in CI by
+    `ExcorMerge.supports(container)` says which, and `merge` refuses up front. Checked in CI by
     `MergeCheck`, a plain `Instrumentation` (androidx.test's runner needs JUnit 4, EPL-1.0), on API
     26 and API 36 emulators. It merges synthetic two-second clips laid out the way YouTube serves
     its formats (fragmented MP4, WebM) and compares every track's sample count. Its first run on
@@ -228,7 +228,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     refused WebM as intended (PR #18). A real 4K download has not been merged yet. That needs the owner's network and device.
     Merging needs free space for both inputs again until they are deleted. Dubbed audio tracks:
     item 45.
-39. **Why a video won't play.** `VyonExUnplayableException` (still an `IllegalStateException`,
+39. **Why a video won't play.** `ExcorUnplayableException` (still an `IllegalStateException`,
     same message) carries `reason`, YouTube's `status` and `youtubeReason`. The sorting follows
     yt-dlp: age gate (`desktopLegacyAgeGateReason` or its age phrases), country block (the
     `errorScreen` subreason), `LIVE_STREAM_OFFLINE` as upcoming, `ERROR` as unavailable, "sign in"
@@ -271,7 +271,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     an artist with more than ten albums shows ten; their songs are all in `songsPlaylistId`, which
     is what "download an artist" uses. Shelves are found by what they link to, never by their
     localized titles. `parse` now reads channel links (`/channel/UC…`, YouTube Music's
-    `/browse/UC…`, a bare `UC…` ID) as `VyonExRef.Channel`; `@handle` links still give null, as
+    `/browse/UC…`, a bare `UC…` ID) as `ExcorRef.Channel`; `@handle` links still give null, as
     resolving a handle takes a request.
 43. **Mixes and related videos ("recommendations", logged out).** Both come from the WEB `next`
     (watch-next) endpoint. `mix(RD…)` reads the mix panel's videos (`playlistPanelVideoRenderer`,
@@ -317,13 +317,13 @@ Each item names the reading chosen; nothing was looked up in the old code.
     A stream within 60 seconds of its `expire` time is looked up again, also when repeating. Each
     `Ready` is one start of the track, so a repeat with the same stream is still a new value of
     `state` (`Ready` is not a data class; a `StateFlow` drops a value equal to the last). When
-    the platform player is refused a URL (HTTP 403), VyonEx's `onRefused` is told and the track is
+    the platform player is refused a URL (HTTP 403), Excor's `onRefused` is told and the track is
     looked up once more; a second refusal ends in `NO_STREAM`. YouTube's refusals become the
     listener's terms (`Failure`): sign-in, age, unavailable, not yet live, not in this country,
     blocked, and `BOT_CHECK` for "Sign in to confirm you're not a bot" (matched in English only).
     After any failure nothing is fetched ahead and nothing is retried on its own. A failed track is
-    not skipped automatically; the app decides what to show. `StreamSource` is the slice of VyonEx
-    it needs, because `VyonEx` itself is a per-platform class; tests use a fake. 13 tests run on the
+    not skipped automatically; the app decides what to show. `StreamSource` is the slice of Excor
+    it needs, because `Excor` itself is a per-platform class; tests use a fake. 13 tests run on the
     JVM and, in CI, on the iOS simulator. The deprecated `androidLibrary {}` block in both builds is
     now `android {}`, as AGP 9.4 asks.
 47. **App, milestone A2: the Android shell.** `android-app/` (Compose, Media3 1.11), minimum Android
@@ -356,9 +356,9 @@ Each item names the reading chosen; nothing was looked up in the old code.
     it plays everywhere; above 1080p YouTube has only VP9, so those are WebM. Android 8 and 9 cannot
     write Opus (into WebM or Ogg), so they get AAC and MP4 only, up to 1080p. A height YouTube offers
     only in AV1 (8K, for example) is left out, since nothing merges it without re-encoding. Audio is
-    rewritten without re-encoding into a plain .m4a or an Ogg .opus (the new `VyonExMerge.remuxAudio`),
+    rewritten without re-encoding into a plain .m4a or an Ogg .opus (the new `ExcorMerge.remuxAudio`),
     because YouTube's fragmented MP4 and WebM files confuse many music players. Files go to
-    Music/VyonEx and Movies/VyonEx through MediaStore (Android 10 and later, no permission) or the
+    Music/Excor and Movies/Excor through MediaStore (Android 10 and later, no permission) or the
     shared folders with the storage permission (Android 8 and 9). A foreground service of the data
     sync type runs the queue, one track at a time, with progress in a notification; the notification
     permission is asked for on Android 13 and later, and downloads run without it. Each track's
@@ -366,7 +366,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     bytes already written, twice. The queue lives in memory: if Android ends the app, unfinished
     downloads are gone. Android 15 and later allow data sync work six hours a day; past that the rest
     of the queue is marked as stopped. The choice logic is in `app-core` (`Download.kt`, tested on
-    the JVM and the iOS simulator); `VyonExFormats.mergePair` makes the library's pair selection usable
+    the JVM and the iOS simulator); `ExcorFormats.mergePair` makes the library's pair selection usable
     from shared code. No download has run against YouTube yet: the build machines get a bot check.
 49. **Stream probe: only a ranged media answer counts (owner's comparison report, 2026-10-27).**
     The one-byte probe accepted any 2xx status and read the whole answer, so a server that ignored
@@ -385,7 +385,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     client) and `tv_downgraded`, which yt-dlp defines but does not try by default; they need no PO
     token, so they cost a request only when the others failed. Clients that need a PO token for
     their media (`mweb`, `ios`, `android`, `android_vr`, `web_safari`, `web_music`, `web_creator`,
-    `tv_simply`) are not added: VyonEx only gets tokens from the host, and a token minted for WEB is
+    `tv_simply`) are not added: Excor only gets tokens from the host, and a token minted for WEB is
     not known to serve those clients. A client refused three times in a row across videos (refused
     media, or a failed request; never a refusal of one video, such as an age gate) is tried after
     the others for 30 minutes; a success or a new session clears it. On the owner's network, where
@@ -397,7 +397,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     player; a PO token added as a `/pot/` segment where the client needs one; only
     `https://*.googlevideo.com/api/manifest/…` URLs; and the manifest fetched to see that it is one
     (an M3U8 or an MPD in its first kilobyte), else the client is excluded as for a refused stream.
-    Players read manifests themselves, so VyonEx does not parse them: the app plays a live stream
+    Players read manifests themselves, so Excor does not parse them: the app plays a live stream
     through Media3's HLS or DASH source when `extract` finds no single file. The VISIONOS capture
     of an ordinary video already carries an `hls_variant` manifest (demuxed audio), so `manifest`
     works for ordinary videos too. No live stream could be captured (bot check on the build
@@ -458,7 +458,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     YouTube Music's own response, and with yt-dlp's older ones, it answered "No results" from the
     build machine for every section, so nothing would test them; they wait for a capture from a
     normal network.
-57. **SoundCloud (owner, 2026-10-27: "Other sites, no DRM", SoundCloud first).** `vyonEx.soundCloud`
+57. **SoundCloud (owner, 2026-10-27: "Other sites, no DRM", SoundCloud first).** `excor.soundCloud`
     reads public tracks and sets logged out, as yt-dlp's extractor does: the web client's ID from
     SoundCloud's own scripts on its home page (only `a-v2.sndcdn.com` assets are fetched; the ID is
     kept in memory and, when the host allows it, in the config store; a 401 or 403 looks it up again
@@ -490,20 +490,20 @@ Each item names the reading chosen; nothing was looked up in the old code.
     Nothing was ported. Needed from the owner: a look at that pull request's description for any
     mention of googlevideo or YouTube.js as a source, and a decision. SABR also cannot be tried from
     the build machine (YouTube bot-checks its player requests), and WEB's SABR formats need a PO
-    token, which VyonEx only takes from the host.
+    token, which Excor only takes from the host.
 59. **Bandcamp (owner: SoundCloud, then Bandcamp).** Bandcamp answers the cloud build machine with a
     "Client Challenge" page for every track and album page (2026-10-28). That is a bot check: yt-dlp
     retries it with browser impersonation, which this project does not do, so nothing was worked
     around and no Bandcamp code was written blind. `CaptureFixtures` now asks for yt-dlp's test track
     and album pages (`bandcamp-track.html`, `bandcamp-album.html`), stops at a challenge, and redacts
     the signed stream URLs (`bcbits.com/stream/…token=…`) before writing; `FixtureHygieneTest` fails
-    on any left in. Needed: a run of `VYONEX_CAPTURE=1 VYONEX_CAPTURE_ONLY=bandcamp-track.html,bandcamp-album.html`
+    on any left in. Needed: a run of `EXCOR_CAPTURE=1 EXCOR_CAPTURE_ONLY=bandcamp-track.html,bandcamp-album.html`
     from a normal network; the parser (yt-dlp's `data-tralbum` reading) follows on those captures.
-60. **Audio language for dubbed videos (owner's comparison report P1).** `VyonExMetadata.audioTracks`
+60. **Audio language for dubbed videos (owner's comparison report P1).** `ExcorMetadata.audioTracks`
     lists a video's audio tracks (language code, YouTube's name, original, default, descriptive), and
     `preferAudioLanguage(code)` makes `extract`, `extractVideo`, `formats` and the watch-page fallback
     take that language's track. The descriptive track is never taken for a language, and a video
-    without the language keeps its original track (item 45). It is a preference on the VyonEx object
+    without the language keeps its original track (item 45). It is a preference on the Excor object
     rather than a new argument, so the Swift API keeps its signatures. Read as yt-dlp's
     `get_language_code_and_preference` reads it (the `audioTrack.id` before the dot). Unchecked against
     a capture: no dubbed video's response could be captured from the build machine (item 41).
@@ -520,7 +520,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     no public tab value of its own. The next page comes under `onResponseReceivedEndpoints`. Captured
     from the build machine, which `browse` answers. Polls, quizzes and a post's comments are not read.
 63. **Apple Music metadata (owner, 2026-10-28: "Apple Music metadata fetching", "Only metadata", "Image
-    metadata?").** `vyonEx.appleMusic` reads songs, albums (with their songs, in disc and track order),
+    metadata?").** `excor.appleMusic` reads songs, albums (with their songs, in disc and track order),
     artists (with the albums they are on, also under other artists' names, as Apple lists them) and
     song and album search from Apple's documented iTunes Search API (`itunes.apple.com/lookup` and
     `/search`; no key, no account), and parses `music.apple.com` song, album and artist links.
@@ -544,6 +544,6 @@ Each item names the reading chosen; nothing was looked up in the old code.
 
 1. **Live capture blocked by this cloud network.** A direct request to `https://www.youtube.com/watch?v=dQw4w9WgXcQ` failed with `CONNECT tunnel failed, response 403` before receiving an HTTP response. No live watch page or player script was captured, and the opt-in live playback checks were not run. Offline tests use explicitly synthetic fixtures authored for this rewrite. Re-run capture and `EXCOR_LIVE=1` tests from a network that permits YouTube before release.
 2. **Amended section 5 features need API contracts.** Video formats, captions, links, playlists, albums, mixes, metadata, search and downloads were added to section 5, but section 3 defines only the video-ID-to-audio-stream API. This implementation follows the smallest defined API and does not invent public signatures for those additions. Specify their public types and behavior before they are added.
-3. **Swift deliverable is an explicit owner-request override.** The historical withdrawal note for VyonExKit is superseded by the owner's request for a distinct native Swift package, `eXcorKit`, separate from the Kotlin XCFramework.
-4. **Naming follows the owner's amendment.** The clean-room contract uses `com.excor`, `Excor*`, `eXcor` and `eXcorKit`. Preserved historical implementation sources may still use VyonEx identifiers and are not integrated with the clean-room API.
+3. **Swift deliverable is an explicit owner-request override.** The earlier withdrawal is superseded by the owner's request for a distinct native Swift package, `eXcorKit`, separate from the Kotlin XCFramework.
+4. **Naming follows the owner's amendment.** Historical app and implementation files now use eXcor names, but their older API shapes are not integrated with the clean-room API in `cleanroom-src/`.
 5. **Ponytail ultra unavailable here.** The `ponytail:ponytail` skill is not present in the available skill catalog. The implementation continues under the user's ultra-style constraints; each PR description will disclose this.

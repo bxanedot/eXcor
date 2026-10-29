@@ -12,10 +12,10 @@ repositories {
 }
 
 android {
-    namespace = "com.bxane.excor.android"
+    namespace = "com.excor.android"
     compileSdk = 37
     defaultConfig {
-        applicationId = "com.bxane.excor.android"
+        applicationId = "com.excor.android"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

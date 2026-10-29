@@ -57,4 +57,4 @@ Offline clean-room tests use synthetic fixtures under `fixtures/cleanroom/`. The
 - [Repository audit](docs/REPOSITORY_AUDIT.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Dependency licenses](docs/DEPENDENCY_LICENSES.md), [third-party notices](docs/THIRD_PARTY_NOTICES.md), and [open questions](QUESTIONS.md)
 
-The approved names are eXcor for the Kotlin library and eXcorKit for the separate Swift package; the API contract in [BRIEF.md](BRIEF.md) uses those names. Preserved historical app and implementation sources may still contain VyonEx identifiers. They are not integrated with the clean-room eXcor API.
+The approved names are eXcor for Kotlin and eXcorKit for the separate Swift package; [BRIEF.md](BRIEF.md) uses those names throughout its active API contract. Historical app and implementation files now carry the eXcor naming, but their older API shapes remain unintegrated with the clean-room library.

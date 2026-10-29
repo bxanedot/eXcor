@@ -13,7 +13,7 @@ Audit snapshot: branch `rewrite-additive`, starting commit `e11f038` (2026-10-29
 ## Integration and build findings
 
 - `:jvmTest` passes locally with JDK 27 and the toolchain property used by CI.
-- Running `:app-core:jvmTest` fails at `:app-core:compileKotlinJvm`: app-core imports old `VyonEx*` models that the new root `com.excor` build does not expose. The clean-room CI intentionally tests the library, not the app modules; app integration is still unresolved.
+- Running `:app-core:jvmTest` fails at `:app-core:compileKotlinJvm`: app-core expects historical `Excor*` model signatures that the new root `com.excor` API does not expose. The clean-room CI intentionally tests the library, not the app modules; app integration is still unresolved.
 - PR #41 passes Linux and Windows at `e11f038`; its macOS job failed in the combined “Kotlin tests, iOS targets, frameworks and XCFramework” step. The public job page exposes only “Process completed with exit code 1”. Local cross-target compilation reproduced the first failure: `QuickJs` is not `AutoCloseable` on Kotlin/Native, so common `use` did not compile. Explicit `try/finally` cleanup fixes it. Compiling the iOS test source then exposed a stale Foundation factory call in the fixture reader; that call and its opt-in are fixed as well. Both iOS main and test sources now compile on Linux, but simulator execution and framework linking still require macOS.
 - The older PR #40 also has failed Windows, macOS and Linux desktop jobs; both Android device matrix jobs pass. It is a separate draft branch and is not part of this clean-room Kotlin change.
 - The cloud machine cannot run iOS simulator tests or link Apple frameworks. YouTube player requests may receive a bot-check response; live tests stay opt-in.

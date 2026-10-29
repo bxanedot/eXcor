@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// Native Swing shell backed by the SAME VyonEx JVM engine used by Android and iOS.
+// Native Swing shell backed by the SAME Excor JVM engine used by Android and iOS.
 plugins {
     kotlin("jvm")
     application
@@ -19,4 +19,4 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
 }
 
-application { mainClass.set("com.vyonex.desktop.MainKt") }
+application { mainClass.set("com.excor.desktop.MainKt") }

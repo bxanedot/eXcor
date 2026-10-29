@@ -8,7 +8,7 @@ Base: `main`, originally `69600bf486b28c6fb256e423bec43c7f73f1efe9`
 
 Deliver **one multiplatform music application** across Android, Windows,
 macOS, Linux, iPhone and iPad, backed by the same clean-room Kotlin
-Multiplatform VyonEx library, **not** three rewritten extractor implementations.
+Multiplatform Excor library, **not** three rewritten extractor implementations.
 Ship platform-native UI, playback, background tasks, storage and packaging
 around a single shared `app-core` domain/application layer.
 
@@ -19,23 +19,23 @@ or DRM circumvention component.
 
 ## What this branch adds
 
-- `src/commonMain/kotlin/com/vyonex/MusicCatalog.kt`: common metadata, image
+- `src/commonMain/kotlin/com/excor/MusicCatalog.kt`: common metadata, image
   and credit model, strict links, Spotify OAuth token input and provider API.
-- `src/commonMain/kotlin/com/vyonex/internal/MusicCatalog.kt`: Spotify
+- `src/commonMain/kotlin/com/excor/internal/MusicCatalog.kt`: Spotify
   oEmbed previews, authenticated Spotify track/album/artist lookup/search,
   Deezer track/album/artist/playlist public lookup and catalog search.
-- `src/commonTest/kotlin/com/vyonex/MusicCatalogTest.kt`: synthetic JSON
+- `src/commonTest/kotlin/com/excor/MusicCatalogTest.kt`: synthetic JSON
   fixture tests including links, images, invalid tokens, missing data and
   provider error redaction.
-- `src/jvmCommonMain/kotlin/com/vyonex/VyonEx.kt` and
-  `src/iosMain/kotlin/com/vyonex/VyonEx.kt` expose `vyonEx.musicCatalog`
+- `src/jvmCommonMain/kotlin/com/excor/Excor.kt` and
+  `src/iosMain/kotlin/com/excor/Excor.kt` expose `excor.musicCatalog`
   on all targets; `apicheck/ApiCheck.swift` references it.
 - `android-app/MainActivity.kt`: Spotify/Deezer link inspection, images
   and metadata inside the existing Android app.
 - `desktop-app/`: initial JVM/Swing catalog browser with image rendering,
   Deezer/Spotify/YouTube Music searches and external source links.
 - `ios-app/`: initial SwiftUI catalog browser; XcodeGen project uses the
-  existing `VyonEx.xcframework`.
+  existing `eXcor.xcframework`.
 - `settings.gradle.kts`, CI workflow, README and PROVENANCE updates.
 
 **Important: these shells are initial implementations, not finished
@@ -105,9 +105,9 @@ Run using JDK 27 toolchain and the environment settings from
 ./gradlew :android-app:assembleDebug :android-app:lintDebug
 ./gradlew :desktop-app:distZip
 # On macOS with Xcode:
-./gradlew iosSimulatorArm64Test assembleVyonExReleaseXCFramework
-xcodegen generate --spec ios-app/project.yml --project ios-app/VyonExIOS.xcodeproj
-xcodebuild -project ios-app/VyonExIOS.xcodeproj -scheme VyonExIOS \
+./gradlew iosSimulatorArm64Test assembleEXcorReleaseXCFramework
+xcodegen generate --spec ios-app/project.yml --project ios-app/eXcorIOS.xcodeproj
+xcodebuild -project ios-app/eXcorIOS.xcodeproj -scheme eXcorIOS \
   -configuration Debug -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```

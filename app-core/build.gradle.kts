@@ -19,7 +19,7 @@ kotlin {
         testRuns.named("test") { executionTask.configure { useTestNG() } }
     }
     android {
-        namespace = "com.bxane.excor.app.core"
+        namespace = "com.excor.app.core"
         compileSdk = 37
         minSdk = 26
         compilerOptions { jvmTarget = JvmTarget.JVM_17 }

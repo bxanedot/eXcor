@@ -1,9 +1,9 @@
 import SwiftUI
 import Foundation
-import VyonEx
+import eXcor
 
 // SwiftUI is a native shell over the SAME Kotlin Multiplatform extraction/metadata engine.
-final class IOSConfig: NSObject, VyonExConfigStore {
+final class IOSConfig: NSObject, ExcorConfigStore {
     var enabled: Bool { false }
     func getString(key: String) -> String? { nil }
     func getLong(key: String) -> KotlinLong? { nil }
@@ -11,13 +11,13 @@ final class IOSConfig: NSObject, VyonExConfigStore {
     func putLong(key: String, value: Int64) {}
 }
 
-final class IOSHost: NSObject, VyonExHost {
-    let configStore: VyonExConfigStore = IOSConfig()
+final class IOSHost: NSObject, ExcorHost {
+    let configStore: ExcorConfigStore = IOSConfig()
     var tokenProvider: TokenProvider? { nil }
 
-    func session() async throws -> VyonExSession {
+    func session() async throws -> ExcorSession {
         let locale = Locale.current
-        return VyonExSession(
+        return ExcorSession(
             cookie: nil, visitorData: nil,
             region: locale.regionCode ?? "US",
             language: locale.languageCode ?? "en"
@@ -25,7 +25,7 @@ final class IOSHost: NSObject, VyonExHost {
     }
 
     func nowMs() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
-    func log(level: VyonExLogLevel, message: String, trackId: String?) {
+    func log(level: ExcorLogLevel, message: String, trackId: String?) {
         // No provider tokens or media URLs are logged by this shell.
     }
 }
@@ -72,7 +72,7 @@ private struct CatalogRow: Identifiable {
         detail = description.joined(separator: "\n")
     }
 
-    init(result: VyonExSearchResult) {
+    init(result: ExcorSearchResult) {
         id = "\(result.kind)-\(result.id)"
         title = result.title ?? result.id
         subtitle = result.channelName ?? "YouTube Music"
@@ -96,7 +96,7 @@ private final class CatalogModel: ObservableObject {
     @Published private(set) var status = "Ready"
     @Published private(set) var isLoading = false
 
-    private let engine = VyonEx(host: IOSHost())
+    private let engine = Excor(host: IOSHost())
 
     init() { engine.initialize() }
 
@@ -204,7 +204,7 @@ struct ContentView: View {
 }
 
 @main
-struct VyonExIOSApp: App {
+struct ExcorIOSApp: App {
     var body: some Scene {
         WindowGroup { ContentView() }
     }

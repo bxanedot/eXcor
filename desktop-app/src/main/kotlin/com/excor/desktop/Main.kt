@@ -1,13 +1,13 @@
-package com.vyonex.desktop
+package com.excor.desktop
 
-import com.vyonex.MusicCatalogItem
-import com.vyonex.MusicCatalogKind
-import com.vyonex.VyonEx
-import com.vyonex.VyonExConfigStore
-import com.vyonex.VyonExHost
-import com.vyonex.VyonExLogLevel
-import com.vyonex.VyonExSession
-import com.vyonex.VyonExSearchResult
+import com.excor.MusicCatalogItem
+import com.excor.MusicCatalogKind
+import com.excor.Excor
+import com.excor.ExcorConfigStore
+import com.excor.ExcorHost
+import com.excor.ExcorLogLevel
+import com.excor.ExcorSession
+import com.excor.ExcorSearchResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -44,25 +44,25 @@ import javax.swing.ListSelectionModel
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 
-/** Desktop uses the existing VyonEx JVM implementation, not a second extractor. */
-private class DesktopHost : VyonExHost {
+/** Desktop uses the existing Excor JVM implementation, not a second extractor. */
+private class DesktopHost : ExcorHost {
     override val httpClient = OkHttpClient()
-    override val filesDir = File(System.getProperty("user.home"), ".vyonex").apply { mkdirs() }
+    override val filesDir = File(System.getProperty("user.home"), ".excor").apply { mkdirs() }
     private val values = mutableMapOf<String, String>()
-    override val configStore: VyonExConfigStore = object : VyonExConfigStore {
+    override val configStore: ExcorConfigStore = object : ExcorConfigStore {
         override val enabled: Boolean = false
         override fun getString(key: String) = values[key]
         override fun getLong(key: String) = values[key]?.toLongOrNull()
         override fun putString(key: String, value: String) { values[key] = value }
         override fun putLong(key: String, value: Long) { values[key] = value.toString() }
     }
-    override suspend fun session(): VyonExSession {
+    override suspend fun session(): ExcorSession {
         val locale = Locale.getDefault()
-        return VyonExSession(null, null, locale.country.ifEmpty { "US" }, locale.language.ifEmpty { "en" })
+        return ExcorSession(null, null, locale.country.ifEmpty { "US" }, locale.language.ifEmpty { "en" })
     }
     override fun nowMs(): Long = System.currentTimeMillis()
-    override fun log(level: VyonExLogLevel, message: String, trackId: String?) {
-        if (level == VyonExLogLevel.ERROR) System.err.println("VyonEx: $message")
+    override fun log(level: ExcorLogLevel, message: String, trackId: String?) {
+        if (level == ExcorLogLevel.ERROR) System.err.println("eXcor: $message")
     }
 }
 
@@ -87,7 +87,7 @@ private fun MusicCatalogItem.asEntry(): Entry {
         url, images.firstOrNull()?.url, lines.joinToString("\n"))
 }
 
-private fun VyonExSearchResult.asEntry(): Entry {
+private fun ExcorSearchResult.asEntry(): Entry {
     val url = when (kind.name) {
         "VIDEO" -> "https://www.youtube.com/watch?v=$id"
         "CHANNEL", "ARTIST" -> "https://www.youtube.com/channel/$id"
@@ -101,7 +101,7 @@ private fun VyonExSearchResult.asEntry(): Entry {
 
 private class Browser {
     private val host = DesktopHost()
-    private val engine = VyonEx(host).also { it.init() }
+    private val engine = Excor(host).also { it.init() }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val frame = JFrame("eXcor — shared music engine")
     private val mode = JComboBox(arrayOf(

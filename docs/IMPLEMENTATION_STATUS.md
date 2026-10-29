@@ -11,7 +11,7 @@ Updated 2026-10-29. This repository is in draft development; it is not a verifie
 | iOS main and test source compilation | Pass locally for `iosSimulatorArm64` targets; simulator execution still requires macOS |
 | Linux / Windows CI | Pass on PR #41 at commit `e11f038` |
 | macOS KMP / iOS / XCFramework CI | Previous run failed; local cross-target compile failures are fixed, macOS rerun pending |
-| Android app integration | Not working against the new root API; `:app-core:jvmTest` fails during compile on legacy `VyonEx*` imports |
+| Android app integration | Not working against the new root API; `:app-core:jvmTest` still fails because historical `Excor*` model signatures do not match the clean-room API |
 | Native Swift `eXcorKit` | Implemented on follow-up branch `rewrite-swift-additive`; no PR opened yet; macOS verification still required |
 | Clean-room source provenance | Recorded in the clean-room section of `PROVENANCE.md`; full repository and dependency audit remains open |
 

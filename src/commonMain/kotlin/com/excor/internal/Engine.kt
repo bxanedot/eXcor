@@ -1,0 +1,674 @@
+package com.excor.internal
+
+import com.excor.ExcorAudioCandidate
+import com.excor.ExcorCaptionFormat
+import com.excor.ExcorCaptionTrack
+import com.excor.ExcorChannel
+import com.excor.ExcorChannelPage
+import com.excor.ExcorChannelTab
+import com.excor.ExcorChapter
+import com.excor.ExcorCommentPage
+import com.excor.ExcorFormat
+import com.excor.ExcorFormats
+import com.excor.ExcorAlbum
+import com.excor.ExcorArtist
+import com.excor.ExcorHostServices
+import com.excor.ExcorListPage
+import com.excor.ExcorLogLevel
+import com.excor.ExcorManifest
+import com.excor.ExcorManifestKind
+import com.excor.ExcorLogLevel.DEBUG
+import com.excor.ExcorLogLevel.INFO
+import com.excor.ExcorLogLevel.WARN
+import com.excor.ExcorSession
+import com.excor.ExcorMetadata
+import com.excor.ExcorMix
+import com.excor.ExcorPlaylist
+import com.excor.ExcorPostPage
+import com.excor.ExcorSearchPage
+import com.excor.ExcorSink
+import com.excor.ExcorStream
+import com.excor.ExcorUnplayableException
+import com.excor.ExcorVideoStream
+import com.excor.urlFor
+import com.excor.internal.primary.extraction.TokenProvider
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.http.encodeURLParameter
+import io.ktor.http.isSuccess
+import io.ktor.utils.io.readBuffer
+import kotlinx.io.readByteArray
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.JsonPrimitive
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.update
+
+internal const val MAX_REMEMBERED = 64
+internal const val EXCLUSION_MS = 10 * 60 * 1000L
+// yt-dlp _video.py CHUNK_SIZE.
+internal const val DOWNLOAD_CHUNK_BYTES = 10L shl 20
+private val WATCH_PAGE_PROFILES = listOf("WEB", "WEB_WATCH_PAGE")
+// BCP 47 as YouTube's audio track IDs use it: "en", "es-US", "zh-Hans".
+private val LANGUAGE_CODE = Regex("""[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*""")
+
+/** Everything behind the platform `Excor` classes. */
+@OptIn(ExperimentalAtomicApi::class)
+internal class Engine(
+    private val host: ExcorHostServices,
+    private val tokenProvider: TokenProvider?,
+    private val http: HttpClient,
+    store: PlayerStore?,
+) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    internal val players = Players(http, store)
+    private val remembered = AtomicReference(emptyMap<String, ExcorStream>())
+    private val exclusions = AtomicReference(emptyMap<String, Long>())
+    internal val health = ClientHealth(host::nowMs)
+    // Each channel's tab params by tab path ("videos", "posts").
+    private val tabParams = AtomicReference(emptyMap<String, Map<String, String>>())
+    private val audioLanguage = AtomicReference<String?>(null)
+
+    /** The audio track to pick for videos with dubbed audio, by language code; null keeps the original track. */
+    fun preferAudioLanguage(code: String?) {
+        require(code == null || LANGUAGE_CODE.matches(code)) { "Excor: $code is not a language code" }
+        audioLanguage.store(code)
+    }
+
+    fun initialize() {
+        scope.launch {
+            delay(2_000)
+            warmUp()
+        }
+    }
+
+    /** Stops background work and frees the loaded player. The engine must not be used afterwards. */
+    fun close() {
+        scope.cancel()
+        // Under the players' lock, so a JS call in flight finishes first.
+        CoroutineScope(Dispatchers.Default).launch { players.close() }
+    }
+
+    fun onSessionChanged() {
+        remembered.store(emptyMap())
+        exclusions.store(emptyMap())
+        health.clear()
+        if (host.configStore.enabled) scope.launch { warmUp() }
+    }
+
+    private suspend fun warmUp() {
+        try {
+            val session = host.session()
+            players.current()
+            tokenProvider?.prewarm(session.cookie)
+            log(DEBUG, "warm-up done")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            log(WARN, "warm-up failed: ${e.describe()}")
+        }
+    }
+
+    /** Player API extraction. Throws when YouTube says the video cannot be played. */
+    suspend fun extract(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): ExcorStream? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val format = selectFormat(playableFormats(audioFormatsOf(pr, audioLanguage.load()), poToken, null, ::AudioFormat), maxKbps, requireM4a)
+            if (format == null) log(DEBUG, "${id.profileId} has no usable audio format", videoId)
+            format?.let { accept(videoId, it, pr, id.clientName, id.profileId, headers) }
+        }
+
+    /** A video stream and, for video-only formats, the audio to play with it. Throws like [extract]. */
+    suspend fun extractVideo(videoId: String, maxHeight: Int, skipClients: Set<String>, requireAvc: Boolean): ExcorVideoStream? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val audio = selectFormat(playableFormats(audioFormatsOf(pr, audioLanguage.load()), poToken, null, ::AudioFormat), 160, requireAvc)
+            val videos = playableFormats(videoFormatsOf(pr), poToken, null, ::VideoFormat)
+            // Video-only formats need an audio track; without one only combined formats can play.
+            val video = selectVideo(if (audio == null) videos.filter { it.muxed } else videos, maxHeight, requireAvc)
+            if (video == null) {
+                log(DEBUG, "${id.profileId} has no usable video format", videoId)
+                return@viaIdentities null
+            }
+            if (!answers(video.url, headers, videoId, id.profileId)) return@viaIdentities null
+            val audioStream = if (video.muxed) null else accept(videoId, audio!!, pr, id.clientName, id.profileId, headers) ?: return@viaIdentities null
+            log(INFO, "chose ${id.profileId} video itag ${video.itag} (${video.width}x${video.height}@${video.fps}, ${video.mimeType})", videoId)
+            // Remembered like audio streams, so headersFor and onRefused work for the video URL too.
+            remember(ExcorStream(videoId, video.url, video.bitrate / 1000, video.mimeType, null, id.clientName, id.profileId, headers))
+            ExcorVideoStream(
+                videoId, video.url, video.width, video.height, video.fps, video.bitrate / 1000, video.mimeType,
+                audioStream, id.clientName, id.profileId, headers,
+            )
+        }
+
+    /** Every playable format of the first identity whose URLs answer, for downloads. Throws like [extract]. */
+    suspend fun formats(videoId: String, skipClients: Set<String>): ExcorFormats? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val all = playableFormats(audioFormatsOf(pr, audioLanguage.load()) + videoFormatsOf(pr), poToken, null, ::formatOf)
+            if (all.isEmpty()) log(DEBUG, "${id.profileId} has no usable format", videoId)
+            // One probe stands for the list: a response's formats share its signature and address checks.
+            all.firstOrNull()?.takeIf { answers(it.url, headers, videoId, id.profileId) }
+                ?.let { ExcorFormats(videoId, all, id.clientName, id.profileId, headers) }
+        }
+
+    /**
+     * The manifest a client offers for [videoId]: HLS when there is one (yt-dlp skips DASH while a stream is live),
+     * else DASH. Its n challenge is solved, a PO token added where the client needs one, and the manifest fetched to
+     * see it is one; a client whose manifest does not answer is excluded, as a refused stream URL is.
+     */
+    suspend fun manifest(videoId: String, skipClients: Set<String>): ExcorManifest? =
+        viaIdentities(videoId, skipClients) { id, pr, poToken, headers ->
+            val data = pr["streamingData"]
+            val (kind, raw) = listOf(ExcorManifestKind.HLS to "hlsManifestUrl", ExcorManifestKind.DASH to "dashManifestUrl")
+                .firstNotNullOfOrNull { (kind, key) -> data.at(key).str?.let { kind to it } }
+                ?: return@viaIdentities null.also { log(DEBUG, "${id.profileId} offers no manifest", videoId) }
+            val url = manifestUrlOf(raw, poToken) { players.current().js.solve("n", it) }.takeIf(::isAllowedManifestUrl)
+                ?: return@viaIdentities null.also { log(WARN, "${id.profileId} manifest is not a googlevideo manifest", videoId) }
+            if (!manifestAnswers(url, kind, headers, videoId, id.profileId)) return@viaIdentities null
+            ExcorManifest(videoId, kind, url, headers, id.profileId, isLive = pr.at("videoDetails", "isLive").bool == true)
+        }
+
+    /** Like [answers] for a manifest: a 200 whose first kilobyte is a manifest of [kind]. */
+    private suspend fun manifestAnswers(url: String, kind: ExcorManifestKind, headers: Map<String, String>, videoId: String, profileId: String): Boolean {
+        val refusal = http.prepareGet(url) { headers.forEach { (name, value) -> header(name, value) } }.execute { response ->
+            when {
+                response.status != HttpStatusCode.OK -> "HTTP ${response.status.value}"
+                !isManifest(kind, response.bodyAsChannel().readBuffer(1024L).readByteArray().decodeToString()) -> "not a $kind manifest"
+                else -> null
+            }
+        }
+        if (refusal == null) return true
+        log(WARN, "$profileId manifest refused ($refusal)", videoId)
+        exclude(videoId, profileId)
+        return false
+    }
+
+    /**
+     * A video's chapters as yt-dlp finds them: the watch-next response's player bar or chapters panel, else
+     * timestamps in the description. Both are checked against the video's duration, so the player is asked too.
+     */
+    suspend fun chapters(videoId: String): List<ExcorChapter> {
+        val info = metadata(videoId) ?: return emptyList()
+        val duration = info.durationSeconds?.toDouble()
+        return chaptersOfNext(innertube("next") { put("videoId", videoId) }, duration).ifEmpty { chaptersOfDescription(info.description, duration) }
+    }
+
+    /**
+     * The first page of a video's comments, top first or [newestFirst]; empty when its comments are off. Two requests:
+     * the watch-next response names the comment section, which is then asked for (three for newest first).
+     */
+    suspend fun comments(videoId: String, newestFirst: Boolean): ExcorCommentPage {
+        val token = commentsTokenOf(innertube("next") { put("videoId", videoId) }) ?: return ExcorCommentPage(emptyList(), null, null)
+        val top = innertube("next") { put("continuation", token) }
+        val newest = if (newestFirst) newestFirstTokenOf(top) else null
+        return commentPageOf(if (newest != null) innertube("next") { put("continuation", newest) } else top)
+    }
+
+    /** The next page of comments, or a comment's replies (its [ExcorComment.repliesContinuation]). */
+    suspend fun commentsMore(continuation: String): ExcorCommentPage = commentPageOf(innertube("next") { put("continuation", continuation) })
+
+    /** The text of [track] in [format], translated into [translateTo] when given. */
+    suspend fun captionText(track: ExcorCaptionTrack, format: ExcorCaptionFormat, translateTo: String?): String {
+        val url = track.urlFor(format, translateTo)
+        require(url.startsWith("$YT_ORIGIN/api/timedtext?")) { "Excor: not a YouTube caption URL" }
+        return http.text(url) { header(HttpHeaders.UserAgent, DESKTOP_UA) }
+    }
+
+    /**
+     * Writes [format] to [sink] from byte [from] in ranged requests of [chunkBytes], as yt-dlp does (YouTube slows
+     * long single requests), and returns the position reached. A refused request throws: list the formats again
+     * and resume from the bytes already written.
+     */
+    suspend fun download(
+        format: ExcorFormat,
+        headers: Map<String, String>,
+        sink: ExcorSink,
+        from: Long,
+        onProgress: ((Long, Long?) -> Unit)?,
+        chunkBytes: Long = DOWNLOAD_CHUNK_BYTES,
+    ): Long {
+        require(isAllowedUrl(format.url)) { "Excor: not a YouTube media URL" }
+        var position = from
+        var total = format.contentLength
+        while (total == null || position < total) {
+            val last = (position + chunkBytes - 1).let { if (total != null) minOf(it, total - 1) else it }
+            val response = http.get(format.url) {
+                headers.forEach { (name, value) -> header(name, value) }
+                header(HttpHeaders.Range, "bytes=$position-$last")
+            }
+            // A 200 is the whole file, which is only right when starting from the beginning.
+            val whole = response.status == HttpStatusCode.OK && position == 0L
+            check(response.status == HttpStatusCode.PartialContent || whole) { "Excor: download refused (HTTP ${response.status.value})" }
+            total = total ?: response.headers[HttpHeaders.ContentRange]?.substringAfterLast('/')?.toLongOrNull()
+            val bytes = response.bodyAsBytes()
+            sink.write(bytes)
+            position += bytes.size
+            onProgress?.invoke(position, total)
+            if (whole || bytes.isEmpty() || (total == null && bytes.size < chunkBytes)) break
+        }
+        return position
+    }
+
+    /** Everything YouTube says about the video: WEB reports the most (microformat), VISIONOS needs no player script. */
+    suspend fun metadata(videoId: String): ExcorMetadata? {
+        val session = host.session()
+        for (id in listOf("WEB", "VISIONOS").map(::identity)) {
+            try {
+                // Cookies go only to clients that take them.
+                val asked = if (id.supportsCookies) session else session.copy(cookie = null)
+                val pr = playerResponse(id, videoId, asked, session.visitorData, null, isLoggedIn(asked.cookie))
+                if (pr["videoDetails"] != null) return metadataOf(videoId, pr)
+                log(DEBUG, "${id.profileId} has no video details (${pr.at("playabilityStatus", "status").str})", videoId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                log(WARN, "${id.profileId} metadata failed: ${e.describe()}", videoId)
+            }
+        }
+        return null
+    }
+
+    /**
+     * Tries the identities in order, one player request each, until [pick] returns a result.
+     * Throws when YouTube said the video cannot be played and nothing was found.
+     */
+    private suspend fun <T : Any> viaIdentities(
+        videoId: String,
+        skipClients: Set<String>,
+        pick: suspend (id: Identity, pr: JsonObject, poToken: String?, headers: Map<String, String>) -> T?,
+    ): T? {
+        val session = host.session()
+        val loggedIn = isLoggedIn(session.cookie)
+        var visitorData = session.visitorData
+        var unplayable: ExcorUnplayableException? = null
+        for (id in health.ordered(if (loggedIn) LOGGED_IN_ORDER else LOGGED_OUT_ORDER)) {
+            if (id.profileId in skipClients || id.clientName in skipClients || isExcluded(videoId, id.profileId)) continue
+            try {
+                val token = if (id.needsPoToken) {
+                    val provider = tokenProvider ?: continue
+                    provider.getPoToken(videoId, visitorData ?: continue, session.cookie) ?: continue
+                } else {
+                    null
+                }
+                val pr = playerResponse(id, videoId, session, token?.visitorData ?: visitorData, token?.playerRequestToken, loggedIn)
+                visitorData = visitorData ?: pr.at("responseContext", "visitorData").str
+                val refusal = unplayableOf(videoId, pr)
+                if (refusal != null) {
+                    unplayable = unplayable ?: refusal
+                    log(DEBUG, "${id.profileId} refused (${refusal.status}: ${refusal.youtubeReason})", videoId)
+                    continue
+                }
+                pick(id, pr, token?.streamingDataToken, mediaHeaders(id.userAgent, session))?.let {
+                    health.succeeded(id.profileId)
+                    return it
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                log(WARN, "${id.profileId} failed: ${e.describe()}", videoId)
+                health.failed(id.profileId)
+            }
+        }
+        unplayable?.let { throw it }
+        return null
+    }
+
+    /** The iOS `extract`: the player API first, then the watch page; YouTube's refusal stands if neither plays. */
+    suspend fun extractOrWatchPage(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): ExcorStream? {
+        var refusal: ExcorUnplayableException? = null
+        val primary = try {
+            extract(videoId, maxKbps, skipClients, requireM4a)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            refusal = e as? ExcorUnplayableException
+            log(INFO, "player API failed, trying the watch page: ${e.describe()}", videoId)
+            null
+        }
+        return primary ?: watchPageStream(videoId, maxKbps, skipClients, requireM4a) ?: refusal?.let { throw it }
+    }
+
+    suspend fun watchPageStream(videoId: String, maxKbps: Int, skipClients: Set<String>, requireM4a: Boolean): ExcorStream? {
+        if (WATCH_PAGE_PROFILES.any { it in skipClients || isExcluded(videoId, it) }) return null
+        return try {
+            val session = host.session()
+            val (pr, formats) = watchPage(videoId, session) ?: return null
+            val format = selectFormat(formats, maxKbps, requireM4a) ?: return null
+            accept(videoId, format, pr, "WEB", "WEB_WATCH_PAGE", watchHeaders(session))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            log(WARN, "watch page failed: ${e.describe()}", videoId)
+            null
+        }
+    }
+
+    suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> = try {
+        watchPage(videoId, host.session())?.second.orEmpty().map {
+            ExcorAudioCandidate(it.url, (it.averageBitrate ?: it.bitrate) / 1000, it.mimeType, audioFormatOf(it.mimeType))
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        log(WARN, "audio candidates failed: ${e.describe()}", videoId)
+        emptyList()
+    }
+
+    /** A playlist and its first page; null when YouTube shows no such playlist (missing or private). */
+    suspend fun playlist(playlistId: String): ExcorPlaylist? {
+        // yt-dlp: a mix is not a playlist page; it is read from the watch-next endpoint instead.
+        require(!playlistId.startsWith("RD")) { "Excor: $playlistId is a mix, not a playlist" }
+        return playlistOf(playlistId, innertube("browse") { put("browseId", "VL$playlistId") })
+    }
+
+    suspend fun playlistMore(continuation: String): ExcorListPage = continuationPageOf(innertube("browse") { put("continuation", continuation) })
+
+    /** A YouTube Music album page; null when YouTube shows no such album. */
+    suspend fun album(browseId: String): ExcorAlbum? {
+        require(browseId.startsWith("MPREb_")) { "Excor: $browseId is not an album page" }
+        return albumOf(browseId, innertube("browse", MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", browseId) })
+    }
+
+    /** A YouTube Music artist page; null when YouTube shows no artist for the channel. */
+    /** A channel's page, logged out; its tabs' `params` are kept for [channelTab]. Null when there is no such channel. */
+    suspend fun channel(channelId: String): ExcorChannel? {
+        require(channelId.startsWith("UC")) { "Excor: $channelId is not a channel ID" }
+        val response = innertube("browse") { put("browseId", channelId) }
+        val params = channelTabPathsOf(response)
+        tabParams.update { all -> (if (all.size >= MAX_REMEMBERED) emptyMap() else all) + (channelId to params) }
+        return channelOf(response)
+    }
+
+    /**
+     * The first page of a channel [tab]; empty when the channel has no such tab. The tab is asked for with the
+     * `params` its channel page gives (one more request the first time, for the channel page).
+     */
+    suspend fun channelTab(channelId: String, tab: ExcorChannelTab): ExcorChannelPage {
+        val params = tabParamsOf(channelId, tab.path) ?: return ExcorChannelPage(emptyList(), null)
+        return channelPageOf(innertube("browse") { put("browseId", channelId); put("params", params) })
+    }
+
+    /** The first page of a channel's community posts; empty when it has no Posts tab. */
+    suspend fun channelPosts(channelId: String): ExcorPostPage {
+        val params = tabParamsOf(channelId, "posts") ?: return ExcorPostPage(emptyList(), null)
+        return postPageOf(innertube("browse") { put("browseId", channelId); put("params", params) })
+    }
+
+    suspend fun channelPostsMore(continuation: String): ExcorPostPage = postPageMoreOf(innertube("browse") { put("continuation", continuation) })
+
+    /** The params of a channel's tab at [path], from its channel page (asked for once, then kept). */
+    private suspend fun tabParamsOf(channelId: String, path: String): String? =
+        tabParams.load()[channelId]?.get(path) ?: run { channel(channelId); tabParams.load()[channelId]?.get(path) }
+
+    suspend fun channelTabMore(continuation: String): ExcorChannelPage = channelPageMoreOf(innertube("browse") { put("continuation", continuation) })
+
+    suspend fun artist(channelId: String): ExcorArtist? {
+        require(channelId.startsWith("UC")) { "Excor: $channelId is not a channel ID" }
+        return artistOf(channelId, innertube("browse", MUSIC_WEB, MUSIC_ORIGIN) { put("browseId", channelId) })
+    }
+
+    /** A mix (`RD…`) and its first videos; [videoId] picks where it starts (a video's own mix, RD + ID, starts there). */
+    suspend fun mix(playlistId: String, videoId: String? = null): ExcorMix? {
+        require(playlistId.startsWith("RD")) { "Excor: $playlistId is not a mix" }
+        val seed = videoId ?: playlistId.removePrefix("RD").takeIf { it.length == 11 }
+        return mixOf(innertube("next") { put("playlistId", playlistId); seed?.let { put("videoId", it) } })
+    }
+
+    /** The mix's next videos, from the previous page's continuation. */
+    suspend fun mixMore(continuation: String): ExcorListPage {
+        val parts = continuation.split(' ')
+        require(parts.size == 4 && parts[0].startsWith("RD") && parts[2].toIntOrNull() != null) { "Excor: not a mix continuation" }
+        val (playlistId, videoId, index, params) = parts
+        return mixMoreOf(
+            innertube("next") { put("playlistId", playlistId); put("videoId", videoId); put("index", index.toInt()); put("params", params) },
+            after = videoId,
+        )
+    }
+
+    /** The videos YouTube shows beside [videoId] (its "up next" recommendations, logged out). */
+    suspend fun related(videoId: String): ExcorListPage = relatedOf(innertube("next") { put("videoId", videoId) })
+
+    suspend fun relatedMore(continuation: String): ExcorListPage = continuationPageOf(innertube("next") { put("continuation", continuation) })
+
+    /** YouTube's search results for [query] (videos, playlists and channels), logged out; [params] are a filter's. */
+    suspend fun search(query: String, params: String? = null): ExcorSearchPage {
+        require(query.isNotBlank()) { "Excor: empty search" }
+        return webSearchOf(innertube("search") { put("query", query); params?.let { put("params", it) } })
+    }
+
+    /** What YouTube's search box suggests for [query], asked as it asks (`SBOX_SETTINGS` of YouTube's page). */
+    suspend fun suggestions(query: String): List<String> {
+        if (query.isBlank()) return emptyList()
+        val session = host.session()
+        // ie/oe: without them the answer is in the language's legacy charset (Shift_JIS for Japanese).
+        val url = "https://suggestqueries-clients6.youtube.com/complete/search?ds=yt&client=youtube" +
+            "&hl=${session.language.encodeURLParameter()}&gl=${session.region.lowercase().encodeURLParameter()}" +
+            "&q=${query.encodeURLParameter()}&xhr=t&ie=utf-8&oe=utf-8"
+        return suggestionsOf(http.text(url) { header(HttpHeaders.UserAgent, DESKTOP_UA) })
+    }
+
+    suspend fun searchMore(continuation: String): ExcorSearchPage = webSearchMoreOf(innertube("search") { put("continuation", continuation) })
+
+    /** YouTube Music's top results for [query]: songs, videos, albums, artists and playlists, logged out. */
+    suspend fun searchMusic(query: String): ExcorSearchPage {
+        require(query.isNotBlank()) { "Excor: empty search" }
+        return musicSearchOf(innertube("search", MUSIC_WEB, MUSIC_ORIGIN) { put("query", query) })
+    }
+
+    /** A logged-out InnerTube call (WEB unless told otherwise): no cookie is sent, so lists are the public ones. */
+    private suspend fun innertube(
+        endpoint: String,
+        id: Identity = identity("WEB"),
+        origin: String = YT_ORIGIN,
+        fields: JsonObjectBuilder.() -> Unit,
+    ): JsonObject {
+        val session = host.session()
+        val response = http.post("$origin/youtubei/v1/$endpoint?prettyPrint=false") {
+            contentType(ContentType.Application.Json)
+            setBody(innertubeBody(id, session, fields))
+            header(HttpHeaders.UserAgent, id.userAgent)
+            header("X-YouTube-Client-Name", id.clientId.toString())
+            header("X-YouTube-Client-Version", id.clientVersion)
+            header(HttpHeaders.Origin, origin)
+            session.visitorData?.let { header("X-Goog-Visitor-Id", it) }
+        }
+        check(response.status.isSuccess()) { "Excor: $endpoint HTTP ${response.status.value}" }
+        return Json.parseToJsonElement(response.bodyAsText()).jsonObject
+    }
+
+    fun headersFor(url: String): Map<String, String>? = remembered.load()[url]?.headers
+
+    fun onRefused(url: String): String? {
+        var hit: ExcorStream? = null
+        remembered.update { streams ->
+            hit = streams[url]
+            streams - url
+        }
+        val refused = hit ?: return null
+        exclude(refused.videoId, refused.profileId)
+        scope.launch { players.invalidate() }
+        return refused.videoId
+    }
+
+    fun exclude(videoId: String, profileId: String) {
+        log(WARN, "excluding $profileId for 10 minutes", videoId)
+        health.failed(profileId)
+        val now = host.nowMs()
+        exclusions.update { all -> all.filterValues { it > now } + ("$videoId/$profileId" to now + EXCLUSION_MS) }
+    }
+
+    internal fun isExcluded(videoId: String, profileId: String) =
+        (exclusions.load()["$videoId/$profileId"] ?: 0) > host.nowMs()
+
+    internal fun remember(stream: ExcorStream): ExcorStream {
+        remembered.update { streams ->
+            (if (streams.size >= MAX_REMEMBERED && stream.url !in streams) emptyMap() else streams) + (stream.url to stream)
+        }
+        return stream
+    }
+
+    private suspend fun playerResponse(
+        id: Identity,
+        videoId: String,
+        session: ExcorSession,
+        visitorData: String?,
+        poToken: String?,
+        loggedIn: Boolean,
+    ): JsonObject {
+        val sts = if (id.needsPlayerJs) players.current().sts else null
+        val response = http.post("$YT_ORIGIN/youtubei/v1/player?prettyPrint=false") {
+            contentType(ContentType.Application.Json)
+            setBody(playerRequestBody(id, videoId, session, visitorData, sts, poToken))
+            header(HttpHeaders.UserAgent, id.userAgent)
+            header("X-YouTube-Client-Name", id.clientId.toString())
+            header("X-YouTube-Client-Version", id.clientVersion)
+            header(HttpHeaders.Origin, YT_ORIGIN)
+            if (visitorData != null) header("X-Goog-Visitor-Id", visitorData)
+            session.cookie?.let { cookie ->
+                header(HttpHeaders.Cookie, cookie)
+                if (loggedIn) {
+                    sidAuthorization(cookie, host.nowMs())?.let { header(HttpHeaders.Authorization, it) }
+                    header("X-Origin", YT_ORIGIN)
+                }
+            }
+        }
+        check(response.status.isSuccess()) { "player API HTTP ${response.status.value}" }
+        return Json.parseToJsonElement(response.bodyAsText()).jsonObject
+    }
+
+    private suspend fun watchPage(videoId: String, session: ExcorSession): Pair<JsonObject, List<AudioFormat>>? {
+        val url = "$YT_ORIGIN/watch?v=${videoId.encodeURLParameter()}" +
+            "&hl=${session.language.encodeURLParameter()}&gl=${session.region.encodeURLParameter()}"
+        val html = http.text(url) {
+            watchHeaders(session).forEach { (name, value) -> header(name, value) }
+            // Non-login cookies (consent) still matter for the page itself.
+            session.cookie?.let { header(HttpHeaders.Cookie, it) }
+        }
+        val page = parseWatchPage(html) ?: return null
+        if (page.playerResponse.at("playabilityStatus", "status").str != "OK") return null
+        return page.playerResponse to playableFormats(audioFormatsOf(page.playerResponse, audioLanguage.load()), null, page.playerId, ::AudioFormat)
+    }
+
+    private suspend fun <F> playableFormats(
+        formats: List<JsonObject>,
+        poToken: String?,
+        playerId: String?,
+        make: (JsonObject, String) -> F,
+    ): List<F> =
+        formats.mapNotNull { json ->
+            val url = try {
+                playableUrl(json) { type, challenge ->
+                    (if (playerId != null) players.get(playerId) else players.current()).js.solve(type, challenge)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                log(DEBUG, "could not decode itag ${json["itag"].str}: ${e.describe()}")
+                null
+            }
+            val full = if (url != null && poToken != null) "$url&pot=${poToken.encodeURLParameter()}" else url
+            full?.takeIf(::isAllowedUrl)?.let { make(json, it) }
+        }
+
+    /**
+     * BRIEF 4.2 only counts a format "whose URL works", so the URL is probed for one byte with the
+     * stream's own headers, and only a ranged answer counts ([probeRefusal]). The answer is streamed
+     * and its body never read: a server ignoring the range would otherwise send the whole file. A
+     * refusal excludes the profile, as onRefused would.
+     */
+    private suspend fun answers(url: String, headers: Map<String, String>, videoId: String, profileId: String): Boolean {
+        val refusal = http.prepareGet(url) {
+            headers.forEach { (name, value) -> header(name, value) }
+            header(HttpHeaders.Range, "bytes=0-0")
+        }.execute { probeRefusal(it.status, it.headers[HttpHeaders.ContentRange], it.headers[HttpHeaders.ContentType]) }
+        if (refusal == null) return true
+        log(WARN, "$profileId URL refused ($refusal)", videoId)
+        exclude(videoId, profileId)
+        return false
+    }
+
+    /** The audio stream for [format] once its URL answers, remembered for headersFor and onRefused. */
+    private suspend fun accept(
+        videoId: String,
+        format: AudioFormat,
+        pr: JsonObject,
+        clientName: String,
+        profileId: String,
+        headers: Map<String, String>,
+    ): ExcorStream? {
+        if (!answers(format.url, headers, videoId, profileId)) return null
+        log(INFO, "chose $profileId itag ${format.itag} (${format.mimeType}, ${format.bitrate / 1000} kbps)", videoId)
+        return remember(
+            ExcorStream(
+                videoId = videoId,
+                url = format.url,
+                kbps = format.bitrate / 1000,
+                mimeType = format.mimeType,
+                // Formats carry their own value (enablePerFormatLoudness); VISIONOS has no response-wide one.
+                loudnessDb = format.loudnessDb ?: (pr.at("playerConfig", "audioConfig", "loudnessDb") as? JsonPrimitive)?.doubleOrNull,
+                clientName = clientName,
+                profileId = profileId,
+                headers = headers,
+            ),
+        )
+    }
+
+    private fun mediaHeaders(userAgent: String, session: ExcorSession) = buildMap {
+        put("User-Agent", userAgent)
+        if (isLoggedIn(session.cookie)) put("Cookie", session.cookie!!)
+    }
+
+    private fun watchHeaders(session: ExcorSession) = buildMap {
+        put("User-Agent", DESKTOP_UA)
+        put("Accept", "*/*")
+        put("Accept-Language", "${session.language}-${session.region},${session.language};q=0.9")
+        put("Referer", "$YT_ORIGIN/")
+        put("Origin", YT_ORIGIN)
+        if (isLoggedIn(session.cookie)) put("Cookie", session.cookie!!)
+    }
+
+    private fun log(level: ExcorLogLevel, message: String, trackId: String? = null) =
+        host.log(level, "Excor: $message", trackId)
+}
+
+private fun Throwable.describe() = "${this::class.simpleName}: $message"
+
+private val FIRST_BYTE = Regex("""bytes 0-0/(\d+)""")
+
+/**
+ * Why a probe's answer does not count, or null when it does: a 206 for exactly the first byte of a
+ * file that has bytes. A 200 means the range was ignored, and an error or block page (HTML, JSON,
+ * text) can come back with a success status. Media types are not checked one by one, so an
+ * unexpected but real media type still counts.
+ */
+internal fun probeRefusal(status: HttpStatusCode, contentRange: String?, contentType: String?): String? {
+    val type = contentType?.substringBefore(';')?.trim()?.lowercase()
+    return when {
+        status != HttpStatusCode.PartialContent -> "HTTP ${status.value}"
+        (FIRST_BYTE.matchEntire(contentRange?.trim().orEmpty())?.groupValues?.get(1)?.toLongOrNull() ?: 0) <= 0 ->
+            "range not honoured: ${contentRange ?: "no Content-Range"}"
+        type != null && (type.startsWith("text/") || type == "application/json") -> "not media: $type"
+        else -> null
+    }
+}
