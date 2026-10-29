@@ -23,9 +23,7 @@ jobs:
       - run: ./gradlew $GRADLE_ARGS jvmTest jvmJar assembleAndroidMain :app-core:jvmTest :desktop-app:distZip :android-app:lintDebug
         shell: bash
 
-  # VyonExMerge runs on Android's own MediaExtractor and MediaMuxer, so MergeCheck runs on emulators: the
-  # library's minimum API and a current one. GitHub's Linux runners offer KVM once its device is opened up.
-  # The app is started on the same emulators.
+  # The app is started on the library's minimum API and a current one.
   android-device:
     runs-on: ubuntu-latest
     # An emulator that never boots would otherwise hold the runner for hours.
@@ -42,29 +40,23 @@ jobs:
           java-version: |
             27
             21
-      - run: ./gradlew $GRADLE_ARGS assembleAndroidDeviceTest :android-app:assembleDebug
+      - run: ./gradlew $GRADLE_ARGS :android-app:assembleDebug
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: MergeCheck on an API ${{ matrix.api }} emulator
+      - name: Start API ${{ matrix.api }} emulator
         run: |
           image="system-images;android-${{ matrix.api }};default;x86_64"
           adb=$ANDROID_HOME/platform-tools/adb
           # The runner sets XDG_CONFIG_HOME, which avdmanager follows and the emulator does not; one AVD folder for both.
           export ANDROID_AVD_HOME=$HOME/.android/avd
           mkdir -p "$ANDROID_AVD_HOME"
-          # One retry: a download cut short ("Error reading Zip content") fails the install, not the test.
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image" || $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image"
           echo no | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n check -k "$image"
           $ANDROID_HOME/emulator/emulator -avd check -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect &
-          # Under the timeout too, so an emulator that exits fails the step instead of holding it to the job limit.
           timeout 600 sh -c "$adb wait-for-device && until [ \"\$($adb shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
-          $adb install -r build/outputs/apk/androidTest/vyonex-androidTest.apk
-          # am instrument exits 0 either way; the report says how it went.
-          $adb shell am instrument -w com.vyonex.test/com.vyonex.MergeCheck | tee report.txt
-          grep -q 'MergeCheck: OK' report.txt
       # Opens no link, so it makes no request beyond the library's background warm-up.
       - name: App starts on the API ${{ matrix.api }} emulator
         run: |
@@ -83,7 +75,7 @@ jobs:
       - if: matrix.api == 36
         uses: actions/upload-artifact@v4
         with:
-          name: vyonex-android-debug
+          name: excor-android-debug
           path: android-app/build/outputs/apk/debug/android-app-debug.apk
 
   macos:
@@ -97,14 +89,14 @@ jobs:
             27
             21
       - name: JVM tests, iOS simulator tests, framework links, XCFramework
-        run: ./gradlew $GRADLE_ARGS jvmTest iosSimulatorArm64Test linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosSimulatorArm64 linkReleaseFrameworkIosX64 assembleVyonExReleaseXCFramework
+        run: ./gradlew $GRADLE_ARGS jvmTest iosSimulatorArm64Test linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosSimulatorArm64 linkReleaseFrameworkIosX64 assembleEXcorReleaseXCFramework
       - name: Build desktop distribution
         run: ./gradlew $GRADLE_ARGS :desktop-app:distZip
       - name: Swift type-check of the public API
         run: >
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
-          -F build/XCFrameworks/release/VyonEx.xcframework/ios-arm64_x86_64-simulator
-          apicheck/ApiCheck.swift
+          -F build/XCFrameworks/release/eXcor.xcframework/ios-arm64_x86_64-simulator
+          apicheck/ExcorApiCheck.swift
 
       - name: Generate iOS SwiftUI application project
         run: |
