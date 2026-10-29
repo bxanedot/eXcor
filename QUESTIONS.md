@@ -1,4 +1,6 @@
-# Open questions
+# eXcor open questions
+
+> Historical VyonEx names in the items below refer to the earlier API, fixtures or test harness. The clean-room deliverables use eXcor naming per the amendment in `BRIEF.md`.
 
 Each item names the reading chosen; nothing was looked up in the old code.
 
@@ -536,3 +538,11 @@ Each item names the reading chosen; nothing was looked up in the old code.
     about 20 calls a minute; a refusal throws with its HTTP status. Its terms say promotional content
     (previews, album art) is only to promote store content: what an app shows or saves is the app's
     call, not a clearance given here.
+
+## Clean-room eXcor items (2026-10-28)
+
+1. **Live capture blocked by this cloud network.** A direct request to `https://www.youtube.com/watch?v=dQw4w9WgXcQ` failed with `CONNECT tunnel failed, response 403` before receiving an HTTP response. No live watch page or player script was captured, and the opt-in live playback checks were not run. Offline tests use explicitly synthetic fixtures authored for this rewrite. Re-run capture and `EXCOR_LIVE=1` tests from a network that permits YouTube before release.
+2. **Amended section 5 features need API contracts.** Video formats, captions, links, playlists, albums, mixes, metadata, search and downloads were added to section 5, but section 3 defines only the video-ID-to-audio-stream API. This implementation follows the smallest defined API and does not invent public signatures for those additions. Specify their public types and behavior before they are added.
+3. **Swift deliverable is an explicit owner-request override.** Section 8 says the old `VyonExKit` was withdrawn, while the current task explicitly asks for a native Swift package. The new package uses the requested name `eXcorKit` and remains separate from the Kotlin XCFramework.
+4. **Naming follows the owner's rename.** The new API/package/artifact use `com.excor`, `Excor*`, `eXcor` and `eXcorKit` instead of the historical `VyonEx` names in the brief. The existing tracked application files are preserved; only the new clean-room deliverables and their build/CI metadata are renamed.
+5. **Ponytail ultra unavailable here.** The `ponytail:ponytail` skill is not present in the available skill catalog. The implementation continues under the user's ultra-style constraints; each PR description will disclose this.
