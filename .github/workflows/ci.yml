@@ -59,7 +59,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Swift package tests
-        run: swift test
+        shell: bash
+        run: |
+          set +e
+          swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
+          result=${PIPESTATUS[0]}
+          if [ "$result" -ne 0 ]; then
+            {
+              echo '### Swift test failure output'
+              echo '```text'
+              tail -n 100 "$RUNNER_TEMP/swift-test.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$result"
         working-directory: swift
       - name: Swift package iOS Simulator build
         run: xcodebuild -scheme eXcorKit -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
