@@ -71,6 +71,8 @@ jobs:
               tail -n 100 "$RUNNER_TEMP/swift-test.log"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
+            details=$(tail -n 40 "$RUNNER_TEMP/swift-test.log" | python3 -c 'import sys; print(sys.stdin.read().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"), end="")')
+            printf '::error title=Swift test log::%s\n' "$details"
           fi
           exit "$result"
         working-directory: swift
