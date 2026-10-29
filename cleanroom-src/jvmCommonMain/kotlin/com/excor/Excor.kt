@@ -1,5 +1,6 @@
 package com.excor
 
+import com.excor.catalog.ExcorMusicCatalog
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
@@ -25,6 +26,7 @@ class Excor(host: ExcorHost) {
             }
         }
     }
+    val musicCatalog = ExcorMusicCatalog(client, host.catalogTokenProvider)
     private val engine = ExcorEngine(
         host = host,
         tokenProvider = host.tokenProvider,

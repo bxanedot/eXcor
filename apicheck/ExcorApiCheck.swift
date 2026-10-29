@@ -1,7 +1,9 @@
 import eXcor
 
 func compileExcorAPI(host: ExcorHost) async throws {
+    _ = host.catalogTokenProvider
     let library = Excor(host: host)
+    _ = library.musicCatalog
     library.initialize()
     library.initializeFallback()
     let _: [ExcorAudioCandidate] = try await library.audioCandidates(videoId: "abcdefghijk")

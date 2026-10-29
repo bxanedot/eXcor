@@ -1,30 +1,35 @@
 # eXcor implementation status
 
-Updated 2026-10-29. This repository is in draft development; it is not a verified multi-platform release. The native compile fixes below are local and await a fresh macOS CI run.
+Updated 2026-10-29 for `feature/catalog-metadata`, based on `main` at `e12ba98e6fd57c7d53ea8557197e7365d04da664`. This repository remains a draft SDK, not a finished multi-provider product or verified public release.
 
-## Deliverables
+## Current deliverables
 
 | Deliverable | State |
 |---|---|
-| Clean-room Kotlin API and audio engine | Implemented in `cleanroom-src/`; PR #41 is open |
-| Offline Kotlin JVM tests | Pass locally with JDK 27 (`:jvmTest`) |
-| iOS main and test source compilation | Pass locally for `iosSimulatorArm64` targets; simulator execution still requires macOS |
-| Linux / Windows CI | Pass on PR #41 at commit `e11f038` |
-| macOS KMP / iOS / XCFramework CI | Previous run failed; local cross-target compile failures are fixed, macOS rerun pending |
-| Android app integration | Not working against the new root API; `:app-core:jvmTest` still fails because historical `Excor*` model signatures do not match the clean-room API |
-| Native Swift `eXcorKit` | Implemented on follow-up branch `rewrite-swift-additive`; no PR opened yet; macOS verification still required |
-| Clean-room source provenance | Recorded in the clean-room section of `PROVENANCE.md`; full repository and dependency audit remains open |
+| Clean-room Kotlin YouTube audio engine | Implemented in `cleanroom-src/`; additive API and offline tests are present |
+| Native Swift `eXcorKit` YouTube engine | Implemented under `swift/`; separate from the Kotlin framework |
+| Linux / Windows / macOS CI | Green for `feature/catalog-metadata`; [workflow run 40968192280](https://github.com/bxanedot/eXcor/actions/runs/40968192280) |
+| Android app integration | Not complete; preserved app modules are not integrated with the root clean-room API |
+| Shared catalog models and provider capability API | Experimental Kotlin API on `feature/catalog-metadata`; JVM suite, Android packaging, iOS simulator tests, framework links, Swift API check, and Swift package checks pass in run 40968192280 |
+| Apple/iTunes metadata | Experimental Kotlin search, URL lookup, album tracks, artist albums; cross-target CI passes; live behavior remains unverified; this is iTunes Search/Lookup, not the full Apple Music API |
+| Spotify metadata | Experimental Kotlin adapter; cross-target CI passes and the host supplies access tokens; current provider terms, eligibility, and live access remain unverified |
+| Deezer metadata | Not implemented; current access eligibility and terms not yet verified |
+| YouTube Music catalog metadata | Restricted / not implemented; an authorized music-specific catalog path is unresolved |
+| Full source and fixture provenance | Open for quarantined historical source and older fixtures; active clean-room sources are logged in `PROVENANCE.md` |
 
-## Latest checks observed
+## Environment and local verification
 
-- PR #41 uses commit `e11f038`: Linux and Windows jobs succeeded, macOS job failed. The public job page reports `Process completed with exit code 1` for “Kotlin tests, iOS targets, frameworks and XCFramework”; the exact failing task is not visible without sign-in.
-- PR #40 is a separate, older draft at commit `eb698c2`: Windows, macOS and Linux desktop jobs failed; Android device jobs for API 26 and 36 succeeded.
-- Local verification after the fixes: `:compileKotlinIosSimulatorArm64`, `:compileTestKotlinIosSimulatorArm64`, `:jvmTest` and `:jvmJar` pass. `:iosSimulatorArm64Test` and framework linking cannot run on Linux. `:assembleAndroidMain` could not be run locally because no Android SDK is installed. `:app-core:jvmTest` still fails because app-core imports the older API.
+The project requires a JDK 27 toolchain. This cloud executor originally provided JDK 21 only; a pinned Temurin 27.0.1 build was installed outside the repository after its published SHA-256 was verified. Gradle also needs the configured HTTP proxy and the system Java CA store to resolve dependencies. The full JVM suite and JAR build, Android library packaging, and Kotlin compilation for iOS arm64, simulator arm64, and x64 pass locally. Hosted CI run 40968192280 is green on Linux, Windows, and macOS.
 
-## Risks and limits
+Linux cannot run the iOS simulator or link Apple frameworks. Those checks must continue on the macOS workflow. The Android SDK is installed outside the repository at `/workspace/.toolchains/android-sdk`; its setup is in the saved environment draft. YouTube live access is not established by CI and must remain opt-in.
 
-- The root build currently selects only `cleanroom-src/`, so the preserved app modules cannot resolve their earlier API.
-- The previous macOS check’s full logs are unavailable in this unauthenticated session. Local reproduction identified and fixed the first two iOS compilation issues; the next CI run must confirm the native job.
-- Cloud YouTube requests can receive a bot-check response; live extraction tests are opt-in and no workaround is used.
-- Older captured fixtures are third-party content and remain subject to the rights-review question in `QUESTIONS.md`.
-- Nothing in this status establishes release readiness or legal clearance.
+## Remaining release gates
+
+- Verify current Spotify access terms and eligibility for the token-gated prototype; verify whether Deezer offers an eligible, permitted API before coding; keep YouTube Music restricted until an authorized music catalog path exists.
+- Verify Apple/iTunes live behavior and continue to describe it as iTunes Search/Lookup rather than full Apple Music API support.
+- Verify session isolation, cancellation, response bounds, URL validation, and secret redaction for catalog calls.
+- Integrate the Android consumer against the supported public API.
+- Complete clean-room/provenance and fixture-rights review for excluded repository content before making a whole-repository legal claim.
+- Add examples, documentation, public API compatibility checks, release metadata, and reproducible publication workflows for verified targets.
+
+The detailed sequence is [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) and [`superpowers/plans/2026-10-29-metadata-catalog.md`](superpowers/plans/2026-10-29-metadata-catalog.md).
