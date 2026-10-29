@@ -137,7 +137,7 @@ public actor ExcorKit {
             _ = try await loadPlayerSource(page: page, response: page.playerResponse, session: session, generation: generation)
         } catch {
             if error is CancellationError || Task.isCancelled { return }
-            host.log(.warn, "eXcor: background warm-up failed")
+            host.log(.warn, "eXcor: background warm-up failed", trackId: nil)
         }
     }
 
