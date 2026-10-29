@@ -138,6 +138,7 @@ This addition is independently implemented under the repository's Apache-2.0 lic
 | [esbuild](https://github.com/evanw/esbuild) and `@esbuild/linux-x64` | `0.28.1` | MIT | Build-time bundler used to regenerate the checked-in EJS bundles; neither package is a runtime dependency. npm registry integrity recorded during generation: `esbuild` `HrJrvZv5ayxBzPfwphOoNzkzOIIlifzk0KJrGK2c8R4+LKpMtpYLQeUdjnwjWv/LZlkH2laZk+4w78pi99D4Vw==`; Linux binary `u/anNYF2mmVOEDwLtnQ1wOr3EZ9sTNGLWrsYGYwHWzGA3Si84IOkHXlbWTD1NB+9/1lcnweYKO54uhxZydNzfA==`. |
 | [QuickJS-KT](https://github.com/dokar3/quickjs-kt/tree/v1.0.15) | `1.0.15` | Apache-2.0 | JavaScript runtime and coroutine cancellation behavior. |
 | [Ktor](https://ktor.io/) client core, OkHttp, Darwin and Mock engines | `3.6.0` | Apache-2.0 | HTTP requests, URL parsing/building, platform transports, test transport and timeouts. |
+| [Spotify Web API TypeScript SDK](https://github.com/spotify/spotify-web-api-ts-sdk/tree/c6f34491eaa17ab73698d5464ee10332d0c551cc) | Commit `c6f34491eaa17ab73698d5464ee10332d0c551cc` (2025-10-15) | Apache-2.0 (`LICENSE` checked) | Read its README authentication overview, endpoint declarations, and response types to confirm Web API resource paths and field names. The Kotlin adapter is independently authored; no SDK code or fixtures were copied. Current Spotify terms and access eligibility remain unverified; see `QUESTIONS.md`. |
 | [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) core and test | `1.11.0` | Apache-2.0 | Background warm-up, cancellation and coroutine tests. |
 | [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) JSON | `1.12.0` | Apache-2.0 | Bounded player-response parsing and cache records. |
 | [kotlinx-io](https://github.com/Kotlin/kotlinx-io) core and bytestring | `0.9.1` | Apache-2.0 | Ktor HTTP core transitive runtime dependencies. |
@@ -151,6 +152,8 @@ This addition is independently implemented under the repository's Apache-2.0 lic
 | [actions/checkout](https://github.com/actions/checkout) / [actions/setup-java](https://github.com/actions/setup-java) | `v4` / `v4` | MIT | CI checkout and JDK setup. |
 
 The format ranking and exact HTTPS `/videoplayback` allowlist follow `BRIEF.md` sections 4.2 and 4.4. Watch-page parsing, stream remembering, exclusions, redaction and disk-cache behavior are original implementations of the brief. Fixtures in `fixtures/cleanroom/` are synthetic test inputs, not captured YouTube responses. A direct capture attempt is documented in `QUESTIONS.md`.
+
+The Apple/iTunes catalog adapter uses the public API behavior recorded in the Apple Search API documentation entry above; it was implemented independently and tested with synthetic fixtures. Spotify tests also use synthetic fixtures authored for this addition. Deezer has no adapter because current official access and terms have not been verified. YouTube Music remains restricted because this work has not established a documented, authorized music-catalog interface.
 
 ## Native Swift eXcorKit addition (2026-10-29)
 

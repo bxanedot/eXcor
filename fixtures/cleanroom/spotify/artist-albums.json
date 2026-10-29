@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "artists": [{"id": "2222222222222222222222", "name": "June Harbor"}],
+      "external_urls": {"spotify": "https://open.spotify.com/album/3333333333333333333333"},
+      "id": "3333333333333333333333",
+      "images": [{"url": "https://i.scdn.co/image/large", "height": 640, "width": 640}],
+      "name": "Night Signals",
+      "release_date": "2024-05-09",
+      "total_tracks": 9
+    }
+  ],
+  "limit": 50,
+  "next": null,
+  "offset": 0,
+  "total": 1
+}

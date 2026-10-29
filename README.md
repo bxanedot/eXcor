@@ -8,7 +8,9 @@ The current library exposes package `com.excor`, Gradle coordinates `com.excor:e
 
 The KMP library provides audio format selection, player-response and player-script handling, URL validation, host-supplied session and PO-token interfaces, remembered stream headers, refusal tracking, and player-data caching. It returns a direct audio stream only when the URL passes the HTTPS YouTube/GoogleVideo `/videoplayback` allowlist. It does not mint PO tokens.
 
-The current clean-room API does not provide catalog search, playlists, downloads, video formats, or other media providers. The historical app and implementation folders remain in the repository pending a separate provenance and integration audit; they are not compiled by the clean-room root build. In particular, `app-core` still references the older API and does not currently compile against the new root library. See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+Catalog metadata remains experimental and is not a verified release feature. The `feature/catalog-metadata` branch adds Kotlin catalog adapters for Apple's public iTunes Search/Lookup service and Spotify's official Web API using a host-supplied access token. Current Spotify terms and access eligibility remain unverified; Deezer has no adapter, and YouTube Music catalog access remains restricted. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical app and implementation folders remain in the repository pending a separate provenance and integration audit; they are not compiled by the clean-room root build. In particular, `app-core` still references the older API and does not currently compile against the new root library. See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+
+The experimental API and its authorization, paging, and provider limitations are documented in [Catalog metadata](docs/CATALOG.md).
 
 ## Usage
 

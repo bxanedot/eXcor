@@ -1,5 +1,7 @@
 package com.excor
 
+import com.excor.catalog.ExcorCatalogTokenProvider
+
 data class ExcorStream(
     val videoId: String,
     val url: String,
@@ -53,4 +55,5 @@ interface ExcorHostServices {
     val configStore: ExcorConfigStore
     fun nowMs(): Long
     fun log(level: ExcorLogLevel, message: String, trackId: String? = null)
+    val catalogTokenProvider: ExcorCatalogTokenProvider? get() = null
 }

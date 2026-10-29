@@ -1,0 +1,23 @@
+{
+  "resultCount": 1,
+  "results": [
+    {
+      "wrapperType": "track",
+      "kind": "song",
+      "trackId": 740001,
+      "trackName": "North Loop",
+      "artistId": 740002,
+      "artistName": "June Harbor",
+      "collectionId": 740003,
+      "collectionName": "Night Signals",
+      "trackTimeMillis": 187000,
+      "trackNumber": 3,
+      "discNumber": 1,
+      "trackCount": 9,
+      "releaseDate": "2024-02-03T00:00:00Z",
+      "isExplicit": false,
+      "trackViewUrl": "https://music.apple.com/us/album/night-signals/740003?i=740001",
+      "artworkUrl100": "https://is1-ssl.mzstatic.com/image/fake-artwork/100x100bb.jpg"
+    }
+  ]
+}

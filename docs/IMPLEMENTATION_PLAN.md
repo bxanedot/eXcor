@@ -1,33 +1,29 @@
 # eXcor implementation plan
 
-This plan follows the repository audit and the master engineering plan. Complete items in order and keep the root project buildable. Do not claim support until tests pass on every advertised platform.
+This plan follows the user's master engineering plan and the current clean-room repository boundary. The detailed catalog work is in [`superpowers/plans/2026-10-29-metadata-catalog.md`](superpowers/plans/2026-10-29-metadata-catalog.md). Do not include preserved historical source in the clean-room artifact.
 
-## 1. Resolve current verification and integration failures
+## Phase 0 — repository audit and baseline
 
-- The prior macOS failure was reproduced locally as a Kotlin/Native `QuickJs.use` type mismatch; explicit `try/finally` cleanup now compiles on the iOS target. The iOS fixture reader was also corrected and its test source compiles.
-- Push these fixes and rerun the iOS simulator, framework, XCFramework and Swift API checks on macOS. If another failure remains, use its authenticated log before changing more code.
-- Decide how to preserve/build the older app modules separately or migrate them to the eXcor API. Do not add compatibility stubs to the clean-room public API without a brief-backed contract.
-- Keep Linux/Windows JVM and Android library compilation green.
+The active root build uses `cleanroom-src/`, plus a separate native Swift package under `swift/`. Current `main` CI is green. The provenance and functional audit explicitly excludes historical implementation files because the user previously prohibited opening them; whole-repository provenance therefore remains unresolved. See [`REPOSITORY_AUDIT.md`](REPOSITORY_AUDIT.md).
 
-## 2. Close the brief-defined Kotlin deliverable
+## Phase 1 — stable library core
 
-- Verify every public API item against the owner-renamed brief contract.
-- Expand offline and cross-platform tests only where they validate a required behavior or regression.
-- Keep live YouTube tests opt-in; document bot-check failures and do not bypass them.
-- Complete dependency, fixture-rights and source-provenance review.
+Keep the existing extraction API source-compatible. Close any correctness gaps in lifecycle, cancellation, typed failures, URL validation, response bounds, platform behavior, and public API verification before expanding claims.
 
-## 3. Complete native eXcorKit follow-up
+## Phase 2 — catalog and music metadata
 
-- Keep the Swift package in the separate deliverable and use the names `eXcorKit` / `ExcorKit`.
-- Run macOS `swift test`, iOS Simulator package build and the API checks.
-- Record JavaScriptCore cancellation and platform limitations accurately.
+Add a shared source-preserving catalog model, provider capability reporting, lookup/search, and pagination. Implement Apple Music against the public iTunes Search/Lookup API first. Then implement Spotify and Deezer only through currently documented, authorized APIs and host-owned credentials. Do not treat a private endpoint as an acceptable fallback.
 
-## 4. Reassess broader product scope
+## Phase 3 — YouTube Music access decision
 
-- Decide which catalog, download and provider features have an approved public API and authorization path.
-- Add provider modules only after the API, provenance and offline test design are reviewed.
-- Add packaging, examples, benchmarks, API docs and release metadata only for verified targets.
+Verify whether the official YouTube Data API can provide the requested music-specific catalog behavior. If not, mark those operations restricted until an authorized API/access path exists; do not implement undocumented endpoints without permission.
 
-## Explicit non-goals until separately specified
+## Phase 4 — cross-platform integration and maturity
 
-No token minting, DRM circumvention, protected-format extraction, account automation, copying competitor internals, or live-test bypasses.
+Run contract tests across supported KMP targets, integrate supported catalog APIs into the Android consumer, and expand the Swift API only where a verified product contract requires it. Keep the two packages' behavior and capability claims explicit.
+
+## Phase 5 — release readiness
+
+Resolve provenance and fixture-rights review, add working consumer examples and API documentation, tighten CI and license/security checks, and publish only targets with passing reproducible builds and functional smoke tests.
+
+The current capability state and verification limits are in [`FEATURE_MATRIX.md`](FEATURE_MATRIX.md) and [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md). A capability is not complete until it has a public API, tests, documented failure behavior, and verified platform support.

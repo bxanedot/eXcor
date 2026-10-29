@@ -4,6 +4,9 @@ import com.excor.internal.primary.extraction.PoTokenResult
 import com.excor.internal.primary.extraction.TokenProvider
 import com.excor.internal.primary.extraction.TokenProviderCapabilities
 import com.excor.internal.primary.extraction.strategy.PoTokenProviderKind
+import com.excor.catalog.ExcorCatalogKind
+import com.excor.catalog.ExcorCatalogProvider
+import com.excor.catalog.ExcorCatalogTokenProvider
 import java.io.File
 import okhttp3.OkHttpClient
 import kotlin.test.Test
@@ -88,6 +91,16 @@ private suspend fun compileEveryBriefMember() {
     candidate.copy(format = ExcorAudioFormat.WEBM_OPUS).kbps
     session.region
     val library = Excor(host)
+    val catalog = library.musicCatalog
+    catalog.capabilities(ExcorCatalogProvider.APPLE_MUSIC)
+    catalog.search(ExcorCatalogProvider.APPLE_MUSIC, "query", ExcorCatalogKind.TRACK)
+    catalog.lookup("https://music.apple.com/us/album/night-signals/740003")
+    catalog.albumTracks(ExcorCatalogProvider.APPLE_MUSIC, "740003")
+    catalog.artistAlbums(ExcorCatalogProvider.APPLE_MUSIC, "740002")
+    catalog.capabilities(ExcorCatalogProvider.SPOTIFY)
+    host.catalogTokenProvider
+    val catalogTokenProvider = ExcorCatalogTokenProvider { provider -> provider.name }
+    catalogTokenProvider.accessToken(ExcorCatalogProvider.SPOTIFY)
     library.init()
     library.initializeFallback()
     library.audioCandidates("abcdefghijk")
