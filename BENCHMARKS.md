@@ -1,3 +1,7 @@
+# eXcor benchmark status
+
+> The existing `BenchmarkTest` harness and `VYONEX_BENCH` variables belong to the preserved earlier implementation; they do not measure the clean-room eXcor engine. There are no verified eXcor benchmark results yet. Do not treat legacy results or commands as eXcor measurements.
+
 # Benchmarks
 
 No measured results yet. The build machines get YouTube's bot check on player requests (QUESTIONS item 41),
@@ -7,8 +11,8 @@ The live surveys in QUESTIONS item 2 are spot checks, not this benchmark.
 ## Running it
 
 ```sh
-EXCOR_BENCH=1 ./gradlew jvmTest --tests com.bxane.excor.BenchmarkTest --rerun -i
-EXCOR_BENCH=1 EXCOR_BENCH_IDS=dQw4w9WgXcQ:ordinary,6oHkCfhlDnc:Short ./gradlew jvmTest --tests com.bxane.excor.BenchmarkTest --rerun -i
+VYONEX_BENCH=1 ./gradlew jvmTest --tests com.vyonex.BenchmarkTest --rerun -i
+VYONEX_BENCH=1 VYONEX_BENCH_IDS=dQw4w9WgXcQ:ordinary,6oHkCfhlDnc:Short ./gradlew jvmTest --tests com.vyonex.BenchmarkTest --rerun -i
 ```
 
 It writes `build/benchmark-report.md` and prints it. Logged out; no URL, cookie or token is ever written.
@@ -23,7 +27,7 @@ dubbed audio, a 24/7 live stream, and three that YouTube refuses: age-restricted
 - **Identity** that served it, **time** for the whole extraction in milliseconds, and the **network calls** made.
 - **As expected**: playable videos give media or a manifest; refused ones give a refusal, not an error or nothing.
 - **Bot checks** are named as such and counted: a run where YouTube asked to confirm the requester is not a bot
-  measures the network, not Excor, and does not count. (A trial run from the cloud build machine on 2026-10-27
+  measures the network, not VyonEx, and does not count. (A trial run from the cloud build machine on 2026-10-27
   served the first video and got bot checks for most of the rest, which is why no result is recorded from there.)
 
 The aggregate is the share of videos that came out as expected. Refusals change over time (an upcoming stream goes
