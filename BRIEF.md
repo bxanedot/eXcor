@@ -9,9 +9,9 @@ This brief tells you **what** the library must do. It deliberately does not tell
 ## 1. Clean-room rules (read first, follow throughout)
 
 1. **Never open the old code.** Off limits, in every form (web, clone, local copy, search index, cache):
-   - GitHub `bxanedot/excor` and `bxanedot/vyon`, all branches and history, including `player_configs.json`.
-   - Local folders `Desktop\vyon-main`, `Desktop\vyon`, `Documents\Codex\eXcor`, any `Documents\Codex\2026-*` folder, and `~/.gradle/caches/vyon-extractor`.
-   - The XERJ index `excor-current`. Disable the `xerj` MCP server for this work.
+   - GitHub `bxanedot/vyonex` and `bxanedot/vyon`, all branches and history, including `player_configs.json`.
+   - Local folders `Desktop\vyon-main`, `Desktop\vyon`, `Documents\Codex\vyonex`, any `Documents\Codex\2026-*` folder, and `~/.gradle/caches/vyon-extractor`.
+   - The XERJ index `vyonex-current`. Disable the `xerj` MCP server for this work.
 2. **Never read GPL, LGPL or AGPL extractor code**, not even "for the idea". That includes NewPipe / NewPipe Extractor, InnerTubeX, Metrolist, InnerTune, OuterTune, ViMusic, SimpMusic, LibreTube, Piped and Invidious.
 3. **Allowed sources:**
    - **yt-dlp** (`github.com/yt-dlp/yt-dlp`) is released under the Unlicense (public domain). You may read it and port its logic. Check the `LICENSE` file at the commit you use.
@@ -29,7 +29,7 @@ This brief tells you **what** the library must do. It deliberately does not tell
 
 ## 2. Deliverable
 
-- Gradle project, group `com.bxane.excor`, artifact `excor`, version `0.2.0`, license Apache-2.0.
+- Gradle project, group `com.bxane.excor`, artifact `excor`, version `1.0.0`, license Apache-2.0.
 - Kotlin Multiplatform targets: `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64`. Static iOS framework and an XCFramework, both named `Excor`.
 - Toolchain: Gradle 9.8.2, Kotlin 2.4.21, JDK 27 toolchain, JVM bytecode target 26.
 - Dependencies, matched to the host app (all permissively licensed):
