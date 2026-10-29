@@ -1,3 +1,7 @@
+# eXcor benchmark status
+
+> The existing `BenchmarkTest` harness and `VYONEX_BENCH` variables belong to the preserved earlier implementation; they do not measure the clean-room eXcor engine. There are no verified eXcor benchmark results yet. Do not treat legacy results or commands as eXcor measurements.
+
 # Benchmarks
 
 No measured results yet. The build machines get YouTube's bot check on player requests (QUESTIONS item 41),

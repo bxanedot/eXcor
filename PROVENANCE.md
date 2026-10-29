@@ -1,4 +1,6 @@
-# Provenance
+# eXcor provenance
+
+> This file preserves historical provenance records for the existing implementation and includes a separate clean-room section for eXcor. The opening contribution note describes the earlier source tree; it is not a legal determination for the clean-room addition.
 
 The library code was written by Claude in a separate cloud environment with no access to the
 owner's PC. Codex contributed the watch-page capture, live-test runs and results, and
@@ -122,3 +124,30 @@ From Maven Central, and the AndroidX ones from Google's Maven; licenses as decla
 | Android Emulator and AOSP x86_64 system images (API 26, 36), installed by `sdkmanager` on the CI runner | current at run time | Android SDK License Agreement (Google) | CI only (`MergeCheck`, the app start check), not redistributed |
 
 The JVM tests run on TestNG rather than kotlin-test's default JUnit 4, which is EPL-1.0.
+
+## Clean-room eXcor Kotlin addition (2026-10-28)
+
+This addition is independently implemented under the repository's Apache-2.0 license. It uses only the user-provided `BRIEF.md`, the public sources listed below, standard-library behavior and synthetic test data written for this addition. The source tree is restricted to `cleanroom-src/` for the root library build.
+
+| Source | Version / date | License | Use |
+| --- | --- | --- | --- |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp/tree/f264a6cbd1f630894da0f368df00f8aae50140e0), especially `yt_dlp/extractor/youtube/_base.py` and `_video.py` | Commit `f264a6cbd1f630894da0f368df00f8aae50140e0` | Unlicense (verified at that commit) | Current unauthenticated and authenticated client order, client IDs/versions/user agents, web PO-token requirement, player request fields, `pot` media parameter and the five-digit signature timestamp pattern. These rules were independently implemented from the documented behavior; no extractor source was copied. |
+| [yt-dlp/ejs](https://github.com/yt-dlp/ejs/tree/d48c6303a5a6455a42ef9e0b445149cadea51279) | Commit `d48c6303a5a6455a42ef9e0b445149cadea51279` | Unlicense (verified at that commit) | The generated `cleanroom-src/ejs/core.min.js` and `lib.min.js` challenge solver bundles; the Kotlin adapter follows the public JSON input/output shape and bootstrap documented in `src/yt/solver/main.ts` and yt-dlp's EJS runtime adapter. Both bundles retain their upstream license banners. |
+| [astring](https://github.com/davidbonnet/astring) | `1.9.0` | MIT | Bundled by the EJS library; its copyright and license text remain in `lib.min.js`. |
+| [meriyah](https://github.com/meriyah/meriyah) | `6.1.4` | ISC | Bundled by the EJS library; its license text remains in `lib.min.js`. |
+| [esbuild](https://github.com/evanw/esbuild) and `@esbuild/linux-x64` | `0.28.1` | MIT | Build-time bundler used to regenerate the checked-in EJS bundles; neither package is a runtime dependency. npm registry integrity recorded during generation: `esbuild` `HrJrvZv5ayxBzPfwphOoNzkzOIIlifzk0KJrGK2c8R4+LKpMtpYLQeUdjnwjWv/LZlkH2laZk+4w78pi99D4Vw==`; Linux binary `u/anNYF2mmVOEDwLtnQ1wOr3EZ9sTNGLWrsYGYwHWzGA3Si84IOkHXlbWTD1NB+9/1lcnweYKO54uhxZydNzfA==`. |
+| [QuickJS-KT](https://github.com/dokar3/quickjs-kt/tree/v1.0.15) | `1.0.15` | Apache-2.0 | JavaScript runtime and coroutine cancellation behavior. |
+| [Ktor](https://ktor.io/) client core, OkHttp, Darwin and Mock engines | `3.6.0` | Apache-2.0 | HTTP requests, URL parsing/building, platform transports, test transport and timeouts. |
+| [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) core and test | `1.11.0` | Apache-2.0 | Background warm-up, cancellation and coroutine tests. |
+| [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) JSON | `1.12.0` | Apache-2.0 | Bounded player-response parsing and cache records. |
+| [kotlinx-io](https://github.com/Kotlin/kotlinx-io) core and bytestring | `0.9.1` | Apache-2.0 | Ktor HTTP core transitive runtime dependencies. |
+| [Kotlin](https://github.com/JetBrains/kotlin) standard library, test library and Gradle plugin | `2.4.21` | Apache-2.0 | Language runtime, multiplatform build and tests. |
+| [Android Gradle Plugin](https://developer.android.com/build) | `9.4.1` | Apache-2.0 | Android KMP target configuration. |
+| [Foojay Toolchains resolver](https://github.com/gradle/foojay-toolchains) | `1.0.0` | Apache-2.0 | Gradle JDK toolchain provisioning. |
+| [OkHttp](https://github.com/square/okhttp) / [Okio](https://github.com/square/okio) | `5.5.0` / `3.18.2` | Apache-2.0 | Host-provided JVM/Android transport dependency. |
+| [SLF4J API](https://www.slf4j.org/) / [JetBrains annotations](https://github.com/JetBrains/java-annotations) | `2.0.19` / `23.0.0` | MIT / Apache-2.0 | Ktor/Kotlin transitive runtime dependencies. |
+| [TestNG](https://github.com/testng-team/testng) / [JCommander](https://github.com/cbeust/jcommander) | `7.0.0` / `1.72` | Apache-2.0 | JVM test runner and its command-line dependency. |
+| [Gradle](https://github.com/gradle/gradle) | `9.8.2` | Apache-2.0 | Wrapper/build runtime. |
+| [actions/checkout](https://github.com/actions/checkout) / [actions/setup-java](https://github.com/actions/setup-java) | `v4` / `v4` | MIT | CI checkout and JDK setup. |
+
+The format ranking and exact HTTPS `/videoplayback` allowlist follow `BRIEF.md` sections 4.2 and 4.4. Watch-page parsing, stream remembering, exclusions, redaction and disk-cache behavior are original implementations of the brief. Fixtures in `fixtures/cleanroom/` are synthetic test inputs, not captured YouTube responses. A direct capture attempt is documented in `QUESTIONS.md`.
