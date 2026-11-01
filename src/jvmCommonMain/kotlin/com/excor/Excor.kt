@@ -2,6 +2,7 @@ package com.excor
 
 import com.excor.internal.AppleMusicEngine
 import com.excor.internal.Engine
+import com.excor.internal.MusicCatalogEngine
 import com.excor.internal.mergePairOf
 import com.excor.internal.parseRef
 import com.excor.internal.PlayerStore
@@ -45,6 +46,9 @@ class Excor(host: ExcorHost) {
 
     /** Apple Music metadata (songs, albums, artists, search) from Apple's iTunes Search API; no audio. */
     val appleMusic = ExcorAppleMusic(AppleMusicEngine(host, http))
+
+    /** Metadata and artwork from Spotify (oEmbed or authenticated Web API) and Deezer (public catalog). */
+    val musicCatalog = ExcorMusicCatalog(MusicCatalogEngine(http))
 
     fun init() = engine.initialize()
 

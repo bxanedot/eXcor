@@ -539,6 +539,17 @@ Each item names the reading chosen; nothing was looked up in the old code.
     about 20 calls a minute; a refusal throws with its HTTP status. Its terms say promotional content
     (previews, album art) is only to promote store content: what an app shows or saves is the app's
     call, not a clearance given here.
+64. **The apps on the historical engine (owner, 2026-11-01: "Build old engine apart").** After the root
+    build moved to `cleanroom-src/`, `app-core`, the Android app and the desktop app no longer compiled
+    (about 400 errors), and CI had stopped building them. They now build on `historical-engine/`, a
+    separate Gradle module that compiles `src/` with its own `ejs/` copy and the older fixtures. It is
+    never published and is not part of the clean-room artifact, which still builds from
+    `cleanroom-src/` alone; `src/` stays quarantined pending the provenance review. CI builds and
+    tests the app stack again (`apps` job), and the emulator job (MergeCheck, app start) is back. The
+    author of `src/` (Claude) does not write into `cleanroom-src/`, so as not to compromise its
+    clean-room claim. Also fixed on the way: `Excor.musicCatalog` (Spotify/Deezer), which the desktop
+    app calls, had been dropped from `src/` in PR #40's merge, and the desktop app's Java and Kotlin
+    JVM targets disagreed. Still lost from that merge: the Android app's Spotify/Deezer link screen.
 
 ## Clean-room eXcor items (2026-10-28)
 

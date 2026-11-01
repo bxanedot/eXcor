@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 // Native Swing shell backed by the SAME Excor JVM engine used by Android and iOS.
 plugins {
     kotlin("jvm")
@@ -8,10 +6,10 @@ plugins {
 
 repositories { mavenCentral(); google() }
 
-kotlin {
-    jvmToolchain(27)
-    compilerOptions { jvmTarget = JvmTarget.JVM_26 }
-}
+kotlin { jvmToolchain(27) }
+
+// Kotlin 2.4 emits JVM 26 at most; the Java task must target the same, or the build stops.
+java { targetCompatibility = JavaVersion.VERSION_26 }
 
 dependencies {
     implementation(project(":app-core"))
