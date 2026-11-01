@@ -33,6 +33,15 @@ class LiveVideoInfoTest {
         assertTrue(first.channels.any { it.title.contains("Daft Punk", ignoreCase = true) })
         val second = assertNotNull(excor.search("daft punk", assertNotNull(first.continuation)))
         assertTrue(second.videos.isNotEmpty() && second.videos.none { v -> first.videos.any { it.videoId == v.videoId } })
+
+        val channelsOnly = first.filters.first { it.group == "Type" && it.label == "Channels" }
+        val filtered = assertNotNull(excor.search("daft punk", filterParams = assertNotNull(channelsOnly.params)))
+        assertTrue(filtered.channels.size >= 5 && filtered.videos.isEmpty())
+        assertTrue(filtered.filters.first { it.label == "Channels" }.selected)
+        val more = assertNotNull(excor.search("daft punk", assertNotNull(filtered.continuation)))
+        assertTrue(more.channels.isNotEmpty() && more.videos.isEmpty(), "the continuation keeps the filter")
+        val shorts = first.filters.first { it.group == "Type" && it.label == "Shorts" }
+        assertTrue(assertNotNull(excor.search("daft punk", filterParams = shorts.params)).shorts.isNotEmpty())
     }
 
     @Test

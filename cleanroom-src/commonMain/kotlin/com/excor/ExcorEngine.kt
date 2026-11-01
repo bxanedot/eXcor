@@ -118,12 +118,16 @@ internal class ExcorEngine(
         return decodeVideoInfo(body, videoId)
     }
 
-    /** YouTube search; [continuation] from a previous page continues it. Null when YouTube's answer is not a result page. */
-    suspend fun search(query: String, continuation: String?): ExcorYouTubeSearchPage? {
+    /**
+     * YouTube search; [continuation] from a previous page continues it, keeping that page's filters. [filterParams] is
+     * an [ExcorYouTubeSearchFilter.params] from an earlier page. Null when YouTube's answer is not a result page.
+     */
+    suspend fun search(query: String, continuation: String?, filterParams: String? = null): ExcorYouTubeSearchPage? {
         val q = query.trim()
         require(continuation != null || q.length in 1..200) { "query must be 1 to 200 characters" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
-        val body = postPlayer(buildSearchRequest(q, continuation, host.session())) ?: return null
+        require(filterParams == null || SEARCH_PARAMS.matches(filterParams)) { "not search filter params" }
+        val body = postPlayer(buildSearchRequest(q, continuation, host.session(), filterParams)) ?: return null
         return decodeSearchPage(body)
     }
 

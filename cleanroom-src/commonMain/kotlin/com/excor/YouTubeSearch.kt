@@ -2,6 +2,7 @@ package com.excor
 
 import com.excor.catalog.ExcorArtwork
 import io.ktor.http.Url
+import io.ktor.http.decodeURLQueryComponent
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -17,7 +18,19 @@ data class ExcorYouTubeSearchPage(
     val playlists: List<ExcorYouTubePlaylistResult>,
     val continuation: String?,
     val estimatedResults: Long? = null,
+    /** Shorts from the page's Shorts shelves. Shorts show no duration or channel there. */
+    val shorts: List<ExcorYouTubePlaylistVideo> = emptyList(),
+    /** YouTube's filter dialog for this query, as YouTube offers it after the filters already applied. */
+    val filters: List<ExcorYouTubeSearchFilter> = emptyList(),
 )
+
+/**
+ * One option from YouTube's search filter dialog, such as group "Type", label "Channels". Pass [params] to
+ * `search(query, filterParams = ...)`; it is null for an option that is already [selected] or is [disabled] by the
+ * current filters. YouTube builds each [params] to include the filters already applied, so options combine by
+ * picking them from successive pages. [group] and [label] are YouTube's display text in the session's language.
+ */
+data class ExcorYouTubeSearchFilter(val group: String, val label: String, val params: String?, val selected: Boolean, val disabled: Boolean)
 
 /** [viewCount] and [durationSeconds] are null when YouTube shows none (live streams, premieres). */
 data class ExcorYouTubeVideoResult(
@@ -46,8 +59,14 @@ data class ExcorYouTubeChannelResult(
 /** [isMix] marks YouTube's generated mixes (IDs starting with "RD"), which differ per listener. */
 data class ExcorYouTubePlaylistResult(val playlistId: String, val title: String, val isMix: Boolean)
 
-internal fun buildSearchRequest(query: String?, continuation: String?, session: ExcorSession): PlayerRequest = innertubeRequest("search", session) {
-    if (continuation != null) put("continuation", continuation) else put("query", query!!)
+// A continuation token already carries the query's filters, so params go only with a first page.
+internal fun buildSearchRequest(query: String?, continuation: String?, session: ExcorSession, filterParams: String? = null): PlayerRequest = innertubeRequest("search", session) {
+    if (continuation != null) {
+        put("continuation", continuation)
+    } else {
+        put("query", query!!)
+        if (filterParams != null) put("params", filterParams)
+    }
 }
 
 /** A first page (`contents`) or a continuation (`onResponseReceivedCommands`); null when it is neither. */
@@ -61,6 +80,7 @@ internal fun decodeSearchPage(source: String): ExcorYouTubeSearchPage? {
     val videos = mutableListOf<ExcorYouTubeVideoResult>()
     val channels = mutableListOf<ExcorYouTubeChannelResult>()
     val playlists = mutableListOf<ExcorYouTubePlaylistResult>()
+    val shorts = mutableListOf<ExcorYouTubePlaylistVideo>()
     var continuation: String? = null
     for (section in sections.mapNotNull { it as? JsonObject }) {
         (section.path("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token") as? JsonPrimitive)?.contentOrNull
@@ -70,9 +90,27 @@ internal fun decodeSearchPage(source: String): ExcorYouTubeSearchPage? {
             (item["videoRenderer"] as? JsonObject)?.let(::videoOf)?.let(videos::add)
             (item["channelRenderer"] as? JsonObject)?.let(::channelOf)?.let(channels::add)
             (item["lockupViewModel"] as? JsonObject)?.let(::playlistOf)?.let(playlists::add)
+            (item.path("gridShelfViewModel", "contents") as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("shortsLockupViewModel") as? JsonObject }
+                .mapNotNull(::shortOf).let(shorts::addAll)
         }
     }
-    return ExcorYouTubeSearchPage(videos, channels, playlists, continuation, root.textAt("estimatedResults")?.toLongOrNull())
+    return ExcorYouTubeSearchPage(videos, channels, playlists, continuation, root.textAt("estimatedResults")?.toLongOrNull(), shorts, filtersOf(root))
+}
+
+/** The filter dialog behind the header's Filters button; empty when the response has none (continuations). */
+private fun filtersOf(root: JsonObject): List<ExcorYouTubeSearchFilter> {
+    val groups = root.path("header", "searchHeaderRenderer", "searchFilterButton", "buttonRenderer", "command", "openPopupAction", "popup", "searchFilterOptionsDialogRenderer", "groups") as? JsonArray
+        ?: return emptyList()
+    return groups.mapNotNull { (it as? JsonObject)?.get("searchFilterGroupRenderer") as? JsonObject }.flatMap { g ->
+        val group = runsText(g["title"]) ?: return@flatMap emptyList()
+        (g["filters"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("searchFilterRenderer") as? JsonObject }.mapNotNull { f ->
+            val status = f.textAt("status")
+            // The dialog gives params URL-encoded, as in its /results link; the API takes them decoded.
+            val params = (f.path("navigationEndpoint", "searchEndpoint", "params") as? JsonPrimitive)?.contentOrNull
+                ?.let { runCatching { it.decodeURLQueryComponent() }.getOrNull() }?.takeIf(SEARCH_PARAMS::matches)
+            ExcorYouTubeSearchFilter(group, runsText(f["label"]) ?: return@mapNotNull null, params, status == "FILTER_STATUS_SELECTED", status == "FILTER_STATUS_DISABLED")
+        }
+    }
 }
 
 private fun videoOf(v: JsonObject): ExcorYouTubeVideoResult? {
@@ -145,4 +183,5 @@ internal fun JsonObject.textAt(key: String): String? = (get(key) as? JsonPrimiti
 internal val CHANNEL_ID = Regex("UC[A-Za-z0-9_-]{22}")
 internal val PLAYLIST_ID = Regex("[A-Za-z0-9_-]{2,64}")
 private val TOKEN = Regex("[A-Za-z0-9_=%-]+")
+internal val SEARCH_PARAMS = Regex("[A-Za-z0-9_+/=-]{1,256}")
 internal const val MAX_CONTINUATION = 8_192
