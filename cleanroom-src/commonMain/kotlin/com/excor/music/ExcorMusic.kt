@@ -370,6 +370,13 @@ class ExcorSpotifyCatalog internal constructor(private val source: SpotifySource
     @Throws(Throwable::class) suspend fun saveToLibrary(uris: List<String>) = source.saveToLibrary(uris)
     @Throws(Throwable::class) suspend fun removeFromLibrary(uris: List<String>) = source.removeFromLibrary(uris)
     @Throws(Throwable::class) suspend fun libraryContains(uris: List<String>) = source.libraryContains(uris)
+    /** Playlist editing (playlist-modify-public / -private). Each edit returns the playlist's new snapshot ID. */
+    @Throws(Throwable::class) suspend fun createPlaylist(name: String, description: String? = null, public: Boolean = false, collaborative: Boolean = false) =
+        source.createPlaylist(name, description, public, collaborative)
+    @Throws(Throwable::class) suspend fun addToPlaylist(playlistId: String, uris: List<String>, position: Int? = null) = source.addToPlaylist(playlistId, uris, position)
+    @Throws(Throwable::class) suspend fun removeFromPlaylist(playlistId: String, uris: List<String>, snapshot: String? = null) = source.removeFromPlaylist(playlistId, uris, snapshot)
+    @Throws(Throwable::class) suspend fun reorderPlaylist(playlistId: String, rangeStart: Int, insertBefore: Int, length: Int = 1, snapshot: String? = null) =
+        source.reorderPlaylist(playlistId, rangeStart, insertBefore, length, snapshot)
     @Throws(Throwable::class) suspend fun episode(id: String) = source.episode(id)
     @Throws(Throwable::class) suspend fun show(id: String, page: String? = null) = source.show(id, page)
 }

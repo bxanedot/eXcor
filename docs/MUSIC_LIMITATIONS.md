@@ -19,7 +19,7 @@
 
 ## Not implemented
 
-- **Spotify:** playlist editing (adding, removing and reordering items). Library saves, queue, volume, playback control and podcasts are implemented but tested offline only.
+- **Spotify:** playlist cover uploads and detail edits (rename, description). Playlist creation and item editing, library saves, queue, volume, playback control and podcasts are implemented but tested offline only.
 - **Apple Music:** editorial playlist browsing and storefront discovery. Charts cover songs only. Music videos, stations and recommendations are tested offline only.
 - **Deezer:** writes to favorites and playlists; podcasts; editorial endpoints.
 - **Built-in protected-playback adapters.** The host must supply them, and none has been tested on a device.

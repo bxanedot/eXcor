@@ -29,6 +29,7 @@ None of these providers gives eXcor audio. Full tracks are protected and play on
 | UPC lookup | ✓ (`upc:` search) | ✓ (`filter[upc]`) | – | ✓ (`album/upc:`) |
 | User library: saved tracks and playlists | ✓ | ✓ (with user token) | – | ✓ (with token) |
 | Library writes: save, remove, contains | ✓ `spotifyCatalog` (batches of 40) | – | – | – |
+| Playlist editing: create, add, remove, reorder | ✓ `spotifyCatalog` (batches of 100; returns snapshot IDs) | – | – | – |
 | Charts | – | ✓ `appleMusicCatalog.chartSongs` | – | ✓ `deezerCatalog.chartTracks` |
 | Genres, radios, related artists, artist top tracks | – | – | – | ✓ `deezerCatalog` |
 | Playback state; remote control (play, pause, next, previous, seek, queue, volume, devices) of the user's Spotify client | ✓ `spotifyCatalog` (Premium and the playback scopes) | – | – | – |
@@ -44,4 +45,4 @@ Provider-only features stay out of the shared models: `music.deezerCatalog`, `mu
 
 ## Not implemented
 
-Library writes, editorial browsing and built-in protected-playback adapters. [MUSIC_LIMITATIONS.md](MUSIC_LIMITATIONS.md) has the full list.
+Deezer writes, Apple editorial browsing and built-in protected-playback adapters. [MUSIC_LIMITATIONS.md](MUSIC_LIMITATIONS.md) has the full list.

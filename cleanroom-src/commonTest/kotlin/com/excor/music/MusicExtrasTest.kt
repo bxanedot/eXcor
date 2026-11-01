@@ -145,4 +145,29 @@ class MusicExtrasTest {
         assertEquals("Untimed \u263A", excorParseTtml("<tt><body><p>Untimed &#x263A;</p></body></tt>", "test").lines.single().text)
         assertEquals(null, ttmlTime("soon"))
     }
+
+    @Test
+    fun spotifyPlaylistEditing() = runTest {
+        val m = music(mapOf(
+            "POST /v1/me/playlists" to (201 to """{"type":"playlist","id":"7777777777777777777777","name":"Night \"Mix\"","public":false,"collaborative":true,"snapshot_id":"s0"}"""),
+            "POST /v1/playlists/7777777777777777777777/items" to (201 to """{"snapshot_id":"s1"}"""),
+            "DELETE /v1/playlists/7777777777777777777777/items" to (200 to """{"snapshot_id":"s2"}"""),
+            "PUT /v1/playlists/7777777777777777777777/items" to (200 to """{"snapshot_id":"s3"}"""),
+        ))
+        val created = m.spotifyCatalog.createPlaylist("Night \"Mix\"", collaborative = true)
+        assertEquals("7777777777777777777777", created.id)
+        assertEquals("s0", created.snapshot)
+        assertTrue("\"name\":\"Night \\\"Mix\\\"\"" in (requests.last().body as TextContent).text) // escaped, not spliced
+
+        val uris = (0 until 150).map { "spotify:track:" + it.toString().padStart(22, '0') }
+        assertEquals("s1", m.spotifyCatalog.addToPlaylist(created.id, uris, position = 10))
+        val adds = requests.takeLast(2).map { (it.body as TextContent).text }
+        assertTrue("\"position\":10" in adds[0] && "\"position\":110" in adds[1])
+        assertEquals("s2", m.spotifyCatalog.removeFromPlaylist(created.id, uris.take(1), snapshot = "s1"))
+        assertTrue("\"snapshot_id\":\"s1\"" in (requests.last().body as TextContent).text)
+        assertEquals("s3", m.spotifyCatalog.reorderPlaylist(created.id, rangeStart = 5, insertBefore = 0))
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.createPlaylist("x", public = true, collaborative = true) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.addToPlaylist(created.id, listOf("spotify:album:2222222222222222222222")) }.error)
+        assertEquals(ExcorCatalogError.INVALID_URL, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.addToPlaylist("../me", uris.take(1)) }.error)
+    }
 }
