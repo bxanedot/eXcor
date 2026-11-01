@@ -5,6 +5,7 @@ import com.excor.catalog.ExcorCatalogCapabilityStatus
 import com.excor.catalog.ExcorCatalogError
 import com.excor.catalog.ExcorCatalogException
 import com.excor.catalog.ExcorCatalogProvider
+import io.ktor.http.HttpMethod
 import io.ktor.http.URLBuilder
 import kotlinx.serialization.json.JsonObject
 
@@ -118,7 +119,80 @@ internal class SpotifySource(
         )
     }
 
+    /**
+     * Starts [uris] (tracks or episodes) or resumes when empty, on [deviceId] or the active device. Spotify requires
+     * Premium and the user-modify-playback-state scope; a free account gets ACCESS_DENIED. Playback happens in the
+     * Spotify client; no audio reaches eXcor.
+     */
+    suspend fun play(uris: List<String>, deviceId: String?) {
+        val playable = setOf(ExcorMusicKind.TRACK, ExcorMusicKind.EPISODE)
+        if (uris.any { !it.startsWith("spotify:") || spotifyRefOf(it)?.kind !in playable }) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        val body = if (uris.isEmpty()) null else "{\"uris\":[${uris.joinToString(",") { "\"$it\"" }}]}"
+        command(HttpMethod.Put, "me/player/play", deviceId, body)
+    }
+
+    suspend fun pause(deviceId: String?) = command(HttpMethod.Put, "me/player/pause", deviceId)
+    suspend fun next(deviceId: String?) = command(HttpMethod.Post, "me/player/next", deviceId)
+    suspend fun previous(deviceId: String?) = command(HttpMethod.Post, "me/player/previous", deviceId)
+
+    suspend fun seek(positionMs: Long, deviceId: String?) {
+        if (positionMs < 0) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        command(HttpMethod.Put, "me/player/seek", deviceId, extra = listOf("position_ms" to "$positionMs"))
+    }
+
+    suspend fun devices(): List<ExcorSpotifyDevice> = get("me/player/devices").arr("devices")?.objects().orEmpty().mapNotNull { d ->
+        ExcorSpotifyDevice(d.str("id") ?: return@mapNotNull null, d.str("name") ?: "", d.str("type"), d.bool("is_active") ?: false, d.bool("is_restricted") ?: false)
+    }
+
+    suspend fun episode(id: String): ExcorPodcastEpisode = episodeOf(get("episodes/${checked(id)}", marketParam())) ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+
+    suspend fun show(id: String, page: String?): ExcorPodcastShow {
+        val o = get("shows/${checked(id)}", marketParam())
+        val episodes = paged("shows/${checked(id)}/episodes", page, marketParam(), ::episodeOf)
+        return ExcorPodcastShow(
+            id = o.str("id") ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE),
+            title = o.str("name") ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE),
+            description = o.str("description"),
+            publisher = o.str("publisher"),
+            explicit = o.bool("explicit"),
+            languages = o.strings("languages"),
+            totalEpisodes = o.int("total_episodes"),
+            url = urlOf(o),
+            artwork = imagesOf(o),
+            episodes = episodes,
+        )
+    }
+
+    private fun episodeOf(o: JsonObject): ExcorPodcastEpisode? {
+        if (o.str("type") != null && o.str("type") != "episode") return null
+        val id = o.str("id")?.takeIf(SPOTIFY_ID::matches) ?: return null
+        return ExcorPodcastEpisode(
+            id = id,
+            title = o.str("name") ?: return null,
+            description = o.str("description"),
+            showId = o.obj("show")?.str("id"),
+            showTitle = o.obj("show")?.str("name"),
+            durationMs = o.long("duration_ms"),
+            releaseDate = o.str("release_date"),
+            explicit = o.bool("explicit"),
+            languages = o.strings("languages").ifEmpty { listOfNotNull(o.str("language")) },
+            playable = o.bool("is_playable"),
+            url = urlOf(o),
+            artwork = imagesOf(o),
+        )
+    }
+
     // --- requests ---
+
+    private suspend fun command(method: HttpMethod, path: String, deviceId: String?, json: String? = null, extra: List<Pair<String, String>> = emptyList()) {
+        val access = token() ?: throw fail(ExcorCatalogError.AUTHENTICATION_REQUIRED)
+        if (deviceId != null && !DEVICE_ID.matches(deviceId)) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        val url = URLBuilder("https://api.spotify.com/v1/$path").apply {
+            extra.forEach { (k, v) -> parameters.append(k, v) }
+            deviceId?.let { parameters.append("device_id", it) }
+        }.buildString()
+        http.command(provider, method, url, access, json)
+    }
 
     private val searchLimit get() = if (extendedQuota) 50 else 10
 
@@ -284,6 +358,7 @@ internal class SpotifySource(
     companion object {
         const val PAGE = 50
         val SPOTIFY_ID = Regex("[A-Za-z0-9]{22}")
+        val DEVICE_ID = Regex("[A-Za-z0-9]{1,128}")
         val SEARCH_TYPES = mapOf(
             ExcorMusicKind.TRACK to "track", ExcorMusicKind.ALBUM to "album",
             ExcorMusicKind.ARTIST to "artist", ExcorMusicKind.PLAYLIST to "playlist",
@@ -352,3 +427,35 @@ fun spotifyIdOfGid(gid: String): String {
     }
     return digits.reverse().toString().padStart(22, '0')
 }
+
+data class ExcorSpotifyDevice(val id: String, val name: String, val type: String?, val active: Boolean, val restricted: Boolean)
+
+/** A Spotify podcast episode; kept apart from music tracks. */
+data class ExcorPodcastEpisode(
+    val id: String,
+    val title: String,
+    val description: String?,
+    val showId: String?,
+    val showTitle: String?,
+    val durationMs: Long?,
+    val releaseDate: String?,
+    val explicit: Boolean?,
+    val languages: List<String>,
+    val playable: Boolean?,
+    val url: String?,
+    val artwork: List<ExcorArtwork>,
+)
+
+data class ExcorPodcastShow(
+    val id: String,
+    val title: String,
+    val description: String?,
+    /** Withheld for Development Mode apps since February 2026. */
+    val publisher: String?,
+    val explicit: Boolean?,
+    val languages: List<String>,
+    val totalEpisodes: Int?,
+    val url: String?,
+    val artwork: List<ExcorArtwork>,
+    val episodes: ExcorMusicPage<ExcorPodcastEpisode>,
+)
