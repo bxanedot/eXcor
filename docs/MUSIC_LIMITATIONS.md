@@ -21,7 +21,7 @@
 
 - **Spotify:** nothing beyond the 2026 Development Mode limits. Playlist creation, details, covers and item editing, library saves, queue, volume, playback control and podcasts are implemented but tested offline only.
 - **Apple Music:** editorial playlist browsing and storefront discovery. Charts cover songs only. Music videos, stations and recommendations are tested offline only.
-- **Deezer:** writes to favorites and playlists; podcasts; editorial endpoints.
+- **Deezer:** writes to favorites and playlists (Deezer's write documentation is behind a login and new apps reportedly can't register); editorial new releases (the endpoint returned none when checked).
 - **Built-in protected-playback adapters.** The host must supply them, and none has been tested on a device.
 - **A built-in lyrics source.** Lyrics are licensed per use, so the host supplies a licensed `ExcorLyricsProvider`. eXcor parses LRC and TTML with line and word timing.
 - **YouTube Music in `Excor.music`.** It reports RESTRICTED. YouTube extraction stays in the existing `Excor` API.

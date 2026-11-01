@@ -57,6 +57,13 @@ class LiveMusicTest {
         assertTrue(m.deezerCatalog.genres().isNotEmpty())
         assertTrue(m.deezerCatalog.chartTracks().items.isNotEmpty())
         assertTrue(m.deezerCatalog.relatedArtists("27").isNotEmpty())
+
+        val show = m.deezerCatalog.searchPodcasts("history").items.first()
+        val podcast = m.deezerCatalog.podcast(show.id)
+        assertTrue(podcast.episodes.items.isNotEmpty() && podcast.episodes.items.all { it.durationMs != null })
+        assertEquals(podcast.episodes.items.first().id, m.deezerCatalog.episode(podcast.episodes.items.first().id).id)
+        val charts = m.deezerCatalog.editorialCharts()
+        assertTrue(charts.tracks.isNotEmpty() && charts.artists.isNotEmpty())
     }
 
     @Test

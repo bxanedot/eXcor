@@ -351,6 +351,13 @@ class ExcorDeezerCatalog internal constructor(private val source: DeezerSource) 
     @Throws(Throwable::class) suspend fun artistTopTracks(artistId: String, page: String? = null) = source.artistTopTracks(artistId, page)
     @Throws(Throwable::class) suspend fun relatedArtists(artistId: String) = source.relatedArtists(artistId)
     @Throws(Throwable::class) suspend fun albumByUpc(upc: String) = source.albumByUpc(upc)
+    @Throws(Throwable::class) suspend fun searchPodcasts(query: String, page: String? = null) = source.searchPodcasts(query, page)
+    /** The show and a page of its episodes. */
+    @Throws(Throwable::class) suspend fun podcast(podcastId: String, page: String? = null) = source.podcast(podcastId, page)
+    @Throws(Throwable::class) suspend fun episode(episodeId: String) = source.episode(episodeId)
+    /** Editorial charts; "0" is all of Deezer, other IDs come from [editorials]. */
+    @Throws(Throwable::class) suspend fun editorialCharts(editorialId: String = "0") = source.editorialCharts(editorialId)
+    @Throws(Throwable::class) suspend fun editorials() = source.editorials()
 }
 
 class ExcorSpotifyCatalog internal constructor(private val source: SpotifySource) {

@@ -189,4 +189,31 @@ class MusicExtrasTest {
         assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47)) }.error)
         assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", jpeg + ByteArray(200_000)) }.error)
     }
+
+    @Test
+    fun deezerPodcastsAndEditorialCharts() = runTest {
+        val episode = """{"id":9001,"title":"Episode 1","description":"About","available":true,"release_date":"2026-10-29 00:05:00","duration":4591,
+            "link":"https://www.deezer.com/episode/9001","track_token":"SYNTHETIC-NEVER-READ","podcast":{"id":900,"title":"The Show"},"type":"episode"}"""
+        val show = """{"id":900,"title":"The Show","description":"Talk","available":true,"fans":10,"link":"https://www.deezer.com/show/900",
+            "picture_xl":"https://cdn-images.dzcdn.net/images/talk/x/1000x1000.jpg","type":"podcast"}"""
+        val m = music(mapOf(
+            "GET /search/podcast" to (200 to """{"data":[$show],"total":1}"""),
+            "GET /podcast/900" to (200 to show),
+            "GET /podcast/900/episodes" to (200 to """{"data":[$episode],"total":1}"""),
+            "GET /episode/9001" to (200 to episode),
+            "GET /editorial/0/charts" to (200 to """{"tracks":{"data":[],"total":0},"albums":{"data":[],"total":0},"artists":{"data":[{"id":27,"name":"Synthetic Duo","type":"artist"}],"total":1},"playlists":{"data":[],"total":0},"podcasts":{"data":[$show],"total":1}}"""),
+        ))
+        assertEquals("900", m.deezerCatalog.searchPodcasts("talk").items.single().id)
+        val podcast = m.deezerCatalog.podcast("900")
+        assertEquals(ExcorCatalogProvider.DEEZER, podcast.provider)
+        assertEquals(1, podcast.totalEpisodes)
+        assertEquals(4_591_000L, podcast.episodes.items.single().durationMs)
+        val e = m.deezerCatalog.episode("9001")
+        assertEquals("The Show", e.showTitle)
+        assertTrue("SYNTHETIC-NEVER-READ" !in e.toString())
+        val charts = m.deezerCatalog.editorialCharts()
+        assertEquals("Synthetic Duo", charts.artists.single().name)
+        assertEquals(1, charts.podcasts.size)
+        assertEquals(ExcorMusicKind.SHOW, m.parse("https://www.deezer.com/en/show/900")!!.kind)
+    }
 }
