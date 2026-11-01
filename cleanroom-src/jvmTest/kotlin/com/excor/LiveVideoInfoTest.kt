@@ -50,6 +50,10 @@ class LiveVideoInfoTest {
         val channel = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg"))
         assertTrue(channel.title == "Daft Punk" && channel.handle != null && "Videos" in channel.tabs)
         assertTrue(channel.videos.size >= 10 && channel.videos.count { it.durationSeconds != null } >= 10)
+        val shorts = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", tab = ExcorYouTubeChannelTab.SHORTS))
+        assertTrue(shorts.videos.size >= 5, "shorts: ${shorts.videos.size}")
+        val lists = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", tab = ExcorYouTubeChannelTab.PLAYLISTS))
+        assertTrue(lists.playlists.size >= 5, "playlists: ${lists.playlists.size}")
         val more = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", assertNotNull(channel.continuation)))
         assertTrue(more.videos.isNotEmpty() && more.videos.none { v -> channel.videos.any { it.videoId == v.videoId } })
     }
@@ -64,6 +68,10 @@ class LiveVideoInfoTest {
         assertTrue(first.comments.count { it.text.isNotBlank() } >= 10 && first.totalText != null, "comments: ${first.comments.size} total=${first.totalText != null}")
         val second = assertNotNull(excor.comments("dQw4w9WgXcQ", assertNotNull(first.continuation)))
         assertTrue(second.comments.isNotEmpty() && second.comments.none { c -> first.comments.any { it.commentId == c.commentId } }, "second: ${second.comments.size}")
+        val withReplies = assertNotNull(first.comments.firstOrNull { it.repliesContinuation != null }, "a comment with replies")
+        val replies = assertNotNull(excor.comments("dQw4w9WgXcQ", withReplies.repliesContinuation))
+        assertTrue(replies.comments.isNotEmpty() && replies.comments.none { it.commentId == withReplies.commentId }, "replies: ${replies.comments.size}")
+        assertTrue(excor.suggestions("daft pu").any { it.startsWith("daft punk") })
     }
 
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {

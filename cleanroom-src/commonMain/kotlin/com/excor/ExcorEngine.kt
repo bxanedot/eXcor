@@ -139,19 +139,19 @@ internal class ExcorEngine(
      * A channel's details and first page of uploads (two requests: the home page for details and the Videos tab), or,
      * with [continuation], the next page of uploads only. Null when YouTube's answer is not a channel page.
      */
-    suspend fun channel(channelId: String, continuation: String?): ExcorYouTubeChannel? {
+    suspend fun channel(channelId: String, continuation: String?, tab: ExcorYouTubeChannelTab): ExcorYouTubeChannel? {
         require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         val session = host.session()
         if (continuation != null) {
-            val (videos, next) = decodeChannelVideos(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
-            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), videos, next)
+            val page = decodeChannelTab(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
+            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), page.videos, page.continuation, page.playlists)
         }
         val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
-        val params = home.videosParams ?: return home.channel
-        val body = postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel
-        val (videos, next) = decodeChannelVideos(body) ?: return home.channel
-        return home.channel.copy(videos = videos, continuation = next)
+        // A channel without this tab (no Live, no Shorts) gives its details with an empty list.
+        val params = home.tabParams[tab] ?: return home.channel
+        val page = decodeChannelTab(postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel) ?: return home.channel
+        return home.channel.copy(videos = page.videos, continuation = page.continuation, playlists = page.playlists)
     }
 
     /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */
@@ -171,6 +171,21 @@ internal class ExcorEngine(
         val session = host.session()
         val token = continuation ?: commentsTokenOf(postPlayer(buildNextRequest(videoId, null, session)) ?: return null) ?: return null
         return decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null)
+    }
+
+    /** Search completions for [query] in the session's language and region. */
+    suspend fun suggestions(query: String): List<String> {
+        val q = query.trim()
+        require(q.length in 1..200) { "query must be 1 to 200 characters" }
+        val session = host.session()
+        val url = URLBuilder("https://suggestqueries-clients6.youtube.com/complete/search").apply {
+            parameters.append("client", "youtube")
+            parameters.append("ds", "yt")
+            parameters.append("hl", session.language.ifBlank { "en" })
+            parameters.append("gl", session.region.ifBlank { "US" })
+            parameters.append("q", q)
+        }.buildString()
+        return decodeSuggestions(getText(url, youtubeHeaders(session, DESKTOP_UA), 64_000) ?: return emptyList())
     }
 
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
