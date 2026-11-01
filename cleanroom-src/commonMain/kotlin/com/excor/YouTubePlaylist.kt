@@ -41,9 +41,15 @@ data class ExcorYouTubePlaylistVideo(
     val thumbnails: List<ExcorArtwork>,
 )
 
-internal fun buildBrowseRequest(browseId: String?, continuation: String?, session: ExcorSession): PlayerRequest = innertubeRequest("browse", session) {
-    if (continuation != null) put("continuation", continuation) else put("browseId", browseId!!)
-}
+internal fun buildBrowseRequest(browseId: String?, continuation: String?, session: ExcorSession, params: String? = null): PlayerRequest =
+    innertubeRequest("browse", session) {
+        if (continuation != null) {
+            put("continuation", continuation)
+        } else {
+            put("browseId", browseId!!)
+            params?.let { put("params", it) }
+        }
+    }
 
 /** A playlist's first page (`contents`) or a continuation (`onResponseReceivedActions`); null when it is neither. */
 internal fun decodePlaylistPage(source: String, playlistId: String): ExcorYouTubePlaylist? {
@@ -59,7 +65,8 @@ internal fun decodePlaylistPage(source: String, playlistId: String): ExcorYouTub
     var continuation: String? = null
     fun collect(items: JsonArray) {
         for (item in items.mapNotNull { it as? JsonObject }) {
-            (item["lockupViewModel"] as? JsonObject)?.let(::playlistVideoOf)?.let(videos::add)
+            ((item["lockupViewModel"] ?: item.path("richItemRenderer", "content", "lockupViewModel")) as? JsonObject)
+                ?.let(::playlistVideoOf)?.let(videos::add)
             continuationOf(item)?.let { continuation = it }
         }
     }
@@ -89,15 +96,16 @@ internal fun decodePlaylistPage(source: String, playlistId: String): ExcorYouTub
     )
 }
 
-private fun playlistVideoOf(l: JsonObject): ExcorYouTubePlaylistVideo? {
+internal fun playlistVideoOf(l: JsonObject): ExcorYouTubePlaylistVideo? {
     if (l.textAt("contentType") != "LOCKUP_CONTENT_TYPE_VIDEO") return null
     val id = l.textAt("contentId")?.takeIf(VIDEO_ID::matches) ?: return null
     val meta = l.path("metadata", "lockupMetadataViewModel") as? JsonObject ?: return null
     val title = meta.path("title", "content")?.let { (it as? JsonPrimitive)?.contentOrNull } ?: return null
     val rows = (meta.path("metadata", "contentMetadataViewModel", "metadataRows") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }
-    val parts = rows.map { row -> (row["metadataParts"] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject } }
-    val channelPart = parts.firstOrNull()?.firstOrNull()
-    val second = parts.getOrNull(1).orEmpty().map { it.path("text", "content")?.let { c -> (c as? JsonPrimitive)?.contentOrNull } }
+    val parts = rows.flatMap { row -> (row["metadataParts"] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject } }
+    // Parts are told apart by content: a channel link, a views count, then the published text. Channel pages omit the channel.
+    val channelPart = parts.firstOrNull { channelBrowseId(it) != null }
+    val texts = parts.filter { it !== channelPart }.mapNotNull { it.path("text", "content")?.let { c -> (c as? JsonPrimitive)?.contentOrNull } }
     val image = l.path("contentImage", "thumbnailViewModel") as? JsonObject
     val badges = ((image?.get("overlays") as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.path("thumbnailBottomOverlayViewModel", "badges") as? JsonArray }).flatten()
     val duration = badges.firstNotNullOfOrNull { (it as? JsonObject)?.path("thumbnailBadgeViewModel", "text")?.let { t -> (t as? JsonPrimitive)?.contentOrNull }?.let(::clockSeconds) }
@@ -107,8 +115,8 @@ private fun playlistVideoOf(l: JsonObject): ExcorYouTubePlaylistVideo? {
         channelName = channelPart?.path("text", "content")?.let { (it as? JsonPrimitive)?.contentOrNull },
         channelId = channelBrowseId(channelPart),
         durationSeconds = duration,
-        viewsText = second.firstOrNull { it?.contains("view") == true },
-        publishedText = second.firstOrNull { it != null && "view" !in it },
+        viewsText = texts.firstOrNull { "view" in it || "watching" in it },
+        publishedText = texts.firstOrNull { "view" !in it && "watching" !in it },
         thumbnails = (image?.path("image", "sources") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }.mapNotNull { t ->
             val url = t.textAt("url") ?: return@mapNotNull null
             val parsed = runCatching { Url(url) }.getOrNull() ?: return@mapNotNull null
@@ -130,14 +138,14 @@ private fun ownerOf(metadata: JsonElement?): Pair<String, String?>? {
     return null
 }
 
-private fun channelBrowseId(part: JsonObject?): String? {
+internal fun channelBrowseId(part: JsonObject?): String? {
     val runs = part?.path("text", "commandRuns") as? JsonArray ?: return null
     return runs.firstNotNullOfOrNull { run ->
         ((run as? JsonObject)?.path("onTap", "innertubeCommand", "browseEndpoint", "browseId") as? JsonPrimitive)?.contentOrNull
     }?.takeIf(CHANNEL_ID::matches)
 }
 
-private fun continuationOf(item: JsonObject): String? {
+internal fun continuationOf(item: JsonObject): String? {
     val token = item.path("continuationItemViewModel", "continuationCommand", "innertubeCommand", "continuationCommand", "token")
         ?: item.path("continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token")
     return (token as? JsonPrimitive)?.contentOrNull?.takeIf { it.length <= MAX_CONTINUATION && it.all { c -> c.isLetterOrDigit() || c in "_-=%" } }

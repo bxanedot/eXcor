@@ -135,6 +135,25 @@ internal class ExcorEngine(
         return decodePlaylistPage(body, playlistId)
     }
 
+    /**
+     * A channel's details and first page of uploads (two requests: the home page for details and the Videos tab), or,
+     * with [continuation], the next page of uploads only. Null when YouTube's answer is not a channel page.
+     */
+    suspend fun channel(channelId: String, continuation: String?): ExcorYouTubeChannel? {
+        require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val session = host.session()
+        if (continuation != null) {
+            val (videos, next) = decodeChannelVideos(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
+            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), videos, next)
+        }
+        val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
+        val params = home.videosParams ?: return home.channel
+        val body = postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel
+        val (videos, next) = decodeChannelVideos(body) ?: return home.channel
+        return home.channel.copy(videos = videos, continuation = next)
+    }
+
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {

@@ -43,6 +43,17 @@ class LiveVideoInfoTest {
         assertTrue(playlist.videos.size >= 10 && playlist.videos.count { it.durationSeconds != null } >= 10)
     }
 
+    @Test
+    fun channelDetailsAndUploads() = runBlocking {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
+        val excor = Excor(Host(OkHttpClient()))
+        val channel = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg"))
+        assertTrue(channel.title == "Daft Punk" && channel.handle != null && "Videos" in channel.tabs)
+        assertTrue(channel.videos.size >= 10 && channel.videos.count { it.durationSeconds != null } >= 10)
+        val more = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", assertNotNull(channel.continuation)))
+        assertTrue(more.videos.isNotEmpty() && more.videos.none { v -> channel.videos.any { it.videoId == v.videoId } })
+    }
+
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {
         override val tokenProvider = null
         override val filesDir: File? = null
