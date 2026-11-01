@@ -100,4 +100,49 @@ class MusicExtrasTest {
         assertTrue(requests.last().headers["Music-User-Token"] == "u")
         assertEquals(ExcorCatalogError.INVALID_URL, assertFailsWith<ExcorCatalogException> { m.appleMusicCatalog.station("../me") }.error)
     }
+
+    @Test
+    fun spotifyLibraryWritesQueueAndVolume() = runTest {
+        val m = music(mapOf(
+            "PUT /v1/me/library" to (200 to ""),
+            "DELETE /v1/me/library" to (200 to ""),
+            "GET /v1/me/library/contains" to (200 to "[true,false]"),
+            "POST /v1/me/player/queue" to (204 to ""),
+            "PUT /v1/me/player/volume" to (204 to ""),
+        ))
+        val uris = (0 until 45).map { "spotify:track:" + it.toString().padStart(22, '0') }
+        m.spotifyCatalog.saveToLibrary(uris)
+        val puts = requests.filter { it.method == HttpMethod.Put }
+        assertEquals(listOf(40, 5), puts.map { it.url.parameters["uris"]!!.split(',').size })
+        m.spotifyCatalog.removeFromLibrary(uris.take(2))
+        assertEquals(HttpMethod.Delete, requests.last().method)
+        assertEquals(listOf(true, false), m.spotifyCatalog.libraryContains(uris.take(2)))
+        assertEquals(ExcorCatalogError.MALFORMED_RESPONSE, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.libraryContains(uris.take(3)) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.saveToLibrary(listOf("https://open.spotify.com/track/x")) }.error)
+        m.spotifyCatalog.queue("spotify:episode:5555555555555555555555")
+        assertEquals("spotify:episode:5555555555555555555555", requests.last().url.parameters["uri"])
+        m.spotifyCatalog.setVolume(35)
+        assertEquals("35", requests.last().url.parameters["volume_percent"])
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.setVolume(101) }.error)
+    }
+
+    @Test
+    fun ttmlLyricsWithLineAndWordTimes() {
+        val ttml = """<?xml version="1.0" encoding="UTF-8"?>
+            <tt xmlns="http://www.w3.org/ns/ttml" xml:lang="en"><body><div>
+              <p begin="00:00:01.500" end="00:00:04.000"><span begin="1.5s">Glass</span> <span begin="00:02.100">river &amp;</span> <span begin="2600ms">light</span></p>
+              <p begin="5.25s">Second<br/>line</p>
+              <p begin="1:00:00.000">Late</p>
+            </div></body></tt>"""
+        val lyrics = excorParseTtml(ttml, source = "test")
+        assertEquals(ExcorLyricsSync.WORD, lyrics.sync)
+        assertEquals("en", lyrics.language)
+        assertEquals(listOf(1_500L, 5_250L, 3_600_000L), lyrics.lines.map { it.startMs })
+        assertEquals("Glass river & light", lyrics.lines[0].text)
+        assertEquals(listOf(1_500L, 2_100L, 2_600L), lyrics.lines[0].words.map { it.startMs })
+        assertEquals("Second line", lyrics.lines[1].text)
+        assertEquals(ExcorLyricsSync.NONE, excorParseTtml("<tt><body><p>Untimed &#x263A;</p></body></tt>", "test").sync)
+        assertEquals("Untimed \u263A", excorParseTtml("<tt><body><p>Untimed &#x263A;</p></body></tt>", "test").lines.single().text)
+        assertEquals(null, ttmlTime("soon"))
+    }
 }

@@ -179,3 +179,6 @@ The `com.excor.music` package is under the repository's Apache-2.0 license. It a
 | [Stash](https://github.com/rawnaldclark/Stash) README | Read 2026-11-01 | GPL-3.0 | Feature list only, as a research target; no code opened. |
 | [spotify-downloader](https://github.com/CuteTenshii/spotify-downloader) README | Read 2026-11-01 | MIT | Accepted identifiers only: base-62 ID, GID, `spotify:` URI. The credential and decryption sections were skipped and nothing was reproduced. |
 | [DRML](https://github.com/TheRogueArchivist/DRML) index | Read 2026-11-01 | CC0-1.0 | Terminology only. It covers optical-media and software protection, so none of it is used. |
+| [librespot](https://github.com/librespot-org/librespot) `spotify_id.rs` test data, read via docs.rs | 2026-11-01 | MIT | Two published GID/base-62 ID pairs, used only as test vectors that confirm the conversion. No code was used. |
+| [W3C TTML2](https://www.w3.org/TR/ttml2/) | Recommendation | W3C | Time expressions and the `p`/`span`/`br` structure, for the TTML lyrics parser. |
+| Spotify Web API reference: save, remove and check library items; add to queue | Read 2026-11-01 | Spotify Developer Terms | `PUT`/`DELETE /me/library` and `GET /me/library/contains` (40 URIs at most), and `POST /me/player/queue`. |

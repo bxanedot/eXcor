@@ -364,6 +364,12 @@ class ExcorSpotifyCatalog internal constructor(private val source: SpotifySource
     @Throws(Throwable::class) suspend fun previous(deviceId: String? = null) { source.previous(deviceId) }
     @Throws(Throwable::class) suspend fun seek(positionMs: Long, deviceId: String? = null) = source.seek(positionMs, deviceId)
     @Throws(Throwable::class) suspend fun devices() = source.devices()
+    @Throws(Throwable::class) suspend fun queue(uri: String, deviceId: String? = null) = source.queue(uri, deviceId)
+    @Throws(Throwable::class) suspend fun setVolume(percent: Int, deviceId: String? = null) = source.setVolume(percent, deviceId)
+    /** `spotify:` URIs of tracks, albums, episodes, shows, artists or playlists; batched by 40. */
+    @Throws(Throwable::class) suspend fun saveToLibrary(uris: List<String>) = source.saveToLibrary(uris)
+    @Throws(Throwable::class) suspend fun removeFromLibrary(uris: List<String>) = source.removeFromLibrary(uris)
+    @Throws(Throwable::class) suspend fun libraryContains(uris: List<String>) = source.libraryContains(uris)
     @Throws(Throwable::class) suspend fun episode(id: String) = source.episode(id)
     @Throws(Throwable::class) suspend fun show(id: String, page: String? = null) = source.show(id, page)
 }

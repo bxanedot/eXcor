@@ -143,6 +143,8 @@ internal class MusicHttp(
             channel.cancel()
         }
         if (bytes.size > MAX_BYTES) throw ExcorCatalogException(provider, ExcorCatalogError.RESPONSE_TOO_LARGE)
+        // Commands such as Spotify's library writes succeed with an empty body.
+        if (bytes.all { it.toInt().toChar().isWhitespace() }) return JsonObject(emptyMap())
         return try {
             Json.parseToJsonElement(bytes.decodeToString())
         } catch (_: Exception) {

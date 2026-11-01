@@ -8,7 +8,7 @@ Everything is reached through `excor.music`, an instance of `ExcorMusic`. Every 
 | `getTrack` / `getAlbum` / `getArtist` / `getPlaylist(urlOrId)` | `track(url)` or `track(ExcorMusicRef)`; likewise `album`, `artist`, `playlist` |
 | Paging | `albumTracks(ref, page)`, `artistAlbums(ref, page)`, `playlistTracks(ref, page)`; pass `page.next` back |
 | `getMetadata(track)` | `metadata(track)` completes from the same provider; `enrich(track, matches)` fills from other providers with attribution |
-| `getLyrics(track)` | `lyrics(track)` uses the host's licensed `ExcorLyricsProvider`; `excorParseLrc` parses LRC with line and word timing; `track.hasLyrics` is Apple's availability flag |
+| `getLyrics(track)` | `lyrics(track)` uses the host's licensed `ExcorLyricsProvider`; `excorParseLrc` and `excorParseTtml` parse LRC and TTML with line and word timing; `track.hasLyrics` is Apple's availability flag |
 | `getAudioCapabilities(track)` | `audioCapabilities(track)` returns `ExcorAudioCapabilities` |
 | `getDrmInfo(track)` | `drmInfo(track)` returns `ExcorProtectionInfo` |
 | `matchAcrossProviders(track)` | `matchAcrossProviders(track, providers, options)` |

@@ -140,6 +140,44 @@ internal class SpotifySource(
         command(HttpMethod.Put, "me/player/seek", deviceId, extra = listOf("position_ms" to "$positionMs"))
     }
 
+    /** Adds a track or episode to the queue of the user's Spotify client (Premium). */
+    suspend fun queue(uri: String, deviceId: String?) {
+        if (!uri.startsWith("spotify:") || spotifyRefOf(uri)?.kind !in setOf(ExcorMusicKind.TRACK, ExcorMusicKind.EPISODE)) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        command(HttpMethod.Post, "me/player/queue", deviceId, extra = listOf("uri" to uri))
+    }
+
+    suspend fun setVolume(percent: Int, deviceId: String?) {
+        if (percent !in 0..100) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        command(HttpMethod.Put, "me/player/volume", deviceId, extra = listOf("volume_percent" to "$percent"))
+    }
+
+    /**
+     * Saves to or removes from the user's library (`PUT`/`DELETE /me/library`, user-library-modify and the related
+     * scopes). Spotify takes up to 40 URIs per request, so longer lists are sent in batches.
+     */
+    suspend fun saveToLibrary(uris: List<String>) = libraryBatches(uris) { command(HttpMethod.Put, "me/library", null, extra = listOf("uris" to it.joinToString(","))) }
+
+    suspend fun removeFromLibrary(uris: List<String>) = libraryBatches(uris) { command(HttpMethod.Delete, "me/library", null, extra = listOf("uris" to it.joinToString(","))) }
+
+    /** Whether each URI is in the user's library, in the given order. */
+    suspend fun libraryContains(uris: List<String>): List<Boolean> {
+        val result = mutableListOf<Boolean>()
+        libraryBatches(uris) { batch ->
+            val access = token() ?: throw fail(ExcorCatalogError.AUTHENTICATION_REQUIRED)
+            val url = URLBuilder("https://api.spotify.com/v1/me/library/contains").apply { parameters.append("uris", batch.joinToString(",")) }.buildString()
+            val flags = (http.getJson(provider, url, bearer = access) as? kotlinx.serialization.json.JsonArray)
+                ?.map { (it as? kotlinx.serialization.json.JsonPrimitive)?.content == "true" }
+            if (flags == null || flags.size != batch.size) throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+            result += flags
+        }
+        return result
+    }
+
+    private suspend fun libraryBatches(uris: List<String>, send: suspend (List<String>) -> Unit) {
+        if (uris.isEmpty() || uris.any { !it.startsWith("spotify:") || spotifyRefOf(it) == null }) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        uris.chunked(LIBRARY_BATCH).forEach { send(it) }
+    }
+
     suspend fun devices(): List<ExcorSpotifyDevice> = get("me/player/devices").arr("devices")?.objects().orEmpty().mapNotNull { d ->
         ExcorSpotifyDevice(d.str("id") ?: return@mapNotNull null, d.str("name") ?: "", d.str("type"), d.bool("is_active") ?: false, d.bool("is_restricted") ?: false)
     }
@@ -359,6 +397,7 @@ internal class SpotifySource(
         const val PAGE = 50
         val SPOTIFY_ID = Regex("[A-Za-z0-9]{22}")
         val DEVICE_ID = Regex("[A-Za-z0-9]{1,128}")
+        const val LIBRARY_BATCH = 40
         val SEARCH_TYPES = mapOf(
             ExcorMusicKind.TRACK to "track", ExcorMusicKind.ALBUM to "album",
             ExcorMusicKind.ARTIST to "artist", ExcorMusicKind.PLAYLIST to "playlist",

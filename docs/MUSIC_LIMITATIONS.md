@@ -19,16 +19,15 @@
 
 ## Not implemented
 
-- **Spotify:** following and saving to the library (`PUT /me/library`), queue management and volume. Playback control and podcasts are implemented but tested offline only.
+- **Spotify:** playlist editing (adding, removing and reordering items). Library saves, queue, volume, playback control and podcasts are implemented but tested offline only.
 - **Apple Music:** editorial playlist browsing and storefront discovery. Charts cover songs only. Music videos, stations and recommendations are tested offline only.
 - **Deezer:** writes to favorites and playlists; podcasts; editorial endpoints.
 - **Built-in protected-playback adapters.** The host must supply them, and none has been tested on a device.
-- **A built-in lyrics source.** Lyrics are licensed per use, so the host supplies a licensed `ExcorLyricsProvider`. eXcor parses LRC; it doesn't parse TTML.
+- **A built-in lyrics source.** Lyrics are licensed per use, so the host supplies a licensed `ExcorLyricsProvider`. eXcor parses LRC and TTML with line and word timing.
 - **YouTube Music in `Excor.music`.** It reports RESTRICTED. YouTube extraction stays in the existing `Excor` API.
 
 ## Known approximations
 
-- **Spotify GID conversion.** It uses base 62 with the alphabet digits, then lower case, then upper case. It hasn't been checked against a Spotify-issued GID.
 - **Diacritic folding in matching.** It covers Latin letters only.
 - **Spotify playlist fallback.** For extended-quota apps, a 404 on a playlist's `/items` falls back to `/tracks`.
 - **Region restrictions.** These are reported only where the provider states them: Deezer `readable` and `available_countries`, Spotify `restrictions`, Apple `playParams`.
