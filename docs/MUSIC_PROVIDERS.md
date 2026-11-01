@@ -30,7 +30,9 @@ None of these providers gives eXcor audio. Full tracks are protected and play on
 | User library: saved tracks and playlists | ✓ | ✓ (with user token) | – | ✓ (with token) |
 | Charts | – | ✓ `appleMusicCatalog.chartSongs` | – | ✓ `deezerCatalog.chartTracks` |
 | Genres, radios, related artists, artist top tracks | – | – | – | ✓ `deezerCatalog` |
-| Playback state | ✓ `spotifyCatalog.playbackState` | – | – | – |
+| Playback state; remote control (play, pause, next, previous, seek, devices) of the user's Spotify client | ✓ `spotifyCatalog` (Premium and the playback scopes) | – | – | – |
+| Podcasts: episodes and shows | ✓ `spotifyCatalog.episode`, `show` | – | – | – |
+| Music videos, stations, personal recommendations | – | ✓ `appleMusicCatalog` | – | – |
 | Audio variants (lossless, Atmos…) | not offered | ✓ | – | not offered |
 | Lyrics availability | not offered | ✓ `hasLyrics` | – | not offered |
 | Preview availability (boolean only) | ✓ when returned | ✓ | – | ✓ |
@@ -41,4 +43,4 @@ Provider-only features stay out of the shared models: `music.deezerCatalog`, `mu
 
 ## Not implemented
 
-Spotify podcasts and episodes (links parse; no metadata calls), Apple Music stations, music videos and recommendations, and Spotify playback control (play, pause, skip). [MUSIC_LIMITATIONS.md](MUSIC_LIMITATIONS.md) has the full list.
+Library writes, editorial browsing and built-in protected-playback adapters. [MUSIC_LIMITATIONS.md](MUSIC_LIMITATIONS.md) has the full list.

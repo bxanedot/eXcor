@@ -357,6 +357,15 @@ class ExcorSpotifyCatalog internal constructor(private val source: SpotifySource
     @Throws(Throwable::class) suspend fun albumByUpc(upc: String) = source.albumByUpc(upc)
     /** Needs the user-read-playback-state scope; null when nothing is playing. */
     @Throws(Throwable::class) suspend fun playbackState() = source.playbackState()
+    /** Remote control of the user's Spotify client (Premium, user-modify-playback-state). [uris] are `spotify:` URIs. */
+    @Throws(Throwable::class) suspend fun play(uris: List<String> = emptyList(), deviceId: String? = null) = source.play(uris, deviceId)
+    @Throws(Throwable::class) suspend fun pause(deviceId: String? = null) { source.pause(deviceId) }
+    @Throws(Throwable::class) suspend fun next(deviceId: String? = null) { source.next(deviceId) }
+    @Throws(Throwable::class) suspend fun previous(deviceId: String? = null) { source.previous(deviceId) }
+    @Throws(Throwable::class) suspend fun seek(positionMs: Long, deviceId: String? = null) = source.seek(positionMs, deviceId)
+    @Throws(Throwable::class) suspend fun devices() = source.devices()
+    @Throws(Throwable::class) suspend fun episode(id: String) = source.episode(id)
+    @Throws(Throwable::class) suspend fun show(id: String, page: String? = null) = source.show(id, page)
 }
 
 class ExcorAppleMusicCatalog internal constructor(private val source: AppleMusicSource) {
@@ -364,4 +373,8 @@ class ExcorAppleMusicCatalog internal constructor(private val source: AppleMusic
     @Throws(Throwable::class) suspend fun chartSongs(genreId: String? = null, limit: Int = 25) = source.chartSongs(genreId, limit)
     /** Needs a Music-User-Token. */
     @Throws(Throwable::class) suspend fun recentlyPlayed() = source.recentlyPlayed()
+    /** Needs a Music-User-Token. */
+    @Throws(Throwable::class) suspend fun recommendations() = source.recommendations()
+    @Throws(Throwable::class) suspend fun musicVideo(id: String) = source.musicVideo(id)
+    @Throws(Throwable::class) suspend fun station(id: String) = source.station(id)
 }

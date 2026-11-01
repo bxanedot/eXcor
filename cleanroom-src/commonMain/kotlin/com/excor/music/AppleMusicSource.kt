@@ -170,6 +170,55 @@ internal class AppleMusicSource(
         return body.obj("results")?.arr("songs")?.objects().orEmpty().flatMap { it.arr("data")?.objects().orEmpty() }.mapNotNull(::songOf)
     }
 
+    suspend fun musicVideo(id: String): ExcorAppleMusicVideo {
+        val catalogId = id.takeIf(CATALOG_ID::matches) ?: throw fail(ExcorCatalogError.INVALID_URL)
+        requireApi()
+        return first(api("catalog/$storefront/music-videos/$catalogId"), ::musicVideoOf)
+    }
+
+    suspend fun station(id: String): ExcorAppleStation {
+        val stationId = id.takeIf(STATION_ID::matches) ?: throw fail(ExcorCatalogError.INVALID_URL)
+        requireApi()
+        return first(api("catalog/$storefront/stations/$stationId")) { o ->
+            val a = o.obj("attributes") ?: return@first null
+            ExcorAppleStation(o.str("id") ?: return@first null, a.str("name") ?: return@first null, a.bool("isLive"),
+                a.str("url")?.takeIf { httpsUrlOn(it, setOf("music.apple.com")) != null }, artworkOfTemplate(a.obj("artwork")))
+        }
+    }
+
+    /** The listener's personal recommendations (needs a Music-User-Token): groups of albums, playlists and stations. */
+    suspend fun recommendations(): List<ExcorAppleRecommendation> =
+        api("me/recommendations", listOf("limit" to "10"), user = true).arr("data")?.objects().orEmpty().mapNotNull { o ->
+            val title = o.obj("attributes")?.obj("title")?.str("stringForDisplay") ?: return@mapNotNull null
+            val contents = o.obj("relationships")?.obj("contents")?.arr("data")?.objects().orEmpty().mapNotNull { c ->
+                val kind = when (c.str("type")) {
+                    "albums" -> ExcorMusicKind.ALBUM; "playlists" -> ExcorMusicKind.PLAYLIST; "stations" -> ExcorMusicKind.STATION
+                    else -> return@mapNotNull null
+                }
+                ExcorMusicRef(provider, kind, c.str("id") ?: return@mapNotNull null)
+            }
+            ExcorAppleRecommendation(title, contents)
+        }
+
+    private fun musicVideoOf(o: JsonObject): ExcorAppleMusicVideo? {
+        if (o.str("type") != "music-videos") return null
+        val a = o.obj("attributes") ?: return null
+        return ExcorAppleMusicVideo(
+            id = o.str("id") ?: return null,
+            title = a.str("name") ?: return null,
+            artistName = a.str("artistName"),
+            isrc = a.str("isrc"),
+            durationMs = a.long("durationInMillis"),
+            releaseDate = a.str("releaseDate"),
+            genres = a.strings("genreNames").filter { it != "Music" },
+            explicit = when (a.str("contentRating")) { "explicit" -> true; "clean" -> false; else -> null },
+            has4K = a.bool("has4K"),
+            hasHdr = a.bool("hasHDR"),
+            url = a.str("url")?.takeIf { httpsUrlOn(it, setOf("music.apple.com")) != null },
+            artwork = artworkOfTemplate(a.obj("artwork")),
+        )
+    }
+
     // --- Apple Music API ---
 
     private suspend fun requireApi() {
@@ -411,6 +460,7 @@ internal class AppleMusicSource(
         val STOREFRONT = Regex("[a-z]{2}")
         val CATALOG_ID = Regex("[1-9][0-9]{0,14}")
         val PLAYLIST_ID = Regex("pl\\.[A-Za-z0-9-]{1,64}")
+        val STATION_ID = Regex("ra\\.[A-Za-z0-9.-]{1,64}")
         val API_TYPES = mapOf(
             ExcorMusicKind.TRACK to "songs", ExcorMusicKind.ALBUM to "albums",
             ExcorMusicKind.ARTIST to "artists", ExcorMusicKind.PLAYLIST to "playlists",
@@ -454,3 +504,22 @@ internal fun formatsOf(traits: Set<ExcorAudioTrait>): List<ExcorAudioFormat> =
     } else {
         emptyList()
     }
+
+data class ExcorAppleMusicVideo(
+    val id: String,
+    val title: String,
+    val artistName: String?,
+    val isrc: String?,
+    val durationMs: Long?,
+    val releaseDate: String?,
+    val genres: List<String>,
+    val explicit: Boolean?,
+    val has4K: Boolean?,
+    val hasHdr: Boolean?,
+    val url: String?,
+    val artwork: List<ExcorArtwork>,
+)
+
+data class ExcorAppleStation(val id: String, val name: String, val live: Boolean?, val url: String?, val artwork: List<ExcorArtwork>)
+
+data class ExcorAppleRecommendation(val title: String, val items: List<ExcorMusicRef>)

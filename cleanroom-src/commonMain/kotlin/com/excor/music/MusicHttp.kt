@@ -8,10 +8,14 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.content.TextContent
 import io.ktor.http.Parameters
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.cancel
@@ -72,6 +76,17 @@ internal class MusicHttp(
             }
         }
 
+    /** A command (PUT, POST) with an optional JSON body; an empty success returns an empty object. Never cached. */
+    suspend fun command(provider: ExcorCatalogProvider, method: HttpMethod, url: String, bearer: String, json: String? = null): JsonElement =
+        send(provider) {
+            http.request(url) {
+                this.method = method
+                header(HttpHeaders.Accept, "application/json")
+                header(HttpHeaders.Authorization, "Bearer $bearer")
+                if (json != null) setBody(TextContent(json, ContentType.Application.Json)) else setBody(TextContent("", ContentType.Application.Json))
+            }
+        }
+
     private suspend fun send(provider: ExcorCatalogProvider, call: suspend () -> HttpResponse): JsonElement {
         var retried = false
         while (true) {
@@ -113,6 +128,10 @@ internal class MusicHttp(
             throw ExcorCatalogException(provider, ExcorCatalogError.RESPONSE_TOO_LARGE)
         }
         val type = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()?.lowercase()
+        if (type == null && response.headers[HttpHeaders.ContentLength] == "0") {
+            response.bodyAsChannel().cancel()
+            return JsonObject(emptyMap())
+        }
         if (type != "application/json" && type != "text/javascript") {
             response.bodyAsChannel().cancel()
             throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
