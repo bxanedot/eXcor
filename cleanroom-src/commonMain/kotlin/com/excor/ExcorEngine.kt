@@ -162,15 +162,20 @@ internal class ExcorEngine(
     }
 
     /**
-     * A page of [videoId]'s comments in YouTube's default order. The first page takes two requests (the watch page for
-     * the comments token, then the comments); null when comments are off or YouTube's answer is not a comments page.
+     * A page of [videoId]'s comments, YouTube's Top order or [newestFirst]. The first page takes two requests (the watch
+     * page for the comments token, then the comments), three for newest first; null when comments are off or YouTube's
+     * answer is not a comments page.
      */
-    suspend fun comments(videoId: String, continuation: String?): ExcorYouTubeCommentsPage? {
+    suspend fun comments(videoId: String, continuation: String?, newestFirst: Boolean): ExcorYouTubeCommentsPage? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         val session = host.session()
         val token = continuation ?: commentsTokenOf(postPlayer(buildNextRequest(videoId, null, session)) ?: return null) ?: return null
-        return decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null)
+        val page = decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null) ?: return null
+        // Newest first needs the sort token from the first (Top) page: one more request.
+        if (!newestFirst || continuation != null) return page
+        val newest = page.newestContinuation ?: return page
+        return decodeComments(postPlayer(buildNextRequest(null, newest, session)) ?: return page) ?: page
     }
 
     /** Search completions for [query] in the session's language and region. */

@@ -32,6 +32,8 @@ data class ExcorYouTubeCommentsPage(
     /** YouTube's total, such as "2,461,182 Comments"; only on the first page. */
     val totalText: String?,
     val continuation: String?,
+    /** On the first page: pass to `Excor.comments(videoId, it)` for the same comments newest first. */
+    val newestContinuation: String? = null,
 )
 
 internal fun buildNextRequest(videoId: String?, continuation: String?, session: ExcorSession): PlayerRequest = innertubeRequest("next", session) {
@@ -101,7 +103,11 @@ internal fun decodeComments(source: String): ExcorYouTubeCommentsPage? {
     }
     val header = items.firstNotNullOfOrNull { it["commentsHeaderRenderer"] as? JsonObject }
     val total = (header?.path("countText", "runs") as? JsonArray)?.mapNotNull { (it as? JsonObject)?.textAt("text") }?.joinToString("")
-    return ExcorYouTubeCommentsPage(comments, total, items.firstNotNullOfOrNull(::continuationOf))
+    // The sort menu lists Top, then Newest; titles are localized, so the position is what identifies Newest.
+    val sortItems = (header?.path("sortMenu", "sortFilterSubMenuRenderer", "subMenuItems") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }
+    val newest = sortItems.getOrNull(1)?.path("serviceEndpoint", "continuationCommand", "token")?.let { (it as? JsonPrimitive)?.contentOrNull }
+        ?.takeIf { it.length <= MAX_CONTINUATION && it.all { c -> c.isLetterOrDigit() || c in "_-=%" } }
+    return ExcorYouTubeCommentsPage(comments, total, items.firstNotNullOfOrNull(::continuationOf), newest)
 }
 
 private fun continuationItems(root: JsonObject): JsonArray? =

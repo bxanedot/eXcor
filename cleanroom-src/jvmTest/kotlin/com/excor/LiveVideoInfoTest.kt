@@ -72,6 +72,8 @@ class LiveVideoInfoTest {
         val replies = assertNotNull(excor.comments("dQw4w9WgXcQ", withReplies.repliesContinuation))
         assertTrue(replies.comments.isNotEmpty() && replies.comments.none { it.commentId == withReplies.commentId }, "replies: ${replies.comments.size}")
         assertTrue(excor.suggestions("daft pu").any { it.startsWith("daft punk") })
+        val newest = assertNotNull(excor.comments("dQw4w9WgXcQ", newestFirst = true))
+        assertTrue(newest.comments.isNotEmpty() && newest.comments.map { it.commentId } != first.comments.map { it.commentId }, "newest differs from top")
     }
 
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {

@@ -60,9 +60,10 @@ class Excor(host: ExcorHost) {
     @Throws(Throwable::class)
     suspend fun related(videoId: String, continuation: String? = null): ExcorYouTubeRelated? = engine.related(videoId, continuation)
 
-    /** A video's comments in YouTube's default order; pass `page.continuation` back for more. */
+    /** A video's comments, Top order or [newestFirst]; pass `page.continuation` back for more. */
     @Throws(Throwable::class)
-    suspend fun comments(videoId: String, continuation: String? = null): ExcorYouTubeCommentsPage? = engine.comments(videoId, continuation)
+    suspend fun comments(videoId: String, continuation: String? = null, newestFirst: Boolean = false): ExcorYouTubeCommentsPage? =
+        engine.comments(videoId, continuation, newestFirst)
     /** YouTube search completions for a partial query. */
     @Throws(Throwable::class)
     suspend fun suggestions(query: String): List<String> = engine.suggestions(query)
