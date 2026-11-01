@@ -34,8 +34,8 @@ or DRM circumvention component.
   and metadata inside the existing Android app.
 - `desktop-app/`: initial JVM/Swing catalog browser with image rendering,
   Deezer/Spotify/YouTube Music searches and external source links.
-- `ios-app/`: initial SwiftUI catalog browser; XcodeGen project uses the
-  existing `eXcor.xcframework`.
+- `ios-app/`: initial SwiftUI catalog browser; XcodeGen project links the
+  historical engine as `ExcorApp.xcframework` (`historical-engine/`).
 - `settings.gradle.kts`, CI workflow, README and PROVENANCE updates.
 
 **Important: these shells are initial implementations, not finished
@@ -105,8 +105,8 @@ Run using JDK 27 toolchain and the environment settings from
 ./gradlew :android-app:assembleDebug :android-app:lintDebug
 ./gradlew :desktop-app:distZip
 # On macOS with Xcode:
-./gradlew iosSimulatorArm64Test assembleEXcorReleaseXCFramework
-xcodegen generate --spec ios-app/project.yml --project ios-app/eXcorIOS.xcodeproj
+./gradlew iosSimulatorArm64Test assembleEXcorReleaseXCFramework :historical-engine:assembleExcorAppReleaseXCFramework
+xcodegen generate --spec ios-app/project.yml --project ios-app
 xcodebuild -project ios-app/eXcorIOS.xcodeproj -scheme eXcorIOS \
   -configuration Debug -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build

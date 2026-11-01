@@ -1,6 +1,6 @@
 import SwiftUI
 import Foundation
-import eXcor
+import ExcorApp
 
 // SwiftUI is a native shell over the SAME Kotlin Multiplatform extraction/metadata engine.
 final class IOSConfig: NSObject, ExcorConfigStore {

@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 // The historical engine in src/, built only for app-core and the apps (owner, 2026-11-01). It is quarantined pending
 // the provenance review (docs/CLEAN_ROOM.md): never published, never part of the clean-room eXcor artifact, which
@@ -65,10 +66,15 @@ kotlin {
         // MergeCheck runs ExcorMerge on an emulator in CI; see the android-device job.
         withDeviceTest { instrumentationRunner = "com.excor.MergeCheck" }
     }
-    // app-core declares them; only their compilation is needed, no framework is linked.
-    iosArm64()
-    iosSimulatorArm64()
-    iosX64()
+    // ios-app links this as ExcorApp, a name apart from the clean-room eXcor framework.
+    val xcf = XCFramework("ExcorApp")
+    listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "ExcorApp"
+            isStatic = true
+            xcf.add(this)
+        }
+    }
 
     // The default hierarchy (iosMain and friends) plus jvmCommonMain: the OkHttp and java.io.File host API that the
     // JVM and Android share.
