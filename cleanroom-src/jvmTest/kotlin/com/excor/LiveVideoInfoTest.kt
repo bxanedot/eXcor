@@ -64,6 +64,10 @@ class LiveVideoInfoTest {
         assertTrue(first.comments.count { it.text.isNotBlank() } >= 10 && first.totalText != null, "comments: ${first.comments.size} total=${first.totalText != null}")
         val second = assertNotNull(excor.comments("dQw4w9WgXcQ", assertNotNull(first.continuation)))
         assertTrue(second.comments.isNotEmpty() && second.comments.none { c -> first.comments.any { it.commentId == c.commentId } }, "second: ${second.comments.size}")
+        val withReplies = assertNotNull(first.comments.firstOrNull { it.repliesContinuation != null }, "a comment with replies")
+        val replies = assertNotNull(excor.comments("dQw4w9WgXcQ", withReplies.repliesContinuation))
+        assertTrue(replies.comments.isNotEmpty() && replies.comments.none { it.commentId == withReplies.commentId }, "replies: ${replies.comments.size}")
+        assertTrue(excor.suggestions("daft pu").any { it.startsWith("daft punk") })
     }
 
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {

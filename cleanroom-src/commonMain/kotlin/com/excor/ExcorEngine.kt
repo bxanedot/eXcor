@@ -173,6 +173,21 @@ internal class ExcorEngine(
         return decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null)
     }
 
+    /** Search completions for [query] in the session's language and region. */
+    suspend fun suggestions(query: String): List<String> {
+        val q = query.trim()
+        require(q.length in 1..200) { "query must be 1 to 200 characters" }
+        val session = host.session()
+        val url = URLBuilder("https://suggestqueries-clients6.youtube.com/complete/search").apply {
+            parameters.append("client", "youtube")
+            parameters.append("ds", "yt")
+            parameters.append("hl", session.language.ifBlank { "en" })
+            parameters.append("gl", session.region.ifBlank { "US" })
+            parameters.append("q", q)
+        }.buildString()
+        return decodeSuggestions(getText(url, youtubeHeaders(session, DESKTOP_UA), 64_000) ?: return emptyList())
+    }
+
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {

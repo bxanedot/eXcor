@@ -46,6 +46,9 @@ class Excor(host: ExcorHost) {
     /** A video's comments in YouTube's default order; pass `page.continuation` back for more. */
     @Throws(Throwable::class)
     suspend fun comments(videoId: String, continuation: String? = null): ExcorYouTubeCommentsPage? = engine.comments(videoId, continuation)
+    /** YouTube search completions for a partial query. */
+    @Throws(Throwable::class)
+    suspend fun suggestions(query: String): List<String> = engine.suggestions(query)
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> = engine.audioCandidates(videoId)
     suspend fun extract(
         videoId: String,

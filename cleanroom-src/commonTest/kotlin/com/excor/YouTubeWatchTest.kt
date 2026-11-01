@@ -60,4 +60,18 @@ class YouTubeWatchTest {
         assertEquals("commentsnext", page.continuation)
         assertNull(decodeComments("""{"responseContext":{}}"""))
     }
+
+    @Test
+    fun repliesPagesAndSuggestions() {
+        val thread = comments.replace("""{"commentThreadRenderer":{"commentViewModel":{"commentViewModel":{"commentKey":"k1"}}}}""",
+            """{"commentThreadRenderer":{"commentViewModel":{"commentViewModel":{"commentKey":"k1"}},"replies":{"commentRepliesRenderer":{"contents":[
+              {"continuationItemRenderer":{"continuationEndpoint":{"continuationCommand":{"token":"repliestoken"}}}}]}}}}""")
+        assertEquals("repliestoken", decodeComments(thread)!!.comments.first().repliesContinuation)
+        val replies = comments.replace("{\"reloadContinuationItemsCommand\":{\"continuationItems\":[{\"commentsHeaderRenderer\"", "{\"x\":{\"continuationItems\":[{\"commentsHeaderRenderer\"")
+            .replace("""{"commentThreadRenderer":{"commentViewModel":{"commentViewModel":{"commentKey":"k2"}}}}""", """{"commentViewModel":{"commentKey":"k2"}}""")
+        assertTrue(decodeComments(replies)!!.comments.any { it.commentId == "c2" })
+        assertEquals(listOf("daft punk", "daft punk around the world"),
+            decodeSuggestions("""window.google.ac.h(["daft pu",[["daft punk",0,[512],{"zao":"Daft Punk"}],["daft punk around the world",0,[512]]],{"k":1}])"""))
+        assertEquals(emptyList(), decodeSuggestions("not jsonp"))
+    }
 }

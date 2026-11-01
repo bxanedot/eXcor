@@ -23,6 +23,8 @@ data class ExcorYouTubeComment(
     val publishedText: String?,
     val likesText: String?,
     val replyCount: Int?,
+    /** Pass to `Excor.comments(videoId, it)` for this comment's replies; null when it has none. */
+    val repliesContinuation: String? = null,
 )
 
 data class ExcorYouTubeCommentsPage(
@@ -72,8 +74,12 @@ internal fun decodeComments(source: String): ExcorYouTubeCommentsPage? {
         .mapNotNull { (it as? JsonObject)?.path("payload", "commentEntityPayload") as? JsonObject }
         .associateBy { it.textAt("key") }
     val comments = items.mapNotNull { item ->
-        val key = item.path("commentThreadRenderer", "commentViewModel", "commentViewModel", "commentKey")?.let { (it as? JsonPrimitive)?.contentOrNull }
-            ?: return@mapNotNull null
+        // Top-level pages wrap each comment in a thread; reply pages list commentViewModel items directly.
+        val thread = item["commentThreadRenderer"] as? JsonObject
+        val model = (thread?.path("commentViewModel", "commentViewModel") ?: item["commentViewModel"]) as? JsonObject
+        val key = model?.textAt("commentKey") ?: return@mapNotNull null
+        val repliesToken = ((thread?.path("replies", "commentRepliesRenderer", "contents")) as? JsonArray).orEmpty()
+            .mapNotNull { it as? JsonObject }.firstNotNullOfOrNull(::continuationOf)
         val entity = entities[key] ?: return@mapNotNull null
         val properties = entity["properties"] as? JsonObject ?: return@mapNotNull null
         val author = entity["author"] as? JsonObject
@@ -90,6 +96,7 @@ internal fun decodeComments(source: String): ExcorYouTubeCommentsPage? {
             publishedText = properties.textAt("publishedTime"),
             likesText = toolbar?.textAt("likeCountNotliked")?.takeIf(String::isNotBlank),
             replyCount = toolbar?.textAt("replyCount")?.filter(Char::isDigit)?.toIntOrNull(),
+            repliesContinuation = repliesToken,
         )
     }
     val header = items.firstNotNullOfOrNull { it["commentsHeaderRenderer"] as? JsonObject }
@@ -104,3 +111,12 @@ private fun continuationItems(root: JsonObject): JsonArray? =
 
 private fun parse(source: String): JsonObject? =
     if (source.length > 4_000_000) null else runCatching { Json.parseToJsonElement(source) }.getOrNull() as? JsonObject
+
+/** Query completions from YouTube's suggestion service (JSONP-wrapped JSON: `[query, [[text, …], …], …]`). */
+internal fun decodeSuggestions(source: String): List<String> {
+    val start = source.indexOf('(')
+    val end = source.lastIndexOf(')')
+    val body = if (start >= 0 && end > start) source.substring(start + 1, end) else source
+    val root = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonArray ?: return emptyList()
+    return (root.getOrNull(1) as? JsonArray).orEmpty().mapNotNull { ((it as? JsonArray)?.firstOrNull() as? JsonPrimitive)?.contentOrNull }
+}
