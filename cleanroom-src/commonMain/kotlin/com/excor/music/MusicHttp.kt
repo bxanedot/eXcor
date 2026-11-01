@@ -77,13 +77,20 @@ internal class MusicHttp(
         }
 
     /** A command (PUT, POST) with an optional JSON body; an empty success returns an empty object. Never cached. */
-    suspend fun command(provider: ExcorCatalogProvider, method: HttpMethod, url: String, bearer: String, json: String? = null): JsonElement =
+    suspend fun command(
+        provider: ExcorCatalogProvider,
+        method: HttpMethod,
+        url: String,
+        bearer: String,
+        json: String? = null,
+        contentType: ContentType = ContentType.Application.Json,
+    ): JsonElement =
         send(provider) {
             http.request(url) {
                 this.method = method
                 header(HttpHeaders.Accept, "application/json")
                 header(HttpHeaders.Authorization, "Bearer $bearer")
-                if (json != null) setBody(TextContent(json, ContentType.Application.Json)) else setBody(TextContent("", ContentType.Application.Json))
+                setBody(TextContent(json ?: "", contentType))
             }
         }
 

@@ -375,6 +375,9 @@ class ExcorSpotifyCatalog internal constructor(private val source: SpotifySource
         source.createPlaylist(name, description, public, collaborative)
     @Throws(Throwable::class) suspend fun addToPlaylist(playlistId: String, uris: List<String>, position: Int? = null) = source.addToPlaylist(playlistId, uris, position)
     @Throws(Throwable::class) suspend fun removeFromPlaylist(playlistId: String, uris: List<String>, snapshot: String? = null) = source.removeFromPlaylist(playlistId, uris, snapshot)
+    @Throws(Throwable::class) suspend fun updatePlaylist(playlistId: String, name: String? = null, description: String? = null, public: Boolean? = null, collaborative: Boolean? = null) =
+        source.updatePlaylist(playlistId, name, description, public, collaborative)
+    @Throws(Throwable::class) suspend fun uploadPlaylistCover(playlistId: String, jpeg: ByteArray) = source.uploadPlaylistCover(playlistId, jpeg)
     @Throws(Throwable::class) suspend fun reorderPlaylist(playlistId: String, rangeStart: Int, insertBefore: Int, length: Int = 1, snapshot: String? = null) =
         source.reorderPlaylist(playlistId, rangeStart, insertBefore, length, snapshot)
     @Throws(Throwable::class) suspend fun episode(id: String) = source.episode(id)

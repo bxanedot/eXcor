@@ -170,4 +170,23 @@ class MusicExtrasTest {
         assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.addToPlaylist(created.id, listOf("spotify:album:2222222222222222222222")) }.error)
         assertEquals(ExcorCatalogError.INVALID_URL, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.addToPlaylist("../me", uris.take(1)) }.error)
     }
+
+    @Test
+    fun spotifyPlaylistDetailsAndCover() = runTest {
+        val m = music(mapOf(
+            "PUT /v1/playlists/7777777777777777777777" to (200 to ""),
+            "PUT /v1/playlists/7777777777777777777777/images" to (202 to ""),
+        ))
+        m.spotifyCatalog.updatePlaylist("7777777777777777777777", name = "Renamed", public = false)
+        assertEquals("""{"name":"Renamed","public":false}""", (requests.last().body as TextContent).text)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.updatePlaylist("7777777777777777777777") }.error)
+
+        val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 1, 2, 3)
+        m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", jpeg)
+        val upload = requests.last().body as TextContent
+        assertEquals("image/jpeg", upload.contentType.toString())
+        assertEquals("/9j/4AECAw==", upload.text)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47)) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", jpeg + ByteArray(200_000)) }.error)
+    }
 }

@@ -5,6 +5,7 @@ import com.excor.catalog.ExcorCatalogCapabilityStatus
 import com.excor.catalog.ExcorCatalogError
 import com.excor.catalog.ExcorCatalogException
 import com.excor.catalog.ExcorCatalogProvider
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.URLBuilder
 import kotlinx.serialization.json.JsonArray
@@ -241,6 +242,31 @@ internal class SpotifySource(
         return command(HttpMethod.Put, "playlists/$id/items", null, body.toString()).str("snapshot_id") ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
     }
 
+    /** Renames or changes a playlist the user owns; null leaves a field as it is. Collaborative needs private. */
+    suspend fun updatePlaylist(playlistId: String, name: String?, description: String?, public: Boolean?, collaborative: Boolean?) {
+        val id = checked(playlistId)
+        if (name != null && (name.isBlank() || name.length > 300)) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        if (collaborative == true && public == true) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        if (name == null && description == null && public == null && collaborative == null) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        val body = buildJsonObject {
+            name?.let { put("name", it) }
+            description?.let { put("description", it) }
+            public?.let { put("public", it) }
+            collaborative?.let { put("collaborative", it) }
+        }
+        command(HttpMethod.Put, "playlists/$id", null, body.toString())
+    }
+
+    /** Uploads a JPEG cover (ugc-image-upload scope); Spotify takes at most 256 KB of base64, about 192 KB of JPEG. */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    suspend fun uploadPlaylistCover(playlistId: String, jpeg: ByteArray) {
+        val id = checked(playlistId)
+        val isJpeg = jpeg.size >= 3 && jpeg[0] == 0xFF.toByte() && jpeg[1] == 0xD8.toByte() && jpeg[2] == 0xFF.toByte()
+        val encoded = kotlin.io.encoding.Base64.Default.encode(jpeg)
+        if (!isJpeg || encoded.length > COVER_LIMIT) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        command(HttpMethod.Put, "playlists/$id/images", null, encoded, contentType = ContentType.Image.JPEG)
+    }
+
     private fun playableUris(uris: List<String>) {
         val playable = setOf(ExcorMusicKind.TRACK, ExcorMusicKind.EPISODE)
         if (uris.isEmpty() || uris.any { !it.startsWith("spotify:") || spotifyRefOf(it)?.kind !in playable }) throw fail(ExcorCatalogError.INVALID_REQUEST)
@@ -290,14 +316,21 @@ internal class SpotifySource(
 
     // --- requests ---
 
-    private suspend fun command(method: HttpMethod, path: String, deviceId: String?, json: String? = null, extra: List<Pair<String, String>> = emptyList()): JsonObject {
+    private suspend fun command(
+        method: HttpMethod,
+        path: String,
+        deviceId: String?,
+        json: String? = null,
+        extra: List<Pair<String, String>> = emptyList(),
+        contentType: ContentType = ContentType.Application.Json,
+    ): JsonObject {
         val access = token() ?: throw fail(ExcorCatalogError.AUTHENTICATION_REQUIRED)
         if (deviceId != null && !DEVICE_ID.matches(deviceId)) throw fail(ExcorCatalogError.INVALID_REQUEST)
         val url = URLBuilder("https://api.spotify.com/v1/$path").apply {
             extra.forEach { (k, v) -> parameters.append(k, v) }
             deviceId?.let { parameters.append("device_id", it) }
         }.buildString()
-        return http.command(provider, method, url, access, json) as? JsonObject ?: JsonObject(emptyMap())
+        return http.command(provider, method, url, access, json, contentType) as? JsonObject ?: JsonObject(emptyMap())
     }
 
     private val searchLimit get() = if (extendedQuota) 50 else 10
@@ -467,6 +500,7 @@ internal class SpotifySource(
         val DEVICE_ID = Regex("[A-Za-z0-9]{1,128}")
         const val LIBRARY_BATCH = 40
         const val PLAYLIST_BATCH = 100
+        const val COVER_LIMIT = 256 * 1024
         val SEARCH_TYPES = mapOf(
             ExcorMusicKind.TRACK to "track", ExcorMusicKind.ALBUM to "album",
             ExcorMusicKind.ARTIST to "artist", ExcorMusicKind.PLAYLIST to "playlist",
