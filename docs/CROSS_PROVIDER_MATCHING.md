@@ -1,0 +1,65 @@
+# Cross-provider matching
+
+`excorMatchTrack(source, candidate, options)` compares two tracks deterministically. `excorRankMatches` scores a list. `music.matchAcrossProviders(track)` finds candidates on the other providers: by ISRC where the provider supports ISRC lookup, otherwise by title and primary artist. It returns the scored candidates per provider, dropping DIFFERENT ones, and reports per-provider errors separately.
+
+Matching is for discovery and metadata reconciliation. It is not a way to play one provider's track from another provider.
+
+## Rules
+
+**Any of these makes the verdict DIFFERENT:**
+- version markers differ: live, remix, acoustic, remaster, instrumental, karaoke, cover, demo, edit, extended, a cappella, sped up, slowed, orchestral, mono, re-recorded;
+- explicit and clean differ;
+- the base titles aren't similar;
+- no primary artist is shared, which usually means a cover;
+- durations differ by more than `maxDurationDifferenceMs` (default 10 s).
+
+A shared ISRC overrides the title and artist checks, but not a version or explicit/clean conflict.
+
+**Agreements add confidence:**
+
+| Evidence | Points |
+| --- | --- |
+| Title equal | 0.35 |
+| Title similar | 0.20 |
+| Primary artist shared | 0.25 |
+| Duration within 2 s | 0.25 |
+| Duration within 5 s | 0.10 |
+| Same UPC | 0.10 |
+| Same album title | 0.05 |
+| Same release year | 0.05 |
+| Same disc and track number on the same UPC | 0.05 |
+
+Differing ISRCs subtract 0.15: reissues can carry new ISRCs for the same audio, so this lowers confidence rather than rejecting.
+
+**Verdicts:**
+
+| Verdict | When |
+| --- | --- |
+| SAME_RECORDING | Confidence 1.0, only from an ISRC agreement |
+| LIKELY | Confidence ≥ 0.8 (`likelyThreshold`) |
+| POSSIBLE | Confidence ≥ 0.6 |
+| DIFFERENT | Below 0.6, or a rejection above |
+
+Every result lists its evidence.
+
+**Substitutions:** `allowCleanExplicitSubstitution` and `allowVersionSubstitution` turn those rejections into a match that carries a `substitutions` set. The caller must then show the difference to the user.
+
+## Title parsing
+
+Version markers and featured artists are read only from bracketed segments, " - " suffixes and a provider's version field. "Live Forever" is a title, not a live version. Text is lowercased; Latin diacritics, apostrophes and punctuation are dropped, and "&" becomes "and".
+
+`shortcut:` diacritic folding covers Latin letters only, because common Kotlin has no Unicode normalizer. Extend the table if other scripts need it.
+
+## Enrichment
+
+`music.enrich(track, matches)` fills only **empty** fields: ISRC, UPC, label, genres, composers, language, release date and artwork. It takes them from non-substituted matches at or above the confidence threshold, and records each filled field's provider, ID and confidence in `sources`. Fields the track already has are never replaced.
+
+## Example
+
+```kotlin
+val deezer = excor.music.track("https://www.deezer.com/track/3135556")
+val result = excor.music.matchAcrossProviders(deezer, setOf(ExcorCatalogProvider.APPLE_MUSIC))
+val best = result.matches[ExcorCatalogProvider.APPLE_MUSIC]?.firstOrNull()   // verdict, confidence, evidence
+```
+
+The live test matches this Deezer track to Apple Music with a LIKELY or SAME_RECORDING verdict.

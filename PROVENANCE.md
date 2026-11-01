@@ -163,3 +163,19 @@ The `swift/` package independently implements section 8 under the repository's A
 | --- | --- | --- | --- |
 | Swift Package Manager and Swift compiler from Xcode | Apple Xcode toolchain on macOS CI | Apache-2.0 with Runtime Library Exception | Package manifest, compilation and XCTest invocation. |
 | Apple Foundation (`URLSession`), JavaScriptCore and XCTest | Apple SDK supplied by macOS/iOS | Apple SDK terms; system frameworks, not redistributed | HTTP transport, player-script execution and offline tests. No third-party Swift package dependencies are declared. |
+
+## Clean-room music engine addition (2026-11-01)
+
+The `com.excor.music` package is under the repository's Apache-2.0 license. It adds no new dependencies; it uses Ktor, kotlinx.coroutines and kotlinx.serialization, listed above. See `docs/CLEAN_ROOM.md` for the implementer disclosure.
+
+| Source | Version / date | License / terms | Use |
+| --- | --- | --- | --- |
+| [Spotify Web API reference](https://developer.spotify.com/documentation/web-api), [February 2026 migration guide](https://developer.spotify.com/documentation/web-api/tutorials/february-2026-migration-guide), [March](https://developer.spotify.com/documentation/web-api/references/changes/march-2026) and [July 2026](https://developer.spotify.com/documentation/web-api/references/changes/july-2026) changelogs | Read 2026-11-01 | Spotify Developer Terms | Endpoint paths, the PKCE flow, the Development Mode limits, renamed playlist `items`, withheld fields and the 429 body. |
+| [Apple Music API](https://developer.apple.com/documentation/applemusicapi) Songs, Albums, Artists and Playlists attributes; [MusicKit AudioVariant](https://developer.apple.com/documentation/musickit/audiovariant) | Read 2026-11-01 (JSON documentation endpoints) | Apple Developer terms | Attribute names; audio variants and the ALAC "up to" rates; `playParams` meaning. |
+| Deezer public API responses (`api.deezer.com`) | Observed 2026-11-01 | Deezer API terms | Field names, the error body shape (`DataException` 800, `OAuthException` 200), paging (`index`, `total`, `next`), and the ISRC and UPC lookup paths. The developer documentation needs a login and was not read. |
+| iTunes Search API responses (`itunes.apple.com`) | Observed 2026-11-01 | Apple terms | Lookup and search field names. `previewUrl` is never read. |
+| RFC 6381, RFC 8216bis (HLS), ISO/IEC 23001-7, ISO/IEC 23009-1, DASH-IF content-protection identifiers | Published standards | Standards | Codec strings, HLS key attributes, CENC schemes, DRM system IDs. |
+| FIPS 180-4, RFC 7636 | Published standards | Standards | SHA-256 and its test vectors; PKCE and its appendix B vector. |
+| [Stash](https://github.com/rawnaldclark/Stash) README | Read 2026-11-01 | GPL-3.0 | Feature list only, as a research target; no code opened. |
+| [spotify-downloader](https://github.com/CuteTenshii/spotify-downloader) README | Read 2026-11-01 | MIT | Accepted identifiers only: base-62 ID, GID, `spotify:` URI. The credential and decryption sections were skipped and nothing was reproduced. |
+| [DRML](https://github.com/TheRogueArchivist/DRML) index | Read 2026-11-01 | CC0-1.0 | Terminology only. It covers optical-media and software protection, so none of it is used. |
