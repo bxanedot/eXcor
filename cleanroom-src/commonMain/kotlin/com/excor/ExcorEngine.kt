@@ -127,6 +127,14 @@ internal class ExcorEngine(
         return decodeSearchPage(body)
     }
 
+    /** A playlist page; [continuation] from a previous page continues it. Null when YouTube's answer is not a playlist page. */
+    suspend fun playlist(playlistId: String, continuation: String?): ExcorYouTubePlaylist? {
+        require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val body = postPlayer(buildBrowseRequest("VL$playlistId", continuation, host.session())) ?: return null
+        return decodePlaylistPage(body, playlistId)
+    }
+
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {

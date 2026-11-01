@@ -7,7 +7,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 
@@ -47,32 +46,8 @@ data class ExcorYouTubeChannelResult(
 /** [isMix] marks YouTube's generated mixes (IDs starting with "RD"), which differ per listener. */
 data class ExcorYouTubePlaylistResult(val playlistId: String, val title: String, val isMix: Boolean)
 
-internal fun buildSearchRequest(query: String?, continuation: String?, session: ExcorSession): PlayerRequest {
-    val client = metadataClient
-    val body = buildJsonObject {
-        put("context", buildJsonObject {
-            put("client", buildJsonObject {
-                put("clientName", client.name)
-                put("clientVersion", client.clientVersion)
-                put("hl", session.language.ifBlank { "en" })
-                put("gl", session.region.ifBlank { "US" })
-                session.visitorData?.let { put("visitorData", it) }
-            })
-        })
-        if (continuation != null) put("continuation", continuation) else put("query", query!!)
-    }
-    val headers = buildMap {
-        put("Accept", "*/*")
-        put("Content-Type", "application/json")
-        put("Origin", "https://www.youtube.com")
-        put("Referer", "https://www.youtube.com/")
-        put("User-Agent", client.userAgent)
-        put("X-YouTube-Client-Name", client.clientId.toString())
-        put("X-YouTube-Client-Version", client.clientVersion)
-        session.visitorData?.takeIf(String::isNotBlank)?.let { put("X-Goog-Visitor-Id", it) }
-        session.cookie?.takeIf(String::isNotBlank)?.let { put("Cookie", it) }
-    }
-    return PlayerRequest("https://www.youtube.com/youtubei/v1/search?prettyPrint=false", headers, body.toString())
+internal fun buildSearchRequest(query: String?, continuation: String?, session: ExcorSession): PlayerRequest = innertubeRequest("search", session) {
+    if (continuation != null) put("continuation", continuation) else put("query", query!!)
 }
 
 /** A first page (`contents`) or a continuation (`onResponseReceivedCommands`); null when it is neither. */
@@ -162,12 +137,12 @@ internal fun clockSeconds(text: String): Long? {
     return parts.fold(0L) { acc, p -> acc * 60 + p.toLong() }
 }
 
-private fun JsonObject.path(vararg keys: String): JsonElement? =
+internal fun JsonObject.path(vararg keys: String): JsonElement? =
     keys.fold(this as JsonElement?) { node, key -> (node as? JsonObject)?.get(key) }
 
-private fun JsonObject.textAt(key: String): String? = (get(key) as? JsonPrimitive)?.contentOrNull
+internal fun JsonObject.textAt(key: String): String? = (get(key) as? JsonPrimitive)?.contentOrNull
 
-private val CHANNEL_ID = Regex("UC[A-Za-z0-9_-]{22}")
+internal val CHANNEL_ID = Regex("UC[A-Za-z0-9_-]{22}")
 internal val PLAYLIST_ID = Regex("[A-Za-z0-9_-]{2,64}")
 private val TOKEN = Regex("[A-Za-z0-9_=%-]+")
 internal const val MAX_CONTINUATION = 8_192

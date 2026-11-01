@@ -46,6 +46,9 @@ class Excor(host: ExcorHost) {
     /** YouTube search: videos, channels and playlists; pass `page.continuation` back for more. */
     @Throws(Throwable::class)
     suspend fun search(query: String, continuation: String? = null): ExcorYouTubeSearchPage? = engine.search(query, continuation)
+    /** A YouTube playlist: details and videos; pass `page.continuation` back for more videos. */
+    @Throws(Throwable::class)
+    suspend fun playlist(playlistId: String, continuation: String? = null): ExcorYouTubePlaylist? = engine.playlist(playlistId, continuation)
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> = engine.audioCandidates(videoId)
     suspend fun extract(
         videoId: String,

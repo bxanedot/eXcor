@@ -12,7 +12,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 
@@ -93,34 +92,10 @@ data class ExcorVideoInfo(
 internal val VIDEO_ID = Regex("[A-Za-z0-9_-]{11}")
 
 /** A metadata-only player request: no signature timestamp or streaming token, since no stream is asked for. */
-internal fun buildMetadataRequest(videoId: String, session: ExcorSession): PlayerRequest {
-    val client = metadataClient
-    val body = buildJsonObject {
-        put("context", buildJsonObject {
-            put("client", buildJsonObject {
-                put("clientName", client.name)
-                put("clientVersion", client.clientVersion)
-                put("hl", session.language.ifBlank { "en" })
-                put("gl", session.region.ifBlank { "US" })
-                session.visitorData?.let { put("visitorData", it) }
-            })
-        })
-        put("videoId", videoId)
-        put("contentCheckOk", true)
-        put("racyCheckOk", true)
-    }
-    val headers = buildMap {
-        put("Accept", "*/*")
-        put("Content-Type", "application/json")
-        put("Origin", "https://www.youtube.com")
-        put("Referer", "https://www.youtube.com/")
-        put("User-Agent", client.userAgent)
-        put("X-YouTube-Client-Name", client.clientId.toString())
-        put("X-YouTube-Client-Version", client.clientVersion)
-        session.visitorData?.takeIf(String::isNotBlank)?.let { put("X-Goog-Visitor-Id", it) }
-        session.cookie?.takeIf(String::isNotBlank)?.let { put("Cookie", it) }
-    }
-    return PlayerRequest("https://www.youtube.com/youtubei/v1/player?prettyPrint=false", headers, body.toString())
+internal fun buildMetadataRequest(videoId: String, session: ExcorSession): PlayerRequest = innertubeRequest("player", session) {
+    put("videoId", videoId)
+    put("contentCheckOk", true)
+    put("racyCheckOk", true)
 }
 
 /** Null when the response has no `videoDetails` for [videoId] (removed, invalid, or not a player response). */

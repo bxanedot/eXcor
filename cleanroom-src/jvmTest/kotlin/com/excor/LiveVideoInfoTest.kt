@@ -35,6 +35,14 @@ class LiveVideoInfoTest {
         assertTrue(second.videos.isNotEmpty() && second.videos.none { v -> first.videos.any { it.videoId == v.videoId } })
     }
 
+    @Test
+    fun playlistDetailsAndVideos() = runBlocking {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
+        val playlist = assertNotNull(Excor(Host(OkHttpClient())).playlist("PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI"))
+        assertTrue(!playlist.title.isNullOrBlank() && (playlist.videoCount ?: 0) > 0)
+        assertTrue(playlist.videos.size >= 10 && playlist.videos.count { it.durationSeconds != null } >= 10)
+    }
+
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {
         override val tokenProvider = null
         override val filesDir: File? = null
