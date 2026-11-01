@@ -21,7 +21,7 @@ This matrix describes the active clean-room Kotlin sources under `cleanroom-src/
 | Restrict returned playback URLs | Supported and verified | Supported and verified | URL-policy tests in each package |
 | Host-owned session and PO-token integration | Interface implemented; provider behavior varies | Interface implemented; provider behavior varies | Host supplies session/token service; eXcor does not mint tokens |
 | Catalog search and pagination | Experimental for Apple/iTunes and Spotify | Unsupported | Provider-bound offset tokens; synthetic pagination tests only |
-| YouTube video metadata lookup | Unsupported by the active clean-room public API | Unsupported | Extractor returns stream information, not catalog metadata |
+| YouTube video metadata lookup | Supported; live-verified 2026-11-01 | Unsupported | `Excor.videoInfo(videoId)` returns title, channel, handle, duration, views, likes, keywords, category, dates, countries, flags and playability from the InnerTube player response. YouTube returns this metadata even when it withholds streams. `asMusicTrack()` passes the video to cross-provider matching (verified live against Deezer). |
 | YouTube Music songs, albums, artists, and search | Restricted / not implemented | Restricted / not implemented | No authorized music-specific catalog path has been verified |
 | Android app integration | Not integrated | Not applicable | `app-core` still uses an older API shape and is not a root CI target |
 | Public release readiness | Not ready | Not ready | Provider authorization/access, remaining providers, cross-platform verification, provenance, examples, and release packaging remain open |

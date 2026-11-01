@@ -40,3 +40,5 @@ No code of theirs was opened.
 However, the separation rests on that working practice, not on an implementer who never saw the historical code. Anyone who needs strict implementer isolation should treat this package as not meeting it, and have it reviewed or reimplemented by someone who has not seen `src/`.
 
 Its test fixtures are synthetic, written inline in the tests. This is a description of process, not a legal clearance.
+
+`VideoInfo.kt` (YouTube metadata, 2026-11-01) falls under the same disclosure. It reads YouTube's own player response, using fields observed live (`videoDetails`, `microformat.playerMicroformatRenderer`, `playabilityStatus`), and reuses the clean-room client identities. `src/` and InnerTubeX were not opened.

@@ -111,6 +111,13 @@ internal class ExcorEngine(
         }
     }
 
+    /** Video metadata, available even when YouTube withholds the streams; null when YouTube has no such video. */
+    suspend fun videoInfo(videoId: String): ExcorVideoInfo? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        val body = postPlayer(buildMetadataRequest(videoId, host.session())) ?: return null
+        return decodeVideoInfo(body, videoId)
+    }
+
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {

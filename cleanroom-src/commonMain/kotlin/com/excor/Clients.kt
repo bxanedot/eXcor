@@ -52,6 +52,9 @@ private val web = ClientIdentity(
     requiresStreamingToken = true,
 )
 
+/** For metadata-only player requests, which need neither a player script nor a streaming token. */
+internal val metadataClient: ClientIdentity get() = web
+
 internal fun selectClients(
     session: ExcorSession,
     skipClients: Set<String>,

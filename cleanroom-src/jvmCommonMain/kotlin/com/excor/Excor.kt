@@ -40,6 +40,9 @@ class Excor(host: ExcorHost) {
 
     fun init() = engine.initialize()
     fun initializeFallback() = engine.initializeFallback()
+    /** Title, channel, duration, views, dates and playability; null when YouTube has no such video. */
+    @Throws(Throwable::class)
+    suspend fun videoInfo(videoId: String): ExcorVideoInfo? = engine.videoInfo(videoId)
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> = engine.audioCandidates(videoId)
     suspend fun extract(
         videoId: String,

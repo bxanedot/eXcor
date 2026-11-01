@@ -63,3 +63,12 @@ val best = result.matches[ExcorCatalogProvider.APPLE_MUSIC]?.firstOrNull()   // 
 ```
 
 The live test matches this Deezer track to Apple Music with a LIKELY or SAME_RECORDING verdict.
+
+## From a YouTube video
+
+`excor.videoInfo(videoId)?.asMusicTrack()` turns a YouTube video into a matchable track:
+- an auto-generated "Artist - Topic" channel gives the artist directly; otherwise an "Artist - Title" video title is split;
+- tags that only describe the video, such as "(Official Video)" or "[4K Remaster]", are dropped;
+- version tags such as "(Live …)" are kept.
+
+There is no ISRC, so matching scores it as a text candidate. The live test matches a music video to its Deezer track this way.
