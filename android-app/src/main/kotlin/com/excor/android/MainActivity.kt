@@ -4,15 +4,19 @@ import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,8 +25,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -34,7 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,44 +49,50 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
 import com.excor.Excor
-import com.excor.ExcorListItem
-import com.excor.ExcorListPage
 import com.excor.ExcorChannelPage
 import com.excor.ExcorChannelTab
+import com.excor.ExcorListItem
+import com.excor.ExcorListPage
 import com.excor.ExcorRef
 import com.excor.ExcorResultKind
 import com.excor.ExcorSearchResult
 import com.excor.ExcorSearchType
 import com.excor.ExcorUnplayableException
+import com.excor.MusicCatalogItem
 import com.excor.app.AudioChoice
 import com.excor.app.Failure
-import com.excor.app.SEARCH_TYPES
 import com.excor.app.PlayState
 import com.excor.app.Playback
+import com.excor.app.SEARCH_TYPES
 import com.excor.app.Track
 import com.excor.app.appendPage
 import com.excor.app.appendResults
 import com.excor.app.audioChoicesOf
 import com.excor.app.bylineOf
+import com.excor.app.catalogArtworkUrl
 import com.excor.app.clockOf
 import com.excor.app.queueFrom
 import com.excor.app.resultsOf
 import com.excor.app.selectedChoice
 import com.excor.app.suggestsFor
 import com.excor.app.toTrack
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
+import java.net.URL
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** What a link opened: a title, who it is by, and its tracks. */
 private data class Page(
@@ -117,6 +128,9 @@ private sealed interface Opened {
         val type: ExcorSearchType? = null,
     ) : Opened
     data class Problem(val message: String) : Opened
+
+    /** A Spotify or Deezer link's metadata; those catalogs never give audio here. */
+    data class Catalog(val item: MusicCatalogItem) : Opened
 }
 
 private fun trackOf(item: ExcorListItem, artwork: String? = null) =
@@ -322,6 +336,10 @@ class MainActivity : ComponentActivity() {
             asked = text
             val ref = excor.parse(text)
             show {
+                // Spotify and Deezer links show metadata only; no audio is fetched from those catalogs.
+                excor.musicCatalog.parse(text)?.let { catalog ->
+                    return@show excor.musicCatalog.get(catalog)?.let { Opened.Catalog(it) } ?: Opened.Problem("No catalog record found.")
+                }
                 val page = when {
                     ref != null -> excor.pageOf(ref)
                     excor.soundCloud.isLink(text) -> excor.soundCloudPageOf(text)
@@ -353,7 +371,7 @@ class MainActivity : ComponentActivity() {
             OutlinedTextField(
                 value = link,
                 onValueChange = { link = it },
-                label = { Text("Search, or a YouTube, YouTube Music or SoundCloud link") },
+                label = { Text("Search, or a YouTube, YouTube Music, SoundCloud, Spotify or Deezer link") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -373,6 +391,7 @@ class MainActivity : ComponentActivity() {
                 Opened.Nothing -> Unit
                 Opened.Loading -> CircularProgressIndicator()
                 is Opened.Problem -> Text(now.message, color = MaterialTheme.colorScheme.error)
+                is Opened.Catalog -> CatalogDetails(now.item)
                 is Opened.Results -> LazyColumn(Modifier.weight(1f)) {
                     item {
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -476,6 +495,39 @@ class MainActivity : ComponentActivity() {
                 downloading = null
                 withPermissions { downloads.add(tracks, choice, label) }
             }
+        }
+    }
+
+    /** A catalog item's metadata and artwork, with a way to open it in its own app or site. */
+    @Composable
+    private fun CatalogDetails(item: MusicCatalogItem) {
+        val artworkUrl = catalogArtworkUrl(item)
+        var artwork by remember(artworkUrl) { mutableStateOf<Bitmap?>(null) }
+        LaunchedEffect(artworkUrl) {
+            artwork = artworkUrl?.let { url ->
+                withContext(Dispatchers.IO) {
+                    // No artwork rather than an error: the metadata stands without it.
+                    runCatching {
+                        URL(url).openConnection().apply { connectTimeout = 5_000; readTimeout = 7_000 }
+                            .getInputStream().use(BitmapFactory::decodeStream)
+                    }.getOrNull()
+                }
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(item.title ?: item.id, style = MaterialTheme.typography.titleLarge)
+            Text("${item.provider.name} · ${item.kind.name}", style = MaterialTheme.typography.labelMedium)
+            artwork?.let { Image(it.asImageBitmap(), contentDescription = "Artwork", modifier = Modifier.size(180.dp)) }
+            item.artists.mapNotNull { it.name }.takeIf { it.isNotEmpty() }?.let { Text(it.joinToString(", ")) }
+            item.album?.let { Text("Album: $it") }
+            item.releaseDate?.let { Text("Released: $it") }
+            item.durationMs?.let { Text("Duration: ${clockOf(it / 1000)}") }
+            item.isrc?.let { Text("ISRC: $it") }
+            item.upc?.let { Text("UPC: $it") }
+            item.genres.takeIf { it.isNotEmpty() }?.let { Text("Genres: ${it.joinToString()}") }
+            if (!item.fullyEnriched) Text("Basic link preview. Full details need a Spotify sign-in, which this app does not do.")
+            TextButton(onClick = { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(item.url))) }) { Text("Open in ${item.provider.name}") }
+            Text("Metadata only: no audio comes from this catalog.", style = MaterialTheme.typography.bodySmall)
         }
     }
 
