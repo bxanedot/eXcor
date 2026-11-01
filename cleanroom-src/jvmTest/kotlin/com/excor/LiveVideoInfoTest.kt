@@ -54,6 +54,18 @@ class LiveVideoInfoTest {
         assertTrue(more.videos.isNotEmpty() && more.videos.none { v -> channel.videos.any { it.videoId == v.videoId } })
     }
 
+    @Test
+    fun relatedVideosAndComments() = runBlocking {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
+        val excor = Excor(Host(OkHttpClient()))
+        val related = assertNotNull(excor.related("dQw4w9WgXcQ"))
+        assertTrue(related.videos.size >= 5 && related.videos.none { it.videoId == "dQw4w9WgXcQ" }, "related: ${related.videos.size}")
+        val first = assertNotNull(excor.comments("dQw4w9WgXcQ"))
+        assertTrue(first.comments.count { it.text.isNotBlank() } >= 10 && first.totalText != null, "comments: ${first.comments.size} total=${first.totalText != null}")
+        val second = assertNotNull(excor.comments("dQw4w9WgXcQ", assertNotNull(first.continuation)))
+        assertTrue(second.comments.isNotEmpty() && second.comments.none { c -> first.comments.any { it.commentId == c.commentId } }, "second: ${second.comments.size}")
+    }
+
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {
         override val tokenProvider = null
         override val filesDir: File? = null

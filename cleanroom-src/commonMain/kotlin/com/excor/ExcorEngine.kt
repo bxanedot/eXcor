@@ -154,6 +154,25 @@ internal class ExcorEngine(
         return home.channel.copy(videos = videos, continuation = next)
     }
 
+    /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */
+    suspend fun related(videoId: String, continuation: String?): ExcorYouTubeRelated? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        return decodeRelated(postPlayer(buildNextRequest(videoId, continuation, host.session())) ?: return null)
+    }
+
+    /**
+     * A page of [videoId]'s comments in YouTube's default order. The first page takes two requests (the watch page for
+     * the comments token, then the comments); null when comments are off or YouTube's answer is not a comments page.
+     */
+    suspend fun comments(videoId: String, continuation: String?): ExcorYouTubeCommentsPage? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val session = host.session()
+        val token = continuation ?: commentsTokenOf(postPlayer(buildNextRequest(videoId, null, session)) ?: return null) ?: return null
+        return decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null)
+    }
+
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {
