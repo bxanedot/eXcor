@@ -10,7 +10,7 @@ None of these providers gives eXcor audio. Full tracks are protected and play on
 
 | Provider | Access | Status |
 | --- | --- | --- |
-| Deezer, public API | No credentials | **Live-verified**: track, album, artist, playlist, paging, search, ISRC and UPC lookup, charts, genres, related artists, playlist sync. |
+| Deezer, public API | No credentials | **Live-verified**: track, album, artist, playlist, paging, search, ISRC and UPC lookup, charts, editorial charts, genres, related artists, podcasts, playlist sync. |
 | Deezer, user library | OAuth access token from the host | Offline-tested. Deezer reportedly stopped accepting new app registrations; see [MUSIC_LIMITATIONS.md](MUSIC_LIMITATIONS.md). |
 | Apple Music, iTunes Search API | No credentials | **Live-verified**: track, album with tracks, artist, search. Gives no ISRC, playlists or audio variants. |
 | Apple Music API | Developer token (JWT the host signs on its own server) | Offline-tested. A live test runs when `EXCOR_APPLE_DEVELOPER_TOKEN` is set. |
@@ -33,7 +33,8 @@ None of these providers gives eXcor audio. Full tracks are protected and play on
 | Charts | – | ✓ `appleMusicCatalog.chartSongs` | – | ✓ `deezerCatalog.chartTracks` |
 | Genres, radios, related artists, artist top tracks | – | – | – | ✓ `deezerCatalog` |
 | Playback state; remote control (play, pause, next, previous, seek, queue, volume, devices) of the user's Spotify client | ✓ `spotifyCatalog` (Premium and the playback scopes) | – | – | – |
-| Podcasts: episodes and shows | ✓ `spotifyCatalog.episode`, `show` | – | – | – |
+| Podcasts: episodes and shows | ✓ `spotifyCatalog.episode`, `show` | – | – | ✓ `deezerCatalog.searchPodcasts`, `podcast`, `episode` (live-verified) |
+| Editorial charts: tracks, albums, artists, playlists, podcasts | – | – | – | ✓ `deezerCatalog.editorialCharts` (live-verified) |
 | Music videos, stations, personal recommendations | – | ✓ `appleMusicCatalog` | – | – |
 | Audio variants (lossless, Atmos…) | not offered | ✓ | – | not offered |
 | Lyrics availability | not offered | ✓ `hasLyrics` | – | not offered |

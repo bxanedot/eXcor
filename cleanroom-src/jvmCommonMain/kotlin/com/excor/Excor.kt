@@ -40,6 +40,25 @@ class Excor(host: ExcorHost) {
 
     fun init() = engine.initialize()
     fun initializeFallback() = engine.initializeFallback()
+    /** Title, channel, duration, views, dates and playability; null when YouTube has no such video. */
+    @Throws(Throwable::class)
+    suspend fun videoInfo(videoId: String): ExcorVideoInfo? = engine.videoInfo(videoId)
+    /** YouTube search: videos, channels and playlists; pass `page.continuation` back for more. */
+    @Throws(Throwable::class)
+    suspend fun search(query: String, continuation: String? = null): ExcorYouTubeSearchPage? = engine.search(query, continuation)
+    /** A YouTube playlist: details and videos; pass `page.continuation` back for more videos. */
+    @Throws(Throwable::class)
+    suspend fun playlist(playlistId: String, continuation: String? = null): ExcorYouTubePlaylist? = engine.playlist(playlistId, continuation)
+    /** A YouTube channel (UC… ID): details and uploads; pass `channel.continuation` back for more uploads. */
+    @Throws(Throwable::class)
+    suspend fun channel(channelId: String, continuation: String? = null): ExcorYouTubeChannel? = engine.channel(channelId, continuation)
+    /** Videos YouTube suggests next to a video; pass `related.continuation` back for more. */
+    @Throws(Throwable::class)
+    suspend fun related(videoId: String, continuation: String? = null): ExcorYouTubeRelated? = engine.related(videoId, continuation)
+
+    /** A video's comments in YouTube's default order; pass `page.continuation` back for more. */
+    @Throws(Throwable::class)
+    suspend fun comments(videoId: String, continuation: String? = null): ExcorYouTubeCommentsPage? = engine.comments(videoId, continuation)
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> = engine.audioCandidates(videoId)
     suspend fun extract(
         videoId: String,

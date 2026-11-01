@@ -50,6 +50,8 @@ internal class DeezerSource(
             "album" -> ExcorMusicKind.ALBUM
             "artist" -> ExcorMusicKind.ARTIST
             "playlist" -> ExcorMusicKind.PLAYLIST
+            "show" -> ExcorMusicKind.SHOW
+            "episode" -> ExcorMusicKind.EPISODE
             else -> return null
         }
         return ExcorMusicRef(provider, kind, rest[1])
@@ -133,6 +135,83 @@ internal class DeezerSource(
     suspend fun radios(): List<ExcorDeezerRadio> = list("radio", emptyList(), 0, PAGE).first.mapNotNull { o ->
         val id = o.long("id")?.toString() ?: return@mapNotNull null
         ExcorDeezerRadio(id, o.str("title") ?: return@mapNotNull null, o.str("description"), pictures(o, "picture"))
+    }
+
+    suspend fun searchPodcasts(query: String, page: String?): ExcorMusicPage<ExcorPodcastShow> {
+        val q = query(query)
+        val scope = "search/podcast|$q"
+        val offset = offsetOf(scope, page)
+        val (items, total) = list("search/podcast", listOf("q" to q), offset, PAGE)
+        return ExcorMusicPage(items.mapNotNull { showOf(it, null) }, nextOf(scope, offset, items.size, total), total)
+    }
+
+    suspend fun podcast(id: String, page: String?): ExcorPodcastShow {
+        val path = "podcast/${checked(id)}"
+        val show = get(path)
+        return showOf(show, episodes(path + "/episodes", page)) ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+    }
+
+    suspend fun episode(id: String): ExcorPodcastEpisode = episodeOf(get("episode/${checked(id)}")) ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+
+    /** Editorial charts (editorial "0" is all of Deezer): top tracks, albums, artists, playlists and podcasts. */
+    suspend fun editorialCharts(editorialId: String): ExcorDeezerCharts {
+        val body = get("editorial/${checked(editorialId, allowZero = true)}/charts", listOf("limit" to "$PAGE"))
+        fun items(key: String) = body.obj(key)?.arr("data")?.objects().orEmpty()
+        return ExcorDeezerCharts(
+            tracks = items("tracks").mapNotNull(::trackOf),
+            albums = items("albums").mapNotNull(::albumOf),
+            artists = items("artists").mapNotNull(::artistOf),
+            playlists = items("playlists").mapNotNull(::playlistOf),
+            podcasts = items("podcasts").mapNotNull { showOf(it, null) },
+        )
+    }
+
+    suspend fun editorials(): List<Pair<String, String>> = list("editorial", emptyList(), 0, PAGE).first.mapNotNull { o ->
+        (o.long("id")?.toString() ?: return@mapNotNull null) to (o.str("name") ?: return@mapNotNull null)
+    }
+
+    private suspend fun episodes(path: String, page: String?): ExcorMusicPage<ExcorPodcastEpisode> {
+        val offset = offsetOf(path, page)
+        val (items, total) = list(path, emptyList(), offset, PAGE)
+        return ExcorMusicPage(items.mapNotNull(::episodeOf), nextOf(path, offset, items.size, total), total)
+    }
+
+    private fun showOf(o: JsonObject, episodes: ExcorMusicPage<ExcorPodcastEpisode>?): ExcorPodcastShow? {
+        if (o.str("type") != null && o.str("type") != "podcast") return null
+        return ExcorPodcastShow(
+            id = o.long("id")?.takeIf { it > 0 }?.toString() ?: return null,
+            title = o.str("title") ?: return null,
+            description = o.str("description"),
+            publisher = null,
+            explicit = null,
+            languages = emptyList(),
+            totalEpisodes = episodes?.total,
+            url = linkOf(o),
+            artwork = pictures(o, "picture"),
+            episodes = episodes ?: ExcorMusicPage(emptyList()),
+            provider = provider,
+        )
+    }
+
+    private fun episodeOf(o: JsonObject): ExcorPodcastEpisode? {
+        if (o.str("type") != null && o.str("type") != "episode") return null
+        val show = o.obj("podcast")
+        // track_token and stream URLs on episodes are never read.
+        return ExcorPodcastEpisode(
+            id = o.long("id")?.takeIf { it > 0 }?.toString() ?: return null,
+            title = o.str("title") ?: return null,
+            description = o.str("description"),
+            showId = show?.long("id")?.toString(),
+            showTitle = show?.str("title"),
+            durationMs = o.long("duration")?.times(1_000),
+            releaseDate = o.str("release_date"),
+            explicit = null,
+            languages = emptyList(),
+            playable = o.bool("available"),
+            url = linkOf(o),
+            artwork = pictures(o, "picture"),
+            provider = provider,
+        )
     }
 
     // --- requests ---
@@ -338,3 +417,11 @@ internal class DeezerSource(
 data class ExcorDeezerGenre(val id: String, val name: String, val artwork: List<ExcorArtwork>)
 
 data class ExcorDeezerRadio(val id: String, val title: String, val description: String?, val artwork: List<ExcorArtwork>)
+
+data class ExcorDeezerCharts(
+    val tracks: List<ExcorMusicTrack>,
+    val albums: List<ExcorMusicAlbum>,
+    val artists: List<ExcorMusicArtistProfile>,
+    val playlists: List<ExcorMusicPlaylist>,
+    val podcasts: List<ExcorPodcastShow>,
+)

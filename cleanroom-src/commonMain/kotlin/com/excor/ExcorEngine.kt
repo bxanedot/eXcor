@@ -111,6 +111,68 @@ internal class ExcorEngine(
         }
     }
 
+    /** Video metadata, available even when YouTube withholds the streams; null when YouTube has no such video. */
+    suspend fun videoInfo(videoId: String): ExcorVideoInfo? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        val body = postPlayer(buildMetadataRequest(videoId, host.session())) ?: return null
+        return decodeVideoInfo(body, videoId)
+    }
+
+    /** YouTube search; [continuation] from a previous page continues it. Null when YouTube's answer is not a result page. */
+    suspend fun search(query: String, continuation: String?): ExcorYouTubeSearchPage? {
+        val q = query.trim()
+        require(continuation != null || q.length in 1..200) { "query must be 1 to 200 characters" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val body = postPlayer(buildSearchRequest(q, continuation, host.session())) ?: return null
+        return decodeSearchPage(body)
+    }
+
+    /** A playlist page; [continuation] from a previous page continues it. Null when YouTube's answer is not a playlist page. */
+    suspend fun playlist(playlistId: String, continuation: String?): ExcorYouTubePlaylist? {
+        require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val body = postPlayer(buildBrowseRequest("VL$playlistId", continuation, host.session())) ?: return null
+        return decodePlaylistPage(body, playlistId)
+    }
+
+    /**
+     * A channel's details and first page of uploads (two requests: the home page for details and the Videos tab), or,
+     * with [continuation], the next page of uploads only. Null when YouTube's answer is not a channel page.
+     */
+    suspend fun channel(channelId: String, continuation: String?): ExcorYouTubeChannel? {
+        require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val session = host.session()
+        if (continuation != null) {
+            val (videos, next) = decodeChannelVideos(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
+            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), videos, next)
+        }
+        val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
+        val params = home.videosParams ?: return home.channel
+        val body = postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel
+        val (videos, next) = decodeChannelVideos(body) ?: return home.channel
+        return home.channel.copy(videos = videos, continuation = next)
+    }
+
+    /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */
+    suspend fun related(videoId: String, continuation: String?): ExcorYouTubeRelated? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        return decodeRelated(postPlayer(buildNextRequest(videoId, continuation, host.session())) ?: return null)
+    }
+
+    /**
+     * A page of [videoId]'s comments in YouTube's default order. The first page takes two requests (the watch page for
+     * the comments token, then the comments); null when comments are off or YouTube's answer is not a comments page.
+     */
+    suspend fun comments(videoId: String, continuation: String?): ExcorYouTubeCommentsPage? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val session = host.session()
+        val token = continuation ?: commentsTokenOf(postPlayer(buildNextRequest(videoId, null, session)) ?: return null) ?: return null
+        return decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null)
+    }
+
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {

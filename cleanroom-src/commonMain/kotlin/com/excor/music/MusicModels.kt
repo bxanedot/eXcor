@@ -215,3 +215,35 @@ internal fun ExcorMusicTrack.withMissing(
     restricted: Set<ExcorMusicField> = emptySet(),
     elsewhere: Set<ExcorMusicField> = emptySet(),
 ): ExcorMusicTrack = copy(missing = missingFields(TRACK_FIELDS, offered, presentFields(), restricted, elsewhere))
+
+/** A podcast episode (Spotify or Deezer); kept apart from music tracks. */
+data class ExcorPodcastEpisode(
+    val id: String,
+    val title: String,
+    val description: String?,
+    val showId: String?,
+    val showTitle: String?,
+    val durationMs: Long?,
+    val releaseDate: String?,
+    val explicit: Boolean?,
+    val languages: List<String>,
+    val playable: Boolean?,
+    val url: String?,
+    val artwork: List<ExcorArtwork>,
+    val provider: ExcorCatalogProvider = ExcorCatalogProvider.SPOTIFY,
+)
+
+data class ExcorPodcastShow(
+    val id: String,
+    val title: String,
+    val description: String?,
+    /** Spotify withholds it from Development Mode apps since February 2026; Deezer does not give one. */
+    val publisher: String?,
+    val explicit: Boolean?,
+    val languages: List<String>,
+    val totalEpisodes: Int?,
+    val url: String?,
+    val artwork: List<ExcorArtwork>,
+    val episodes: ExcorMusicPage<ExcorPodcastEpisode>,
+    val provider: ExcorCatalogProvider = ExcorCatalogProvider.SPOTIFY,
+)

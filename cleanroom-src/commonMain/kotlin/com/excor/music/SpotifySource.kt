@@ -572,32 +572,3 @@ fun spotifyIdOfGid(gid: String): String {
 
 data class ExcorSpotifyDevice(val id: String, val name: String, val type: String?, val active: Boolean, val restricted: Boolean)
 
-/** A Spotify podcast episode; kept apart from music tracks. */
-data class ExcorPodcastEpisode(
-    val id: String,
-    val title: String,
-    val description: String?,
-    val showId: String?,
-    val showTitle: String?,
-    val durationMs: Long?,
-    val releaseDate: String?,
-    val explicit: Boolean?,
-    val languages: List<String>,
-    val playable: Boolean?,
-    val url: String?,
-    val artwork: List<ExcorArtwork>,
-)
-
-data class ExcorPodcastShow(
-    val id: String,
-    val title: String,
-    val description: String?,
-    /** Withheld for Development Mode apps since February 2026. */
-    val publisher: String?,
-    val explicit: Boolean?,
-    val languages: List<String>,
-    val totalEpisodes: Int?,
-    val url: String?,
-    val artwork: List<ExcorArtwork>,
-    val episodes: ExcorMusicPage<ExcorPodcastEpisode>,
-)
