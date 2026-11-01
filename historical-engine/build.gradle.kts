@@ -83,7 +83,11 @@ kotlin {
     }
 
     sourceSets {
-        configureEach { kotlin.setSrcDirs(listOf(root.dir("src/$name"))) }
+        configureEach {
+            kotlin.setSrcDirs(listOf(root.dir("src/$name/kotlin")))
+            // MergeCheck's clips live in src/androidDeviceTest/resources.
+            resources.setSrcDirs(listOf(root.dir("src/$name/resources")))
+        }
         commonMain {
             kotlin.srcDir(generateEjs)
             dependencies {
