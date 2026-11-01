@@ -33,6 +33,15 @@ class LiveVideoInfoTest {
         assertTrue(first.channels.any { it.title.contains("Daft Punk", ignoreCase = true) })
         val second = assertNotNull(excor.search("daft punk", assertNotNull(first.continuation)))
         assertTrue(second.videos.isNotEmpty() && second.videos.none { v -> first.videos.any { it.videoId == v.videoId } })
+
+        val channelsOnly = first.filters.first { it.group == "Type" && it.label == "Channels" }
+        val filtered = assertNotNull(excor.search("daft punk", filterParams = assertNotNull(channelsOnly.params)))
+        assertTrue(filtered.channels.size >= 5 && filtered.videos.isEmpty())
+        assertTrue(filtered.filters.first { it.label == "Channels" }.selected)
+        val more = assertNotNull(excor.search("daft punk", assertNotNull(filtered.continuation)))
+        assertTrue(more.channels.isNotEmpty() && more.videos.isEmpty(), "the continuation keeps the filter")
+        val shorts = first.filters.first { it.group == "Type" && it.label == "Shorts" }
+        assertTrue(assertNotNull(excor.search("daft punk", filterParams = shorts.params)).shorts.isNotEmpty())
     }
 
     @Test
@@ -72,6 +81,8 @@ class LiveVideoInfoTest {
         val replies = assertNotNull(excor.comments("dQw4w9WgXcQ", withReplies.repliesContinuation))
         assertTrue(replies.comments.isNotEmpty() && replies.comments.none { it.commentId == withReplies.commentId }, "replies: ${replies.comments.size}")
         assertTrue(excor.suggestions("daft pu").any { it.startsWith("daft punk") })
+        val newest = assertNotNull(excor.comments("dQw4w9WgXcQ", newestFirst = true))
+        assertTrue(newest.comments.isNotEmpty() && newest.comments.map { it.commentId } != first.comments.map { it.commentId }, "newest differs from top")
     }
 
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {

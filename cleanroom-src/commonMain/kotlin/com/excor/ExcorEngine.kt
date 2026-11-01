@@ -118,12 +118,16 @@ internal class ExcorEngine(
         return decodeVideoInfo(body, videoId)
     }
 
-    /** YouTube search; [continuation] from a previous page continues it. Null when YouTube's answer is not a result page. */
-    suspend fun search(query: String, continuation: String?): ExcorYouTubeSearchPage? {
+    /**
+     * YouTube search; [continuation] from a previous page continues it, keeping that page's filters. [filterParams] is
+     * an [ExcorYouTubeSearchFilter.params] from an earlier page. Null when YouTube's answer is not a result page.
+     */
+    suspend fun search(query: String, continuation: String?, filterParams: String? = null): ExcorYouTubeSearchPage? {
         val q = query.trim()
         require(continuation != null || q.length in 1..200) { "query must be 1 to 200 characters" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
-        val body = postPlayer(buildSearchRequest(q, continuation, host.session())) ?: return null
+        require(filterParams == null || SEARCH_PARAMS.matches(filterParams)) { "not search filter params" }
+        val body = postPlayer(buildSearchRequest(q, continuation, host.session(), filterParams)) ?: return null
         return decodeSearchPage(body)
     }
 
@@ -162,15 +166,20 @@ internal class ExcorEngine(
     }
 
     /**
-     * A page of [videoId]'s comments in YouTube's default order. The first page takes two requests (the watch page for
-     * the comments token, then the comments); null when comments are off or YouTube's answer is not a comments page.
+     * A page of [videoId]'s comments, YouTube's Top order or [newestFirst]. The first page takes two requests (the watch
+     * page for the comments token, then the comments), three for newest first; null when comments are off or YouTube's
+     * answer is not a comments page.
      */
-    suspend fun comments(videoId: String, continuation: String?): ExcorYouTubeCommentsPage? {
+    suspend fun comments(videoId: String, continuation: String?, newestFirst: Boolean): ExcorYouTubeCommentsPage? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         val session = host.session()
         val token = continuation ?: commentsTokenOf(postPlayer(buildNextRequest(videoId, null, session)) ?: return null) ?: return null
-        return decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null)
+        val page = decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null) ?: return null
+        // Newest first needs the sort token from the first (Top) page: one more request.
+        if (!newestFirst || continuation != null) return page
+        val newest = page.newestContinuation ?: return page
+        return decodeComments(postPlayer(buildNextRequest(null, newest, session)) ?: return page) ?: page
     }
 
     /** Search completions for [query] in the session's language and region. */

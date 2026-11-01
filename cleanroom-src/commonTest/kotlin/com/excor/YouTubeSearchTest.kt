@@ -64,4 +64,36 @@ class YouTubeSearchTest {
         assertTrue("\"query\":\"glass river\"" in request.body && "continuation" !in request.body)
         assertTrue("\"continuation\":\"tok\"" in buildSearchRequest("", "tok", ExcorSession(null, null, "", "")).body)
     }
+
+    @Test
+    fun filterDialogAndShortsShelf() {
+        val source = """
+            {"header":{"searchHeaderRenderer":{"searchFilterButton":{"buttonRenderer":{"command":{"openPopupAction":{"popup":{"searchFilterOptionsDialogRenderer":{"groups":[
+              {"searchFilterGroupRenderer":{"title":{"simpleText":"Type"},"filters":[
+                {"searchFilterRenderer":{"label":{"simpleText":"Videos"},"navigationEndpoint":{"searchEndpoint":{"query":"q","params":"EgIQAQ%3D%3D"}}}},
+                {"searchFilterRenderer":{"label":{"simpleText":"Channels"},"status":"FILTER_STATUS_SELECTED"}},
+                {"searchFilterRenderer":{"label":{"simpleText":"Bad"},"navigationEndpoint":{"searchEndpoint":{"params":"<script>"}}}}]}},
+              {"searchFilterGroupRenderer":{"title":{"simpleText":"Duration"},"filters":[
+                {"searchFilterRenderer":{"label":{"simpleText":"Under 3 minutes"},"status":"FILTER_STATUS_DISABLED"}}]}}]}}}}}}}},
+             "contents":{"twoColumnSearchResultsRenderer":{"primaryContents":{"sectionListRenderer":{"contents":[
+              {"itemSectionRenderer":{"contents":[{"gridShelfViewModel":{"contents":[
+                {"shortsLockupViewModel":{"onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"DDDDDDDDDDD"}}},
+                  "overlayMetadata":{"primaryText":{"content":"Short one"},"secondaryText":{"content":"27K views"}}}},
+                {"shortsLockupViewModel":{"onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"bad"}}}}}]}}]}}]}}}}}
+        """.trimIndent()
+        val page = decodeSearchPage(source)!!
+        assertEquals(listOf("DDDDDDDDDDD"), page.shorts.map { it.videoId })
+        assertEquals("27K views", page.shorts.single().viewsText)
+        val videos = page.filters.first { it.label == "Videos" }
+        assertEquals("Type", videos.group)
+        assertEquals("EgIQAQ==", videos.params)
+        val channels = page.filters.first { it.label == "Channels" }
+        assertTrue(channels.selected && channels.params == null)
+        assertNull(page.filters.first { it.label == "Bad" }.params)
+        assertTrue(page.filters.single { it.group == "Duration" }.disabled)
+
+        val session = ExcorSession(null, null, "", "")
+        assertTrue("\"params\":\"EgIQAQ==\"" in buildSearchRequest("q", null, session, "EgIQAQ==").body)
+        assertTrue("params" !in buildSearchRequest("", "tok", session, "EgIQAQ==").body)
+    }
 }

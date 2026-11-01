@@ -115,7 +115,7 @@ internal fun decodeChannelTab(source: String): ChannelTabPage? {
 }
 
 /** A Short: its ID from the tap command, title and views from the overlay. Shorts show no duration. */
-private fun shortOf(s: JsonObject): ExcorYouTubePlaylistVideo? {
+internal fun shortOf(s: JsonObject): ExcorYouTubePlaylistVideo? {
     val id = s.path("onTap", "innertubeCommand", "reelWatchEndpoint", "videoId")?.let { (it as? JsonPrimitive)?.contentOrNull }?.takeIf(VIDEO_ID::matches) ?: return null
     val title = s.path("overlayMetadata", "primaryText", "content")?.let { (it as? JsonPrimitive)?.contentOrNull } ?: return null
     val thumbs = ((s.path("thumbnailViewModel", "image", "sources") ?: s.path("onTap", "innertubeCommand", "reelWatchEndpoint", "thumbnail", "thumbnails")) as? JsonArray)

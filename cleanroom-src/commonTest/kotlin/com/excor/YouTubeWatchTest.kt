@@ -20,7 +20,9 @@ class YouTubeWatchTest {
 
     private val comments = """
         {"onResponseReceivedEndpoints":[
-          {"reloadContinuationItemsCommand":{"continuationItems":[{"commentsHeaderRenderer":{"countText":{"runs":[{"text":"2,461,182"},{"text":" Comments"}]}}}]}},
+          {"reloadContinuationItemsCommand":{"continuationItems":[{"commentsHeaderRenderer":{"countText":{"runs":[{"text":"2,461,182"},{"text":" Comments"}]},"sortMenu":{"sortFilterSubMenuRenderer":{"subMenuItems":[
+            {"title":"Top","selected":true,"serviceEndpoint":{"continuationCommand":{"token":"toptoken"}}},
+            {"title":"Neueste","selected":false,"serviceEndpoint":{"continuationCommand":{"token":"newesttoken"}}}]}}}}]}},
           {"reloadContinuationItemsCommand":{"continuationItems":[
             {"commentThreadRenderer":{"commentViewModel":{"commentViewModel":{"commentKey":"k1"}}}},
             {"commentThreadRenderer":{"commentViewModel":{"commentViewModel":{"commentKey":"k2"}}}},
@@ -58,6 +60,7 @@ class YouTubeWatchTest {
         assertNull(page.comments[1].replyCount)
         assertEquals("2,461,182 Comments", page.totalText)
         assertEquals("commentsnext", page.continuation)
+        assertEquals("newesttoken", page.newestContinuation) // by position, whatever the localized title
         assertNull(decodeComments("""{"responseContext":{}}"""))
     }
 

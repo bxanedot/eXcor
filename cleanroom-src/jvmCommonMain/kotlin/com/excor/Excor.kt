@@ -43,9 +43,9 @@ class Excor(host: ExcorHost) {
     /** Title, channel, duration, views, dates and playability; null when YouTube has no such video. */
     @Throws(Throwable::class)
     suspend fun videoInfo(videoId: String): ExcorVideoInfo? = engine.videoInfo(videoId)
-    /** YouTube search: videos, channels and playlists; pass `page.continuation` back for more. */
+    /** YouTube search: videos, Shorts, channels and playlists; pass `page.continuation` back for more, or a `page.filters` entry's params to filter. */
     @Throws(Throwable::class)
-    suspend fun search(query: String, continuation: String? = null): ExcorYouTubeSearchPage? = engine.search(query, continuation)
+    suspend fun search(query: String, continuation: String? = null, filterParams: String? = null): ExcorYouTubeSearchPage? = engine.search(query, continuation, filterParams)
     /** A YouTube playlist: details and videos; pass `page.continuation` back for more videos. */
     @Throws(Throwable::class)
     suspend fun playlist(playlistId: String, continuation: String? = null): ExcorYouTubePlaylist? = engine.playlist(playlistId, continuation)
@@ -60,9 +60,10 @@ class Excor(host: ExcorHost) {
     @Throws(Throwable::class)
     suspend fun related(videoId: String, continuation: String? = null): ExcorYouTubeRelated? = engine.related(videoId, continuation)
 
-    /** A video's comments in YouTube's default order; pass `page.continuation` back for more. */
+    /** A video's comments, Top order or [newestFirst]; pass `page.continuation` back for more. */
     @Throws(Throwable::class)
-    suspend fun comments(videoId: String, continuation: String? = null): ExcorYouTubeCommentsPage? = engine.comments(videoId, continuation)
+    suspend fun comments(videoId: String, continuation: String? = null, newestFirst: Boolean = false): ExcorYouTubeCommentsPage? =
+        engine.comments(videoId, continuation, newestFirst)
     /** YouTube search completions for a partial query. */
     @Throws(Throwable::class)
     suspend fun suggestions(query: String): List<String> = engine.suggestions(query)
