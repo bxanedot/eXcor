@@ -139,19 +139,19 @@ internal class ExcorEngine(
      * A channel's details and first page of uploads (two requests: the home page for details and the Videos tab), or,
      * with [continuation], the next page of uploads only. Null when YouTube's answer is not a channel page.
      */
-    suspend fun channel(channelId: String, continuation: String?): ExcorYouTubeChannel? {
+    suspend fun channel(channelId: String, continuation: String?, tab: ExcorYouTubeChannelTab): ExcorYouTubeChannel? {
         require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         val session = host.session()
         if (continuation != null) {
-            val (videos, next) = decodeChannelVideos(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
-            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), videos, next)
+            val page = decodeChannelTab(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
+            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), page.videos, page.continuation, page.playlists)
         }
         val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
-        val params = home.videosParams ?: return home.channel
-        val body = postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel
-        val (videos, next) = decodeChannelVideos(body) ?: return home.channel
-        return home.channel.copy(videos = videos, continuation = next)
+        // A channel without this tab (no Live, no Shorts) gives its details with an empty list.
+        val params = home.tabParams[tab] ?: return home.channel
+        val page = decodeChannelTab(postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel) ?: return home.channel
+        return home.channel.copy(videos = page.videos, continuation = page.continuation, playlists = page.playlists)
     }
 
     /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */

@@ -15,8 +15,9 @@ class YouTubeChannelTest {
          "header":{"pageHeaderRenderer":{"content":{"pageHeaderViewModel":{"metadata":{"contentMetadataViewModel":{"metadataRows":[
            {"metadataParts":[{"text":{"content":"@miravale"}}]},{"metadataParts":[{"text":{"content":"1.2M subscribers"}},{"text":{"content":"84 videos"}}]}]}}}}}},
          "contents":{"twoColumnBrowseResultsRenderer":{"tabs":[
-           {"tabRenderer":{"title":"Home","selected":true,"endpoint":{"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa","params":"EghmZWF0dXJlZA%3D%3D"}}}},
-           {"tabRenderer":{"title":"Videos","endpoint":{"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa","params":"EgZ2aWRlb3M%3D"}}}},
+           {"tabRenderer":{"title":"Home","selected":true,"endpoint":{"commandMetadata":{"webCommandMetadata":{"url":"/@miravale/featured"}},"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa","params":"EghmZWF0dXJlZA%3D%3D"}}}},
+           {"tabRenderer":{"title":"Vidéos","endpoint":{"commandMetadata":{"webCommandMetadata":{"url":"/@miravale/videos"}},"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa","params":"EgZ2aWRlb3M%3D"}}}},
+           {"tabRenderer":{"title":"Shorts","endpoint":{"commandMetadata":{"webCommandMetadata":{"url":"/@miravale/shorts"}},"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa","params":"EgZzaG9ydHM%3D"}}}},
            {"expandableTabRenderer":{"title":"Search"}}]}}}
     """.trimIndent()
 
@@ -37,8 +38,11 @@ class YouTubeChannelTest {
         assertEquals(listOf("mira vale", "synth", "glass river"), c.keywords)
         assertEquals(setOf("FR", "DE"), c.availableCountries)
         assertEquals(1, c.avatars.size)
-        assertEquals(listOf("Home", "Videos"), c.tabs)
-        assertEquals("EgZ2aWRlb3M%3D", home.videosParams)
+        assertEquals(listOf("Home", "Vidéos", "Shorts"), c.tabs)
+        // Matched by address, so a localized title ("Vidéos") still finds the Videos tab.
+        assertEquals("EgZ2aWRlb3M%3D", home.tabParams[ExcorYouTubeChannelTab.VIDEOS])
+        assertEquals("EgZzaG9ydHM%3D", home.tabParams[ExcorYouTubeChannelTab.SHORTS])
+        assertNull(home.tabParams[ExcorYouTubeChannelTab.LIVE])
         assertNull(decodeChannelHome(this.home, "UCbbbbbbbbbbbbbbbbbbbbbb"))
     }
 
@@ -47,7 +51,9 @@ class YouTubeChannelTest {
         val tab = """{"contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"title":"Videos","selected":true,"content":{"richGridRenderer":{"contents":[
             ${item("AAAAAAAAAAA")},${item("BBBBBBBBBBB")},
             {"continuationItemRenderer":{"continuationEndpoint":{"continuationCommand":{"token":"4qmFtab"}}}}]}}}}]}}}"""
-        val (videos, next) = decodeChannelVideos(tab)!!
+        val page = decodeChannelTab(tab)!!
+        val videos = page.videos
+        val next = page.continuation
         assertEquals(listOf("AAAAAAAAAAA", "BBBBBBBBBBB"), videos.map { it.videoId })
         assertEquals(157L, videos.first().durationSeconds)
         assertEquals("3.5M views", videos.first().viewsText)
@@ -55,9 +61,33 @@ class YouTubeChannelTest {
         assertNull(videos.first().channelId)
         assertEquals("4qmFtab", next)
         val more = """{"onResponseReceivedActions":[{"appendContinuationItemsAction":{"continuationItems":[${item("CCCCCCCCCCC")}]}}]}"""
-        val (videos2, next2) = decodeChannelVideos(more)!!
+        val page2 = decodeChannelTab(more)!!
+        val videos2 = page2.videos
+        val next2 = page2.continuation
         assertEquals("CCCCCCCCCCC", videos2.single().videoId)
         assertNull(next2)
         assertTrue("\"params\":\"p\"" in buildBrowseRequest("UCaaaaaaaaaaaaaaaaaaaaaa", null, ExcorSession(null, null, "US", "en"), "p").body)
+    }
+
+    @Test
+    fun shortsAndPlaylistsTabs() {
+        val shorts = """{"contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"selected":true,"content":{"richGridRenderer":{"contents":[
+            {"richItemRenderer":{"content":{"shortsLockupViewModel":{"onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"SSSSSSSSSSS",
+              "thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/SSSSSSSSSSS/frame0.jpg","width":1080,"height":1920}]}}}},
+              "overlayMetadata":{"primaryText":{"content":"A short"},"secondaryText":{"content":"216K views"}}}}}}]}}}}]}}}"""
+        val s = decodeChannelTab(shorts)!!.videos.single()
+        assertEquals("SSSSSSSSSSS", s.videoId)
+        assertEquals("A short", s.title)
+        assertEquals("216K views", s.viewsText)
+        assertNull(s.durationSeconds)
+        assertEquals(1, s.thumbnails.size)
+        val playlists = """{"contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"selected":true,"content":{"sectionListRenderer":{"contents":[
+            {"itemSectionRenderer":{"contents":[{"gridRenderer":{"items":[
+              {"lockupViewModel":{"contentId":"PLsyntheticlist","contentType":"LOCKUP_CONTENT_TYPE_PLAYLIST","metadata":{"lockupMetadataViewModel":{"title":{"content":"Remixes"}}}}},
+              {"continuationItemRenderer":{"continuationEndpoint":{"continuationCommand":{"token":"plmore"}}}}]}}]}}]}}}}]}}}"""
+        val page = decodeChannelTab(playlists)!!
+        assertEquals(listOf("PLsyntheticlist"), page.playlists.map { it.playlistId })
+        assertTrue(page.videos.isEmpty())
+        assertEquals("plmore", page.continuation)
     }
 }

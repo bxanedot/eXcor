@@ -50,6 +50,10 @@ class LiveVideoInfoTest {
         val channel = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg"))
         assertTrue(channel.title == "Daft Punk" && channel.handle != null && "Videos" in channel.tabs)
         assertTrue(channel.videos.size >= 10 && channel.videos.count { it.durationSeconds != null } >= 10)
+        val shorts = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", tab = ExcorYouTubeChannelTab.SHORTS))
+        assertTrue(shorts.videos.size >= 5, "shorts: ${shorts.videos.size}")
+        val lists = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", tab = ExcorYouTubeChannelTab.PLAYLISTS))
+        assertTrue(lists.playlists.size >= 5, "playlists: ${lists.playlists.size}")
         val more = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", assertNotNull(channel.continuation)))
         assertTrue(more.videos.isNotEmpty() && more.videos.none { v -> channel.videos.any { it.videoId == v.videoId } })
     }

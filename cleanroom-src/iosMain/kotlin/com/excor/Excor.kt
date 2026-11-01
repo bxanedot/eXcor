@@ -36,9 +36,13 @@ class Excor(host: ExcorHost) {
     /** A YouTube playlist: details and videos; pass `page.continuation` back for more videos. */
     @Throws(Throwable::class)
     suspend fun playlist(playlistId: String, continuation: String? = null): ExcorYouTubePlaylist? = engine.playlist(playlistId, continuation)
-    /** A YouTube channel (UC… ID): details and uploads; pass `channel.continuation` back for more uploads. */
+    /**
+     * A YouTube channel (UC… ID): details plus one tab (uploads by default; Shorts, Live or Playlists on request).
+     * Pass `channel.continuation` back for more of that tab.
+     */
     @Throws(Throwable::class)
-    suspend fun channel(channelId: String, continuation: String? = null): ExcorYouTubeChannel? = engine.channel(channelId, continuation)
+    suspend fun channel(channelId: String, continuation: String? = null, tab: ExcorYouTubeChannelTab = ExcorYouTubeChannelTab.VIDEOS): ExcorYouTubeChannel? =
+        engine.channel(channelId, continuation, tab)
     /** Videos YouTube suggests next to a video; pass `related.continuation` back for more. */
     @Throws(Throwable::class)
     suspend fun related(videoId: String, continuation: String? = null): ExcorYouTubeRelated? = engine.related(videoId, continuation)
