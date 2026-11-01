@@ -30,6 +30,9 @@ class Excor(host: ExcorHost) {
     /** Title, channel, duration, views, dates and playability; null when YouTube has no such video. */
     @Throws(Throwable::class)
     suspend fun videoInfo(videoId: String): ExcorVideoInfo? = engine.videoInfo(videoId)
+    /** YouTube search: videos, channels and playlists; pass `page.continuation` back for more. */
+    @Throws(Throwable::class)
+    suspend fun search(query: String, continuation: String? = null): ExcorYouTubeSearchPage? = engine.search(query, continuation)
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> = engine.audioCandidates(videoId)
     suspend fun extract(
         videoId: String,

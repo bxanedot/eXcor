@@ -24,6 +24,17 @@ class LiveVideoInfoTest {
         assertTrue(best.verdict == ExcorMatchVerdict.LIKELY || best.verdict == ExcorMatchVerdict.POSSIBLE)
     }
 
+    @Test
+    fun searchWithContinuation() = runBlocking {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
+        val excor = Excor(Host(OkHttpClient()))
+        val first = assertNotNull(excor.search("daft punk"))
+        assertTrue(first.videos.size >= 5 && first.videos.all { it.title.isNotBlank() })
+        assertTrue(first.channels.any { it.title.contains("Daft Punk", ignoreCase = true) })
+        val second = assertNotNull(excor.search("daft punk", assertNotNull(first.continuation)))
+        assertTrue(second.videos.isNotEmpty() && second.videos.none { v -> first.videos.any { it.videoId == v.videoId } })
+    }
+
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {
         override val tokenProvider = null
         override val filesDir: File? = null

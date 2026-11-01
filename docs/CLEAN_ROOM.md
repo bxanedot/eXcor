@@ -41,4 +41,4 @@ However, the separation rests on that working practice, not on an implementer wh
 
 Its test fixtures are synthetic, written inline in the tests. This is a description of process, not a legal clearance.
 
-`VideoInfo.kt` (YouTube metadata, 2026-11-01) falls under the same disclosure. It reads YouTube's own player response, using fields observed live (`videoDetails`, `microformat.playerMicroformatRenderer`, `playabilityStatus`), and reuses the clean-room client identities. `src/` and InnerTubeX were not opened.
+`VideoInfo.kt` (YouTube metadata) and `YouTubeSearch.kt` (YouTube search), both 2026-11-01, fall under the same disclosure. It reads YouTube's own player response, using fields observed live (`videoDetails`, `microformat.playerMicroformatRenderer`, `playabilityStatus`), and reuses the clean-room client identities. `src/` and InnerTubeX were not opened.
