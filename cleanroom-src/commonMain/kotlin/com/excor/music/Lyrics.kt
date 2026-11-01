@@ -76,3 +76,63 @@ private val WORD_TIME = Regex("<(\\d{1,3}):(\\d{2})(?:[.:](\\d{1,3}))?>")
 private val OFFSET_TAG = Regex("\\[offset:\\s*([+-]?\\d+)]", RegexOption.IGNORE_CASE)
 private val META_TAG = Regex("\\[[a-zA-Z]+:[^]]*]")
 private val SPACES = Regex("\\s+")
+
+/**
+ * Parses timed lyrics in TTML (W3C TTML2), the format Apple Music uses: each `<p>` is a line with its `begin`
+ * time, and `<span begin=…>` children inside it carry word times. Clock (`hh:mm:ss.fff`, `mm:ss.fff`) and offset
+ * (`12.3s`, `450ms`) times are read; `xml:lang` on the root gives the language. Lines without times are untimed.
+ */
+fun excorParseTtml(ttml: String, source: String): ExcorLyrics {
+    val language = TT_LANG.find(ttml)?.groupValues?.get(1)
+    val lines = TTML_P.findAll(ttml).mapNotNull { p ->
+        val start = attribute(p.groupValues[1], "begin")?.let(::ttmlTime)
+        val body = p.groupValues[2]
+        val words = TTML_SPAN.findAll(body).mapNotNull { span ->
+            val at = attribute(span.groupValues[1], "begin")?.let(::ttmlTime) ?: return@mapNotNull null
+            ExcorLyricsWord(at, xmlText(span.groupValues[2]).trim()).takeIf { it.text.isNotEmpty() }
+        }.toList()
+        val text = xmlText(body.replace(TTML_BR, " ")).replace(SPACES, " ").trim()
+        if (text.isEmpty()) null else ExcorLyricsLine(start, text, words)
+    }.toList()
+    val sync = when {
+        lines.any { it.words.isNotEmpty() } -> ExcorLyricsSync.WORD
+        lines.isNotEmpty() && lines.all { it.startMs != null } -> ExcorLyricsSync.LINE
+        else -> ExcorLyricsSync.NONE
+    }
+    return ExcorLyrics(if (sync == ExcorLyricsSync.NONE) lines.map { it.copy(startMs = null, words = emptyList()) } else lines, sync, language, source = source)
+}
+
+/** A TTML time expression in milliseconds; null when it is not one. */
+internal fun ttmlTime(value: String): Long? {
+    val v = value.trim()
+    TTML_OFFSET.matchEntire(v)?.let { m ->
+        val n = m.groupValues[1].toDoubleOrNull() ?: return null
+        return when (m.groupValues[2]) {
+            "h" -> (n * 3_600_000).toLong(); "m" -> (n * 60_000).toLong(); "s" -> (n * 1_000).toLong(); "ms" -> n.toLong()
+            else -> null
+        }
+    }
+    val parts = v.split(':')
+    if (parts.size !in 1..3) return null
+    val seconds = parts.last().toDoubleOrNull() ?: return null
+    val whole = parts.dropLast(1).map { it.toLongOrNull() ?: return null }
+    val minutes = whole.fold(0L) { acc, x -> acc * 60 + x }
+    return minutes * 60_000 + (seconds * 1_000 + 0.5).toLong()
+}
+
+private fun attribute(attributes: String, name: String): String? =
+    Regex("(?:^|\\s)(?:\\w+:)?$name\\s*=\\s*\"([^\"]*)\"").find(attributes)?.groupValues?.get(1)
+
+private fun xmlText(fragment: String): String = fragment.replace(XML_TAG, "")
+    .replace(Regex("&#(x[0-9a-fA-F]+|[0-9]+);")) { m ->
+        val code = m.groupValues[1].let { if (it.startsWith("x")) it.drop(1).toIntOrNull(16) else it.toIntOrNull() }
+        code?.takeIf { it in 1..0x10FFFF }?.let { c -> if (c > 0xFFFF) { val u = c - 0x10000; "${(0xD800 + (u shr 10)).toChar()}${(0xDC00 + (u and 0x3FF)).toChar()}" } else c.toChar().toString() } ?: ""
+    }
+    .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
+
+private val TT_LANG = Regex("<(?:\\w+:)?tt\\b[^>]*\\bxml:lang\\s*=\\s*\"([^\"]+)\"")
+private val TTML_P = Regex("<(?:\\w+:)?p\\b([^>]*)>(.*?)</(?:\\w+:)?p>", RegexOption.DOT_MATCHES_ALL)
+private val TTML_SPAN = Regex("<(?:\\w+:)?span\\b([^>]*)>(.*?)</(?:\\w+:)?span>", RegexOption.DOT_MATCHES_ALL)
+private val TTML_BR = Regex("<(?:\\w+:)?br\\s*/?>")
+private val TTML_OFFSET = Regex("([0-9]+(?:\\.[0-9]+)?)(h|ms|m|s)")
+private val XML_TAG = Regex("<[^>]+>")

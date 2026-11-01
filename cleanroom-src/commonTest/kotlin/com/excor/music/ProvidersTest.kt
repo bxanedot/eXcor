@@ -191,6 +191,9 @@ class ProvidersTest {
         assertEquals("0000000000000000000001", spotifyIdOfGid("00000000000000000000000000000001"))
         assertEquals("000000000000000000000z", spotifyIdOfGid("00000000000000000000000000000023"))
         assertEquals("0000000000000000000010", spotifyIdOfGid("0000000000000000000000000000003e"))
+        // Published GID/ID pairs (librespot's test data).
+        assertEquals("5sWHDYs0csV6RS48xBl0tH", spotifyIdOfGid("b39fe8081e1f4c54be38e8d6f9f12bb9"))
+        assertEquals("4GNcXTGWmnZ3ySrqvol3o4", spotifyIdOfGid("9a1b1cfbc6f244569ae0356c77bbe9d8"))
         val id = spotifyIdOfGid("ffffffffffffffffffffffffffffffff")
         assertEquals(22, id.length)
         assertEquals(spotifyRefOf("spotify:track:ffffffffffffffffffffffffffffffff")!!.id, id)

@@ -77,13 +77,20 @@ internal class MusicHttp(
         }
 
     /** A command (PUT, POST) with an optional JSON body; an empty success returns an empty object. Never cached. */
-    suspend fun command(provider: ExcorCatalogProvider, method: HttpMethod, url: String, bearer: String, json: String? = null): JsonElement =
+    suspend fun command(
+        provider: ExcorCatalogProvider,
+        method: HttpMethod,
+        url: String,
+        bearer: String,
+        json: String? = null,
+        contentType: ContentType = ContentType.Application.Json,
+    ): JsonElement =
         send(provider) {
             http.request(url) {
                 this.method = method
                 header(HttpHeaders.Accept, "application/json")
                 header(HttpHeaders.Authorization, "Bearer $bearer")
-                if (json != null) setBody(TextContent(json, ContentType.Application.Json)) else setBody(TextContent("", ContentType.Application.Json))
+                setBody(TextContent(json ?: "", contentType))
             }
         }
 
@@ -143,6 +150,8 @@ internal class MusicHttp(
             channel.cancel()
         }
         if (bytes.size > MAX_BYTES) throw ExcorCatalogException(provider, ExcorCatalogError.RESPONSE_TOO_LARGE)
+        // Commands such as Spotify's library writes succeed with an empty body.
+        if (bytes.all { it.toInt().toChar().isWhitespace() }) return JsonObject(emptyMap())
         return try {
             Json.parseToJsonElement(bytes.decodeToString())
         } catch (_: Exception) {

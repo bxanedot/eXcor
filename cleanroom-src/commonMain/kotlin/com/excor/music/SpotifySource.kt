@@ -5,9 +5,14 @@ import com.excor.catalog.ExcorCatalogCapabilityStatus
 import com.excor.catalog.ExcorCatalogError
 import com.excor.catalog.ExcorCatalogException
 import com.excor.catalog.ExcorCatalogProvider
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.URLBuilder
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
  * Spotify Web API with a caller-supplied OAuth access token. Since February 2026, Development Mode apps get at most 10
@@ -140,6 +145,133 @@ internal class SpotifySource(
         command(HttpMethod.Put, "me/player/seek", deviceId, extra = listOf("position_ms" to "$positionMs"))
     }
 
+    /** Adds a track or episode to the queue of the user's Spotify client (Premium). */
+    suspend fun queue(uri: String, deviceId: String?) {
+        if (!uri.startsWith("spotify:") || spotifyRefOf(uri)?.kind !in setOf(ExcorMusicKind.TRACK, ExcorMusicKind.EPISODE)) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        command(HttpMethod.Post, "me/player/queue", deviceId, extra = listOf("uri" to uri))
+    }
+
+    suspend fun setVolume(percent: Int, deviceId: String?) {
+        if (percent !in 0..100) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        command(HttpMethod.Put, "me/player/volume", deviceId, extra = listOf("volume_percent" to "$percent"))
+    }
+
+    /**
+     * Saves to or removes from the user's library (`PUT`/`DELETE /me/library`, user-library-modify and the related
+     * scopes). Spotify takes up to 40 URIs per request, so longer lists are sent in batches.
+     */
+    suspend fun saveToLibrary(uris: List<String>) = libraryBatches(uris) { command(HttpMethod.Put, "me/library", null, extra = listOf("uris" to it.joinToString(","))) }
+
+    suspend fun removeFromLibrary(uris: List<String>) = libraryBatches(uris) { command(HttpMethod.Delete, "me/library", null, extra = listOf("uris" to it.joinToString(","))) }
+
+    /** Whether each URI is in the user's library, in the given order. */
+    suspend fun libraryContains(uris: List<String>): List<Boolean> {
+        val result = mutableListOf<Boolean>()
+        libraryBatches(uris) { batch ->
+            val access = token() ?: throw fail(ExcorCatalogError.AUTHENTICATION_REQUIRED)
+            val url = URLBuilder("https://api.spotify.com/v1/me/library/contains").apply { parameters.append("uris", batch.joinToString(",")) }.buildString()
+            val flags = (http.getJson(provider, url, bearer = access) as? kotlinx.serialization.json.JsonArray)
+                ?.map { (it as? kotlinx.serialization.json.JsonPrimitive)?.content == "true" }
+            if (flags == null || flags.size != batch.size) throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+            result += flags
+        }
+        return result
+    }
+
+    private suspend fun libraryBatches(uris: List<String>, send: suspend (List<String>) -> Unit) {
+        if (uris.isEmpty() || uris.any { !it.startsWith("spotify:") || spotifyRefOf(it) == null }) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        uris.chunked(LIBRARY_BATCH).forEach { send(it) }
+    }
+
+    /** Creates a playlist for the user (`POST /me/playlists`); a collaborative playlist must be private. */
+    suspend fun createPlaylist(name: String, description: String?, public: Boolean, collaborative: Boolean): ExcorMusicPlaylist {
+        if (name.isBlank() || name.length > 300 || (collaborative && public)) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        val body = buildJsonObject {
+            put("name", name)
+            put("public", public)
+            put("collaborative", collaborative)
+            description?.let { put("description", it) }
+        }
+        return playlistOf(command(HttpMethod.Post, "me/playlists", null, body.toString())) ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+    }
+
+    /**
+     * Adds tracks or episodes at [position] (appends when null), in batches of 100 kept in order. Returns the new
+     * snapshot ID. Needs playlist-modify-public or -private.
+     */
+    suspend fun addToPlaylist(playlistId: String, uris: List<String>, position: Int?): String {
+        val id = checked(playlistId)
+        playableUris(uris)
+        if (position != null && position < 0) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        var snapshot = ""
+        uris.chunked(PLAYLIST_BATCH).forEachIndexed { i, batch ->
+            val body = buildJsonObject {
+                put("uris", JsonArray(batch.map(::JsonPrimitive)))
+                position?.let { put("position", it + i * PLAYLIST_BATCH) }
+            }
+            snapshot = command(HttpMethod.Post, "playlists/$id/items", null, body.toString()).str("snapshot_id") ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+        }
+        return snapshot
+    }
+
+    /** Removes every occurrence of [uris], checked against [snapshot] when given. Returns the new snapshot ID. */
+    suspend fun removeFromPlaylist(playlistId: String, uris: List<String>, snapshot: String?): String {
+        val id = checked(playlistId)
+        playableUris(uris)
+        var current = snapshot
+        uris.chunked(PLAYLIST_BATCH).forEach { batch ->
+            val body = buildJsonObject {
+                put("items", JsonArray(batch.map { uri -> buildJsonObject { put("uri", uri) } }))
+                current?.let { put("snapshot_id", it) }
+            }
+            current = command(HttpMethod.Delete, "playlists/$id/items", null, body.toString()).str("snapshot_id") ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+        }
+        return current!!
+    }
+
+    /** Moves [length] items starting at [rangeStart] to before [insertBefore]. Returns the new snapshot ID. */
+    suspend fun reorderPlaylist(playlistId: String, rangeStart: Int, insertBefore: Int, length: Int, snapshot: String?): String {
+        val id = checked(playlistId)
+        if (rangeStart < 0 || insertBefore < 0 || length < 1) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        val body = buildJsonObject {
+            put("range_start", rangeStart)
+            put("insert_before", insertBefore)
+            put("range_length", length)
+            snapshot?.let { put("snapshot_id", it) }
+        }
+        return command(HttpMethod.Put, "playlists/$id/items", null, body.toString()).str("snapshot_id") ?: throw fail(ExcorCatalogError.MALFORMED_RESPONSE)
+    }
+
+    /** Renames or changes a playlist the user owns; null leaves a field as it is. Collaborative needs private. */
+    suspend fun updatePlaylist(playlistId: String, name: String?, description: String?, public: Boolean?, collaborative: Boolean?) {
+        val id = checked(playlistId)
+        if (name != null && (name.isBlank() || name.length > 300)) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        if (collaborative == true && public == true) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        if (name == null && description == null && public == null && collaborative == null) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        val body = buildJsonObject {
+            name?.let { put("name", it) }
+            description?.let { put("description", it) }
+            public?.let { put("public", it) }
+            collaborative?.let { put("collaborative", it) }
+        }
+        command(HttpMethod.Put, "playlists/$id", null, body.toString())
+    }
+
+    /** Uploads a JPEG cover (ugc-image-upload scope); Spotify takes at most 256 KB of base64, about 192 KB of JPEG. */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    suspend fun uploadPlaylistCover(playlistId: String, jpeg: ByteArray) {
+        val id = checked(playlistId)
+        val isJpeg = jpeg.size >= 3 && jpeg[0] == 0xFF.toByte() && jpeg[1] == 0xD8.toByte() && jpeg[2] == 0xFF.toByte()
+        val encoded = kotlin.io.encoding.Base64.Default.encode(jpeg)
+        if (!isJpeg || encoded.length > COVER_LIMIT) throw fail(ExcorCatalogError.INVALID_REQUEST)
+        command(HttpMethod.Put, "playlists/$id/images", null, encoded, contentType = ContentType.Image.JPEG)
+    }
+
+    private fun playableUris(uris: List<String>) {
+        val playable = setOf(ExcorMusicKind.TRACK, ExcorMusicKind.EPISODE)
+        if (uris.isEmpty() || uris.any { !it.startsWith("spotify:") || spotifyRefOf(it)?.kind !in playable }) throw fail(ExcorCatalogError.INVALID_REQUEST)
+    }
+
     suspend fun devices(): List<ExcorSpotifyDevice> = get("me/player/devices").arr("devices")?.objects().orEmpty().mapNotNull { d ->
         ExcorSpotifyDevice(d.str("id") ?: return@mapNotNull null, d.str("name") ?: "", d.str("type"), d.bool("is_active") ?: false, d.bool("is_restricted") ?: false)
     }
@@ -184,14 +316,21 @@ internal class SpotifySource(
 
     // --- requests ---
 
-    private suspend fun command(method: HttpMethod, path: String, deviceId: String?, json: String? = null, extra: List<Pair<String, String>> = emptyList()) {
+    private suspend fun command(
+        method: HttpMethod,
+        path: String,
+        deviceId: String?,
+        json: String? = null,
+        extra: List<Pair<String, String>> = emptyList(),
+        contentType: ContentType = ContentType.Application.Json,
+    ): JsonObject {
         val access = token() ?: throw fail(ExcorCatalogError.AUTHENTICATION_REQUIRED)
         if (deviceId != null && !DEVICE_ID.matches(deviceId)) throw fail(ExcorCatalogError.INVALID_REQUEST)
         val url = URLBuilder("https://api.spotify.com/v1/$path").apply {
             extra.forEach { (k, v) -> parameters.append(k, v) }
             deviceId?.let { parameters.append("device_id", it) }
         }.buildString()
-        http.command(provider, method, url, access, json)
+        return http.command(provider, method, url, access, json, contentType) as? JsonObject ?: JsonObject(emptyMap())
     }
 
     private val searchLimit get() = if (extendedQuota) 50 else 10
@@ -359,6 +498,9 @@ internal class SpotifySource(
         const val PAGE = 50
         val SPOTIFY_ID = Regex("[A-Za-z0-9]{22}")
         val DEVICE_ID = Regex("[A-Za-z0-9]{1,128}")
+        const val LIBRARY_BATCH = 40
+        const val PLAYLIST_BATCH = 100
+        const val COVER_LIMIT = 256 * 1024
         val SEARCH_TYPES = mapOf(
             ExcorMusicKind.TRACK to "track", ExcorMusicKind.ALBUM to "album",
             ExcorMusicKind.ARTIST to "artist", ExcorMusicKind.PLAYLIST to "playlist",
