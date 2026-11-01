@@ -1,6 +1,7 @@
 package com.excor
 
 import com.excor.catalog.ExcorCatalogTokenProvider
+import com.excor.music.ExcorMusicConfig
 
 data class ExcorStream(
     val videoId: String,
@@ -56,4 +57,6 @@ interface ExcorHostServices {
     fun nowMs(): Long
     fun log(level: ExcorLogLevel, message: String, trackId: String? = null)
     val catalogTokenProvider: ExcorCatalogTokenProvider? get() = null
+    /** Null uses [catalogTokenProvider] for tokens and defaults for the rest. */
+    val musicConfig: ExcorMusicConfig? get() = null
 }

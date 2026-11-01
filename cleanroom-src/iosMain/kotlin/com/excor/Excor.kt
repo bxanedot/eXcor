@@ -1,6 +1,8 @@
 package com.excor
 
 import com.excor.catalog.ExcorMusicCatalog
+import com.excor.music.ExcorMusic
+import com.excor.music.ExcorMusicConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.HttpTimeout
@@ -19,6 +21,8 @@ class Excor(host: ExcorHost) {
         }
     }
     val musicCatalog = ExcorMusicCatalog(client, host.catalogTokenProvider)
+    /** Spotify, Apple Music and Deezer metadata, matching, sync and authorized-playback decisions. */
+    val music = ExcorMusic(client, host.musicConfig ?: ExcorMusicConfig(tokens = host.catalogTokenProvider), host::nowMs)
     private val engine = ExcorEngine(host, host.tokenProvider, client)
 
     fun initialize() = engine.initialize()

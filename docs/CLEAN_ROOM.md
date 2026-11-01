@@ -20,3 +20,23 @@ The old captured responses in `fixtures/` are not used by the clean-room tests. 
 ## Naming amendment
 
 The source brief's naming amendment controls the new deliverables: Kotlin package `com.excor`, artifact `com.excor:eXcor`, XCFramework `eXcor`, and separate Swift package/module `eXcorKit`. API names in sections 2–8 use this mapping. Section 1 retains exact identifiers for forbidden historical sources. Existing historical implementations remain separate and are not thereby API-compatible with the clean-room deliverables.
+
+## Music engine (`cleanroom-src/commonMain/kotlin/com/excor/music/`, 2026-11-01)
+
+The music engine was written from:
+- the providers' official documentation (Spotify Web API reference and its 2026 changelogs and migration guide, Apple Music API and MusicKit documentation, Deezer's public API responses);
+- standards (RFC 6381, RFC 8216bis, ISO/IEC 23001-7 and 23009-1 descriptors, DASH-IF system IDs, FIPS 180-4, RFC 7636);
+- live responses from the keyless Deezer and iTunes endpoints, read only for field names.
+
+The reference projects named in the brief were read only at README level:
+- Stash (GPL-3.0): its features only;
+- spotify-downloader (MIT, archived): its accepted input identifiers only, with its credential and decryption sections skipped;
+- DRML (CC0): its terminology only.
+
+No code of theirs was opened.
+
+**Disclosure.** The engine was implemented by the same assistant session that earlier wrote, and read in full, the historical engine in `src/`, including that engine's Spotify, Deezer and Apple Music catalog code. During this work `src/` was not opened or consulted. The music engine's structure and tests were written afresh against the sources above.
+
+However, the separation rests on that working practice, not on an implementer who never saw the historical code. Anyone who needs strict implementer isolation should treat this package as not meeting it, and have it reviewed or reimplemented by someone who has not seen `src/`.
+
+Its test fixtures are synthetic, written inline in the tests. This is a description of process, not a legal clearance.

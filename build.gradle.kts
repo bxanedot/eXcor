@@ -126,7 +126,7 @@ kotlin.sourceSets.commonTest { kotlin.srcDir(generateFixturesPath) }
 
 // Declared so that changing EXCOR_LIVE or EXCOR_LIVE_IDS re-runs the tests instead of reusing results.
 tasks.withType<Test>().configureEach {
-    listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS").forEach { environment(it, System.getenv(it) ?: "") }
+    listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS", "EXCOR_BENCH").forEach { environment(it, System.getenv(it) ?: "") }
 }
 tasks.withType<AbstractTestTask>().configureEach {
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
