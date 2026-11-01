@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// The app's shared logic (queue, playback orchestration), on top of the library at the repository root.
+// The app's shared logic (queue, playback orchestration), on top of the historical engine (historical-engine/), not
+// the clean-room library at the repository root, whose API it has not been migrated to.
 plugins {
     kotlin("multiplatform")
     id("com.android.kotlin.multiplatform.library")
@@ -31,7 +32,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // Its types (ExcorStream, ExcorUnplayableException) are part of this module's API.
-            api(project(":"))
+            api(project(":historical-engine"))
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
         }
         commonTest.dependencies {
