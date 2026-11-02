@@ -30,6 +30,11 @@ class LiveVideoInfoTest {
         assertNotNull(songMatches.matches[ExcorCatalogProvider.DEEZER].orEmpty().firstOrNull(), "a Deezer candidate for the credited song: ${songMatches.errors}")
         assertEquals(emptyList(), excor.songs("PkZNo7MFNFg"))
 
+        val mix = assertNotNull(excor.mix("FGBhQbmPwH8"))
+        assertTrue(mix.videos.size >= 10 && mix.nextVideoId != null, "mix: ${mix.videos.size}")
+        val moreMix = assertNotNull(excor.mix(mix.nextVideoId!!, mix.playlistId, mix.nextIndex))
+        assertTrue(moreMix.videos.any { v -> mix.videos.none { it.videoId == v.videoId } }, "the next mix window brings new videos")
+
         val deezerTrack = excor.music.track("https://www.deezer.com/track/3135556")
         val onYouTube = excor.findOnYouTube(deezerTrack)
         assertTrue(onYouTube.isNotEmpty() && onYouTube.first().verdict.let { it == ExcorMatchVerdict.LIKELY || it == ExcorMatchVerdict.POSSIBLE }, "YouTube matches: ${onYouTube.map { it.verdict }}")

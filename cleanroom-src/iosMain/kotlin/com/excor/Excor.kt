@@ -43,8 +43,9 @@ class Excor(host: ExcorHost) {
     @Throws(Throwable::class)
     suspend fun playlist(playlistId: String, continuation: String? = null): ExcorYouTubePlaylist? = engine.playlist(playlistId, continuation)
     /**
-     * A YouTube channel (UC… ID): details plus one tab (uploads by default; Shorts, Live or Playlists on request).
-     * Pass `channel.continuation` back for more of that tab.
+     * A YouTube channel (UC… ID): details plus one tab (uploads by default; Shorts, Live, Playlists or Posts on request).
+     * Pass `channel.continuation` back for more of that tab. A tab the channel lacks gives an empty list; null means
+     * YouTube's answer was not a channel page or the tab failed to load.
      */
     @Throws(Throwable::class)
     suspend fun channel(channelId: String, continuation: String? = null, tab: ExcorYouTubeChannelTab = ExcorYouTubeChannelTab.VIDEOS): ExcorYouTubeChannel? =
@@ -55,6 +56,9 @@ class Excor(host: ExcorHost) {
     /** A video's chapters, in start order; empty when it has none. */
     @Throws(Throwable::class)
     suspend fun chapters(videoId: String): List<ExcorYouTubeChapter>? = engine.chapters(videoId)
+    /** A window of a video's mix (YouTube's endless radio for it); pass `mix.nextVideoId` and `mix.nextIndex` back for more. */
+    @Throws(Throwable::class)
+    suspend fun mix(videoId: String, playlistId: String = "RD$videoId", index: Int? = null): ExcorYouTubeMix? = engine.mix(videoId, playlistId, index)
     /** Songs YouTube credits in a video's description: title, artist, album and credit lines. */
     @Throws(Throwable::class)
     suspend fun songs(videoId: String): List<ExcorYouTubeSong>? = engine.songs(videoId)

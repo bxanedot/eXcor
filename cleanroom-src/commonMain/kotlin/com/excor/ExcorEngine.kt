@@ -160,7 +160,8 @@ internal class ExcorEngine(
 
     /**
      * A channel's details and first page of uploads (two requests: the home page for details and the Videos tab), or,
-     * with [continuation], the next page of uploads only. Null when YouTube's answer is not a channel page.
+     * with [continuation], the next page of uploads only. Null when YouTube's answer is not a channel page, or when a
+     * tab the channel has fails to load.
      */
     suspend fun channel(channelId: String, continuation: String?, tab: ExcorYouTubeChannelTab): ExcorYouTubeChannel? {
         require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
@@ -171,9 +172,10 @@ internal class ExcorEngine(
             return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), page.videos, page.continuation, page.playlists, page.posts)
         }
         val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
-        // A channel without this tab (no Live, no Shorts) gives its details with an empty list.
+        // A channel without this tab (no Live, no Shorts) gives its details with an empty list. A tab it has that fails
+        // to load gives null, so a refused or broken answer is not mistaken for an empty tab.
         val params = home.tabParams[tab] ?: return home.channel
-        val page = decodeChannelTab(postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel) ?: return home.channel
+        val page = decodeChannelTab(postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return null) ?: return null
         return home.channel.copy(videos = page.videos, continuation = page.continuation, playlists = page.playlists, posts = page.posts)
     }
 
@@ -190,6 +192,17 @@ internal class ExcorEngine(
     suspend fun chapters(videoId: String): List<ExcorYouTubeChapter>? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         return decodeChapters(postPlayer(buildNextRequest(videoId, null, host.session())) ?: return null)
+    }
+
+    /**
+     * A window of the mix for [videoId] (one request); [playlistId] defaults to the video's own mix. Null when YouTube's
+     * answer has no panel for that playlist.
+     */
+    suspend fun mix(videoId: String, playlistId: String, index: Int?): ExcorYouTubeMix? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
+        require(index == null || index in 0..10_000) { "index out of range" }
+        return decodeMix(postPlayer(buildWatchPlaylistRequest(videoId, playlistId, index, host.session())) ?: return null, playlistId)
     }
 
     /** Songs credited in a video's description (one request); empty when it credits none, null when not a watch page. */

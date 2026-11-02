@@ -5,7 +5,9 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -107,6 +109,27 @@ class EngineStateTest {
         )
         try {
             testEngine.block()
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun aChannelTabThatFailsToLoadIsNotReportedAsEmpty() = runTest {
+        val channelId = "UCaaaaaaaaaaaaaaaaaaaaaa"
+        val home = """{"metadata":{"channelMetadataRenderer":{"title":"Mira Vale","externalId":"$channelId"}},
+            "contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"title":"Playlists","endpoint":{
+              "commandMetadata":{"webCommandMetadata":{"url":"/@miravale/playlists"}},"browseEndpoint":{"browseId":"$channelId","params":"EglwbGF5bGlzdHM%3D"}}}}]}}}"""
+        val client = HttpClient(MockEngine { request ->
+            val body = (request.body as TextContent).text
+            if ("\"params\"" in body) respond("", HttpStatusCode.ServiceUnavailable)
+            else respond(home, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            assertNull(engine.channel(channelId, null, ExcorYouTubeChannelTab.PLAYLISTS))
+            // A tab the channel does not have is an empty list, not a failure.
+            assertEquals(emptyList(), assertNotNull(engine.channel(channelId, null, ExcorYouTubeChannelTab.LIVE)).videos)
         } finally {
             client.close()
         }

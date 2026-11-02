@@ -1,9 +1,11 @@
 package com.excor
 
+import com.excor.catalog.ExcorArtwork
 import com.excor.catalog.ExcorCatalogProvider
 import com.excor.music.ExcorArtistRole
 import com.excor.music.ExcorMusicArtist
 import com.excor.music.ExcorMusicTrack
+import io.ktor.http.Url
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -14,6 +16,19 @@ import kotlinx.serialization.json.put
 
 /** Videos YouTube suggests next to a video, from the watch page's InnerTube `next` response. */
 data class ExcorYouTubeRelated(val videos: List<ExcorYouTubePlaylistVideo>, val continuation: String?)
+
+/**
+ * A window of a watch playlist, such as a mix ("RD" + video ID), which browse refuses ("unviewable"). Mixes are
+ * generated per request and do not end: pass [nextVideoId] and [nextIndex] back for the following window, which can
+ * repeat some videos.
+ */
+data class ExcorYouTubeMix(
+    val playlistId: String,
+    val title: String?,
+    val videos: List<ExcorYouTubePlaylistVideo>,
+    val nextVideoId: String?,
+    val nextIndex: Int?,
+)
 
 /** A chapter of a video; it runs until the next chapter's [startMs] or the end of the video. */
 data class ExcorYouTubeChapter(val title: String, val startMs: Long)
@@ -66,6 +81,51 @@ data class ExcorYouTubeCommentsPage(
 
 internal fun buildNextRequest(videoId: String?, continuation: String?, session: ExcorSession): PlayerRequest = innertubeRequest("next", session) {
     if (continuation != null) put("continuation", continuation) else put("videoId", videoId!!)
+}
+
+internal fun buildWatchPlaylistRequest(videoId: String, playlistId: String, index: Int?, session: ExcorSession): PlayerRequest = innertubeRequest("next", session) {
+    put("videoId", videoId)
+    put("playlistId", playlistId)
+    if (index != null) put("index", index)
+}
+
+/** The watch playlist panel of a `next` response; null when the response has none for [playlistId]. */
+internal fun decodeMix(source: String, playlistId: String): ExcorYouTubeMix? {
+    val root = parse(source) ?: return null
+    val panel = root.path("contents", "twoColumnWatchNextResults", "playlist", "playlist") as? JsonObject ?: return null
+    if (panel.textAt("playlistId") != playlistId) return null
+    val items = (panel["contents"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("playlistPanelVideoRenderer") as? JsonObject }
+    val videos = items.mapNotNull { v ->
+        val id = v.textAt("videoId")?.takeIf(VIDEO_ID::matches) ?: return@mapNotNull null
+        val title = v.path("title", "simpleText")?.let { (it as? JsonPrimitive)?.contentOrNull } ?: return@mapNotNull null
+        val owner = (v.path("longBylineText", "runs") as? JsonArray)?.firstOrNull() as? JsonObject
+        ExcorYouTubePlaylistVideo(
+            videoId = id,
+            title = title,
+            channelName = owner?.textAt("text"),
+            channelId = (owner?.path("navigationEndpoint", "browseEndpoint", "browseId") as? JsonPrimitive)?.contentOrNull?.takeIf(CHANNEL_ID::matches),
+            durationSeconds = v.path("lengthText", "simpleText")?.let { (it as? JsonPrimitive)?.contentOrNull }?.let(::clockSeconds),
+            viewsText = null,
+            publishedText = null,
+            thumbnails = (v.path("thumbnail", "thumbnails") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }.mapNotNull { t ->
+                val url = t.textAt("url") ?: return@mapNotNull null
+                val parsed = runCatching { Url(url) }.getOrNull() ?: return@mapNotNull null
+                if (parsed.protocol.name != "https" || parsed.host.lowercase() != "i.ytimg.com") return@mapNotNull null
+                ExcorArtwork(url, t.textAt("width")?.toIntOrNull(), t.textAt("height")?.toIntOrNull())
+            },
+        )
+    }
+    // The window continues from the last item that names a video, skipping any that fail to decode.
+    val last = items.asReversed().firstNotNullOfOrNull { (it.path("navigationEndpoint", "watchEndpoint") as? JsonObject)?.takeIf { e -> e.textAt("videoId")?.let(VIDEO_ID::matches) == true } }
+    val infinite = (panel["isInfinite"] as? JsonPrimitive)?.booleanOrNull == true
+    return ExcorYouTubeMix(
+        playlistId = playlistId,
+        title = panel.textAt("title"),
+        videos = videos,
+        // A finite playlist ends with its panel; only an endless mix offers the next window.
+        nextVideoId = last?.textAt("videoId")?.takeIf { infinite && VIDEO_ID.matches(it) },
+        nextIndex = last?.textAt("index")?.toIntOrNull()?.takeIf { infinite && it >= 0 },
+    )
 }
 
 /** Related videos from a first `next` response or a related continuation; null when it is neither. */
