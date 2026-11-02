@@ -89,6 +89,15 @@ class YouTubeChannelTest {
         assertEquals(listOf("PLsyntheticlist"), page.playlists.map { it.playlistId })
         assertTrue(page.videos.isEmpty())
         assertEquals("plmore", page.continuation)
+
+        val live = """{"contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"selected":true,"content":{"richGridRenderer":{"contents":[
+            {"richItemRenderer":{"content":{"lockupViewModel":{"contentId":"LLLLLLLLLLL","contentType":"LOCKUP_CONTENT_TYPE_VIDEO",
+              "contentImage":{"thumbnailViewModel":{"overlays":[{"thumbnailBottomOverlayViewModel":{"badges":[{"thumbnailBadgeViewModel":{"text":"EN DIRECT","badgeStyle":"THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE"}}]}}]}},
+              "metadata":{"lockupMetadataViewModel":{"title":{"content":"Radio"},"metadata":{"contentMetadataViewModel":{"metadataRows":[{"metadataParts":[{"text":{"content":"2K watching"}}]}]}}}}}}}},
+            ${item("AAAAAAAAAAA")}]}}}}]}}}"""
+        val (stream, upload) = decodeChannelTab(live)!!.videos
+        assertTrue(stream.isLive && stream.durationSeconds == null && stream.viewsText == "2K watching")
+        assertTrue(!upload.isLive && upload.durationSeconds == 157L)
     }
 
     @Test
