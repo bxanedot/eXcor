@@ -132,4 +132,33 @@ class YouTubeChannelTest {
         assertNull(decodeChannelAbout(about, "UCbbbbbbbbbbbbbbbbbbbbbb"))
         assertNull(decodeChannelAbout("""{"responseContext":{}}""", "UCaaaaaaaaaaaaaaaaaaaaaa"))
     }
+
+    @Test
+    fun postsTabAndContinuation() {
+        fun post(id: String, attachment: String) = """{"backstagePostThreadRenderer":{"post":{"backstagePostRenderer":{"postId":"$id",
+            "contentText":{"runs":[{"text":"Archive "},{"text":"#307"}]},"publishedTimeText":{"runs":[{"text":"3 months ago"}]},
+            "voteCount":{"simpleText":"23K"},"backstageAttachment":$attachment}}}}"""
+        fun image(size: Int) = """{"backstageImageRenderer":{"image":{"thumbnails":[{"url":"https://yt3.ggpht.com/a=s288","width":288,"height":288},
+            {"url":"https://yt3.ggpht.com/a=s$size","width":$size,"height":$size},{"url":"https://evil.example/x=s9999","width":9999}]}}}"""
+        val first = """{"contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"selected":true,"content":{"sectionListRenderer":{"contents":[
+            {"itemSectionRenderer":{"contents":[
+              ${post("Ugkxu4UYOgJq3Hxrsl2BrhAO", """{"postMultiImageRenderer":{"images":[${image(2048)},${image(1024)}]}}""")},
+              ${post("bad id!", "{}")},
+              {"continuationItemRenderer":{"continuationEndpoint":{"continuationCommand":{"token":"postsmore"}}}}]}}]}}}}]}}}"""
+        val page = decodeChannelTab(first)!!
+        val p = page.posts.single()
+        assertEquals("Archive #307", p.text)
+        assertEquals("3 months ago", p.publishedText)
+        assertEquals("23K", p.likesText)
+        assertEquals(listOf(2048, 1024), p.images.map { it.width })
+        assertEquals("https://www.youtube.com/post/Ugkxu4UYOgJq3Hxrsl2BrhAO", p.url)
+        assertEquals("postsmore", page.continuation)
+        assertTrue(page.videos.isEmpty())
+
+        val next = """{"onResponseReceivedEndpoints":[{"appendContinuationItemsAction":{"continuationItems":[
+            ${post("UgkxK0gVWrh18Ql8EQDpvP", image(800))}]}}]}"""
+        val more = decodeChannelTab(next)!!
+        assertEquals(listOf(800), more.posts.single().images.map { it.width })
+        assertNull(more.continuation)
+    }
 }

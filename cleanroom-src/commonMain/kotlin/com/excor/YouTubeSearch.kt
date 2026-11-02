@@ -1,6 +1,7 @@
 package com.excor
 
 import com.excor.catalog.ExcorArtwork
+import com.excor.music.ExcorMusicTrack
 import io.ktor.http.Url
 import io.ktor.http.decodeURLQueryComponent
 import kotlinx.serialization.json.Json
@@ -45,7 +46,10 @@ data class ExcorYouTubeVideoResult(
     val isLive: Boolean,
     val officialArtistChannel: Boolean,
     val thumbnails: List<ExcorArtwork>,
-)
+) {
+    /** The result as a music track, read the same way as [ExcorVideoInfo.asMusicTrack]. */
+    fun asMusicTrack(): ExcorMusicTrack = youtubeMusicTrack(videoId, title, channelName, channelId, durationSeconds, thumbnails)
+}
 
 data class ExcorYouTubeChannelResult(
     val channelId: String,

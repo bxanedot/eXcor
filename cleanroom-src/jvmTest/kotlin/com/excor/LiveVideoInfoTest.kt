@@ -23,6 +23,16 @@ class LiveVideoInfoTest {
         val best = matches.matches[ExcorCatalogProvider.DEEZER].orEmpty().firstOrNull()
         assertNotNull(best, "a Deezer candidate for the video: ${matches.errors}")
         assertTrue(best.verdict == ExcorMatchVerdict.LIKELY || best.verdict == ExcorMatchVerdict.POSSIBLE)
+
+        val song = assertNotNull(excor.songs("FGBhQbmPwH8")).single()
+        assertTrue(song.title == "One More Time" && song.artist == "Daft Punk" && song.credits.isNotEmpty(), "song: ${song.title} / ${song.artist}")
+        val songMatches = excor.music.matchAcrossProviders(song.asMusicTrack("FGBhQbmPwH8"), setOf(ExcorCatalogProvider.DEEZER))
+        assertNotNull(songMatches.matches[ExcorCatalogProvider.DEEZER].orEmpty().firstOrNull(), "a Deezer candidate for the credited song: ${songMatches.errors}")
+        assertEquals(emptyList(), excor.songs("PkZNo7MFNFg"))
+
+        val deezerTrack = excor.music.track("https://www.deezer.com/track/3135556")
+        val onYouTube = excor.findOnYouTube(deezerTrack)
+        assertTrue(onYouTube.isNotEmpty() && onYouTube.first().verdict.let { it == ExcorMatchVerdict.LIKELY || it == ExcorMatchVerdict.POSSIBLE }, "YouTube matches: ${onYouTube.map { it.verdict }}")
     }
 
     @Test
@@ -66,6 +76,10 @@ class LiveVideoInfoTest {
         assertTrue(lists.playlists.size >= 5, "playlists: ${lists.playlists.size}")
         val more = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", assertNotNull(channel.continuation)))
         assertTrue(more.videos.isNotEmpty() && more.videos.none { v -> channel.videos.any { it.videoId == v.videoId } })
+        val posts = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", tab = ExcorYouTubeChannelTab.POSTS))
+        assertTrue(posts.posts.size >= 5 && posts.posts.any { it.images.isNotEmpty() } && posts.posts.all { it.publishedText != null }, "posts: ${posts.posts.size}")
+        val morePosts = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", assertNotNull(posts.continuation)))
+        assertTrue(morePosts.posts.isNotEmpty() && morePosts.posts.none { p -> posts.posts.any { it.postId == p.postId } }, "more posts: ${morePosts.posts.size}")
         val live = assertNotNull(excor.channel("UCSJ4gkVC6NrvII8umztf0Ow", tab = ExcorYouTubeChannelTab.LIVE))
         assertTrue(live.videos.any { it.isLive }, "a live stream on Lofi Girl's Live tab")
         val about = assertNotNull(excor.channelAbout("UCBR8-60-B28hp2BmDPdntcQ"))

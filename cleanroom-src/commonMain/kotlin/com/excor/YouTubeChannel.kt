@@ -31,10 +31,24 @@ data class ExcorYouTubeChannel(
     val continuation: String?,
     /** The channel's playlists, filled when the Playlists tab was asked for. */
     val playlists: List<ExcorYouTubePlaylistResult> = emptyList(),
+    /** The channel's posts, filled when the Posts tab was asked for. */
+    val posts: List<ExcorYouTubePost> = emptyList(),
 )
 
+/** A channel post. [likesText] is YouTube's rounded display text; [images] holds the largest size of each image. */
+data class ExcorYouTubePost(
+    val postId: String,
+    val text: String?,
+    /** YouTube's relative text, such as "3 months ago"; not a date. */
+    val publishedText: String?,
+    val likesText: String?,
+    val images: List<ExcorArtwork>,
+) {
+    val url: String get() = "https://www.youtube.com/post/$postId"
+}
+
 /** Channel tabs eXcor reads, matched by the tab's address so YouTube's localized titles do not matter. */
-enum class ExcorYouTubeChannelTab(internal val path: String) { VIDEOS("videos"), SHORTS("shorts"), LIVE("streams"), PLAYLISTS("playlists") }
+enum class ExcorYouTubeChannelTab(internal val path: String) { VIDEOS("videos"), SHORTS("shorts"), LIVE("streams"), PLAYLISTS("playlists"), POSTS("posts") }
 
 /**
  * A channel's About panel. Texts are YouTube's display texts in the session's language; [viewCount] is read from its
@@ -148,26 +162,30 @@ private fun firstValue(node: JsonElement?, key: String, depth: Int = 0): JsonEle
     }
 }
 
-internal class ChannelTabPage(val videos: List<ExcorYouTubePlaylistVideo>, val playlists: List<ExcorYouTubePlaylistResult>, val continuation: String?)
+internal class ChannelTabPage(
+    val videos: List<ExcorYouTubePlaylistVideo>,
+    val playlists: List<ExcorYouTubePlaylistResult>,
+    val continuation: String?,
+    val posts: List<ExcorYouTubePost> = emptyList(),
+)
 
 /**
- * A channel tab page (a rich grid for Videos, Shorts and Live; a grid inside a section list for Playlists) or a
- * continuation of one.
+ * A channel tab page (a rich grid for Videos, Shorts and Live; a grid inside a section list for Playlists; the
+ * section's own items for Posts) or a continuation of one.
  */
 internal fun decodeChannelTab(source: String): ChannelTabPage? {
     val root = parseObject(source) ?: return null
     val selected = (root.path("contents", "twoColumnBrowseResultsRenderer", "tabs") as? JsonArray).orEmpty()
         .mapNotNull { (it as? JsonObject)?.get("tabRenderer") as? JsonObject }
         .firstOrNull { (it["selected"] as? JsonPrimitive)?.booleanOrNull == true }
-    val grid = selected?.path("content", "sectionListRenderer", "contents")?.let { sections ->
-        (sections as? JsonArray).orEmpty().firstNotNullOfOrNull { s ->
-            ((s as? JsonObject)?.path("itemSectionRenderer", "contents") as? JsonArray)?.firstNotNullOfOrNull { (it as? JsonObject)?.path("gridRenderer", "items") as? JsonArray }
-        }
-    }
+    val section = (selected?.path("content", "sectionListRenderer", "contents") as? JsonArray).orEmpty()
+        .firstNotNullOfOrNull { (it as? JsonObject)?.path("itemSectionRenderer", "contents") as? JsonArray }
+    val grid = section?.let { s -> s.firstNotNullOfOrNull { (it as? JsonObject)?.path("gridRenderer", "items") as? JsonArray } ?: s }
+    // Grid continuations come as actions, Posts continuations as endpoints.
+    val continued = ((root["onResponseReceivedActions"] ?: root["onResponseReceivedEndpoints"]) as? JsonArray)?.firstOrNull() as? JsonObject
     val items = selected?.path("content", "richGridRenderer", "contents") as? JsonArray
         ?: grid
-        ?: ((root["onResponseReceivedActions"] as? JsonArray)?.firstOrNull() as? JsonObject)
-            ?.path("appendContinuationItemsAction", "continuationItems") as? JsonArray
+        ?: continued?.path("appendContinuationItemsAction", "continuationItems") as? JsonArray
         ?: return null
     val objects = items.mapNotNull { it as? JsonObject }
     val contents = objects.map { (it.path("richItemRenderer", "content") as? JsonObject) ?: it }
@@ -181,7 +199,29 @@ internal fun decodeChannelTab(source: String): ChannelTabPage? {
         val title = l.path("metadata", "lockupMetadataViewModel", "title", "content")?.let { (it as? JsonPrimitive)?.contentOrNull } ?: return@mapNotNull null
         ExcorYouTubePlaylistResult(id, title, id.startsWith("RD"))
     }
-    return ChannelTabPage(videos, playlists, objects.firstNotNullOfOrNull(::continuationOf))
+    val posts = objects.mapNotNull { (it.path("backstagePostThreadRenderer", "post", "backstagePostRenderer") as? JsonObject)?.let(::postOf) }
+    return ChannelTabPage(videos, playlists, objects.firstNotNullOfOrNull(::continuationOf), posts)
+}
+
+private fun postOf(p: JsonObject): ExcorYouTubePost? {
+    val id = p.textAt("postId")?.takeIf { it.length in 10..64 && it.all { c -> c.isLetterOrDigit() || c in "_-" } } ?: return null
+    val attachment = p["backstageAttachment"] as? JsonObject
+    val imageObjects = (attachment?.path("postMultiImageRenderer", "images") as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("backstageImageRenderer") as? JsonObject } +
+        listOfNotNull(attachment?.get("backstageImageRenderer") as? JsonObject)
+    return ExcorYouTubePost(
+        postId = id,
+        text = (p["contentText"] as? JsonObject)?.let { o -> (o["runs"] as? JsonArray)?.mapNotNull { (it as? JsonObject)?.textAt("text") }?.joinToString("") }?.takeIf(String::isNotBlank),
+        publishedText = ((p.path("publishedTimeText", "runs") as? JsonArray)?.firstOrNull() as? JsonObject)?.textAt("text"),
+        likesText = p.path("voteCount", "simpleText")?.let { (it as? JsonPrimitive)?.contentOrNull },
+        images = imageObjects.mapNotNull { img ->
+            (img.path("image", "thumbnails") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }.mapNotNull { t ->
+                val url = t.textAt("url") ?: return@mapNotNull null
+                val parsed = runCatching { Url(url) }.getOrNull() ?: return@mapNotNull null
+                if (parsed.protocol.name != "https" || parsed.host.lowercase() !in setOf("yt3.ggpht.com", "yt3.googleusercontent.com")) return@mapNotNull null
+                ExcorArtwork(url, t.textAt("width")?.toIntOrNull(), t.textAt("height")?.toIntOrNull())
+            }.maxByOrNull { it.width ?: 0 }
+        },
+    )
 }
 
 /** A Short: its ID from the tap command, title and views from the overlay. Shorts show no duration. */

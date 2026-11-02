@@ -2,6 +2,12 @@ package com.excor
 
 import com.excor.internal.primary.extraction.PoTokenResult
 import com.excor.internal.primary.extraction.TokenProvider
+import com.excor.music.ExcorArtistRole
+import com.excor.music.ExcorMatchOptions
+import com.excor.music.ExcorMatchVerdict
+import com.excor.music.ExcorMusicTrack
+import com.excor.music.ExcorTrackMatch
+import com.excor.music.excorRankMatches
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -131,6 +137,19 @@ internal class ExcorEngine(
         return decodeSearchPage(body)
     }
 
+    /**
+     * The YouTube videos that match a track from another provider, best first: one search for its primary artist and
+     * title, each video read as a track and scored by [excorRankMatches]. DIFFERENT verdicts and live streams are
+     * dropped. A music video whose intro or outro runs past the duration tolerance is rejected like any other
+     * duration mismatch, which leaves the "Topic" upload of the recording.
+     */
+    suspend fun findOnYouTube(track: ExcorMusicTrack, options: ExcorMatchOptions): List<ExcorTrackMatch> {
+        val artist = track.artists.firstOrNull { it.role == ExcorArtistRole.PRIMARY } ?: track.artists.firstOrNull()
+        val query = listOfNotNull(artist?.name, track.displayTitle).joinToString(" ").take(200)
+        val page = search(query, null) ?: return emptyList()
+        return excorRankMatches(track, page.videos.filter { !it.isLive }.map { it.asMusicTrack() }, options).filter { it.verdict != ExcorMatchVerdict.DIFFERENT }
+    }
+
     /** A playlist page; [continuation] from a previous page continues it. Null when YouTube's answer is not a playlist page. */
     suspend fun playlist(playlistId: String, continuation: String?): ExcorYouTubePlaylist? {
         require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
@@ -149,13 +168,13 @@ internal class ExcorEngine(
         val session = host.session()
         if (continuation != null) {
             val page = decodeChannelTab(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
-            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), page.videos, page.continuation, page.playlists)
+            return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), page.videos, page.continuation, page.playlists, page.posts)
         }
         val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
         // A channel without this tab (no Live, no Shorts) gives its details with an empty list.
         val params = home.tabParams[tab] ?: return home.channel
         val page = decodeChannelTab(postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return home.channel) ?: return home.channel
-        return home.channel.copy(videos = page.videos, continuation = page.continuation, playlists = page.playlists)
+        return home.channel.copy(videos = page.videos, continuation = page.continuation, playlists = page.playlists, posts = page.posts)
     }
 
     /** A channel's About panel: two requests (the channel home, then its panel). Null when YouTube gives no panel. */
@@ -171,6 +190,12 @@ internal class ExcorEngine(
     suspend fun chapters(videoId: String): List<ExcorYouTubeChapter>? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         return decodeChapters(postPlayer(buildNextRequest(videoId, null, host.session())) ?: return null)
+    }
+
+    /** Songs credited in a video's description (one request); empty when it credits none, null when not a watch page. */
+    suspend fun songs(videoId: String): List<ExcorYouTubeSong>? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        return decodeSongs(postPlayer(buildNextRequest(videoId, null, host.session())) ?: return null)
     }
 
     /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */

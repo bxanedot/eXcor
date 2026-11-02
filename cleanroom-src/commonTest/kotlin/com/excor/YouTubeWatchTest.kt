@@ -88,4 +88,28 @@ class YouTubeWatchTest {
         assertEquals(emptyList(), decodeChapters("""{"contents":{"twoColumnWatchNextResults":{}}}"""))
         assertNull(decodeChapters("""{"responseContext":{}}"""))
     }
+
+    @Test
+    fun songsFromTheMusicCardList() {
+        fun list(icon: String, cards: String) = """{"horizontalCardListRenderer":{"header":{"richListHeaderRenderer":{"title":{"simpleText":"Musique"}}},
+            "footerButton":{"buttonViewModel":{"iconName":"$icon"}},"cards":[$cards]}}"""
+        val song = """{"videoAttributeViewModel":{"title":"Glass River","subtitle":"Mira Vale","secondarySubtitle":{"content":"Tides"},
+            "overflowMenuOnTap":{"innertubeCommand":{"confirmDialogEndpoint":{"content":{"confirmDialogRenderer":{"dialogMessages":[{"runs":[
+              {"text":"Song","bold":true},{"text":": ","bold":true},{"text":"Glass River"},{"text":"\n\n"},
+              {"text":"Writers","bold":true},{"text":": ","bold":true},{"text":"A. Vale, B. Stone"}]}]}}}}}}}"""
+        val watch = """{"contents":{"twoColumnWatchNextResults":{}},"engagementPanels":[{"engagementPanelSectionListRenderer":{"content":{"structuredDescriptionContentRenderer":{"items":[
+            ${list("PERSON", """{"videoAttributeViewModel":{"title":"Not a song"}}""")},
+            ${list("MUSIC", "$song,{\"videoAttributeViewModel\":{\"title\":\" \"}}")}]}}}}]}"""
+        val songs = decodeSongs(watch)!!
+        val s = songs.single()
+        assertEquals("Glass River", s.title)
+        assertEquals("Mira Vale", s.artist)
+        assertEquals("Tides", s.album)
+        assertEquals(mapOf("Song" to "Glass River", "Writers" to "A. Vale, B. Stone"), s.credits)
+        val track = s.asMusicTrack("AAAAAAAAAAA", 320_000)
+        assertEquals("Tides", track.albumTitle)
+        assertEquals(listOf("Mira Vale"), track.artists.map { it.name })
+        assertEquals(emptyList(), decodeSongs("""{"contents":{"twoColumnWatchNextResults":{}}}"""))
+        assertNull(decodeSongs("""{"responseContext":{}}"""))
+    }
 }
