@@ -167,6 +167,12 @@ internal class ExcorEngine(
         return decodeChannelAbout(postPlayer(buildBrowseRequest(null, token, session)) ?: return null, channelId)
     }
 
+    /** A video's chapters (one request); empty when it has none, null when YouTube's answer is not a watch page. */
+    suspend fun chapters(videoId: String): List<ExcorYouTubeChapter>? {
+        require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        return decodeChapters(postPlayer(buildNextRequest(videoId, null, host.session())) ?: return null)
+    }
+
     /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */
     suspend fun related(videoId: String, continuation: String?): ExcorYouTubeRelated? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }

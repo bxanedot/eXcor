@@ -77,4 +77,15 @@ class YouTubeWatchTest {
             decodeSuggestions("""window.google.ac.h(["daft pu",[["daft punk",0,[512],{"zao":"Daft Punk"}],["daft punk around the world",0,[512]]],{"k":1}])"""))
         assertEquals(emptyList(), decodeSuggestions("not jsonp"))
     }
+
+    @Test
+    fun chaptersFromThePlayerBar() {
+        fun chapter(title: String, start: String) = """{"chapterRenderer":{"title":{"simpleText":"$title"},"timeRangeStartMillis":$start}}"""
+        val watch = """{"contents":{"twoColumnWatchNextResults":{}},"playerOverlays":{"playerOverlayRenderer":{"decoratedPlayerBarRenderer":{"decoratedPlayerBarRenderer":{"playerBar":
+            {"multiMarkersPlayerBarRenderer":{"markersMap":[{"key":"HEATSEEKER","value":{"heatmap":{}}},{"key":"DESCRIPTION_CHAPTERS","value":{"chapters":[
+              ${chapter("Finding a product", "235000")},${chapter("Intro", "0")},${chapter("  ", "1000")},${chapter("Bad", "-5")}]}}]}}}}}}}"""
+        assertEquals(listOf(ExcorYouTubeChapter("Intro", 0), ExcorYouTubeChapter("Finding a product", 235_000)), decodeChapters(watch))
+        assertEquals(emptyList(), decodeChapters("""{"contents":{"twoColumnWatchNextResults":{}}}"""))
+        assertNull(decodeChapters("""{"responseContext":{}}"""))
+    }
 }

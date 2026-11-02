@@ -11,6 +11,9 @@ import kotlinx.serialization.json.put
 /** Videos YouTube suggests next to a video, from the watch page's InnerTube `next` response. */
 data class ExcorYouTubeRelated(val videos: List<ExcorYouTubePlaylistVideo>, val continuation: String?)
 
+/** A chapter of a video; it runs until the next chapter's [startMs] or the end of the video. */
+data class ExcorYouTubeChapter(val title: String, val startMs: Long)
+
 /** One comment. [text] can be empty (image-only comments). Counts are YouTube's display texts ("220K"), which it rounds. */
 data class ExcorYouTubeComment(
     val commentId: String,
@@ -51,6 +54,23 @@ internal fun decodeRelated(source: String): ExcorYouTubeRelated? {
         objects.mapNotNull { (it["lockupViewModel"] as? JsonObject)?.let(::playlistVideoOf) },
         objects.firstNotNullOfOrNull(::continuationOf),
     )
+}
+
+/**
+ * Chapters from a first `next` response: the player bar's chapter markers, in start order. Empty for a video without
+ * chapters; null when the response is not a watch page.
+ */
+internal fun decodeChapters(source: String): List<ExcorYouTubeChapter>? {
+    val root = parse(source) ?: return null
+    if (root.path("contents", "twoColumnWatchNextResults") !is JsonObject) return null
+    val markers = (root.path("playerOverlays", "playerOverlayRenderer", "decoratedPlayerBarRenderer", "decoratedPlayerBarRenderer", "playerBar", "multiMarkersPlayerBarRenderer", "markersMap") as? JsonArray)
+        .orEmpty().mapNotNull { it as? JsonObject }
+    val chapters = markers.firstNotNullOfOrNull { it.path("value", "chapters") as? JsonArray } ?: return emptyList()
+    return chapters.mapNotNull { (it as? JsonObject)?.get("chapterRenderer") as? JsonObject }.mapNotNull { c ->
+        val title = c.path("title", "simpleText")?.let { (it as? JsonPrimitive)?.contentOrNull }?.trim()?.takeIf(String::isNotEmpty) ?: return@mapNotNull null
+        val start = c.textAt("timeRangeStartMillis")?.toLongOrNull()?.takeIf { it >= 0 } ?: return@mapNotNull null
+        ExcorYouTubeChapter(title, start)
+    }.sortedBy { it.startMs }
 }
 
 /** The comments section's continuation token in a first `next` response; null when comments are off or absent. */

@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.testng.SkipException
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -86,6 +87,9 @@ class LiveVideoInfoTest {
         val replies = assertNotNull(excor.comments("dQw4w9WgXcQ", withReplies.repliesContinuation))
         assertTrue(replies.comments.isNotEmpty() && replies.comments.none { it.commentId == withReplies.commentId }, "replies: ${replies.comments.size}")
         assertTrue(excor.suggestions("daft pu").any { it.startsWith("daft punk") })
+        val chapters = assertNotNull(excor.chapters("PkZNo7MFNFg"))
+        assertTrue(chapters.size >= 10 && chapters.first().startMs == 0L && chapters.zipWithNext().all { (a, b) -> a.startMs < b.startMs }, "chapters: ${chapters.size}")
+        assertEquals(emptyList(), excor.chapters("dQw4w9WgXcQ"))
         val newest = assertNotNull(excor.comments("dQw4w9WgXcQ", newestFirst = true))
         assertTrue(newest.comments.isNotEmpty() && newest.comments.map { it.commentId } != first.comments.map { it.commentId }, "newest differs from top")
     }
