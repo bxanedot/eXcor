@@ -44,6 +44,23 @@ data class ExcorCrossProviderMatches(
 )
 
 /**
+ * One source track of a playlist conversion. [matches] are the target's non-DIFFERENT candidates, best first;
+ * [best] is the first of them, whatever its verdict, so check [ExcorTrackMatch.verdict] before using it. [error] is
+ * set when the target could not be searched for this track.
+ */
+data class ExcorConvertedTrack(val source: ExcorMusicTrack, val matches: List<ExcorTrackMatch>, val error: ExcorCatalogException? = null) {
+    val best: ExcorTrackMatch? get() = matches.firstOrNull()
+}
+
+/** A playlist matched onto another provider. [truncated] is true when the playlist had more than the tracks read. */
+data class ExcorPlaylistConversion(
+    val playlist: ExcorMusicPlaylist,
+    val target: ExcorCatalogProvider,
+    val tracks: List<ExcorConvertedTrack>,
+    val truncated: Boolean,
+)
+
+/**
  * What a track's provider declares about its audio. Declared, not delivered: eXcor returns no stream for these
  * catalogs, and [protection] says why. Null booleans mean the provider does not say.
  */
@@ -258,6 +275,43 @@ class ExcorMusic internal constructor(httpClient: HttpClient, private val config
             outcomes.mapNotNull { (p, r) -> r.getOrNull()?.let { p to it } }.toMap(),
             outcomes.mapNotNull { (p, r) -> (r.exceptionOrNull() as? ExcorCatalogException)?.let { p to it } }.toMap(),
         )
+    }
+
+    /**
+     * Matches each track of a playlist onto [target], in playlist order, reading at most [maxTracks] tracks. Tracks are
+     * matched one after another, so the providers' request budgets set the pace (the keyless iTunes API allows about
+     * 20 calls a minute); [onTrack] reports each one as it is done. A track the target can't be searched for carries
+     * its error instead of failing the whole conversion. Like [matchAcrossProviders], this is for discovery: it
+     * finds candidates and writes nothing.
+     */
+    @Throws(Throwable::class)
+    suspend fun convertPlaylist(
+        ref: ExcorMusicRef,
+        target: ExcorCatalogProvider,
+        maxTracks: Int = 500,
+        options: ExcorMatchOptions = config.matchOptions,
+        onTrack: suspend (ExcorConvertedTrack) -> Unit = {},
+    ): ExcorPlaylistConversion {
+        require(target != ref.provider) { "target must differ from the playlist's provider" }
+        require(maxTracks in 1..10_000) { "maxTracks out of range" }
+        val playlist = playlist(ref)
+        val converted = mutableListOf<ExcorConvertedTrack>()
+        var cursor: String? = null
+        var truncated = false
+        pages@ do {
+            val page = playlistTracks(ref, cursor)
+            for (track in page.items) {
+                if (converted.size == maxTracks) { truncated = true; break@pages }
+                val result = matchAcrossProviders(track, setOf(target), options)
+                val entry = ExcorConvertedTrack(track, result.matches[target].orEmpty(), result.errors[target])
+                converted += entry
+                onTrack(entry)
+            }
+            cursor = page.next
+            // Stopping exactly at a page boundary still leaves tracks unread when another page follows.
+            if (cursor != null && converted.size == maxTracks) { truncated = true; break }
+        } while (cursor != null)
+        return ExcorPlaylistConversion(playlist, target, converted, truncated)
     }
 
     /**

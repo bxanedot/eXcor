@@ -288,6 +288,39 @@ class ProvidersTest {
     }
 
     @Test
+    fun playlistConversionMatchesEachTrackAndKeepsPerTrackErrors() = runTest {
+        val song = """{"wrapperType":"track","kind":"song","trackId":7001,"trackName":"Glass River (Live)","artistName":"Mira Vale","artistId":7100,
+            "collectionId":7000,"collectionName":"Night Ferry","trackTimeMillis":201000,"trackExplicitness":"notExplicit",
+            "trackViewUrl":"https://music.apple.com/us/album/night-ferry/7000?i=7001"}"""
+        val server = Server(mutableMapOf(
+            "api.deezer.com/playlist/900" to { _ -> 200 to """{"id":900,"title":"Mix","checksum":"c1","nb_tracks":3,"type":"playlist"}""" },
+            "api.deezer.com/playlist/900/tracks" to { r ->
+                val ids = if (r.url.parameters["index"] == "0") listOf("1001", "1002") else listOf("1003")
+                // Track 1002 has its own title, so its search is a separate (uncached) request.
+                200 to """{"data":[${ids.joinToString(",") { id -> deezerTrack.replace("1001", id).let { if (id == "1002") it.replace("Glass River", "Paper Moon") else it } }}],"total":3}"""
+            },
+            "itunes.apple.com/search" to { r -> if (r.url.parameters["term"].orEmpty().contains("paper", ignoreCase = true)) 403 to "{}" else 200 to """{"resultCount":1,"results":[$song]}""" },
+        ))
+        val m = music(server)
+        val ref = m.parse("https://www.deezer.com/playlist/900")!!
+        val reported = mutableListOf<String>()
+        val all = m.convertPlaylist(ref, APPLE_MUSIC) { reported += it.source.id }
+        assertEquals(listOf("1001", "1002", "1003"), all.tracks.map { it.source.id })
+        assertEquals(listOf("1001", "1002", "1003"), reported)
+        assertEquals("7001", all.tracks[0].best!!.candidate.id)
+        assertEquals(ExcorCatalogError.ACCESS_DENIED, all.tracks[1].error!!.error)
+        assertNull(all.tracks[1].best)
+        assertEquals("7001", all.tracks[2].best!!.candidate.id)
+        assertFalse(all.truncated)
+
+        // Stopping at the page boundary with another page left is still truncated.
+        val two = m.convertPlaylist(ref, APPLE_MUSIC, maxTracks = 2)
+        assertEquals(2, two.tracks.size)
+        assertTrue(two.truncated)
+        assertFailsWith<IllegalArgumentException> { m.convertPlaylist(ref, DEEZER) }
+    }
+
+    @Test
     fun playlistSyncShortCircuitsOnAnUnchangedChecksum() = runTest {
         val server = Server(mutableMapOf(
             "api.deezer.com/playlist/900" to { _ -> 200 to """{"id":900,"title":"Mix","checksum":"c1","nb_tracks":2,"type":"playlist","creator":{"id":5,"name":"Ed"}}""" },

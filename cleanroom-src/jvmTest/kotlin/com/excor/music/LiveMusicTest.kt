@@ -1,5 +1,6 @@
 package com.excor.music
 
+import com.excor.catalog.ExcorCatalogError
 import com.excor.catalog.ExcorCatalogProvider
 import com.excor.catalog.ExcorCatalogTokenProvider
 import io.ktor.client.HttpClient
@@ -79,6 +80,14 @@ class LiveMusicTest {
         val best = matches.matches[ExcorCatalogProvider.APPLE_MUSIC].orEmpty().firstOrNull()
         assertNotNull(best, "an Apple Music candidate for the Deezer track: ${matches.errors}")
         assertTrue(best.verdict == ExcorMatchVerdict.LIKELY || best.verdict == ExcorMatchVerdict.SAME_RECORDING)
+
+        val converted = m.convertPlaylist(m.parse("https://www.deezer.com/playlist/908622995")!!, ExcorCatalogProvider.APPLE_MUSIC, maxTracks = 5)
+        assertEquals(5, converted.tracks.size)
+        assertTrue(converted.truncated)
+        // The keyless iTunes API sporadically answers 403 from this environment (MUSIC_LIMITATIONS.md); those tracks carry
+        // the error instead of failing the conversion.
+        assertTrue(converted.tracks.all { it.error == null || it.error!!.error == ExcorCatalogError.ACCESS_DENIED }, "errors: ${converted.tracks.mapNotNull { it.error }}")
+        assertTrue(converted.tracks.any { it.best != null }, "matched: ${converted.tracks.map { it.best?.verdict }}")
     }
 
     @Test

@@ -78,3 +78,7 @@ When YouTube credits the song in the description's Music section, `excor.songs(v
 ## To YouTube
 
 `excor.findOnYouTube(track)` goes the other way: it searches YouTube once for the track's primary artist and title, reads each video as a track (as above), and returns the non-DIFFERENT matches, best first. Live streams are skipped. A music video whose intro or outro runs past the duration tolerance is rejected like any other duration mismatch, which usually leaves the auto-generated "Topic" upload of the recording. The live test finds a Deezer track on YouTube this way.
+
+## Whole playlists
+
+`music.convertPlaylist(ref, target)` runs `matchAcrossProviders` for each track of a playlist, in order, up to `maxTracks` (default 500), and reports each track through `onTrack` as it finishes. Tracks are matched one after another, so the request budgets set the pace: Deezer allows 50 requests per 5 s, and the keyless iTunes API about 20 per minute. A track the target can't be searched for keeps its error, and the conversion continues. `truncated` says whether tracks were left unread. The live test converts the first five tracks of a Deezer playlist to Apple Music.
