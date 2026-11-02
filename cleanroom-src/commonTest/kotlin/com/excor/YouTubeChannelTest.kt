@@ -89,5 +89,47 @@ class YouTubeChannelTest {
         assertEquals(listOf("PLsyntheticlist"), page.playlists.map { it.playlistId })
         assertTrue(page.videos.isEmpty())
         assertEquals("plmore", page.continuation)
+
+        val live = """{"contents":{"twoColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"selected":true,"content":{"richGridRenderer":{"contents":[
+            {"richItemRenderer":{"content":{"lockupViewModel":{"contentId":"LLLLLLLLLLL","contentType":"LOCKUP_CONTENT_TYPE_VIDEO",
+              "contentImage":{"thumbnailViewModel":{"overlays":[{"thumbnailBottomOverlayViewModel":{"badges":[{"thumbnailBadgeViewModel":{"text":"EN DIRECT","badgeStyle":"THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE"}}]}}]}},
+              "metadata":{"lockupMetadataViewModel":{"title":{"content":"Radio"},"metadata":{"contentMetadataViewModel":{"metadataRows":[{"metadataParts":[{"text":{"content":"2K watching"}}]}]}}}}}}}},
+            ${item("AAAAAAAAAAA")}]}}}}]}}}"""
+        val (stream, upload) = decodeChannelTab(live)!!.videos
+        assertTrue(stream.isLive && stream.durationSeconds == null && stream.viewsText == "2K watching")
+        assertTrue(!upload.isLive && upload.durationSeconds == 157L)
+    }
+
+    @Test
+    fun aboutPanel() {
+        val withPanel = home.replace(
+            "\"pageHeaderViewModel\":{",
+            "\"pageHeaderViewModel\":{\"description\":{\"descriptionPreviewViewModel\":{\"rendererContext\":{\"commandContext\":{\"onTap\":{\"innertubeCommand\":" +
+                "{\"showEngagementPanelEndpoint\":{\"engagementPanel\":{\"content\":{\"sectionListRenderer\":{\"contents\":[{\"itemSectionRenderer\":{\"contents\":[" +
+                "{\"continuationItemRenderer\":{\"continuationEndpoint\":{\"continuationCommand\":{\"token\":\"4qmFsgJgAbout\"}}}}]}}]}}}}}}}}}},",
+        )
+        assertEquals("4qmFsgJgAbout", decodeChannelHome(withPanel, "UCaaaaaaaaaaaaaaaaaaaaaa")!!.aboutToken)
+        assertNull(decodeChannelHome(home, "UCaaaaaaaaaaaaaaaaaaaaaa")!!.aboutToken)
+
+        fun link(title: String, url: String) = """{"channelExternalLinkViewModel":{"title":{"content":"$title"},"link":{"content":"x","commandRuns":[{"onTap":{"innertubeCommand":{"urlEndpoint":{"url":"$url"}}}}]}}}"""
+        val about = """{"onResponseReceivedEndpoints":[{"appendContinuationItemsAction":{"continuationItems":[{"aboutChannelRenderer":{"metadata":{"aboutChannelViewModel":{
+            "channelId":"UCaaaaaaaaaaaaaaaaaaaaaa","description":"Official channel\n","subscriberCountText":"1.2M subscribers","videoCountText":"84 videos",
+            "viewCountText":"6,066,806,347 views","joinedDateText":{"content":"Joined Sep 10, 2007"},"country":"France","links":[
+              ${link("Site", "https://www.youtube.com/redirect?event=channel_description&redir_token=SECRET&q=https%3A%2F%2Fmiravale.example%2Ftour")},
+              ${link("Subscribe", "https://www.youtube.com/user/miravale?sub_confirmation=1")},
+              ${link("Script", "https://www.youtube.com/redirect?q=javascript%3Aalert(1)")},
+              ${link("Empty", "https://www.youtube.com/redirect?event=x")}]}}}}]}}]}"""
+        val panel = decodeChannelAbout(about, "UCaaaaaaaaaaaaaaaaaaaaaa")!!
+        assertEquals("Official channel", panel.description)
+        assertEquals(6_066_806_347L, panel.viewCount)
+        assertEquals("Joined Sep 10, 2007", panel.joinedText)
+        assertEquals("France", panel.country)
+        assertEquals(
+            listOf(ExcorYouTubeChannelLink("Site", "https://miravale.example/tour"), ExcorYouTubeChannelLink("Subscribe", "https://www.youtube.com/user/miravale?sub_confirmation=1")),
+            panel.links,
+        )
+        assertTrue(panel.links.none { "SECRET" in it.url })
+        assertNull(decodeChannelAbout(about, "UCbbbbbbbbbbbbbbbbbbbbbb"))
+        assertNull(decodeChannelAbout("""{"responseContext":{}}""", "UCaaaaaaaaaaaaaaaaaaaaaa"))
     }
 }

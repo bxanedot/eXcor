@@ -39,6 +39,8 @@ data class ExcorYouTubePlaylistVideo(
     val viewsText: String?,
     val publishedText: String?,
     val thumbnails: List<ExcorArtwork>,
+    /** Streaming now: YouTube's live badge, read by its style so the badge's localized text does not matter. */
+    val isLive: Boolean = false,
 )
 
 internal fun buildBrowseRequest(browseId: String?, continuation: String?, session: ExcorSession, params: String? = null): PlayerRequest =
@@ -109,6 +111,7 @@ internal fun playlistVideoOf(l: JsonObject): ExcorYouTubePlaylistVideo? {
     val image = l.path("contentImage", "thumbnailViewModel") as? JsonObject
     val badges = ((image?.get("overlays") as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.path("thumbnailBottomOverlayViewModel", "badges") as? JsonArray }).flatten()
     val duration = badges.firstNotNullOfOrNull { (it as? JsonObject)?.path("thumbnailBadgeViewModel", "text")?.let { t -> (t as? JsonPrimitive)?.contentOrNull }?.let(::clockSeconds) }
+    val live = badges.any { ((it as? JsonObject)?.path("thumbnailBadgeViewModel", "badgeStyle") as? JsonPrimitive)?.contentOrNull == "THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE" }
     return ExcorYouTubePlaylistVideo(
         videoId = id,
         title = title,
@@ -123,6 +126,7 @@ internal fun playlistVideoOf(l: JsonObject): ExcorYouTubePlaylistVideo? {
             if (parsed.protocol.name != "https" || parsed.host.lowercase() != "i.ytimg.com") return@mapNotNull null
             ExcorArtwork(url, t.textAt("width")?.toIntOrNull(), t.textAt("height")?.toIntOrNull())
         },
+        isLive = live,
     )
 }
 

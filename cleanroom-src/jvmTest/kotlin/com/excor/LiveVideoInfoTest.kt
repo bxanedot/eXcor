@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.testng.SkipException
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -65,6 +66,11 @@ class LiveVideoInfoTest {
         assertTrue(lists.playlists.size >= 5, "playlists: ${lists.playlists.size}")
         val more = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", assertNotNull(channel.continuation)))
         assertTrue(more.videos.isNotEmpty() && more.videos.none { v -> channel.videos.any { it.videoId == v.videoId } })
+        val live = assertNotNull(excor.channel("UCSJ4gkVC6NrvII8umztf0Ow", tab = ExcorYouTubeChannelTab.LIVE))
+        assertTrue(live.videos.any { it.isLive }, "a live stream on Lofi Girl's Live tab")
+        val about = assertNotNull(excor.channelAbout("UCBR8-60-B28hp2BmDPdntcQ"))
+        assertTrue(about.description != null && (about.viewCount ?: 0) > 1_000_000 && about.country != null && about.subscribersText != null)
+        assertTrue(about.links.isNotEmpty() && about.links.all { it.url.startsWith("http") && "redir_token" !in it.url })
     }
 
     @Test
@@ -81,6 +87,9 @@ class LiveVideoInfoTest {
         val replies = assertNotNull(excor.comments("dQw4w9WgXcQ", withReplies.repliesContinuation))
         assertTrue(replies.comments.isNotEmpty() && replies.comments.none { it.commentId == withReplies.commentId }, "replies: ${replies.comments.size}")
         assertTrue(excor.suggestions("daft pu").any { it.startsWith("daft punk") })
+        val chapters = assertNotNull(excor.chapters("PkZNo7MFNFg"))
+        assertTrue(chapters.size >= 10 && chapters.first().startMs == 0L && chapters.zipWithNext().all { (a, b) -> a.startMs < b.startMs }, "chapters: ${chapters.size}")
+        assertEquals(emptyList(), excor.chapters("dQw4w9WgXcQ"))
         val newest = assertNotNull(excor.comments("dQw4w9WgXcQ", newestFirst = true))
         assertTrue(newest.comments.isNotEmpty() && newest.comments.map { it.commentId } != first.comments.map { it.commentId }, "newest differs from top")
     }

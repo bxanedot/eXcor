@@ -56,6 +56,12 @@ class Excor(host: ExcorHost) {
     @Throws(Throwable::class)
     suspend fun channel(channelId: String, continuation: String? = null, tab: ExcorYouTubeChannelTab = ExcorYouTubeChannelTab.VIDEOS): ExcorYouTubeChannel? =
         engine.channel(channelId, continuation, tab)
+    /** A channel's About panel: description, counts, join date, country and links. */
+    @Throws(Throwable::class)
+    suspend fun channelAbout(channelId: String): ExcorYouTubeChannelAbout? = engine.channelAbout(channelId)
+    /** A video's chapters, in start order; empty when it has none. */
+    @Throws(Throwable::class)
+    suspend fun chapters(videoId: String): List<ExcorYouTubeChapter>? = engine.chapters(videoId)
     /** Videos YouTube suggests next to a video; pass `related.continuation` back for more. */
     @Throws(Throwable::class)
     suspend fun related(videoId: String, continuation: String? = null): ExcorYouTubeRelated? = engine.related(videoId, continuation)

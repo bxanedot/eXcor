@@ -4,6 +4,7 @@ import com.excor.catalog.ExcorArtwork
 import io.ktor.http.Url
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
@@ -35,7 +36,26 @@ data class ExcorYouTubeChannel(
 /** Channel tabs eXcor reads, matched by the tab's address so YouTube's localized titles do not matter. */
 enum class ExcorYouTubeChannelTab(internal val path: String) { VIDEOS("videos"), SHORTS("shorts"), LIVE("streams"), PLAYLISTS("playlists") }
 
-internal class ChannelHome(val channel: ExcorYouTubeChannel, val tabParams: Map<ExcorYouTubeChannelTab, String>)
+/**
+ * A channel's About panel. Texts are YouTube's display texts in the session's language; [viewCount] is read from its
+ * full, unrounded view count. [country] is present only when the channel shows one.
+ */
+data class ExcorYouTubeChannelAbout(
+    val channelId: String,
+    val description: String?,
+    val subscribersText: String?,
+    val videoCountText: String?,
+    val viewCount: Long?,
+    /** Such as "Joined Sep 10, 2007". */
+    val joinedText: String?,
+    val country: String?,
+    val links: List<ExcorYouTubeChannelLink>,
+)
+
+/** A link the channel lists, with its destination taken out of YouTube's redirect. */
+data class ExcorYouTubeChannelLink(val title: String, val url: String)
+
+internal class ChannelHome(val channel: ExcorYouTubeChannel, val tabParams: Map<ExcorYouTubeChannelTab, String>, val aboutToken: String? = null)
 
 /** The channel home page: details and the Videos tab's browse params. Null when it is not a channel page. */
 internal fun decodeChannelHome(source: String, channelId: String): ChannelHome? {
@@ -75,7 +95,57 @@ internal fun decodeChannelHome(source: String, channelId: String): ChannelHome? 
         videos = emptyList(),
         continuation = null,
     )
-    return ChannelHome(channel, tabParams)
+    // The header's "...more" opens an engagement panel whose only item is a continuation that loads the About panel.
+    val header = root.path("header", "pageHeaderRenderer", "content", "pageHeaderViewModel")
+    val aboutToken = firstValue(firstValue(header, "showEngagementPanelEndpoint"), "continuationCommand")
+        ?.let { ((it as? JsonObject)?.get("token") as? JsonPrimitive)?.contentOrNull }
+        ?.takeIf { it.length <= MAX_CONTINUATION && it.all { c -> c.isLetterOrDigit() || c in "_-=%" } }
+    return ChannelHome(channel, tabParams, aboutToken)
+}
+
+/** The About panel continuation; null when it is not this channel's About panel. */
+internal fun decodeChannelAbout(source: String, channelId: String): ExcorYouTubeChannelAbout? {
+    val root = parseObject(source) ?: return null
+    val about = firstValue(root["onResponseReceivedEndpoints"], "aboutChannelViewModel") as? JsonObject ?: return null
+    if (about.textAt("channelId") != channelId) return null
+    val links = (about["links"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("channelExternalLinkViewModel") as? JsonObject }.mapNotNull { l ->
+        val title = l.path("title", "content")?.let { (it as? JsonPrimitive)?.contentOrNull } ?: return@mapNotNull null
+        val target = ((l.path("link", "commandRuns") as? JsonArray)?.firstOrNull() as? JsonObject)
+            ?.path("onTap", "innertubeCommand", "urlEndpoint", "url")?.let { (it as? JsonPrimitive)?.contentOrNull } ?: return@mapNotNull null
+        ExcorYouTubeChannelLink(title, linkDestination(target) ?: return@mapNotNull null)
+    }
+    return ExcorYouTubeChannelAbout(
+        channelId = channelId,
+        description = about.textAt("description")?.trim()?.takeIf(String::isNotEmpty),
+        subscribersText = about.textAt("subscriberCountText"),
+        videoCountText = about.textAt("videoCountText"),
+        viewCount = about.textAt("viewCountText")?.filter(Char::isDigit)?.takeIf(String::isNotEmpty)?.toLongOrNull(),
+        joinedText = about.path("joinedDateText", "content")?.let { (it as? JsonPrimitive)?.contentOrNull },
+        country = about.textAt("country"),
+        links = links,
+    )
+}
+
+/**
+ * Off-site links go through youtube.com/redirect with the destination in `q`; the redirect's one-time token is
+ * dropped. YouTube's own links come direct. Only http(s) destinations are kept.
+ */
+private fun linkDestination(target: String): String? {
+    val url = runCatching { Url(target) }.getOrNull() ?: return null
+    val host = url.host.lowercase()
+    val destination = if ((host == "www.youtube.com" || host == "youtube.com") && url.encodedPath == "/redirect") url.parameters["q"] ?: return null else target
+    val parsed = runCatching { Url(destination) }.getOrNull() ?: return null
+    return destination.takeIf { parsed.protocol.name in setOf("http", "https") && parsed.host.isNotEmpty() && it.length <= 2_048 }
+}
+
+/** The first value stored under [key] anywhere below [node], depth first. */
+private fun firstValue(node: JsonElement?, key: String, depth: Int = 0): JsonElement? {
+    if (depth > 40) return null
+    return when (node) {
+        is JsonObject -> node[key] ?: node.values.firstNotNullOfOrNull { firstValue(it, key, depth + 1) }
+        is JsonArray -> node.firstNotNullOfOrNull { firstValue(it, key, depth + 1) }
+        else -> null
+    }
 }
 
 internal class ChannelTabPage(val videos: List<ExcorYouTubePlaylistVideo>, val playlists: List<ExcorYouTubePlaylistResult>, val continuation: String?)
