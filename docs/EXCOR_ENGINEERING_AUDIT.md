@@ -1,0 +1,40 @@
+# eXcor engineering audit
+
+Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as subsystems change. **Verified** means a live check passes from this environment. **Tested** means offline tests only. **Blocked** means an external constraint prevents verification here.
+
+**Project facts:**
+- **Code:** Kotlin Multiplatform, package `com.excor`, coordinates `com.excor:eXcor:0.2.0`, built from `cleanroom-src/`.
+- **Targets:** JVM (JDK 26 bytecode), Android (minSdk 26, Java 17 bytecode), iOS arm64, simulator arm64 and x64, plus the XCFramework `eXcor`.
+- **Separate deliverables:** the `eXcorKit` Swift package under `swift/`, and the apps under `historical-engine` (unpublished).
+
+## Subsystems
+
+| Subsystem | Files | State | Evidence |
+|---|---|---|---|
+| InnerTube request builder (WEB, WEB_REMIX) | `InnerTube.kt`, `Clients.kt` | Verified | Every live metadata test; `YouTubeMusicTest.requestsGoToYouTubeMusicWithItsClient` |
+| Client profiles for playback (web, web_embedded, tv, visionOS) | `Clients.kt`, `ExcorEngine.kt` | Tested; Blocked live | `ClientsTest`; the player answers `LOGIN_REQUIRED` "Sign in to confirm you're not a bot" for every client from here |
+| Video metadata | `VideoInfo.kt` | Verified | `LiveVideoInfoTest.videoMetadataAndCrossProviderMatch` |
+| Search: filters, Shorts, continuations, suggestions | `YouTubeSearch.kt`, `YouTubeWatch.kt` | Verified | `searchWithContinuation`, `relatedVideosAndComments` |
+| Playlists, mixes | `YouTubePlaylist.kt`, `YouTubeWatch.kt` | Verified | `playlistDetailsAndVideos`, the mix checks |
+| Channels: five tabs, About panel, failed-tab reporting | `YouTubeChannel.kt` | Verified | `channelDetailsAndUploads`, `EngineStateTest.aChannelTabThatFailsToLoadIsNotReportedAsEmpty` |
+| Related videos, comments, chapters, credited songs | `YouTubeWatch.kt` | Verified | `relatedVideosAndComments`, `videoMetadataAndCrossProviderMatch` |
+| YouTube Music: search, suggestions, artists, playlists, radio | `YouTubeMusic.kt` | Verified | `youTubeMusicSearchArtistPlaylistAndRadio`, `YouTubeMusicTest` |
+| YouTube Music: songs, albums, discographies | `YouTubeMusic.kt` | Tested; Blocked live | Not offered here: no Songs or Albums filter, no `MPREb_` IDs, empty Releases tabs |
+| Player script and signature handling | `PlayerJs.kt`, `cleanroom-src/ejs` | Tested | `PlayerJsTest`; no playable response to apply it to here |
+| Stream selection and URL validation | `Selection.kt`, `UrlPolicy.kt`, `UrlParameters.kt` | Tested | `SelectionTest`, `UrlPolicyTest` |
+| Direct audio streams | `ExcorEngine.kt` | Tested; Blocked live | `EngineStateTest`; `LivePlaybackTest` fails here because of the bot check |
+| SABR/UMP | — | Missing; Blocked | No `serverAbrStreamingUrl` reaches this environment, so the protocol can't be observed or validated |
+| Captions, transcripts | — | Blocked | No `captions` in the bot-checked player response; `get_transcript` answers "Precondition check failed" |
+| Hashtag pages | — | Blocked | Robot check |
+| Music catalogs: Deezer, keyless Apple; matching; playlist conversion | `music/` | Verified | `LiveMusicTest` |
+| Spotify, full Apple Music API | `music/` | Tested | Need credentials |
+| Packaging and installability | `build.gradle.kts`, `samples/jvm-quickstart` | Verified | Full `publishToMavenLocal` on Linux. The sample installs through the README steps and runs live. Fixed: the shared metadata didn't compile (`RegexOption.DOT_MATCHES_ALL` isn't in common Kotlin), so the library couldn't be published until 2026-11-02 |
+| Session invalidation and secret redaction | `ExcorEngine.kt`, `Api.kt` | Tested | `EngineStateTest`; `ExcorSession.toString` hides cookies and visitor data |
+| Benchmarks | `LiveMusicTest.benchmark` | Partial | Music only; no YouTube benchmark yet |
+
+## Defects found and fixed in this pass
+
+- **The library couldn't be published:** the common metadata compilation failed in `Lyrics.kt` and `Drm.kt`. CI now publishes and builds a consumer on every push.
+- **A failed channel tab looked empty:** a tab that failed to load came back as an empty list (bxanedot/eXcor#54).
+- **Too fast for Apple's keyless limit:** iTunes calls shared a 20-per-second budget against Apple's documented limit of about 20 per minute (bxanedot/eXcor#55).
+- **Mix continuation lost:** a mix's continuation was dropped when its last item didn't decode (bxanedot/eXcor#54).

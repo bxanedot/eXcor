@@ -5,11 +5,17 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 /**
- * An InnerTube request with the WEB client context, for calls that need neither a player script nor a streaming
- * token (metadata, search, browse). [fields] adds the endpoint's own fields.
+ * An InnerTube request for calls that need neither a player script nor a streaming token (metadata, search, browse):
+ * the WEB client on www.youtube.com by default, or YouTube Music's client on [host]. [fields] adds the endpoint's own
+ * fields.
  */
-internal fun innertubeRequest(endpoint: String, session: ExcorSession, fields: JsonObjectBuilder.() -> Unit): PlayerRequest {
-    val client = metadataClient
+internal fun innertubeRequest(
+    endpoint: String,
+    session: ExcorSession,
+    client: ClientIdentity = metadataClient,
+    host: String = "www.youtube.com",
+    fields: JsonObjectBuilder.() -> Unit,
+): PlayerRequest {
     val body = buildJsonObject {
         put("context", buildJsonObject {
             put("client", buildJsonObject {
@@ -25,13 +31,13 @@ internal fun innertubeRequest(endpoint: String, session: ExcorSession, fields: J
     val headers = buildMap {
         put("Accept", "*/*")
         put("Content-Type", "application/json")
-        put("Origin", "https://www.youtube.com")
-        put("Referer", "https://www.youtube.com/")
+        put("Origin", "https://$host")
+        put("Referer", "https://$host/")
         put("User-Agent", client.userAgent)
         put("X-YouTube-Client-Name", client.clientId.toString())
         put("X-YouTube-Client-Version", client.clientVersion)
         session.visitorData?.takeIf(String::isNotBlank)?.let { put("X-Goog-Visitor-Id", it) }
         session.cookie?.takeIf(String::isNotBlank)?.let { put("Cookie", it) }
     }
-    return PlayerRequest("https://www.youtube.com/youtubei/v1/$endpoint?prettyPrint=false", headers, body.toString())
+    return PlayerRequest("https://$host/youtubei/v1/$endpoint?prettyPrint=false", headers, body.toString())
 }

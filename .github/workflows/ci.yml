@@ -19,6 +19,10 @@ jobs:
             27
             21
       - run: ./gradlew $GRADLE_ARGS :jvmTest :jvmJar :assembleAndroidMain
+      # Installability: publish every publication locally (this also compiles the shared metadata, which no platform
+      # build does), then build a standalone consumer that follows the README's installation steps.
+      - run: ./gradlew $GRADLE_ARGS publishToMavenLocal
+      - run: ./gradlew $GRADLE_ARGS -p samples/jvm-quickstart build
 
   windows:
     runs-on: windows-latest

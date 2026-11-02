@@ -105,7 +105,8 @@ private fun systemOf(uuid: String): ExcorDrmSystem =
     ExcorDrmSystem.entries.firstOrNull { it.systemId != null && it.systemId == uuid.lowercase() } ?: ExcorDrmSystem.UNKNOWN
 
 // Self-closing or with children; the descriptor's own children (cenc:pssh, laurl) are inside the match.
-private val CONTENT_PROTECTION = Regex("<(?:\\w+:)?ContentProtection\\b[^>]*?(?:/>|>.*?</(?:\\w+:)?ContentProtection>)", RegexOption.DOT_MATCHES_ALL)
+// `[\s\S]` rather than DOT_MATCHES_ALL, which common Kotlin does not have (only the platforms do).
+private val CONTENT_PROTECTION = Regex("<(?:\\w+:)?ContentProtection\\b[^>]*?(?:/>|>[\\s\\S]*?</(?:\\w+:)?ContentProtection>)")
 private val XML_ATTRIBUTE = Regex("([\\w:]+)\\s*=\\s*\"([^\"]*)\"")
 
 /** HLS attribute lists: NAME=value pairs, values optionally quoted and holding commas. */

@@ -131,8 +131,9 @@ private fun xmlText(fragment: String): String = fragment.replace(XML_TAG, "")
     .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
 
 private val TT_LANG = Regex("<(?:\\w+:)?tt\\b[^>]*\\bxml:lang\\s*=\\s*\"([^\"]+)\"")
-private val TTML_P = Regex("<(?:\\w+:)?p\\b([^>]*)>(.*?)</(?:\\w+:)?p>", RegexOption.DOT_MATCHES_ALL)
-private val TTML_SPAN = Regex("<(?:\\w+:)?span\\b([^>]*)>(.*?)</(?:\\w+:)?span>", RegexOption.DOT_MATCHES_ALL)
+// `[\s\S]` rather than DOT_MATCHES_ALL, which common Kotlin does not have (only the platforms do).
+private val TTML_P = Regex("<(?:\\w+:)?p\\b([^>]*)>([\\s\\S]*?)</(?:\\w+:)?p>")
+private val TTML_SPAN = Regex("<(?:\\w+:)?span\\b([^>]*)>([\\s\\S]*?)</(?:\\w+:)?span>")
 private val TTML_BR = Regex("<(?:\\w+:)?br\\s*/?>")
 private val TTML_OFFSET = Regex("([0-9]+(?:\\.[0-9]+)?)(h|ms|m|s)")
 private val XML_TAG = Regex("<[^>]+>")

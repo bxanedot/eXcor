@@ -205,6 +205,51 @@ internal class ExcorEngine(
         return decodeMix(postPlayer(buildWatchPlaylistRequest(videoId, playlistId, index, host.session())) ?: return null, playlistId)
     }
 
+    /**
+     * YouTube Music search; [continuation] continues a filtered search, [filterParams] is an
+     * [ExcorYouTubeSearchFilter.params] from an earlier page. Null when YouTube Music's answer is not a result page.
+     */
+    suspend fun musicSearch(query: String, continuation: String?, filterParams: String?): ExcorYouTubeMusicSearchPage? {
+        val q = query.trim()
+        require(continuation != null || q.length in 1..200) { "query must be 1 to 200 characters" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        require(filterParams == null || SEARCH_PARAMS.matches(filterParams)) { "not search filter params" }
+        return decodeMusicSearch(postPlayer(buildMusicSearchRequest(q, continuation, filterParams, host.session())) ?: return null)
+    }
+
+    /** YouTube Music search completions for a partial query; empty when there are none or the request fails. */
+    suspend fun musicSuggestions(input: String): List<String> {
+        val q = input.trim().take(200)
+        if (q.isEmpty()) return emptyList()
+        return decodeMusicSuggestions(postPlayer(buildMusicSuggestionsRequest(q, host.session())) ?: return emptyList())
+    }
+
+    /** A YouTube Music artist page (UC… channel ID); null when YouTube Music's answer is not one. */
+    suspend fun musicArtist(channelId: String): ExcorYouTubeMusicArtist? {
+        require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
+        return decodeMusicArtist(postPlayer(buildMusicBrowseRequest(channelId, null, host.session())) ?: return null, channelId)
+    }
+
+    /** A YouTube Music playlist page; [continuation] gives its next tracks. Null when the answer is not a playlist page. */
+    suspend fun musicPlaylist(playlistId: String, continuation: String?): ExcorYouTubeMusicPlaylist? {
+        require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId"
+        return decodeMusicPlaylist(postPlayer(buildMusicBrowseRequest(browseId, continuation, host.session())) ?: return null, playlistId.removePrefix("VL"))
+    }
+
+    /**
+     * A window of a YouTube Music radio or watch queue: for [videoId] (its radio by default) or a queue [playlistId]
+     * such as an artist's radio; [continuation] gives the next window. Null when the answer has no queue.
+     */
+    suspend fun musicQueue(videoId: String?, playlistId: String?, continuation: String?): ExcorYouTubeMusicQueue? {
+        require(continuation != null || videoId != null || playlistId != null) { "videoId, playlistId or continuation is required" }
+        require(videoId == null || VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        require(playlistId == null || PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        return decodeMusicQueue(postPlayer(buildMusicQueueRequest(videoId, playlistId, continuation, host.session())) ?: return null)
+    }
+
     /** Songs credited in a video's description (one request); empty when it credits none, null when not a watch page. */
     suspend fun songs(videoId: String): List<ExcorYouTubeSong>? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
