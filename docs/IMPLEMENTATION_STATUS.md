@@ -12,7 +12,7 @@ Updated 2026-11-02, based on `main` after bxanedot/eXcor#53. This repository rem
 | Deezer metadata | Live-verified 2026-11-02 (keyless public API) by `LiveMusicTest.deezerCatalogEndToEnd`; writes are offline-tested only |
 | Apple Music metadata | Keyless iTunes Search/Lookup live-verified 2026-11-02, including a Deezer-to-Apple match (one transient 403 noted in `MUSIC_LIMITATIONS.md`). The full Apple Music API needs a developer token and is offline-tested only |
 | Spotify metadata and remote control | Offline-tested only; live checks need a host-supplied token (`EXCOR_SPOTIFY_TOKEN`) and run skipped here |
-| YouTube Music catalog | Not implemented: from this environment `music.youtube.com` search returns no songs or albums, and artist Releases tabs are empty |
+| YouTube Music | Live-verified 2026-11-02: search with filters and continuations, suggestions, artist pages, playlists and radio queues, through `Excor`. Songs, albums and discographies are withheld from this environment |
 | Native Swift `eXcorKit` | Under `swift/`; built and tested on the macOS CI job |
 | Apps | The Android and desktop apps (through `app-core`, `apps` job) and the iOS app (macOS job) build in CI against `historical-engine`; none is integrated with the clean-room API |
 | CI | Green on Linux, Windows, macOS, apps and Android devices (API 26 and 36) for every merged PR through bxanedot/eXcor#53 |

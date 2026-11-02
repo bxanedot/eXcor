@@ -23,6 +23,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.cancel
 import kotlinx.coroutines.CancellationException
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -120,8 +121,15 @@ internal class ExcorEngine(
     /** Video metadata, available even when YouTube withholds the streams; null when YouTube has no such video. */
     suspend fun videoInfo(videoId: String): ExcorVideoInfo? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
-        val body = postPlayer(buildMetadataRequest(videoId, host.session())) ?: return null
-        return decodeVideoInfo(body, videoId)
+        val session = host.session()
+        val body = postPlayer(buildMetadataRequest(videoId, session)) ?: return null
+        decodeVideoInfo(body, videoId)?.let { return it }
+        // YouTube's bot check strips videoDetails from the player response but leaves the watch page readable, so the
+        // details come from there, with the player's playability kept. A response that isn't a player response at all
+        // (no playabilityStatus) is still null.
+        val playability = playabilityOf(body) ?: return null
+        if (playability.first == "ERROR") return null
+        return decodeWatchVideoInfo(postPlayer(buildNextRequest(videoId, null, session)) ?: return null, videoId, playability)
     }
 
     /**
@@ -203,6 +211,51 @@ internal class ExcorEngine(
         require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
         require(index == null || index in 0..10_000) { "index out of range" }
         return decodeMix(postPlayer(buildWatchPlaylistRequest(videoId, playlistId, index, host.session())) ?: return null, playlistId)
+    }
+
+    /**
+     * YouTube Music search; [continuation] continues a filtered search, [filterParams] is an
+     * [ExcorYouTubeSearchFilter.params] from an earlier page. Null when YouTube Music's answer is not a result page.
+     */
+    suspend fun musicSearch(query: String, continuation: String?, filterParams: String?): ExcorYouTubeMusicSearchPage? {
+        val q = query.trim()
+        require(continuation != null || q.length in 1..200) { "query must be 1 to 200 characters" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        require(filterParams == null || SEARCH_PARAMS.matches(filterParams)) { "not search filter params" }
+        return decodeMusicSearch(postPlayer(buildMusicSearchRequest(q, continuation, filterParams, host.session())) ?: return null)
+    }
+
+    /** YouTube Music search completions for a partial query; empty when there are none or the request fails. */
+    suspend fun musicSuggestions(input: String): List<String> {
+        val q = input.trim().take(200)
+        if (q.isEmpty()) return emptyList()
+        return decodeMusicSuggestions(postPlayer(buildMusicSuggestionsRequest(q, host.session())) ?: return emptyList())
+    }
+
+    /** A YouTube Music artist page (UC… channel ID); null when YouTube Music's answer is not one. */
+    suspend fun musicArtist(channelId: String): ExcorYouTubeMusicArtist? {
+        require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
+        return decodeMusicArtist(postPlayer(buildMusicBrowseRequest(channelId, null, host.session())) ?: return null, channelId)
+    }
+
+    /** A YouTube Music playlist page; [continuation] gives its next tracks. Null when the answer is not a playlist page. */
+    suspend fun musicPlaylist(playlistId: String, continuation: String?): ExcorYouTubeMusicPlaylist? {
+        require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        val browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId"
+        return decodeMusicPlaylist(postPlayer(buildMusicBrowseRequest(browseId, continuation, host.session())) ?: return null, playlistId.removePrefix("VL"))
+    }
+
+    /**
+     * A window of a YouTube Music radio or watch queue: for [videoId] (its radio by default) or a queue [playlistId]
+     * such as an artist's radio; [continuation] gives the next window. Null when the answer has no queue.
+     */
+    suspend fun musicQueue(videoId: String?, playlistId: String?, continuation: String?): ExcorYouTubeMusicQueue? {
+        require(continuation != null || videoId != null || playlistId != null) { "videoId, playlistId or continuation is required" }
+        require(videoId == null || VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
+        require(playlistId == null || PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
+        require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
+        return decodeMusicQueue(postPlayer(buildMusicQueueRequest(videoId, playlistId, continuation, host.session())) ?: return null)
     }
 
     /** Songs credited in a video's description (one request); empty when it credits none, null when not a watch page. */
@@ -453,7 +506,40 @@ internal class ExcorEngine(
         return parseWatchPage(source)
     }
 
+    /**
+     * InnerTube POSTs are reads, so a transient failure is retried: up to [INNERTUBE_ATTEMPTS] attempts on HTTP 429,
+     * 500, 502, 503, 504 or a transport error, waiting a Retry-After of at most 5 s or an exponential backoff with
+     * jitter. Any other status is final. Cancellation is never retried.
+     */
     private suspend fun postPlayer(request: PlayerRequest): String? {
+        var attempt = 1
+        while (true) {
+            val outcome = try {
+                postOnce(request)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (attempt >= INNERTUBE_ATTEMPTS) throw failure
+                PostOutcome.Retry(null)
+            }
+            when (outcome) {
+                is PostOutcome.Done -> return outcome.body
+                is PostOutcome.Retry -> {
+                    if (attempt >= INNERTUBE_ATTEMPTS) return null
+                    val backoff = 300L * (1L shl (attempt - 1)) + Random.nextLong(0, 200)
+                    delay(outcome.retryAfterMs ?: backoff)
+                    attempt++
+                }
+            }
+        }
+    }
+
+    private sealed interface PostOutcome {
+        class Done(val body: String?) : PostOutcome
+        class Retry(val retryAfterMs: Long?) : PostOutcome
+    }
+
+    private suspend fun postOnce(request: PlayerRequest): PostOutcome {
         val response = http.post(request.url) {
             request.headers.forEach { (name, value) -> header(name, value) }
             contentType(ContentType.Application.Json)
@@ -462,13 +548,16 @@ internal class ExcorEngine(
         }
         if (!response.status.isSuccess()) {
             response.bodyAsChannel().cancel()
-            return null
+            val status = response.status.value
+            if (status !in RETRYABLE_STATUSES) return PostOutcome.Done(null)
+            val retryAfter = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()?.takeIf { it in 0..5 }?.times(1_000)
+            return PostOutcome.Retry(retryAfter)
         }
         if ((response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L) > PLAYER_RESPONSE_LIMIT) {
             response.bodyAsChannel().cancel()
-            return null
+            return PostOutcome.Done(null)
         }
-        return response.bodyAsText().takeIf { it.length <= PLAYER_RESPONSE_LIMIT }
+        return PostOutcome.Done(response.bodyAsText().takeIf { it.length <= PLAYER_RESPONSE_LIMIT })
     }
 
     private suspend fun getText(url: String, headers: Map<String, String>, limit: Int): String? {
@@ -668,6 +757,8 @@ internal class ExcorEngine(
         const val WATCH_PAGE_LIMIT = 5_000_000
         const val PLAYER_SCRIPT_LIMIT = 2_000_000
         const val PLAYER_RESPONSE_LIMIT = 2_000_000
+        const val INNERTUBE_ATTEMPTS = 3
+        val RETRYABLE_STATUSES = setOf(429, 500, 502, 503, 504)
         const val MAX_CIPHER_LENGTH = 16_384
         const val EXCLUSION_MS = 10 * 60 * 1000L
         const val MAX_REMEMBERED_URLS = 64

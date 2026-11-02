@@ -25,7 +25,7 @@
 - **Deezer:** writes to favorites and playlists (Deezer's write documentation is behind a login and new apps reportedly can't register); editorial new releases (the endpoint returned none when checked).
 - **Built-in protected-playback adapters.** The host must supply them, and none has been tested on a device.
 - **A built-in lyrics source.** Lyrics are licensed per use, so the host supplies a licensed `ExcorLyricsProvider`. eXcor parses LRC and TTML with line and word timing.
-- **YouTube Music in `Excor.music`.** It reports RESTRICTED. YouTube extraction stays in the existing `Excor` API.
+- **YouTube Music in `Excor.music`.** It reports RESTRICTED there; YouTube Music is read through the `Excor` API instead (`musicSearch`, `musicArtist`, `musicPlaylist`, `musicRadio`, `musicSuggestions`). From this environment YouTube Music withholds songs and albums.
 
 ## Known approximations
 

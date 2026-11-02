@@ -59,6 +59,22 @@ class Excor(host: ExcorHost) {
     /** A window of a video's mix (YouTube's endless radio for it); pass `mix.nextVideoId` and `mix.nextIndex` back for more. */
     @Throws(Throwable::class)
     suspend fun mix(videoId: String, playlistId: String = "RD$videoId", index: Int? = null): ExcorYouTubeMix? = engine.mix(videoId, playlistId, index)
+    /** YouTube Music search: typed items and YouTube Music's own filters; pass a filter's params, or `page.continuation` on a filtered search. */
+    @Throws(Throwable::class)
+    suspend fun musicSearch(query: String, continuation: String? = null, filterParams: String? = null): ExcorYouTubeMusicSearchPage? = engine.musicSearch(query, continuation, filterParams)
+    /** YouTube Music search completions for a partial query. */
+    @Throws(Throwable::class)
+    suspend fun musicSuggestions(input: String): List<String> = engine.musicSuggestions(input)
+    /** A YouTube Music artist page: name, description, audience, shelves and radio and shuffle queues. */
+    @Throws(Throwable::class)
+    suspend fun musicArtist(channelId: String): ExcorYouTubeMusicArtist? = engine.musicArtist(channelId)
+    /** A YouTube Music playlist with typed tracks; pass `playlist.continuation` back for more. */
+    @Throws(Throwable::class)
+    suspend fun musicPlaylist(playlistId: String, continuation: String? = null): ExcorYouTubeMusicPlaylist? = engine.musicPlaylist(playlistId, continuation)
+    /** A YouTube Music radio for a video (by default) or a queue playlist; pass `queue.continuation` back for more. */
+    @Throws(Throwable::class)
+    suspend fun musicRadio(videoId: String? = null, playlistId: String? = videoId?.let { "RDAMVM$it" }, continuation: String? = null): ExcorYouTubeMusicQueue? =
+        engine.musicQueue(videoId, playlistId, continuation)
     /** Songs YouTube credits in a video's description: title, artist, album and credit lines. */
     @Throws(Throwable::class)
     suspend fun songs(videoId: String): List<ExcorYouTubeSong>? = engine.songs(videoId)

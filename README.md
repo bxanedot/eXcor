@@ -8,13 +8,57 @@ The current library exposes package `com.excor`, Gradle coordinates `com.excor:e
 
 The KMP library provides audio format selection, player-response and player-script handling, URL validation, host-supplied session and PO-token interfaces, remembered stream headers, refusal tracking, and player-data caching. It returns a direct audio stream only when the URL passes the HTTPS YouTube/GoogleVideo `/videoplayback` allowlist. It does not mint PO tokens.
 
-`Excor.music` puts Spotify, Apple Music and Deezer metadata behind one API, along with cross-provider matching, incremental playlist and library sync, audio-variant and DRM reporting, and authorized-playback decisions. Deezer and Apple's keyless endpoints are verified live; Spotify and the Apple Music API are tested offline only. See [music providers](docs/MUSIC_PROVIDERS.md) and [limitations](docs/MUSIC_LIMITATIONS.md). YouTube Music catalog access remains restricted. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical app and implementation folders remain in the repository pending a separate provenance and integration audit; they are not compiled by the clean-room root build. `app-core`, the Android app and the desktop app have not been migrated to the new root library; they build on `historical-engine/`, a separate module compiling the quarantined `src/` that is never published (QUESTIONS item 64). See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+`Excor.music` puts Spotify, Apple Music and Deezer metadata behind one API, along with cross-provider matching, incremental playlist and library sync, audio-variant and DRM reporting, and authorized-playback decisions. Deezer and Apple's keyless endpoints are verified live; Spotify and the Apple Music API are tested offline only. See [music providers](docs/MUSIC_PROVIDERS.md) and [limitations](docs/MUSIC_LIMITATIONS.md). YouTube Music search, artists, playlists and radio are available through `Excor` (see below); `Excor.music` itself does not cover YouTube Music. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical app and implementation folders remain in the repository pending a separate provenance and integration audit; they are not compiled by the clean-room root build. `app-core`, the Android app and the desktop app have not been migrated to the new root library; they build on `historical-engine/`, a separate module compiling the quarantined `src/` that is never published (QUESTIONS item 64). See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
 The experimental API and its authorization, paging, and provider limitations are documented in [Catalog metadata](docs/CATALOG.md).
 
-## Usage
+## Installation
 
-The host implements `ExcorHost` to provide the HTTP client, session, clock, logging, cache settings, and optional PO-token provider.
+No release is published to a remote repository yet. Build and install the library into your local Maven repository from this checkout (JDK 27):
+
+```sh
+./gradlew publishToMavenLocal
+```
+
+Then, in your app's Gradle build:
+
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+    google()
+}
+
+dependencies {
+    implementation("com.excor:eXcor:0.2.0")
+}
+```
+
+Gradle picks the JVM, Android or iOS variant from the published Kotlin Multiplatform metadata. The JVM artifact is JDK 26 bytecode, so JVM apps need JDK 26 or newer (and `jvmTarget` 26). The Android artifact is Java 17 bytecode with minSdk 26. [`samples/jvm-quickstart`](samples/jvm-quickstart) is a standalone app built exactly this way; CI publishes the library locally and builds it on every push.
+
+## Quick start (JVM and Android)
+
+`excorDefaultHost()` gives a ready host with a signed-out session, an in-memory cache and the system clock:
+
+```kotlin
+val excor = Excor(excorDefaultHost(region = "US", language = "en"))
+
+val video = excor.videoInfo("dQw4w9WgXcQ")                 // title, channel, duration, views, playability
+val results = excor.search("daft punk")                       // videos, Shorts, channels, playlists, filters
+val next = excor.search("daft punk", results?.continuation)  // the next page
+val channel = excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", tab = ExcorYouTubeChannelTab.PLAYLISTS)
+val comments = excor.comments("dQw4w9WgXcQ", newestFirst = true)
+
+val music = excor.musicSearch("daft punk")                    // typed: songs, videos, artists, albums, playlists…
+val artist = excor.musicArtist("UC_kRDKYrUlrbtrSiyu5Tflg")
+val radio = excor.musicRadio(videoId = "FGBhQbmPwH8")         // pass radio.continuation back for more
+```
+
+Every call is `suspend`, and returns null when YouTube's answer isn't the expected page. Invalid arguments throw `IllegalArgumentException`. [Feature matrix](docs/FEATURE_MATRIX.md) lists what is verified live and what is blocked.
+
+## Streams
+
+The host implements `ExcorHost` (or uses `excorDefaultHost`) to provide the HTTP client, session, clock, logging, cache settings, and optional PO-token provider.
 
 ```kotlin
 val excor = Excor(host)

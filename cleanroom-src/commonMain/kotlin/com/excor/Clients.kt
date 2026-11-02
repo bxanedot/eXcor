@@ -55,6 +55,17 @@ private val web = ClientIdentity(
 /** For metadata-only player requests, which need neither a player script nor a streaming token. */
 internal val metadataClient: ClientIdentity get() = web
 
+/** YouTube Music's web client, for music.youtube.com metadata only; never used to request streams. */
+internal val musicClient = ClientIdentity(
+    name = "WEB_REMIX",
+    profileId = "web_remix",
+    clientId = 67,
+    clientVersion = "1.20260708.01.00",
+    userAgent = web.userAgent,
+    requiresPlayerScript = false,
+    requiresStreamingToken = false,
+)
+
 internal fun selectClients(
     session: ExcorSession,
     skipClients: Set<String>,

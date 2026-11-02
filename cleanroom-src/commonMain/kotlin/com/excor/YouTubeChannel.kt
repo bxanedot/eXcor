@@ -251,5 +251,5 @@ internal fun shortOf(s: JsonObject): ExcorYouTubePlaylistVideo? {
 internal fun keywordsOf(value: String?): List<String> =
     Regex("\"([^\"]+)\"|(\\S+)").findAll(value.orEmpty()).map { it.groupValues[1].ifEmpty { it.groupValues[2] } }.toList()
 
-private fun parseObject(source: String): JsonObject? =
+internal fun parseObject(source: String): JsonObject? =
     if (source.length > 4_000_000) null else runCatching { Json.parseToJsonElement(source) }.getOrNull() as? JsonObject
