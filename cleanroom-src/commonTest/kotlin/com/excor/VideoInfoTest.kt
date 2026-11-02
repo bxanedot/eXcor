@@ -63,4 +63,34 @@ class VideoInfoTest {
         assertEquals("visitor", request.headers["X-Goog-Visitor-Id"])
         assertFalse("Cookie" in request.headers)
     }
+
+    @Test
+    fun watchPageFillsInWhenThePlayerWithholdsDetails() {
+        val botChecked = """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"Sign in to confirm you\u2019re not a bot"}}"""
+        assertNull(decodeVideoInfo(botChecked, "AAAAAAAAAAA"))
+        assertEquals("LOGIN_REQUIRED" to "Sign in to confirm you\u2019re not a bot", playabilityOf(botChecked))
+        assertNull(playabilityOf("""{"responseContext":{}}"""))
+
+        fun watch(views: String, live: Boolean = false) = """{"currentVideoEndpoint":{"watchEndpoint":{"videoId":"AAAAAAAAAAA"}},
+          "contents":{"twoColumnWatchNextResults":{"results":{"results":{"contents":[
+            {"videoPrimaryInfoRenderer":{"title":{"runs":[{"text":"Glass River"}]},"dateText":{"simpleText":"Apr 23, 2005"},
+              "viewCount":{"videoViewCountRenderer":{"viewCount":{"simpleText":"$views"},"isLive":$live}}}},
+            {"videoSecondaryInfoRenderer":{"owner":{"videoOwnerRenderer":{"title":{"runs":[{"text":"Mira Vale",
+              "navigationEndpoint":{"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa","canonicalBaseUrl":"/@miravale"}}}]}}},
+              "attributedDescription":{"content":"Recorded live."}}}]}}}}}"""
+        val info = decodeWatchVideoInfo(watch("447,551,399 views"), "AAAAAAAAAAA", playabilityOf(botChecked))!!
+        assertEquals("Glass River", info.title)
+        assertEquals("Mira Vale", info.author)
+        assertEquals("UCaaaaaaaaaaaaaaaaaaaaaa", info.channelId)
+        assertEquals("@miravale", info.channelHandle)
+        assertEquals(447_551_399L, info.viewCount)
+        assertEquals("Recorded live.", info.description)
+        assertEquals("Apr 23, 2005", info.publishedText)
+        assertNull(info.durationSeconds)
+        assertTrue(info.fromWatchPage && !info.playable && info.playabilityStatus == "LOGIN_REQUIRED")
+        // A live stream's count is of viewers watching now, not views.
+        val live = decodeWatchVideoInfo(watch("1,234 watching now", live = true), "AAAAAAAAAAA", null)!!
+        assertTrue(live.isLive && live.viewCount == null)
+        assertNull(decodeWatchVideoInfo(watch("1 view"), "BBBBBBBBBBB", null))
+    }
 }

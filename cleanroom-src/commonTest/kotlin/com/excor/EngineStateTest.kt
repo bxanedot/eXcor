@@ -135,6 +135,75 @@ class EngineStateTest {
         }
     }
 
+    @Test
+    fun videoInfoFallsBackToTheWatchPageWhenThePlayerWithholdsDetails() = runTest {
+        val watch = """{"currentVideoEndpoint":{"watchEndpoint":{"videoId":"$VIDEO_ID"}},"contents":{"twoColumnWatchNextResults":{"results":{"results":{"contents":[
+            {"videoPrimaryInfoRenderer":{"title":{"runs":[{"text":"Glass River"}]}}}]}}}}}"""
+        var player = """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"bot check"}}"""
+        var nextCalls = 0
+        val client = HttpClient(MockEngine { request ->
+            val body = when (request.url.encodedPath) {
+                "/youtubei/v1/player" -> player
+                "/youtubei/v1/next" -> { nextCalls++; watch }
+                else -> return@MockEngine respond("", HttpStatusCode.NotFound)
+            }
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            val info = assertNotNull(engine.videoInfo(VIDEO_ID))
+            assertEquals("Glass River", info.title)
+            assertEquals("LOGIN_REQUIRED", info.playabilityStatus)
+            assertEquals(true, info.fromWatchPage)
+            // A removed video (ERROR) is not looked up on the watch page.
+            player = """{"playabilityStatus":{"status":"ERROR","reason":"Video unavailable"}}"""
+            assertNull(engine.videoInfo(VIDEO_ID))
+            assertEquals(1, nextCalls)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun innerTubeReadsRetryTransientFailuresAndStopAtTheLimit() = runTest {
+        val statuses = ArrayDeque<HttpStatusCode>()
+        var calls = 0
+        var retryAfter: String? = null
+        val ok = """{"onResponseReceivedCommands":[{"appendContinuationItemsAction":{"continuationItems":[]}}]}"""
+        val client = HttpClient(MockEngine {
+            calls++
+            val status = statuses.removeFirstOrNull() ?: HttpStatusCode.OK
+            val headers = if (status == HttpStatusCode.TooManyRequests && retryAfter != null) headersOf(HttpHeaders.RetryAfter, retryAfter!!) else headersOf()
+            respond(if (status == HttpStatusCode.OK) ok else "", status, headers)
+        })
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            statuses += listOf(HttpStatusCode.ServiceUnavailable, HttpStatusCode.BadGateway)
+            assertNotNull(engine.search("q", "token"))
+            assertEquals(3, calls)
+
+            calls = 0
+            retryAfter = "2"
+            val start = testScheduler.currentTime
+            statuses += HttpStatusCode.TooManyRequests
+            assertNotNull(engine.search("q", "token"))
+            assertEquals(2, calls)
+            assertEquals(2_000, testScheduler.currentTime - start, "a short Retry-After is honored")
+
+            calls = 0
+            statuses += List(3) { HttpStatusCode.ServiceUnavailable }
+            assertNull(engine.search("q", "token"))
+            assertEquals(3, calls, "three attempts at most")
+
+            calls = 0
+            statuses += HttpStatusCode.BadRequest
+            assertNull(engine.search("q", "token"))
+            assertEquals(1, calls, "a client error is final")
+        } finally {
+            client.close()
+        }
+    }
+
     private data class TestEngine(
         val engine: ExcorEngine,
         val host: FakeHost,

@@ -4,7 +4,8 @@ eXcor is compared on capabilities that are documented or can be observed from ou
 
 **Sources:**
 - **InnerTubeX:** its README at github.com/MetrolistGroup/innertubex, read 2026-11-02 (v0.11.0 install line).
-- **YouTube.js and NewPipeExtractor:** not yet assessed.
+- **YouTube.js:** its README and the introduction at ytjs.dev/guide, read 2026-11-02.
+- **NewPipeExtractor:** its README, read 2026-11-02.
 
 | Capability | InnerTubeX (README) | eXcor (evidence) |
 |---|---|---|
@@ -16,8 +17,20 @@ eXcor is compared on capabilities that are documented or can be observed from ou
 | Player cipher | Kotlin, via hosted QuackJS | Kotlin player-JS handling with the vendored yt-dlp/ejs solver (Unlicense) |
 | Sessions and auth | Isolated authenticated sessions, generation-safe cancellation, host `TokenProvider` | Host session and PO-token interfaces; session-change invalidation is tested |
 | Cross-provider music | Not described | Spotify, Apple Music and Deezer catalogs; matching; playlist conversion; YouTube to and from other providers |
-| Performance claims | None quantified | Music benchmark harness (`EXCOR_BENCH=1`); YouTube benchmark pending |
+| Performance claims | None quantified | Measured YouTube and music benchmarks (`docs/PERFORMANCE.md`). No comparative claim, since there's nothing to compare against |
 | Installation | JitPack | `maven-publish` (`com.excor:eXcor:0.2.0`). The full local publish succeeds; `samples/jvm-quickstart` installs it through the README steps and runs live. CI publishes and builds the sample on every push. No remote repository yet |
 | Status | Experimental 0.x | 0.2.0, draft SDK |
 
 Where InnerTubeX documents a capability that eXcor lacks (SABR/UMP), eXcor can't currently verify one here. Where eXcor exceeds its README (YouTube Music, multi-provider catalogs, search filters, comments, chapters, About panel), each row above has a live test.
+
+## YouTube.js and NewPipeExtractor
+
+Their READMEs and introduction pages document platforms and installation, but not a per-feature API list. This table records only what they state; it does not infer the rest.
+
+| | YouTube.js (documented) | NewPipeExtractor (documented) | eXcor |
+|---|---|---|---|
+| Runtime | "Node.js, Deno, modern browsers, and more"; JavaScript | Java library for Android and Gradle projects (desugaring below minSdk 33); a "core component of NewPipe" | Kotlin Multiplatform: JVM, Android (minSdk 26), iOS |
+| Services | YouTube's InnerTube ("A JavaScript client for YouTube's internal API") | YouTube, SoundCloud, media.ccc.de, Bandcamp, PeerTube | YouTube, YouTube Music; Spotify, Apple Music and Deezer catalogs |
+| Installation | npm, Yarn, Deno | JitPack; snapshots as `net.newpipe:extractor` | `maven-publish` to a local repository; CI-verified consumer |
+
+eXcor's per-feature evidence lives in `FEATURE_MATRIX.md` and `EXCOR_ENGINEERING_AUDIT.md`. Comparing feature by feature with these two needs their full documentation or black-box runs; that hasn't been done.

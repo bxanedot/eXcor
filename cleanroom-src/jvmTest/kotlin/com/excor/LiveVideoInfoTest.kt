@@ -41,6 +41,14 @@ class LiveVideoInfoTest {
     }
 
     @Test
+    fun videoInfoForABotCheckedVideo() = runBlocking {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
+        // From environments YouTube bot-checks, the player response for this video carries no details; the watch page does.
+        val info = assertNotNull(Excor(Host(OkHttpClient())).videoInfo("jNQXAC9IVRw"))
+        assertTrue(info.title == "Me at the zoo" && info.author == "jawed" && info.channelId != null && (info.viewCount ?: 0) > 1_000_000, "info: ${info.title} ${info.author} ${info.viewCount}")
+    }
+
+    @Test
     fun searchWithContinuation() = runBlocking {
         if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
         val excor = Excor(Host(OkHttpClient()))
@@ -141,6 +149,53 @@ class LiveVideoInfoTest {
         assertTrue(next.tracks.any { t -> radio.tracks.none { it.videoId == t.videoId } }, "the next radio window brings new tracks")
         val artistRadio = assertNotNull(excor.musicRadio(playlistId = page.radioPlaylistId))
         assertTrue(artistRadio.tracks.isNotEmpty())
+    }
+
+    /**
+     * Latency, request count and heap for the public metadata calls against live YouTube. EXCOR_BENCH=1 runs it and
+     * writes build/reports/youtube-bench.txt. Results depend on the network and YouTube's servers, so the report names
+     * the environment and sample counts; compare runs from the same machine only.
+     */
+    @Test
+    fun benchmark() = runBlocking {
+        if (System.getenv("EXCOR_BENCH") != "1") throw SkipException("Set EXCOR_BENCH=1 to run the YouTube benchmark")
+        var requests = 0
+        val client = OkHttpClient.Builder().addInterceptor { chain -> requests++; chain.proceed(chain.request()) }.build()
+        val report = StringBuilder()
+        val runtime = Runtime.getRuntime()
+        report.append("environment: ${System.getProperty("os.name")} ${System.getProperty("os.arch")}, ${runtime.availableProcessors()} CPUs, JDK ${System.getProperty("java.version")}\n")
+        System.gc()
+        val heapBefore = runtime.totalMemory() - runtime.freeMemory()
+        val coldStart = System.nanoTime()
+        val excor = Excor(Host(client))
+        excor.videoInfo("dQw4w9WgXcQ")
+        report.append("cold start (construct + first videoInfo): ${(System.nanoTime() - coldStart) / 1_000_000}ms, requests=$requests\n")
+
+        suspend fun measure(name: String, inputs: List<String>, block: suspend (String) -> Any?) {
+            val before = requests
+            var failures = 0
+            val samples = inputs.map { input ->
+                val t = System.nanoTime()
+                if (runCatching { block(input) }.getOrNull() == null) failures++
+                (System.nanoTime() - t) / 1_000_000
+            }.sorted()
+            report.append("$name: n=${samples.size} median=${samples[samples.size / 2]}ms p95=${samples[((samples.size - 1) * 95) / 100]}ms requests=${requests - before} failures=$failures\n")
+        }
+        val videos = listOf("dQw4w9WgXcQ", "FGBhQbmPwH8", "K0HSD_i2DvA", "jNQXAC9IVRw", "PkZNo7MFNFg", "yydNF8tuVmU", "dwDns8x3Jb4", "PwILkY9gRrc", "HhZaHf8RP6g", "5NV6Rdv1a3I")
+        val queries = listOf("daft punk", "lofi", "jazz piano", "news", "chess", "cooking pasta", "guitar lesson", "space documentary", "kotlin", "rain sounds")
+        measure("videoInfo", videos) { excor.videoInfo(it) }
+        measure("search", queries) { excor.search(it) }
+        measure("search continuation", queries.take(5)) { q -> excor.search(q)?.continuation?.let { excor.search(q, it) } }
+        measure("playlist", List(5) { "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI" }) { excor.playlist(it) }
+        measure("channel (2 requests)", List(5) { "UC_kRDKYrUlrbtrSiyu5Tflg" }) { excor.channel(it) }
+        measure("comments (2 requests)", videos.take(5)) { excor.comments(it) }
+        measure("musicSearch", queries) { excor.musicSearch(it) }
+        measure("musicRadio", videos.take(5)) { excor.musicRadio(videoId = it) }
+        System.gc()
+        report.append("heap delta after run: ${((runtime.totalMemory() - runtime.freeMemory()) - heapBefore) / 1024}KiB\n")
+        File("build/reports").mkdirs()
+        File("build/reports/youtube-bench.txt").writeText(report.toString())
+        println(report)
     }
 
     private class Host(override val httpClient: OkHttpClient) : ExcorHost {

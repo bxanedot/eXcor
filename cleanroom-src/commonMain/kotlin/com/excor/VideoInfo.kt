@@ -9,6 +9,7 @@ import com.excor.music.ExcorMusicTrack
 import io.ktor.http.Url
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
@@ -44,6 +45,14 @@ data class ExcorVideoInfo(
     val availableCountries: Set<String>?,
     val playabilityStatus: String?,
     val playabilityReason: String?,
+    /** YouTube's displayed publish date, such as "Apr 23, 2005"; set when the data came from the watch page. */
+    val publishedText: String? = null,
+    /**
+     * True when the player response withheld the video's details (as YouTube's bot check does) and these fields come
+     * from the watch page instead. The watch page has no duration, keywords, category, dates or countries, so those
+     * stay null.
+     */
+    val fromWatchPage: Boolean = false,
 ) {
     val playable: Boolean get() = playabilityStatus == "OK"
     val url: String get() = "https://www.youtube.com/watch?v=$videoId"
@@ -145,6 +154,66 @@ internal fun decodeVideoInfo(source: String, videoId: String): ExcorVideoInfo? {
         availableCountries = (micro?.get("availableCountries") as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }?.toSet(),
         playabilityStatus = playability?.text("status"),
         playabilityReason = playability?.text("reason")?.filter { it >= ' ' && it != '\u007f' }?.take(200),
+    )
+}
+
+/** The player response's playability status and reason, for a response without `videoDetails`. */
+internal fun playabilityOf(source: String): Pair<String, String?>? {
+    if (source.length > 2_000_000) return null
+    val root = runCatching { Json.parseToJsonElement(source) }.getOrNull() as? JsonObject ?: return null
+    val playability = root["playabilityStatus"] as? JsonObject ?: return null
+    val status = playability.text("status") ?: return null
+    return status to playability.text("reason")?.filter { it >= ' ' && it != '\u007f' }?.take(200)
+}
+
+/**
+ * The video's metadata from its watch page (`next`): the primary and secondary info renderers. [playability] is the
+ * player response's status and reason. Null when the watch page is not [videoId]'s.
+ */
+internal fun decodeWatchVideoInfo(source: String, videoId: String, playability: Pair<String, String?>?): ExcorVideoInfo? {
+    val root = parseObject(source) ?: return null
+    if (root.path("currentVideoEndpoint", "watchEndpoint", "videoId")?.let { (it as? JsonPrimitive)?.contentOrNull } != videoId) return null
+    val contents = (root.path("contents", "twoColumnWatchNextResults", "results", "results", "contents") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }
+    val primary = contents.firstNotNullOfOrNull { it["videoPrimaryInfoRenderer"] as? JsonObject } ?: return null
+    val secondary = contents.firstNotNullOfOrNull { it["videoSecondaryInfoRenderer"] as? JsonObject }
+    fun textOf(value: JsonElement?): String? {
+        val o = value as? JsonObject ?: return null
+        o.text("simpleText")?.let { return it }
+        return (o["runs"] as? JsonArray)?.mapNotNull { (it as? JsonObject)?.text("text") }?.joinToString("")?.takeIf(String::isNotBlank)
+    }
+    val title = textOf(primary["title"]) ?: return null
+    val views = primary.path("viewCount", "videoViewCountRenderer") as? JsonObject
+    val viewText = textOf(views?.get("viewCount"))
+    val live = views?.flag("isLive") == true || viewText?.contains("watching") == true
+    val ownerRun = ((secondary?.path("owner", "videoOwnerRenderer", "title", "runs") as? JsonArray)?.firstOrNull() as? JsonObject)
+    val ownerLink = ownerRun?.path("navigationEndpoint", "browseEndpoint") as? JsonObject
+    return ExcorVideoInfo(
+        videoId = videoId,
+        title = title,
+        author = ownerRun?.text("text"),
+        channelId = ownerLink?.text("browseId")?.takeIf(CHANNEL_ID::matches),
+        channelHandle = ownerLink?.text("canonicalBaseUrl")?.removePrefix("/")?.takeIf { it.startsWith("@") },
+        durationSeconds = null,
+        // A live stream's count is of current viewers, not views.
+        viewCount = viewText?.takeIf { !live }?.filter(Char::isDigit)?.takeIf(String::isNotEmpty)?.toLongOrNull(),
+        likeCount = null,
+        description = (secondary?.path("attributedDescription", "content") as? JsonPrimitive)?.contentOrNull?.takeIf(String::isNotBlank),
+        keywords = emptyList(),
+        category = null,
+        publishDate = null,
+        uploadDate = null,
+        thumbnails = emptyList(),
+        isLive = live,
+        isLiveContent = live,
+        isPrivate = null,
+        isUnlisted = null,
+        isFamilySafe = null,
+        isShortsEligible = null,
+        availableCountries = null,
+        playabilityStatus = playability?.first,
+        playabilityReason = playability?.second,
+        publishedText = textOf(primary["dateText"]),
+        fromWatchPage = true,
     )
 }
 

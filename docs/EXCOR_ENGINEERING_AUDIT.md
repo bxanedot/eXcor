@@ -13,7 +13,8 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 |---|---|---|---|
 | InnerTube request builder (WEB, WEB_REMIX) | `InnerTube.kt`, `Clients.kt` | Verified | Every live metadata test; `YouTubeMusicTest.requestsGoToYouTubeMusicWithItsClient` |
 | Client profiles for playback (web, web_embedded, tv, visionOS) | `Clients.kt`, `ExcorEngine.kt` | Tested; Blocked live | `ClientsTest`; the player answers `LOGIN_REQUIRED` "Sign in to confirm you're not a bot" for every client from here |
-| Video metadata | `VideoInfo.kt` | Verified | `LiveVideoInfoTest.videoMetadataAndCrossProviderMatch` |
+| Video metadata, with a watch-page fallback when the player withholds details | `VideoInfo.kt` | Verified | `videoMetadataAndCrossProviderMatch`, `videoInfoForABotCheckedVideo`, `EngineStateTest.videoInfoFallsBackToTheWatchPageWhenThePlayerWithholdsDetails` |
+| InnerTube read retries (429, 5xx, transport errors; three attempts; Retry-After of up to 5 s; backoff with jitter) | `ExcorEngine.kt` | Tested | `EngineStateTest.innerTubeReadsRetryTransientFailuresAndStopAtTheLimit` |
 | Search: filters, Shorts, continuations, suggestions | `YouTubeSearch.kt`, `YouTubeWatch.kt` | Verified | `searchWithContinuation`, `relatedVideosAndComments` |
 | Playlists, mixes | `YouTubePlaylist.kt`, `YouTubeWatch.kt` | Verified | `playlistDetailsAndVideos`, the mix checks |
 | Channels: five tabs, About panel, failed-tab reporting | `YouTubeChannel.kt` | Verified | `channelDetailsAndUploads`, `EngineStateTest.aChannelTabThatFailsToLoadIsNotReportedAsEmpty` |
@@ -30,11 +31,13 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | Spotify, full Apple Music API | `music/` | Tested | Need credentials |
 | Packaging and installability | `build.gradle.kts`, `samples/jvm-quickstart` | Verified | Full `publishToMavenLocal` on Linux. The sample installs through the README steps and runs live. Fixed: the shared metadata didn't compile (`RegexOption.DOT_MATCHES_ALL` isn't in common Kotlin), so the library couldn't be published until 2026-11-02 |
 | Session invalidation and secret redaction | `ExcorEngine.kt`, `Api.kt` | Tested | `EngineStateTest`; `ExcorSession.toString` hides cookies and visitor data |
-| Benchmarks | `LiveMusicTest.benchmark` | Partial | Music only; no YouTube benchmark yet |
+| Benchmarks | `LiveVideoInfoTest.benchmark`, `LiveMusicTest.benchmark` | Verified | `docs/PERFORMANCE.md` (measured 2026-11-02) |
 
 ## Defects found and fixed in this pass
 
 - **The library couldn't be published:** the common metadata compilation failed in `Lyrics.kt` and `Drm.kt`. CI now publishes and builds a consumer on every push.
 - **A failed channel tab looked empty:** a tab that failed to load came back as an empty list (bxanedot/eXcor#54).
 - **Too fast for Apple's keyless limit:** iTunes calls shared a 20-per-second budget against Apple's documented limit of about 20 per minute (bxanedot/eXcor#55).
+- **`videoInfo` null for most videos:** it returned null for 8 of 10 videos from a bot-checked environment. It now falls back to the watch page.
+- **Transient failures were final:** InnerTube reads now retry, within bounds.
 - **Mix continuation lost:** a mix's continuation was dropped when its last item didn't decode (bxanedot/eXcor#54).

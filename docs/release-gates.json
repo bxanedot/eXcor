@@ -1,29 +1,117 @@
 {
   "updated": "2026-11-02",
   "gates": [
-    {"id": "G1", "name": "Existing eXcor preserved", "status": "passing",
-     "evidence": "Every change is additive to the public API; the full JVM suite and CI stay green", "command": "./gradlew :jvmTest", "blockers": []},
-    {"id": "G2", "name": "Build correctness", "status": "passing",
-     "evidence": "JVM tests, Android library, iOS arm64/simulator/x64 compilations and the shared metadata compile", "command": "./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata", "blockers": []},
-    {"id": "G3", "name": "InnerTube operations", "status": "passing",
-     "evidence": "Live: video metadata, search with filters and continuations, playlists, mixes, channels, comments, chapters", "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest", "blockers": []},
-    {"id": "G4", "name": "Player compatibility", "status": "blocked",
-     "evidence": "PlayerJsTest passes offline; no playable player response reaches this environment", "command": "./gradlew :jvmTest --tests com.excor.PlayerJsTest", "blockers": ["YouTube answers every client with LOGIN_REQUIRED (bot check) from this environment"]},
-    {"id": "G5", "name": "Streaming", "status": "blocked",
-     "evidence": "LivePlaybackTest fails here: no streamingData", "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest", "blockers": ["Bot check from this environment; needs a normal-network run"]},
-    {"id": "G6", "name": "SABR/UMP", "status": "blocked",
-     "evidence": "Not implemented; no serverAbrStreamingUrl can be observed here", "command": null, "blockers": ["No observable SABR responses from this environment"]},
-    {"id": "G7", "name": "YouTube Music", "status": "passing",
-     "evidence": "Live: search with filters and continuations, suggestions, artist pages, playlists, radio. Songs and albums are withheld from this environment", "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest", "blockers": ["Songs, albums and discographies cannot be observed here"]},
-    {"id": "G8", "name": "Reliability", "status": "partial",
-     "evidence": "Bounded bodies, cancellation, failed-tab null, per-track errors, request budgets tested offline", "command": "./gradlew :jvmTest", "blockers": ["No end-to-end retry and backoff tests for YouTube requests yet"]},
-    {"id": "G9", "name": "Developer usability", "status": "passing",
-     "evidence": "samples/jvm-quickstart installs com.excor:eXcor:0.2.0 from mavenLocal per the README and runs live", "command": "./gradlew publishToMavenLocal && ./gradlew -p samples/jvm-quickstart run", "blockers": []},
-    {"id": "G10", "name": "Release packaging", "status": "partial",
-     "evidence": "Full publishToMavenLocal succeeds (root, JVM, Android, three iOS klibs) and runs in CI", "command": "./gradlew publishToMavenLocal", "blockers": ["No remote repository or release is authorized yet"]},
-    {"id": "G11", "name": "Competitive analysis", "status": "partial",
-     "evidence": "docs/COMPETITOR_MATRIX.md compares against InnerTubeX's README", "command": null, "blockers": ["YouTube.js and NewPipeExtractor not yet assessed"]},
-    {"id": "G12", "name": "Security", "status": "partial",
-     "evidence": "URL allowlist, secret redaction in toString and logs, link destinations restricted to http(s), bounded responses", "command": "./gradlew :jvmTest --tests com.excor.UrlPolicyTest", "blockers": ["No dependency vulnerability scan in CI yet"]}
+    {
+      "id": "G1",
+      "name": "Existing eXcor preserved",
+      "status": "passing",
+      "evidence": "Every change is additive to the public API; the full JVM suite and CI stay green",
+      "command": "./gradlew :jvmTest",
+      "blockers": []
+    },
+    {
+      "id": "G2",
+      "name": "Build correctness",
+      "status": "passing",
+      "evidence": "JVM tests, Android library, iOS arm64/simulator/x64 compilations and the shared metadata compile",
+      "command": "./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata",
+      "blockers": []
+    },
+    {
+      "id": "G3",
+      "name": "InnerTube operations",
+      "status": "passing",
+      "evidence": "Live: video metadata, search with filters and continuations, playlists, mixes, channels, comments, chapters; videoInfo falls back to the watch page when the bot check withholds details",
+      "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest",
+      "blockers": []
+    },
+    {
+      "id": "G4",
+      "name": "Player compatibility",
+      "status": "blocked",
+      "evidence": "PlayerJsTest passes offline; no playable player response reaches this environment",
+      "command": "./gradlew :jvmTest --tests com.excor.PlayerJsTest",
+      "blockers": [
+        "YouTube answers every client with LOGIN_REQUIRED (bot check) from this environment"
+      ]
+    },
+    {
+      "id": "G5",
+      "name": "Streaming",
+      "status": "blocked",
+      "evidence": "LivePlaybackTest fails here: no streamingData",
+      "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest",
+      "blockers": [
+        "Bot check from this environment; needs a normal-network run"
+      ]
+    },
+    {
+      "id": "G6",
+      "name": "SABR/UMP",
+      "status": "blocked",
+      "evidence": "Not implemented; no serverAbrStreamingUrl can be observed here",
+      "command": null,
+      "blockers": [
+        "No observable SABR responses from this environment"
+      ]
+    },
+    {
+      "id": "G7",
+      "name": "YouTube Music",
+      "status": "passing",
+      "evidence": "Live: search with filters and continuations, suggestions, artist pages, playlists, radio. Songs and albums are withheld from this environment",
+      "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest",
+      "blockers": [
+        "Songs, albums and discographies cannot be observed here"
+      ]
+    },
+    {
+      "id": "G8",
+      "name": "Reliability",
+      "status": "partial",
+      "evidence": "Bounded bodies, cancellation, failed-tab null, per-track errors, request budgets, and InnerTube read retries (429/5xx/transport errors, 3 attempts, Retry-After of up to 5 s, backoff with jitter), all tested offline",
+      "command": "./gradlew :jvmTest",
+      "blockers": [
+        "No fault-injection run against live endpoints"
+      ]
+    },
+    {
+      "id": "G9",
+      "name": "Developer usability",
+      "status": "passing",
+      "evidence": "samples/jvm-quickstart installs com.excor:eXcor:0.2.0 from mavenLocal per the README and runs live",
+      "command": "./gradlew publishToMavenLocal && ./gradlew -p samples/jvm-quickstart run",
+      "blockers": []
+    },
+    {
+      "id": "G10",
+      "name": "Release packaging",
+      "status": "partial",
+      "evidence": "Full publishToMavenLocal succeeds (root, JVM, Android, three iOS klibs) and runs in CI",
+      "command": "./gradlew publishToMavenLocal",
+      "blockers": [
+        "No remote repository or release is authorized yet"
+      ]
+    },
+    {
+      "id": "G11",
+      "name": "Competitive analysis",
+      "status": "partial",
+      "evidence": "docs/COMPETITOR_MATRIX.md: InnerTubeX from its README; YouTube.js and NewPipeExtractor from their READMEs (platforms, services, installation)",
+      "command": null,
+      "blockers": [
+        "YouTube.js and NewPipeExtractor document no per-feature API list in the pages read; no black-box comparison yet"
+      ]
+    },
+    {
+      "id": "G12",
+      "name": "Security",
+      "status": "partial",
+      "evidence": "URL allowlist, secret redaction in toString and logs, link destinations restricted to http(s), bounded responses",
+      "command": "./gradlew :jvmTest --tests com.excor.UrlPolicyTest",
+      "blockers": [
+        "No dependency vulnerability scan in CI yet"
+      ]
+    }
   ]
 }

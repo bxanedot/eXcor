@@ -23,6 +23,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.cancel
 import kotlinx.coroutines.CancellationException
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -120,8 +121,15 @@ internal class ExcorEngine(
     /** Video metadata, available even when YouTube withholds the streams; null when YouTube has no such video. */
     suspend fun videoInfo(videoId: String): ExcorVideoInfo? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
-        val body = postPlayer(buildMetadataRequest(videoId, host.session())) ?: return null
-        return decodeVideoInfo(body, videoId)
+        val session = host.session()
+        val body = postPlayer(buildMetadataRequest(videoId, session)) ?: return null
+        decodeVideoInfo(body, videoId)?.let { return it }
+        // YouTube's bot check strips videoDetails from the player response but leaves the watch page readable, so the
+        // details come from there, with the player's playability kept. A response that isn't a player response at all
+        // (no playabilityStatus) is still null.
+        val playability = playabilityOf(body) ?: return null
+        if (playability.first == "ERROR") return null
+        return decodeWatchVideoInfo(postPlayer(buildNextRequest(videoId, null, session)) ?: return null, videoId, playability)
     }
 
     /**
@@ -498,7 +506,40 @@ internal class ExcorEngine(
         return parseWatchPage(source)
     }
 
+    /**
+     * InnerTube POSTs are reads, so a transient failure is retried: up to [INNERTUBE_ATTEMPTS] attempts on HTTP 429,
+     * 500, 502, 503, 504 or a transport error, waiting a Retry-After of at most 5 s or an exponential backoff with
+     * jitter. Any other status is final. Cancellation is never retried.
+     */
     private suspend fun postPlayer(request: PlayerRequest): String? {
+        var attempt = 1
+        while (true) {
+            val outcome = try {
+                postOnce(request)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (attempt >= INNERTUBE_ATTEMPTS) throw failure
+                PostOutcome.Retry(null)
+            }
+            when (outcome) {
+                is PostOutcome.Done -> return outcome.body
+                is PostOutcome.Retry -> {
+                    if (attempt >= INNERTUBE_ATTEMPTS) return null
+                    val backoff = 300L * (1L shl (attempt - 1)) + Random.nextLong(0, 200)
+                    delay(outcome.retryAfterMs ?: backoff)
+                    attempt++
+                }
+            }
+        }
+    }
+
+    private sealed interface PostOutcome {
+        class Done(val body: String?) : PostOutcome
+        class Retry(val retryAfterMs: Long?) : PostOutcome
+    }
+
+    private suspend fun postOnce(request: PlayerRequest): PostOutcome {
         val response = http.post(request.url) {
             request.headers.forEach { (name, value) -> header(name, value) }
             contentType(ContentType.Application.Json)
@@ -507,13 +548,16 @@ internal class ExcorEngine(
         }
         if (!response.status.isSuccess()) {
             response.bodyAsChannel().cancel()
-            return null
+            val status = response.status.value
+            if (status !in RETRYABLE_STATUSES) return PostOutcome.Done(null)
+            val retryAfter = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()?.takeIf { it in 0..5 }?.times(1_000)
+            return PostOutcome.Retry(retryAfter)
         }
         if ((response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L) > PLAYER_RESPONSE_LIMIT) {
             response.bodyAsChannel().cancel()
-            return null
+            return PostOutcome.Done(null)
         }
-        return response.bodyAsText().takeIf { it.length <= PLAYER_RESPONSE_LIMIT }
+        return PostOutcome.Done(response.bodyAsText().takeIf { it.length <= PLAYER_RESPONSE_LIMIT })
     }
 
     private suspend fun getText(url: String, headers: Map<String, String>, limit: Int): String? {
@@ -713,6 +757,8 @@ internal class ExcorEngine(
         const val WATCH_PAGE_LIMIT = 5_000_000
         const val PLAYER_SCRIPT_LIMIT = 2_000_000
         const val PLAYER_RESPONSE_LIMIT = 2_000_000
+        const val INNERTUBE_ATTEMPTS = 3
+        val RETRYABLE_STATUSES = setOf(429, 500, 502, 503, 504)
         const val MAX_CIPHER_LENGTH = 16_384
         const val EXCLUSION_MS = 10 * 60 * 1000L
         const val MAX_REMEMBERED_URLS = 64
