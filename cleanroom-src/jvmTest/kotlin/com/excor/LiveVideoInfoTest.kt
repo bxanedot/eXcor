@@ -210,6 +210,7 @@ class LiveVideoInfoTest {
         }
         override suspend fun session() = ExcorSession(null, null, "US", "en")
         override fun nowMs(): Long = System.currentTimeMillis()
-        override fun log(level: ExcorLogLevel, message: String, trackId: String?) = Unit
+        // Warnings name an endpoint and a status only, so printing them is safe and explains a null result.
+        override fun log(level: ExcorLogLevel, message: String, trackId: String?) { if (level >= ExcorLogLevel.WARN) println("[$level] $message") }
     }
 }

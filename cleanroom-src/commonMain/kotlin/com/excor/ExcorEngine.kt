@@ -122,14 +122,14 @@ internal class ExcorEngine(
     suspend fun videoInfo(videoId: String): ExcorVideoInfo? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         val session = host.session()
-        val body = postPlayer(buildMetadataRequest(videoId, session)) ?: return null
+        val body = postMetadata(buildMetadataRequest(videoId, session)) ?: return null
         decodeVideoInfo(body, videoId)?.let { return it }
         // YouTube's bot check strips videoDetails from the player response but leaves the watch page readable, so the
         // details come from there, with the player's playability kept. A response that isn't a player response at all
         // (no playabilityStatus) is still null.
         val playability = playabilityOf(body) ?: return null
         if (playability.first == "ERROR") return null
-        return decodeWatchVideoInfo(postPlayer(buildNextRequest(videoId, null, session)) ?: return null, videoId, playability)
+        return decodeWatchVideoInfo(postMetadata(buildNextRequest(videoId, null, session)) ?: return null, videoId, playability)
     }
 
     /**
@@ -141,7 +141,7 @@ internal class ExcorEngine(
         require(continuation != null || q.length in 1..200) { "query must be 1 to 200 characters" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         require(filterParams == null || SEARCH_PARAMS.matches(filterParams)) { "not search filter params" }
-        val body = postPlayer(buildSearchRequest(q, continuation, host.session(), filterParams)) ?: return null
+        val body = postMetadata(buildSearchRequest(q, continuation, host.session(), filterParams)) ?: return null
         return decodeSearchPage(body)
     }
 
@@ -162,7 +162,7 @@ internal class ExcorEngine(
     suspend fun playlist(playlistId: String, continuation: String?): ExcorYouTubePlaylist? {
         require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
-        val body = postPlayer(buildBrowseRequest("VL$playlistId", continuation, host.session())) ?: return null
+        val body = postMetadata(buildBrowseRequest("VL$playlistId", continuation, host.session())) ?: return null
         return decodePlaylistPage(body, playlistId)
     }
 
@@ -176,14 +176,14 @@ internal class ExcorEngine(
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         val session = host.session()
         if (continuation != null) {
-            val page = decodeChannelTab(postPlayer(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
+            val page = decodeChannelTab(postMetadata(buildBrowseRequest(null, continuation, session)) ?: return null) ?: return null
             return ExcorYouTubeChannel(channelId, null, null, null, null, null, emptyList(), null, null, emptyList(), emptyList(), page.videos, page.continuation, page.playlists, page.posts)
         }
-        val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
+        val home = decodeChannelHome(postMetadata(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
         // A channel without this tab (no Live, no Shorts) gives its details with an empty list. A tab it has that fails
         // to load gives null, so a refused or broken answer is not mistaken for an empty tab.
         val params = home.tabParams[tab] ?: return home.channel
-        val page = decodeChannelTab(postPlayer(buildBrowseRequest(channelId, null, session, params)) ?: return null) ?: return null
+        val page = decodeChannelTab(postMetadata(buildBrowseRequest(channelId, null, session, params)) ?: return null) ?: return null
         return home.channel.copy(videos = page.videos, continuation = page.continuation, playlists = page.playlists, posts = page.posts)
     }
 
@@ -191,15 +191,15 @@ internal class ExcorEngine(
     suspend fun channelAbout(channelId: String): ExcorYouTubeChannelAbout? {
         require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
         val session = host.session()
-        val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
+        val home = decodeChannelHome(postMetadata(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
         val token = home.aboutToken ?: return null
-        return decodeChannelAbout(postPlayer(buildBrowseRequest(null, token, session)) ?: return null, channelId)
+        return decodeChannelAbout(postMetadata(buildBrowseRequest(null, token, session)) ?: return null, channelId)
     }
 
     /** A video's chapters (one request); empty when it has none, null when YouTube's answer is not a watch page. */
     suspend fun chapters(videoId: String): List<ExcorYouTubeChapter>? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
-        return decodeChapters(postPlayer(buildNextRequest(videoId, null, host.session())) ?: return null)
+        return decodeChapters(postMetadata(buildNextRequest(videoId, null, host.session())) ?: return null)
     }
 
     /**
@@ -210,7 +210,7 @@ internal class ExcorEngine(
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
         require(index == null || index in 0..10_000) { "index out of range" }
-        return decodeMix(postPlayer(buildWatchPlaylistRequest(videoId, playlistId, index, host.session())) ?: return null, playlistId)
+        return decodeMix(postMetadata(buildWatchPlaylistRequest(videoId, playlistId, index, host.session())) ?: return null, playlistId)
     }
 
     /**
@@ -222,20 +222,20 @@ internal class ExcorEngine(
         require(continuation != null || q.length in 1..200) { "query must be 1 to 200 characters" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         require(filterParams == null || SEARCH_PARAMS.matches(filterParams)) { "not search filter params" }
-        return decodeMusicSearch(postPlayer(buildMusicSearchRequest(q, continuation, filterParams, host.session())) ?: return null)
+        return decodeMusicSearch(postMetadata(buildMusicSearchRequest(q, continuation, filterParams, host.session())) ?: return null)
     }
 
-    /** YouTube Music search completions for a partial query; empty when there are none or the request fails. */
+    /** YouTube Music search completions for a partial query; empty when there are none. */
     suspend fun musicSuggestions(input: String): List<String> {
         val q = input.trim().take(200)
         if (q.isEmpty()) return emptyList()
-        return decodeMusicSuggestions(postPlayer(buildMusicSuggestionsRequest(q, host.session())) ?: return emptyList())
+        return decodeMusicSuggestions(postMetadata(buildMusicSuggestionsRequest(q, host.session())) ?: return emptyList())
     }
 
     /** A YouTube Music artist page (UC… channel ID); null when YouTube Music's answer is not one. */
     suspend fun musicArtist(channelId: String): ExcorYouTubeMusicArtist? {
         require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
-        return decodeMusicArtist(postPlayer(buildMusicBrowseRequest(channelId, null, host.session())) ?: return null, channelId)
+        return decodeMusicArtist(postMetadata(buildMusicBrowseRequest(channelId, null, host.session())) ?: return null, channelId)
     }
 
     /** A YouTube Music playlist page; [continuation] gives its next tracks. Null when the answer is not a playlist page. */
@@ -243,7 +243,7 @@ internal class ExcorEngine(
         require(PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         val browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId"
-        return decodeMusicPlaylist(postPlayer(buildMusicBrowseRequest(browseId, continuation, host.session())) ?: return null, playlistId.removePrefix("VL"))
+        return decodeMusicPlaylist(postMetadata(buildMusicBrowseRequest(browseId, continuation, host.session())) ?: return null, playlistId.removePrefix("VL"))
     }
 
     /**
@@ -255,20 +255,20 @@ internal class ExcorEngine(
         require(videoId == null || VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         require(playlistId == null || PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
-        return decodeMusicQueue(postPlayer(buildMusicQueueRequest(videoId, playlistId, continuation, host.session())) ?: return null)
+        return decodeMusicQueue(postMetadata(buildMusicQueueRequest(videoId, playlistId, continuation, host.session())) ?: return null)
     }
 
     /** Songs credited in a video's description (one request); empty when it credits none, null when not a watch page. */
     suspend fun songs(videoId: String): List<ExcorYouTubeSong>? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
-        return decodeSongs(postPlayer(buildNextRequest(videoId, null, host.session())) ?: return null)
+        return decodeSongs(postMetadata(buildNextRequest(videoId, null, host.session())) ?: return null)
     }
 
     /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */
     suspend fun related(videoId: String, continuation: String?): ExcorYouTubeRelated? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
-        return decodeRelated(postPlayer(buildNextRequest(videoId, continuation, host.session())) ?: return null)
+        return decodeRelated(postMetadata(buildNextRequest(videoId, continuation, host.session())) ?: return null)
     }
 
     /**
@@ -280,12 +280,12 @@ internal class ExcorEngine(
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
         val session = host.session()
-        val token = continuation ?: commentsTokenOf(postPlayer(buildNextRequest(videoId, null, session)) ?: return null) ?: return null
-        val page = decodeComments(postPlayer(buildNextRequest(null, token, session)) ?: return null) ?: return null
+        val token = continuation ?: commentsTokenOf(postMetadata(buildNextRequest(videoId, null, session)) ?: return null) ?: return null
+        val page = decodeComments(postMetadata(buildNextRequest(null, token, session)) ?: return null) ?: return null
         // Newest first needs the sort token from the first (Top) page: one more request.
         if (!newestFirst || continuation != null) return page
         val newest = page.newestContinuation ?: return page
-        return decodeComments(postPlayer(buildNextRequest(null, newest, session)) ?: return page) ?: page
+        return decodeComments(postMetadata(buildNextRequest(null, newest, session)) ?: return page) ?: page
     }
 
     /** Search completions for [query] in the session's language and region. */
@@ -511,7 +511,28 @@ internal class ExcorEngine(
      * 500, 502, 503, 504 or a transport error, waiting a Retry-After of at most 5 s or an exponential backoff with
      * jitter. Any other status is final. Cancellation is never retried.
      */
-    private suspend fun postPlayer(request: PlayerRequest): String? {
+    private suspend fun postPlayer(request: PlayerRequest): String? = when (val result = postWithRetries(request)) {
+        is PostResult.Body -> result.body
+        // Stream extraction treats any failed player request as "try the next client".
+        is PostResult.Exhausted -> null
+        is PostResult.Failed -> throw result.cause
+    }
+
+    /**
+     * A metadata read: the body, or null when YouTube answered with something other than the page (a non-retryable
+     * status, an oversized body). Throws [ExcorRequestException] when the request itself kept failing, so callers can
+     * tell "not available" from "try again later".
+     */
+    private suspend fun postMetadata(request: PlayerRequest): String? = when (val result = postWithRetries(request)) {
+        is PostResult.Body -> result.body
+        is PostResult.Exhausted -> throw ExcorRequestException(
+            if (result.status == 429) ExcorRequestFailure.RATE_LIMITED else ExcorRequestFailure.SERVER_ERROR,
+            result.status,
+        )
+        is PostResult.Failed -> throw ExcorRequestException(ExcorRequestFailure.NETWORK, null, result.cause)
+    }
+
+    private suspend fun postWithRetries(request: PlayerRequest): PostResult {
         var attempt = 1
         while (true) {
             val outcome = try {
@@ -519,13 +540,13 @@ internal class ExcorEngine(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                if (attempt >= INNERTUBE_ATTEMPTS) throw failure
-                PostOutcome.Retry(null)
+                if (attempt >= INNERTUBE_ATTEMPTS) return PostResult.Failed(failure)
+                PostOutcome.Retry(null, null)
             }
             when (outcome) {
-                is PostOutcome.Done -> return outcome.body
+                is PostOutcome.Done -> return PostResult.Body(outcome.body)
                 is PostOutcome.Retry -> {
-                    if (attempt >= INNERTUBE_ATTEMPTS) return null
+                    if (attempt >= INNERTUBE_ATTEMPTS) return PostResult.Exhausted(outcome.status)
                     val backoff = 300L * (1L shl (attempt - 1)) + Random.nextLong(0, 200)
                     delay(outcome.retryAfterMs ?: backoff)
                     attempt++
@@ -536,7 +557,13 @@ internal class ExcorEngine(
 
     private sealed interface PostOutcome {
         class Done(val body: String?) : PostOutcome
-        class Retry(val retryAfterMs: Long?) : PostOutcome
+        class Retry(val retryAfterMs: Long?, val status: Int?) : PostOutcome
+    }
+
+    private sealed interface PostResult {
+        class Body(val body: String?) : PostResult
+        class Exhausted(val status: Int?) : PostResult
+        class Failed(val cause: Exception) : PostResult
     }
 
     private suspend fun postOnce(request: PlayerRequest): PostOutcome {
@@ -549,9 +576,11 @@ internal class ExcorEngine(
         if (!response.status.isSuccess()) {
             response.bodyAsChannel().cancel()
             val status = response.status.value
+            // The endpoint name and status only: InnerTube URLs carry no secrets, but headers and bodies might.
+            log(ExcorLogLevel.WARN, "InnerTube ${request.url.substringAfter("/youtubei/v1/").substringBefore('?')} answered HTTP $status")
             if (status !in RETRYABLE_STATUSES) return PostOutcome.Done(null)
             val retryAfter = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()?.takeIf { it in 0..5 }?.times(1_000)
-            return PostOutcome.Retry(retryAfter)
+            return PostOutcome.Retry(retryAfter, status)
         }
         if ((response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L) > PLAYER_RESPONSE_LIMIT) {
             response.bodyAsChannel().cancel()

@@ -69,10 +69,10 @@
       "id": "G8",
       "name": "Reliability",
       "status": "partial",
-      "evidence": "Bounded bodies, cancellation, failed-tab null, per-track errors, request budgets, and InnerTube read retries (429/5xx/transport errors, 3 attempts, Retry-After of up to 5 s, backoff with jitter), all tested offline",
+      "evidence": "Typed request failures (ExcorRequestException: RATE_LIMITED, SERVER_ERROR, NETWORK) after bounded retries; WARN diagnostics naming endpoint and status; bounded bodies, cancellation, failed-tab reporting, per-track errors, request budgets; all tested offline (docs/ERROR_HANDLING.md)",
       "command": "./gradlew :jvmTest",
       "blockers": [
-        "No fault-injection run against live endpoints"
+        "No fault-injection run against live endpoints; one full live run returned two unexplained nulls (passed on reruns), now diagnosable through WARN logs"
       ]
     },
     {
