@@ -17,6 +17,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.content.TextContent
 import io.ktor.http.Parameters
+import io.ktor.http.Url
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readBuffer
@@ -42,10 +43,11 @@ internal class MusicHttp(
     private val cacheTtlMs: Long = 5 * 60_000,
 ) {
     private val budgets = ExcorCatalogProvider.entries.associateWith { RequestBudget(budgetOf(it), nowMs) }
+    private val itunesBudget = RequestBudget(ITUNES_BUDGET, nowMs)
     private val cache = LinkedHashMap<String, Pair<Long, JsonElement>>()
     private val cacheLock = Mutex()
     /** Requests sent so far, for benchmarks. */
-    val requests: Int get() = budgets.values.sumOf { it.taken }
+    val requests: Int get() = budgets.values.sumOf { it.taken } + itunesBudget.taken
 
     suspend fun getJson(
         provider: ExcorCatalogProvider,
@@ -56,7 +58,7 @@ internal class MusicHttp(
     ): JsonElement {
         val cacheable = cacheable && currentCoroutineContext()[FreshReadsKey] == null
         if (cacheable) cached(url)?.let { return it }
-        val element = send(provider) {
+        val element = send(provider, url) {
             http.get(url) {
                 header(HttpHeaders.Accept, "application/json")
                 bearer?.let { header(HttpHeaders.Authorization, "Bearer $it") }
@@ -68,7 +70,7 @@ internal class MusicHttp(
     }
 
     suspend fun postForm(provider: ExcorCatalogProvider, url: String, form: Map<String, String>, headers: Map<String, String> = emptyMap()): JsonElement =
-        send(provider) {
+        send(provider, url) {
             http.post(url) {
                 header(HttpHeaders.Accept, "application/json")
                 headers.forEach { (k, v) -> header(k, v) }
@@ -85,7 +87,7 @@ internal class MusicHttp(
         json: String? = null,
         contentType: ContentType = ContentType.Application.Json,
     ): JsonElement =
-        send(provider) {
+        send(provider, url) {
             http.request(url) {
                 this.method = method
                 header(HttpHeaders.Accept, "application/json")
@@ -94,10 +96,12 @@ internal class MusicHttp(
             }
         }
 
-    private suspend fun send(provider: ExcorCatalogProvider, call: suspend () -> HttpResponse): JsonElement {
+    private suspend fun send(provider: ExcorCatalogProvider, url: String, call: suspend () -> HttpResponse): JsonElement {
         var retried = false
+        // The keyless iTunes Search/Lookup API has its own published limit, separate from the Apple Music API's.
+        val budget = if (runCatching { Url(url).host }.getOrNull().equals(ITUNES_HOST, ignoreCase = true)) itunesBudget else budgets.getValue(provider)
         while (true) {
-            budgets.getValue(provider).take()
+            budget.take()
             val response = try {
                 call()
             } catch (cancelled: CancellationException) {
@@ -185,11 +189,17 @@ internal class MusicHttp(
             else -> ExcorCatalogError.PROVIDER_UNAVAILABLE
         }
 
-        // shortcut: 50 per 5 s is Deezer's commonly cited limit (its docs need a login); the others publish no figure. Tune if 429s appear.
+        // shortcut: 50 per 5 s is Deezer's commonly cited limit (its docs need a login); Spotify and the Apple Music API
+        // publish no figure. Tune if 429s appear.
         private fun budgetOf(provider: ExcorCatalogProvider) = when (provider) {
             ExcorCatalogProvider.DEEZER -> 50 to 5_000L
             else -> 20 to 1_000L
         }
+
+        // Apple's Search API page: "limited to approximately 20 calls per minute (subject to change)". Over it, Apple
+        // has been seen answering 403, so waiting here keeps matching from failing as access denied.
+        private const val ITUNES_HOST = "itunes.apple.com"
+        private val ITUNES_BUDGET = 20 to 60_000L
     }
 }
 

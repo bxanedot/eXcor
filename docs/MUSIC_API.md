@@ -22,6 +22,7 @@ Other members:
 - `parse(url)` parses links offline, including `spotify:` URIs and 32-hex Spotify GIDs.
 - `capabilities(provider)` reports what this configuration can do.
 - `tracksByIsrc(provider, isrc)` looks tracks up by ISRC.
+- `convertPlaylist(ref, target, maxTracks, options, onTrack)` matches each track of a playlist onto another provider, in order, and returns `ExcorPlaylistConversion`: per track, the candidates best first (check the verdict of `best`) or the error that stopped the search. It finds candidates and writes nothing.
 - `libraryTracks` and `libraryPlaylists` read the user's library.
 - `spotifyAuth(clientId)` runs Spotify sign-in.
 - `requestCount` counts the requests sent so far.
