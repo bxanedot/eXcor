@@ -112,4 +112,25 @@ class YouTubeWatchTest {
         assertEquals(emptyList(), decodeSongs("""{"contents":{"twoColumnWatchNextResults":{}}}"""))
         assertNull(decodeSongs("""{"responseContext":{}}"""))
     }
+
+    @Test
+    fun mixWindowAndItsContinuation() {
+        fun item(id: String, index: Int) = """{"playlistPanelVideoRenderer":{"videoId":"$id","title":{"simpleText":"Song $id"},
+            "longBylineText":{"runs":[{"text":"Mira Vale","navigationEndpoint":{"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa"}}}]},
+            "lengthText":{"simpleText":"4:02"},"thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/$id/hq.jpg","width":168,"height":94}]},
+            "navigationEndpoint":{"watchEndpoint":{"videoId":"$id","playlistId":"RDAAAAAAAAAAA","index":$index}}}}"""
+        fun panel(infinite: Boolean) = """{"contents":{"twoColumnWatchNextResults":{"playlist":{"playlist":{"playlistId":"RDAAAAAAAAAAA","title":"Mix - Glass River",
+            "isInfinite":$infinite,"contents":[${item("AAAAAAAAAAA", 0)},${item("BBBBBBBBBBB", 1)},{"playlistPanelVideoRenderer":{"videoId":"bad"}}]}}}}}"""
+        val mix = decodeMix(panel(true), "RDAAAAAAAAAAA")!!
+        assertEquals("Mix - Glass River", mix.title)
+        assertEquals(listOf("AAAAAAAAAAA", "BBBBBBBBBBB"), mix.videos.map { it.videoId })
+        assertEquals(242L, mix.videos[1].durationSeconds)
+        assertEquals("UCaaaaaaaaaaaaaaaaaaaaaa", mix.videos[1].channelId)
+        assertEquals("BBBBBBBBBBB" to 1, mix.nextVideoId to mix.nextIndex)
+        val finite = decodeMix(panel(false), "RDAAAAAAAAAAA")!!
+        assertNull(finite.nextVideoId)
+        assertNull(decodeMix(panel(true), "RDBBBBBBBBBBB"))
+        val request = buildWatchPlaylistRequest("BBBBBBBBBBB", "RDAAAAAAAAAAA", 1, ExcorSession(null, null, "", "")).body
+        assertTrue("\"playlistId\":\"RDAAAAAAAAAAA\"" in request && "\"index\":1" in request)
+    }
 }
