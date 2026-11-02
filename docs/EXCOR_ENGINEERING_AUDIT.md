@@ -31,6 +31,7 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | Spotify, full Apple Music API | `music/` | Tested | Need credentials |
 | Packaging and installability | `build.gradle.kts`, `samples/jvm-quickstart` | Verified | Full `publishToMavenLocal` on Linux. The sample installs through the README steps and runs live. Fixed: the shared metadata didn't compile (`RegexOption.DOT_MATCHES_ALL` isn't in common Kotlin), so the library couldn't be published until 2026-11-02 |
 | Session invalidation and secret redaction | `ExcorEngine.kt`, `Api.kt` | Tested | `EngineStateTest`; `ExcorSession.toString` hides cookies and visitor data |
+| Dependency vulnerabilities (OSV-Scanner 2.0.0 in CI) | `.github/workflows/ci.yml` | Verified | Shipped runtime dependencies: 115 packages, no known vulnerabilities (2026-11-02). Test TestNG pinned to 7.5.1. Android lint tooling findings are report-only |
 | Benchmarks | `LiveVideoInfoTest.benchmark`, `LiveMusicTest.benchmark` | Verified | `docs/PERFORMANCE.md` (measured 2026-11-02) |
 
 ## Defects found and fixed in this pass

@@ -23,6 +23,22 @@ jobs:
       # build does), then build a standalone consumer that follows the README's installation steps.
       - run: ./gradlew $GRADLE_ARGS publishToMavenLocal
       - run: ./gradlew $GRADLE_ARGS -p samples/jvm-quickstart build
+      # Known vulnerabilities (OSV) in what ships: the published variants' runtime dependencies fail the build. Build
+      # tooling (Android lint) and test-only dependencies are reported without failing. The lockfile exists only for
+      # this step; normal builds don't lock.
+      - name: Dependency vulnerability scan
+        run: |
+          printf 'rootProject { dependencyLocking { lockAllConfigurations() } }\n' > "$RUNNER_TEMP/lock.gradle"
+          ./gradlew $GRADLE_ARGS -q --init-script "$RUNNER_TEMP/lock.gradle" :dependencies --write-locks > /dev/null
+          curl -sSfL -o "$RUNNER_TEMP/osv-scanner" https://github.com/google/osv-scanner/releases/download/v2.0.0/osv-scanner_linux_amd64
+          echo "b60c273474aecad1158cfe1e9828f3841483701ba0fe3560517a45b2db16e84c  $RUNNER_TEMP/osv-scanner" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+          mkdir -p "$RUNNER_TEMP/shipped"
+          grep -E '=(.*,)?(jvmRuntimeClasspath|androidRuntimeClasspath|ios(Arm64|SimulatorArm64|X64)CompileKlibraries)(,|$)' gradle.lockfile > "$RUNNER_TEMP/shipped/gradle.lockfile"
+          echo "All configurations, report only:"
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile || true
+          echo "Shipped runtime dependencies, gating:"
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile "$RUNNER_TEMP/shipped/gradle.lockfile"
 
   windows:
     runs-on: windows-latest
