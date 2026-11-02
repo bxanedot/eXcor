@@ -107,10 +107,10 @@
       "id": "G12",
       "name": "Security",
       "status": "partial",
-      "evidence": "URL allowlist, secret redaction in toString and logs, link destinations restricted to http(s), bounded responses",
-      "command": "./gradlew :jvmTest --tests com.excor.UrlPolicyTest",
+      "evidence": "URL allowlist, secret redaction in toString and logs, link destinations restricted to http(s), bounded responses; CI scans dependencies with OSV-Scanner 2.0.0, gating on shipped runtime dependencies (115 packages, no known vulnerabilities on 2026-11-02)",
+      "command": "see the 'Dependency vulnerability scan' step in .github/workflows/ci.yml",
       "blockers": [
-        "No dependency vulnerability scan in CI yet"
+        "Report-only findings in Android lint tooling (guava, commons-lang3, httpclient, bouncycastle), which comes with the Android Gradle plugin and is not shipped"
       ]
     }
   ]

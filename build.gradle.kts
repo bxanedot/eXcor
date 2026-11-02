@@ -108,6 +108,8 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
             implementation("io.ktor:ktor-client-mock:3.6.0")
         }
+        // kotlin-test-testng brings TestNG 7.0.0, which has GHSA-rc2q-x9mf-w3vf (fixed in 7.5.1). Test-only.
+        jvmTest.dependencies { implementation("org.testng:testng:7.5.1") }
     }
 }
 

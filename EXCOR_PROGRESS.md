@@ -26,7 +26,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
 | G10 Release packaging | Partial | Local publish works; no remote release is authorized |
 | G11 Competitive analysis | Partial | InnerTubeX from its README; YouTube.js and NewPipeExtractor document only platforms, services and installation |
-| G12 Security | Partial | No dependency vulnerability scan |
+| G12 Security | Partial | CI OSV scan gates on shipped dependencies (clean); tooling and test findings are report-only |
 
 **Not a release candidate:** G4–G6 are blocked in this environment, and the directive's acceptance standard requires real playback validation.
 
@@ -67,5 +67,5 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 1. Done: YouTube benchmark (`docs/PERFORMANCE.md`), InnerTube read retries, `videoInfo` watch-page fallback.
 2. Assess YouTube.js and NewPipeExtractor from their documentation for `docs/COMPETITOR_MATRIX.md`.
-3. A dependency vulnerability check in CI.
+3. Done: OSV dependency scan in CI. Shipped dependencies are clean. TestNG for tests is pinned to 7.5.1, which fixes GHSA-rc2q-x9mf-w3vf. Android lint tooling findings are report-only.
 4. On a normal network: run `LivePlaybackTest`. If playback works there, SABR/UMP work can start against real responses.
