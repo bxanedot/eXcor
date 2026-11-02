@@ -2,7 +2,10 @@ package com.excor
 
 import com.excor.catalog.ExcorMusicCatalog
 import com.excor.music.ExcorMusic
+import com.excor.music.ExcorMatchOptions
 import com.excor.music.ExcorMusicConfig
+import com.excor.music.ExcorMusicTrack
+import com.excor.music.ExcorTrackMatch
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
@@ -46,6 +49,9 @@ class Excor(host: ExcorHost) {
     /** YouTube search: videos, Shorts, channels and playlists; pass `page.continuation` back for more, or a `page.filters` entry's params to filter. */
     @Throws(Throwable::class)
     suspend fun search(query: String, continuation: String? = null, filterParams: String? = null): ExcorYouTubeSearchPage? = engine.search(query, continuation, filterParams)
+    /** YouTube videos matching a Spotify, Apple Music or Deezer track, best first; one search. */
+    @Throws(Throwable::class)
+    suspend fun findOnYouTube(track: ExcorMusicTrack, options: ExcorMatchOptions = ExcorMatchOptions()): List<ExcorTrackMatch> = engine.findOnYouTube(track, options)
     /** A YouTube playlist: details and videos; pass `page.continuation` back for more videos. */
     @Throws(Throwable::class)
     suspend fun playlist(playlistId: String, continuation: String? = null): ExcorYouTubePlaylist? = engine.playlist(playlistId, continuation)
@@ -62,6 +68,9 @@ class Excor(host: ExcorHost) {
     /** A video's chapters, in start order; empty when it has none. */
     @Throws(Throwable::class)
     suspend fun chapters(videoId: String): List<ExcorYouTubeChapter>? = engine.chapters(videoId)
+    /** Songs YouTube credits in a video's description: title, artist, album and credit lines. */
+    @Throws(Throwable::class)
+    suspend fun songs(videoId: String): List<ExcorYouTubeSong>? = engine.songs(videoId)
     /** Videos YouTube suggests next to a video; pass `related.continuation` back for more. */
     @Throws(Throwable::class)
     suspend fun related(videoId: String, continuation: String? = null): ExcorYouTubeRelated? = engine.related(videoId, continuation)

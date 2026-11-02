@@ -72,3 +72,9 @@ The live test matches this Deezer track to Apple Music with a LIKELY or SAME_REC
 - version tags such as "(Live …)" are kept.
 
 There is no ISRC, so matching scores it as a text candidate. The live test matches a music video to its Deezer track this way.
+
+When YouTube credits the song in the description's Music section, `excor.songs(videoId)` gives a cleaner source: `song.asMusicTrack(videoId, durationMs)` uses YouTube's own title, artist and album instead of a title split. Pass the video's duration only when the video is the song itself. The live test matches a credited song to Deezer this way.
+
+## To YouTube
+
+`excor.findOnYouTube(track)` goes the other way: it searches YouTube once for the track's primary artist and title, reads each video as a track (as above), and returns the non-DIFFERENT matches, best first. Live streams are skipped. A music video whose intro or outro runs past the duration tolerance is rejected like any other duration mismatch, which usually leaves the auto-generated "Topic" upload of the recording. The live test finds a Deezer track on YouTube this way.

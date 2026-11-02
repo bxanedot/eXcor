@@ -1,5 +1,9 @@
 package com.excor
 
+import com.excor.catalog.ExcorCatalogProvider
+import com.excor.music.ExcorArtistRole
+import com.excor.music.ExcorMusicArtist
+import com.excor.music.ExcorMusicTrack
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -13,6 +17,27 @@ data class ExcorYouTubeRelated(val videos: List<ExcorYouTubePlaylistVideo>, val 
 
 /** A chapter of a video; it runs until the next chapter's [startMs] or the end of the video. */
 data class ExcorYouTubeChapter(val title: String, val startMs: Long)
+
+/**
+ * A song YouTube credits in a video's description ("Music" section). [credits] are YouTube's labelled credit lines as
+ * shown, in the session's language, such as "Writers" to the writers' names.
+ */
+data class ExcorYouTubeSong(val title: String, val artist: String?, val album: String?, val credits: Map<String, String>) {
+    /**
+     * The song as a music track for [com.excor.music.ExcorMusic.matchAcrossProviders], keyed by the video it was
+     * credited in. YouTube's credit is cleaner than a title split, but carries no ISRC, so matching still scores it as
+     * text; pass the video's duration when the video is the song itself.
+     */
+    fun asMusicTrack(videoId: String, durationMs: Long? = null): ExcorMusicTrack = ExcorMusicTrack(
+        provider = ExcorCatalogProvider.YOUTUBE_MUSIC,
+        id = videoId,
+        title = title,
+        url = "https://www.youtube.com/watch?v=$videoId",
+        artists = listOfNotNull(artist?.let { ExcorMusicArtist(ExcorCatalogProvider.YOUTUBE_MUSIC, null, it, ExcorArtistRole.PRIMARY) }),
+        albumTitle = album,
+        durationMs = durationMs,
+    )
+}
 
 /** One comment. [text] can be empty (image-only comments). Counts are YouTube's display texts ("220K"), which it rounds. */
 data class ExcorYouTubeComment(
@@ -71,6 +96,56 @@ internal fun decodeChapters(source: String): List<ExcorYouTubeChapter>? {
         val start = c.textAt("timeRangeStartMillis")?.toLongOrNull()?.takeIf { it >= 0 } ?: return@mapNotNull null
         ExcorYouTubeChapter(title, start)
     }.sortedBy { it.startMs }
+}
+
+/**
+ * Songs from a first `next` response's structured description. The music card list is the one whose footer button
+ * has the MUSIC icon, so its localized "Music" title does not matter. Empty when the video credits no songs; null when
+ * the response is not a watch page.
+ */
+internal fun decodeSongs(source: String): List<ExcorYouTubeSong>? {
+    val root = parse(source) ?: return null
+    if (root.path("contents", "twoColumnWatchNextResults") !is JsonObject) return null
+    val lists = (root["engagementPanels"] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }.flatMap { panel ->
+        (panel.path("engagementPanelSectionListRenderer", "content", "structuredDescriptionContentRenderer", "items") as? JsonArray).orEmpty()
+            .mapNotNull { (it as? JsonObject)?.get("horizontalCardListRenderer") as? JsonObject }
+    }
+    val music = lists.firstOrNull { it.path("footerButton", "buttonViewModel", "iconName")?.let { i -> (i as? JsonPrimitive)?.contentOrNull } == "MUSIC" } ?: return emptyList()
+    return (music["cards"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("videoAttributeViewModel") as? JsonObject }.mapNotNull { card ->
+        val title = card.textAt("title")?.trim()?.takeIf(String::isNotEmpty) ?: return@mapNotNull null
+        val dialog = ((card.path("overflowMenuOnTap", "innertubeCommand", "confirmDialogEndpoint", "content", "confirmDialogRenderer", "dialogMessages") as? JsonArray)?.firstOrNull() as? JsonObject)
+        ExcorYouTubeSong(
+            title = title,
+            artist = card.textAt("subtitle")?.trim()?.takeIf(String::isNotEmpty),
+            album = card.path("secondarySubtitle", "content")?.let { (it as? JsonPrimitive)?.contentOrNull }?.trim()?.takeIf(String::isNotEmpty),
+            credits = creditsOf(dialog?.get("runs") as? JsonArray),
+        )
+    }
+}
+
+/** The credits dialog's runs: a bold "Label: " followed by plain value runs, entries separated by blank lines. */
+private fun creditsOf(runs: JsonArray?): Map<String, String> {
+    val credits = linkedMapOf<String, String>()
+    val label = StringBuilder()
+    val value = StringBuilder()
+    fun flush() {
+        val l = label.toString().trim().removeSuffix(":").trim()
+        val v = value.toString().trim()
+        if (l.isNotEmpty() && v.isNotEmpty() && credits.size < 32) credits[l.take(100)] = v.take(1_000)
+        label.clear()
+        value.clear()
+    }
+    for (run in runs.orEmpty().mapNotNull { it as? JsonObject }) {
+        val text = run.textAt("text") ?: continue
+        if ((run["bold"] as? JsonPrimitive)?.booleanOrNull == true) {
+            if (value.isNotEmpty()) flush()
+            label.append(text)
+        } else {
+            value.append(text)
+        }
+    }
+    flush()
+    return credits
 }
 
 /** The comments section's continuation token in a first `next` response; null when comments are off or absent. */

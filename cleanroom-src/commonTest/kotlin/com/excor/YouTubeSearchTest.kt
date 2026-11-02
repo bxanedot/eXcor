@@ -48,6 +48,14 @@ class YouTubeSearchTest {
         assertEquals(listOf(true), page.playlists.map { it.isMix })
         assertEquals("EpwDEhBTeW50aGV0aWM", page.continuation)
         assertEquals(1_234L, page.estimatedResults)
+
+        val topic = video.copy(title = "Glass River (Official Audio)", channelName = "Mira Vale - Topic").asMusicTrack()
+        assertEquals("Glass River", topic.title)
+        assertEquals("Mira Vale", topic.artists.single().name)
+        assertEquals(3_723_000L, topic.durationMs)
+        val split = video.copy(title = "Mira Vale - Glass River (Live at Home)", channelName = "Label").asMusicTrack()
+        assertEquals("Glass River (Live at Home)", split.title)
+        assertEquals("Mira Vale", split.artists.single().name)
     }
 
     @Test

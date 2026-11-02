@@ -53,41 +53,46 @@ data class ExcorVideoInfo(
      * channels give the artist directly; otherwise an "Artist - Title" video title is split. The result is a best
      * guess from the title, so matching scores it like any other text candidate (no ISRC).
      */
-    fun asMusicTrack(): ExcorMusicTrack {
-        val topicArtist = author?.takeIf { it.endsWith(TOPIC_SUFFIX) }?.removeSuffix(TOPIC_SUFFIX)?.trim()
-        // "(Official Video)", "[4K Remaster]" and the like describe the video, not the recording.
-        val cleaned = VIDEO_TAG.replace(title) { m -> if (VIDEO_WORDS.containsMatchIn(m.value) && !VERSION_WORDS.containsMatchIn(m.value)) " " else m.value }.replace(Regex("\\s+"), " ").trim()
-        val dash = Regex("^(.+?)\\s[-–—]\\s(.+)$").find(cleaned)
-        val (artist, song) = when {
-            topicArtist != null -> topicArtist to cleaned
-            dash != null -> dash.groupValues[1].trim() to dash.groupValues[2].trim()
-            else -> author to cleaned
-        }
-        return ExcorMusicTrack(
-            provider = ExcorCatalogProvider.YOUTUBE_MUSIC,
-            id = videoId,
-            title = song,
-            url = url,
-            artists = listOfNotNull(artist?.let { ExcorMusicArtist(ExcorCatalogProvider.YOUTUBE_MUSIC, channelId.takeIf { topicArtist != null }, it, ExcorArtistRole.PRIMARY) }),
-            durationMs = durationSeconds?.times(1_000),
-            releaseDate = publishDate?.take(10),
-            artwork = thumbnails,
-            markets = availableCountries,
-            availability = when {
-                playable -> ExcorAvailability.AVAILABLE
-                playabilityStatus == null -> ExcorAvailability.UNKNOWN
-                else -> ExcorAvailability.UNAVAILABLE
-            },
-        )
-    }
-
-    private companion object {
-        const val TOPIC_SUFFIX = " - Topic"
-        val VIDEO_TAG = Regex("[(\\[][^)\\]]*[)\\]]")
-        val VERSION_WORDS = Regex("\\b(live|remix|acoustic|cover|instrumental|karaoke|demo|edit|version)\\b", RegexOption.IGNORE_CASE)
-        val VIDEO_WORDS = Regex("\\b(official|video|audio|lyrics?|visuali[sz]er|hd|hq|4k|8k|mv|m/v)\\b", RegexOption.IGNORE_CASE)
-    }
+    fun asMusicTrack(): ExcorMusicTrack = youtubeMusicTrack(videoId, title, author, channelId, durationSeconds, thumbnails).copy(
+        releaseDate = publishDate?.take(10),
+        markets = availableCountries,
+        availability = when {
+            playable -> ExcorAvailability.AVAILABLE
+            playabilityStatus == null -> ExcorAvailability.UNKNOWN
+            else -> ExcorAvailability.UNAVAILABLE
+        },
+    )
 }
+
+/**
+ * A YouTube video read as a music track: an auto-generated "Artist - Topic" channel gives the artist directly;
+ * otherwise an "Artist - Title" title is split, else the channel is taken as the artist.
+ */
+internal fun youtubeMusicTrack(videoId: String, title: String, author: String?, channelId: String?, durationSeconds: Long?, thumbnails: List<ExcorArtwork>): ExcorMusicTrack {
+    val topicArtist = author?.takeIf { it.endsWith(TOPIC_SUFFIX) }?.removeSuffix(TOPIC_SUFFIX)?.trim()
+    // "(Official Video)", "[4K Remaster]" and the like describe the video, not the recording.
+    val cleaned = VIDEO_TAG.replace(title) { m -> if (VIDEO_WORDS.containsMatchIn(m.value) && !VERSION_WORDS.containsMatchIn(m.value)) " " else m.value }.replace(Regex("\\s+"), " ").trim()
+    val dash = Regex("^(.+?)\\s[-–—]\\s(.+)$").find(cleaned)
+    val (artist, song) = when {
+        topicArtist != null -> topicArtist to cleaned
+        dash != null -> dash.groupValues[1].trim() to dash.groupValues[2].trim()
+        else -> author to cleaned
+    }
+    return ExcorMusicTrack(
+        provider = ExcorCatalogProvider.YOUTUBE_MUSIC,
+        id = videoId,
+        title = song,
+        url = "https://www.youtube.com/watch?v=$videoId",
+        artists = listOfNotNull(artist?.let { ExcorMusicArtist(ExcorCatalogProvider.YOUTUBE_MUSIC, channelId.takeIf { topicArtist != null }, it, ExcorArtistRole.PRIMARY) }),
+        durationMs = durationSeconds?.times(1_000),
+        artwork = thumbnails,
+    )
+}
+
+private const val TOPIC_SUFFIX = " - Topic"
+private val VIDEO_TAG = Regex("[(\\[][^)\\]]*[)\\]]")
+private val VERSION_WORDS = Regex("\\b(live|remix|acoustic|cover|instrumental|karaoke|demo|edit|version)\\b", RegexOption.IGNORE_CASE)
+private val VIDEO_WORDS = Regex("\\b(official|video|audio|lyrics?|visuali[sz]er|hd|hq|4k|8k|mv|m/v)\\b", RegexOption.IGNORE_CASE)
 
 internal val VIDEO_ID = Regex("[A-Za-z0-9_-]{11}")
 
