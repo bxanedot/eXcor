@@ -15,6 +15,7 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | Client profiles for playback (web, web_embedded, tv, visionOS) | `Clients.kt`, `ExcorEngine.kt` | Tested; Blocked live | `ClientsTest`; the player answers `LOGIN_REQUIRED` "Sign in to confirm you're not a bot" for every client from here |
 | Video metadata, with a watch-page fallback when the player withholds details | `VideoInfo.kt` | Verified | `videoMetadataAndCrossProviderMatch`, `videoInfoForABotCheckedVideo`, `EngineStateTest.videoInfoFallsBackToTheWatchPageWhenThePlayerWithholdsDetails` |
 | InnerTube read retries (429, 5xx, transport errors; three attempts; Retry-After of up to 5 s; backoff with jitter) | `ExcorEngine.kt` | Tested | `EngineStateTest.innerTubeReadsRetryTransientFailuresAndStopAtTheLimit` |
+| Typed request failures and diagnostics | `Api.kt`, `ExcorEngine.kt` | Tested | `EngineStateTest` (exhausted 503, 429 and transport failures map to `SERVER_ERROR`, `RATE_LIMITED` and `NETWORK`; the message carries the kind only); `docs/ERROR_HANDLING.md` |
 | Search: filters, Shorts, continuations, suggestions | `YouTubeSearch.kt`, `YouTubeWatch.kt` | Verified | `searchWithContinuation`, `relatedVideosAndComments` |
 | Playlists, mixes | `YouTubePlaylist.kt`, `YouTubeWatch.kt` | Verified | `playlistDetailsAndVideos`, the mix checks |
 | Channels: five tabs, About panel, failed-tab reporting | `YouTubeChannel.kt` | Verified | `channelDetailsAndUploads`, `EngineStateTest.aChannelTabThatFailsToLoadIsNotReportedAsEmpty` |

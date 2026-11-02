@@ -54,7 +54,12 @@ val artist = excor.musicArtist("UC_kRDKYrUlrbtrSiyu5Tflg")
 val radio = excor.musicRadio(videoId = "FGBhQbmPwH8")         // pass radio.continuation back for more
 ```
 
-Every call is `suspend`, and returns null when YouTube's answer isn't the expected page. Invalid arguments throw `IllegalArgumentException`. [Feature matrix](docs/FEATURE_MATRIX.md) lists what is verified live and what is blocked.
+Every call is `suspend`:
+- It returns null when YouTube answered, but not with the expected page (an unavailable or removed item).
+- It throws `ExcorRequestException` when the request itself kept failing after up to three attempts. `failure` says whether YouTube was rate limiting (`RATE_LIMITED`), had server errors (`SERVER_ERROR`) or couldn't be reached (`NETWORK`).
+- Invalid arguments throw `IllegalArgumentException`.
+
+ [Feature matrix](docs/FEATURE_MATRIX.md) lists what is verified live and what is blocked.
 
 ## Streams
 

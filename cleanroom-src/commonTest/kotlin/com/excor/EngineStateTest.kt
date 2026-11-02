@@ -10,6 +10,7 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -127,7 +128,8 @@ class EngineStateTest {
         })
         try {
             val engine = ExcorEngine(FakeHost(), null, client)
-            assertNull(engine.channel(channelId, null, ExcorYouTubeChannelTab.PLAYLISTS))
+            // Retried, then reported as a server failure rather than an empty tab.
+            assertEquals(ExcorRequestFailure.SERVER_ERROR, assertFailsWith<ExcorRequestException> { engine.channel(channelId, null, ExcorYouTubeChannelTab.PLAYLISTS) }.failure)
             // A tab the channel does not have is an empty list, not a failure.
             assertEquals(emptyList(), assertNotNull(engine.channel(channelId, null, ExcorYouTubeChannelTab.LIVE)).videos)
         } finally {
@@ -192,13 +194,36 @@ class EngineStateTest {
 
             calls = 0
             statuses += List(3) { HttpStatusCode.ServiceUnavailable }
-            assertNull(engine.search("q", "token"))
+            val server = assertFailsWith<ExcorRequestException> { engine.search("q", "token") }
+            assertEquals(ExcorRequestFailure.SERVER_ERROR to 503, server.failure to server.statusCode)
             assertEquals(3, calls, "three attempts at most")
+
+            calls = 0
+            retryAfter = null
+            statuses += List(3) { HttpStatusCode.TooManyRequests }
+            assertEquals(ExcorRequestFailure.RATE_LIMITED, assertFailsWith<ExcorRequestException> { engine.search("q", "token") }.failure)
+            assertEquals(3, calls)
 
             calls = 0
             statuses += HttpStatusCode.BadRequest
             assertNull(engine.search("q", "token"))
             assertEquals(1, calls, "a client error is final")
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun aConnectionThatKeepsFailingIsANetworkFailure() = runTest {
+        var calls = 0
+        val client = HttpClient(MockEngine { calls++; throw IllegalStateException("connection reset") })
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            val failure = assertFailsWith<ExcorRequestException> { engine.search("q", "token") }
+            assertEquals(ExcorRequestFailure.NETWORK, failure.failure)
+            assertEquals(3, calls)
+            // The message carries the failure kind only.
+            assertEquals("YouTube request failed: NETWORK", failure.message)
         } finally {
             client.close()
         }

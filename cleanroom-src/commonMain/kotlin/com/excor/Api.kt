@@ -60,3 +60,27 @@ interface ExcorHostServices {
     /** Null uses [catalogTokenProvider] for tokens and defaults for the rest. */
     val musicConfig: ExcorMusicConfig? get() = null
 }
+
+/** Why a YouTube request failed after eXcor's retries. */
+enum class ExcorRequestFailure {
+    /** HTTP 429 on every attempt: back off before asking again. */
+    RATE_LIMITED,
+
+    /** HTTP 500, 502, 503 or 504 on every attempt: YouTube is having trouble; try again later. */
+    SERVER_ERROR,
+
+    /** The connection failed on every attempt (DNS, TLS, timeout, reset); check connectivity or the HTTP client. */
+    NETWORK,
+}
+
+/**
+ * Thrown by the metadata calls (`videoInfo`, `search`, `channel`, `musicSearch` and the rest) when the request itself
+ * kept failing, after up to three attempts. A null result instead means YouTube answered, but not with the page asked
+ * for (an unavailable or removed item, or a refusal that retrying would not change). The message names only the
+ * failure and status, never URLs, headers or session data.
+ */
+class ExcorRequestException(
+    val failure: ExcorRequestFailure,
+    val statusCode: Int?,
+    cause: Throwable? = null,
+) : Exception("YouTube request failed: $failure" + (statusCode?.let { " (HTTP $it)" } ?: ""), cause)

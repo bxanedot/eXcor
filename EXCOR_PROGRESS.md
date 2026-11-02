@@ -22,7 +22,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G5 Streaming | Blocked | `LivePlaybackTest` fails here for that reason |
 | G6 SABR/UMP | Blocked | Not implemented; nothing to observe here |
 | G7 YouTube Music | Passing | For what this environment can observe; songs and albums are withheld |
-| G8 Reliability | Partial | InnerTube read retries tested offline; no live fault injection |
+| G8 Reliability | Partial | Typed failures after bounded retries, WARN diagnostics; no live fault injection |
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
 | G10 Release packaging | Partial | Local publish works; no remote release is authorized |
 | G11 Competitive analysis | Partial | InnerTubeX from its README; YouTube.js and NewPipeExtractor document only platforms, services and installation |
@@ -65,7 +65,10 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 ## Next tasks
 
-1. Done: YouTube benchmark (`docs/PERFORMANCE.md`), InnerTube read retries, `videoInfo` watch-page fallback.
-2. Assess YouTube.js and NewPipeExtractor from their documentation for `docs/COMPETITOR_MATRIX.md`.
-3. Done: OSV dependency scan in CI. Shipped dependencies are clean. TestNG for tests is pinned to 7.5.1, which fixes GHSA-rc2q-x9mf-w3vf. Android lint tooling findings are report-only.
-4. On a normal network: run `LivePlaybackTest`. If playback works there, SABR/UMP work can start against real responses.
+1. Done:
+   - YouTube benchmark (`docs/PERFORMANCE.md`), InnerTube read retries, `videoInfo` watch-page fallback;
+   - YouTube.js and NewPipeExtractor documentation assessment;
+   - OSV dependency scan (bxanedot/eXcor#57);
+   - typed request failures (`docs/ERROR_HANDLING.md`) and `CHANGELOG.md`.
+2. If the intermittent nulls seen once in a full live run recur, read the WARN logs (endpoint and status) and fix the cause.
+3. On a normal network: run `LivePlaybackTest`. If playback works there, SABR/UMP work can start against real responses.
