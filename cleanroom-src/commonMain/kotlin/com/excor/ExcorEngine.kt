@@ -18,6 +18,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.URLBuilder
+import io.ktor.http.takeFrom
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -332,9 +333,11 @@ internal class ExcorEngine(
         requireM4a: Boolean,
         session: ExcorSession,
     ): ExcorStream? {
-        val page = fetchWatchPage(videoId, session) ?: return null
-        val apiKey = page.apiKey ?: return null
-        val playerUrl = page.playerResponse.playerScriptUrl
+        // The watch page gives the API key and player script, but YouTube can answer it with a captcha page while the
+        // player API still serves clients that need neither; those are tried without it.
+        val page = fetchWatchPage(videoId, session)
+        val apiKey = page?.apiKey
+        val playerUrl = page?.playerResponse?.playerScriptUrl
         val excluded = activeExclusions(videoId)
         val identities = selectClients(session, skipClients, excluded)
         val playerData = if (identities.any(ClientIdentity::requiresPlayerScript) && playerUrl != null) {
@@ -344,7 +347,10 @@ internal class ExcorEngine(
 
         for (identity in identities) {
             val token = if (identity.requiresStreamingToken) {
-                val provider = tokenProvider ?: continue
+                val provider = tokenProvider ?: run {
+                    log(ExcorLogLevel.DEBUG, "${identity.name} skipped: needs a streaming token and no provider is set", videoId)
+                    null
+                } ?: continue
                 try {
                     provider.getPoToken(videoId, session.visitorData.orEmpty(), session.cookie)
                         ?.takeIf { it.playerRequestToken.isNotBlank() && it.streamingDataToken.isNotBlank() }
@@ -355,7 +361,10 @@ internal class ExcorEngine(
                     continue
                 }
             } else null
-            if (identity.requiresPlayerScript && playerData?.entry?.signatureTimestamp == null) continue
+            if (identity.requiresPlayerScript && playerData?.entry?.signatureTimestamp == null) {
+                log(ExcorLogLevel.DEBUG, "${identity.name} skipped: needs the player script, which was not available", videoId)
+                continue
+            }
 
             val request = buildPlayerRequest(
                 identity, videoId, session, apiKey,
@@ -368,8 +377,12 @@ internal class ExcorEngine(
             } catch (_: Exception) {
                 continue
             } ?: continue
-            val response = decodePlayerResponse(body) ?: continue
+            val response = decodePlayerResponse(body) ?: run {
+                log(ExcorLogLevel.DEBUG, "${identity.name}: not a player response", videoId)
+                null
+            } ?: continue
             if (response.playabilityStatus != "OK") {
+                log(ExcorLogLevel.DEBUG, "${identity.name}: playability ${response.playabilityStatus}", videoId)
                 playabilityReason = response.playabilityReason
                     ?: response.playabilityStatus?.let { "YouTube reports playback status $it" }
                 continue
@@ -377,8 +390,13 @@ internal class ExcorEngine(
             val responsePlayerUrl = response.playerScriptUrl ?: playerUrl
             val formats = playableFormats(response, responsePlayerUrl, token?.streamingDataToken, session)
             val headers = mediaHeaders(identity.userAgent, session)
-            for (format in rankAudioFormats(formats, maxKbps, requireM4a)) {
-                if (!isPlayable(format.url, headers)) continue
+            val ranked = rankAudioFormats(formats, maxKbps, requireM4a)
+            log(ExcorLogLevel.DEBUG, "${identity.name}: ${response.formats.size} formats, ${formats.size} usable, ${ranked.size} audio candidates", videoId)
+            for (format in ranked) {
+                if (!isPlayable(format.url, headers)) {
+                    log(ExcorLogLevel.DEBUG, "${identity.name}: ${format.mimeType} failed the playback probe", videoId)
+                    continue
+                }
                 val stream = ExcorStream(
                     videoId = videoId,
                     url = format.url,
@@ -600,20 +618,36 @@ internal class ExcorEngine(
         return response.bodyAsText().takeIf { it.length <= limit }
     }
 
+    /**
+     * Reads the first KiB of [url]. googlevideo answers a media request with a 302 to another googlevideo node, so up to
+     * [MAX_MEDIA_REDIRECTS] redirects are followed here (the client follows none), each only to a target that passes
+     * the same playback allowlist.
+     */
     private suspend fun isPlayable(url: String, headers: Map<String, String>): Boolean {
-        if (!isAllowedPlaybackUrl(url)) return false
-        val response = try {
-            http.get(url) {
-                headers.forEach { (name, value) -> header(name, value) }
-                header(HttpHeaders.Range, "bytes=0-1023")
+        var target = url
+        repeat(MAX_MEDIA_REDIRECTS + 1) {
+            if (!isAllowedPlaybackUrl(target)) return false
+            val response = try {
+                http.get(target) {
+                    headers.forEach { (name, value) -> header(name, value) }
+                    header(HttpHeaders.Range, "bytes=0-1023")
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                log(ExcorLogLevel.DEBUG, "playback probe failed: ${failure::class.simpleName}")
+                return false
             }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-            return false
+            response.bodyAsChannel().cancel()
+            val status = response.status.value
+            log(ExcorLogLevel.DEBUG, "playback probe answered HTTP $status")
+            if (status == 200 || status == 206) return true
+            if (status !in 301..308 || status == 304) return false
+            val location = response.headers[HttpHeaders.Location] ?: return false
+            // An absolute Location is used exactly as sent: rebuilding it re-encodes the signed query and breaks it.
+            target = if (location.startsWith("https://")) location else runCatching { URLBuilder(target).takeFrom(location).buildString() }.getOrNull() ?: return false
         }
-        response.bodyAsChannel().cancel()
-        return response.status.value == 200 || response.status.value == 206
+        return false
     }
 
     private suspend fun warmUp() {
@@ -787,6 +821,7 @@ internal class ExcorEngine(
         const val PLAYER_SCRIPT_LIMIT = 2_000_000
         const val PLAYER_RESPONSE_LIMIT = 2_000_000
         const val INNERTUBE_ATTEMPTS = 3
+        const val MAX_MEDIA_REDIRECTS = 3
         val RETRYABLE_STATUSES = setOf(429, 500, 502, 503, 504)
         const val MAX_CIPHER_LENGTH = 16_384
         const val EXCLUSION_MS = 10 * 60 * 1000L

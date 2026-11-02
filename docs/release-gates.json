@@ -28,31 +28,31 @@
     {
       "id": "G4",
       "name": "Player compatibility",
-      "status": "blocked",
-      "evidence": "PlayerJsTest passes offline; no playable player response reaches this environment",
-      "command": "./gradlew :jvmTest --tests com.excor.PlayerJsTest",
+      "status": "partial",
+      "evidence": "Live 2026-11-02: VISIONOS (no player script, no streaming token) answers OK with direct URLs for dQw4w9WgXcQ, and eXcor extracts from it. Its player request no longer sends youtube.com's Referer, which YouTube answers with 403. PlayerJsTest passes offline",
+      "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest",
       "blockers": [
-        "YouTube answers every client with LOGIN_REQUIRED (bot check) from this environment"
+        "The signature and n-parameter path (player script) has no playable response to test against here: the watch page answers with a captcha (HTTP 429)"
       ]
     },
     {
       "id": "G5",
       "name": "Streaming",
-      "status": "blocked",
-      "evidence": "LivePlaybackTest fails here: no streamingData",
+      "status": "partial",
+      "evidence": "Live 2026-11-02 (LivePlaybackTest.extractedAudioDecodesFullyAndSeeks): eXcor extracted Opus/WebM audio for dQw4w9WgXcQ, the full 3,433,755-byte file decoded with ffmpeg without errors (213.06 s against a 213 s video), and a mid-file range read landed at the requested offset. The probe follows googlevideo's 302 to another allowlisted node",
       "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest",
       "blockers": [
-        "Bot check from this environment; needs a normal-network run"
+        "Most videos are still bot-checked or unavailable to every client from this environment (kJQP7kiw5Fk unavailable; JGwWNGJdvx8, FGBhQbmPwH8, 9bZkp7q19f0 bot-checked), so publicMusicVideosReturnRangeReadableAudio fails on its second video here"
       ]
     },
     {
       "id": "G6",
       "name": "SABR/UMP",
       "status": "blocked",
-      "evidence": "Not implemented; no serverAbrStreamingUrl can be observed here",
+      "evidence": "Not implemented. A serverAbrStreamingUrl now appears in VISIONOS responses here, but those responses also carry direct URLs, which play",
       "command": null,
       "blockers": [
-        "No observable SABR responses from this environment"
+        "No documented, independently usable SABR request specification; the direct URLs from the same response are used instead"
       ]
     },
     {

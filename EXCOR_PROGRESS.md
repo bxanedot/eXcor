@@ -18,9 +18,9 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G1 Existing eXcor preserved | Passing | Additive changes only |
 | G2 Build correctness | Passing | Now includes the shared metadata compile |
 | G3 InnerTube operations | Passing | Live-verified |
-| G4 Player compatibility | Blocked | Bot check: no playable player response here |
-| G5 Streaming | Blocked | `LivePlaybackTest` fails here for that reason |
-| G6 SABR/UMP | Blocked | Not implemented; nothing to observe here |
+| G4 Player compatibility | Partial | VISIONOS path verified live; the player-script path is untested here |
+| G5 Streaming | Partial | Extraction, full ffmpeg decode and seek verified for a video YouTube serves here; most videos are bot-checked |
+| G6 SABR/UMP | Blocked | Not implemented; responses here carry direct URLs that play |
 | G7 YouTube Music | Passing | For what this environment can observe; songs and albums are withheld |
 | G8 Reliability | Partial | Typed failures after bounded retries, WARN diagnostics; no live fault injection |
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
@@ -28,7 +28,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G11 Competitive analysis | Partial | InnerTubeX from its README; YouTube.js and NewPipeExtractor document only platforms, services and installation |
 | G12 Security | Partial | CI OSV scan gates on shipped dependencies (clean); tooling and test findings are report-only |
 
-**Not a release candidate:** G4–G6 are blocked in this environment, and the directive's acceptance standard requires real playback validation.
+**Not a release candidate:** G6 (SABR/UMP) is not implemented. G4 and G5 are verified only for videos YouTube serves to this environment; most are bot-checked.
 
 ## Completed in this pass
 
@@ -55,11 +55,12 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 - **Consumer:** `./gradlew publishToMavenLocal && ./gradlew -p samples/jvm-quickstart run`
   Latest: all six steps "ok".
 - **Playback:** `EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest`
-  Fails here (bot check). It must be run on a normal network.
+  - `extractedAudioDecodesFullyAndSeeks` passes (2026-11-02): VISIONOS Opus, 3,433,755 bytes, ffmpeg decodes 213.06 s against a 213 s video, mid-file seek correct.
+  - `publicMusicVideosReturnRangeReadableAudio` passes its first video but fails on the second, `kJQP7kiw5Fk`, which every client gets as "unavailable" here.
 
 ## Known blockers
 
-- **Bot check:** YouTube answers every playback client from this environment with `LOGIN_REQUIRED` ("Sign in to confirm you're not a bot") or "unavailable". There is no `streamingData` and no SABR URL, so G4–G6 can't be verified here, and eXcor does not bypass bot checks.
+- **Bot check:** YouTube answers most videos from this environment with `LOGIN_REQUIRED` ("Sign in to confirm you're not a bot") or "unavailable", on every client. Some videos (such as `dQw4w9WgXcQ`) are served to VISIONOS, which is how streaming was verified. The HTML watch page answers with a captcha (HTTP 429). eXcor does not bypass either.
 - **Withheld YouTube Music catalog:** songs, albums and discographies aren't offered to this environment.
 - **Maven Central 429s:** builds here use a local init script that serves a few modules from `~/.m2`. CI is unaffected.
 
