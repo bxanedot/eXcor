@@ -12,7 +12,7 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | Subsystem | Files | State | Evidence |
 |---|---|---|---|
 | InnerTube request builder (WEB, WEB_REMIX) | `InnerTube.kt`, `Clients.kt` | Verified | Every live metadata test; `YouTubeMusicTest.requestsGoToYouTubeMusicWithItsClient` |
-| Client profiles for playback (web, web_embedded, tv, visionOS) | `Clients.kt`, `ExcorEngine.kt` | Tested; Blocked live | `ClientsTest`; the player answers `LOGIN_REQUIRED` "Sign in to confirm you're not a bot" for every client from here |
+| Client profiles for playback (web, web_embedded, tv, visionOS) | `Clients.kt`, `ExcorEngine.kt` | Partially verified | VISIONOS plays live without the watch page or a player script. The others are bot-checked here or need the player script, whose watch page answers with a captcha. Per-client DEBUG logs explain each skip |
 | Video metadata, with a watch-page fallback when the player withholds details | `VideoInfo.kt` | Verified | `videoMetadataAndCrossProviderMatch`, `videoInfoForABotCheckedVideo`, `EngineStateTest.videoInfoFallsBackToTheWatchPageWhenThePlayerWithholdsDetails` |
 | InnerTube read retries (429, 5xx, transport errors; three attempts; Retry-After of up to 5 s; backoff with jitter) | `ExcorEngine.kt` | Tested | `EngineStateTest.innerTubeReadsRetryTransientFailuresAndStopAtTheLimit` |
 | Typed request failures and diagnostics | `Api.kt`, `ExcorEngine.kt` | Tested | `EngineStateTest` (exhausted 503, 429 and transport failures map to `SERVER_ERROR`, `RATE_LIMITED` and `NETWORK`; the message carries the kind only); `docs/ERROR_HANDLING.md` |
@@ -24,8 +24,8 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | YouTube Music: songs, albums, discographies | `YouTubeMusic.kt` | Tested; Blocked live | Not offered here: no Songs or Albums filter, no `MPREb_` IDs, empty Releases tabs |
 | Player script and signature handling | `PlayerJs.kt`, `cleanroom-src/ejs` | Tested | `PlayerJsTest`; no playable response to apply it to here |
 | Stream selection and URL validation | `Selection.kt`, `UrlPolicy.kt`, `UrlParameters.kt` | Tested | `SelectionTest`, `UrlPolicyTest` |
-| Direct audio streams | `ExcorEngine.kt` | Tested; Blocked live | `EngineStateTest`; `LivePlaybackTest` fails here because of the bot check |
-| SABR/UMP | — | Missing; Blocked | No `serverAbrStreamingUrl` reaches this environment, so the protocol can't be observed or validated |
+| Direct audio streams | `ExcorEngine.kt`, `PlayerRequest.kt`, `Clients.kt` | Verified (for videos YouTube serves here) | `LivePlaybackTest.extractedAudioDecodesFullyAndSeeks`: full download, ffmpeg decode, duration match, mid-file seek. `EngineStateTest.extractionWorksWithoutTheWatchPageAndFollowsOnlyAllowedMediaRedirects`. Most videos remain bot-checked from here |
+| SABR/UMP | — | Missing | A `serverAbrStreamingUrl` now appears in VISIONOS responses, alongside direct URLs that play; there is no documented SABR request specification to implement against independently |
 | Captions, transcripts | — | Blocked | No `captions` in the bot-checked player response; `get_transcript` answers "Precondition check failed" |
 | Hashtag pages | — | Blocked | Robot check |
 | Music catalogs: Deezer, keyless Apple; matching; playlist conversion | `music/` | Verified | `LiveMusicTest` |
@@ -40,6 +40,12 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 - **The library couldn't be published:** the common metadata compilation failed in `Lyrics.kt` and `Drm.kt`. CI now publishes and builds a consumer on every push.
 - **A failed channel tab looked empty:** a tab that failed to load came back as an empty list (bxanedot/eXcor#54).
 - **Too fast for Apple's keyless limit:** iTunes calls shared a 20-per-second budget against Apple's documented limit of about 20 per minute (bxanedot/eXcor#55).
+- **Extraction returned nothing even when YouTube served a playable stream.** There were three causes:
+  - it required the HTML watch page, which answers with a captcha (HTTP 429) here, before trying any client;
+  - VISIONOS's player request carried youtube.com's Referer, which YouTube answers with 403;
+  - the playback probe treated googlevideo's 302 to another node as a failure, because the client follows no redirects.
+
+  Now extraction goes on without the page for clients that don't need it. VISIONOS sends no browser Origin or Referer. The probe follows up to 3 redirects, each only to an allowlisted target, using an absolute Location verbatim (rebuilding it broke the signed query).
 - **`videoInfo` null for most videos:** it returned null for 8 of 10 videos from a bot-checked environment. It now falls back to the watch page.
 - **Transient failures were final:** InnerTube reads now retry, within bounds.
 - **Mix continuation lost:** a mix's continuation was dropped when its last item didn't decode (bxanedot/eXcor#54).

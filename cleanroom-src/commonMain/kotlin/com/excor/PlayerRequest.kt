@@ -17,11 +17,11 @@ internal fun buildPlayerRequest(
     client: ClientIdentity,
     videoId: String,
     session: ExcorSession,
-    apiKey: String,
+    apiKey: String?,
     signatureTimestamp: Int?,
     poToken: PoTokenResult?,
 ): PlayerRequest? {
-    if (apiKey.isBlank() || videoId.isBlank()) return null
+    if (videoId.isBlank()) return null
     if (client.requiresPlayerScript && signatureTimestamp == null) return null
 
     val clientContext = buildJsonObject {
@@ -49,14 +49,17 @@ internal fun buildPlayerRequest(
             put("serviceIntegrityDimensions", buildJsonObject { put("poToken", it.playerRequestToken) })
         }
     }
+    // InnerTube answers without the page's API key, so a key is sent only when the watch page supplied one.
     val url = URLBuilder("https://www.youtube.com/youtubei/v1/player")
-        .apply { parameters.append("key", apiKey) }
+        .apply { apiKey?.takeIf(String::isNotBlank)?.let { parameters.append("key", it) } }
         .buildString()
     val headers = buildMap {
         put("Accept", "*/*")
         put("Content-Type", "application/json")
-        put("Origin", "https://www.youtube.com")
-        put("Referer", "https://www.youtube.com/")
+        if (client.browserOrigin) {
+            put("Origin", "https://www.youtube.com")
+            put("Referer", "https://www.youtube.com/")
+        }
         put("User-Agent", client.userAgent)
         put("X-YouTube-Client-Name", client.clientId.toString())
         put("X-YouTube-Client-Version", client.clientVersion)

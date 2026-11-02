@@ -229,6 +229,45 @@ class EngineStateTest {
         }
     }
 
+    @Test
+    fun extractionWorksWithoutTheWatchPageAndFollowsOnlyAllowedMediaRedirects() = runTest {
+        var redirectTo = "https://rr5---sn.googlevideo.com/videoplayback"
+        val requestedHosts = mutableListOf<String>()
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                // YouTube's captcha answer for the HTML page; clients that need no player script go on without it.
+                "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                "/youtubei/v1/player" -> respond(fixture("player-response.json"), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                "/videoplayback" -> {
+                    requestedHosts += request.url.host
+                    if (request.url.host == "rr1---sn.googlevideo.com") {
+                        respond("", HttpStatusCode.Found, headersOf(HttpHeaders.Location, "$redirectTo?${request.url.encodedQuery}"))
+                    } else {
+                        respond("x", HttpStatusCode.PartialContent)
+                    }
+                }
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        }) {
+            // As Excor configures its client: redirects are never followed by the client itself.
+            followRedirects = false
+        }
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            val stream = assertNotNull(engine.extract(VIDEO_ID, 128, emptySet(), false, false))
+            assertEquals("VISIONOS", stream.clientName)
+            assertEquals(listOf("rr1---sn.googlevideo.com", "rr5---sn.googlevideo.com"), requestedHosts)
+
+            // A redirect off the playback allowlist is never followed (a fresh engine, so nothing is remembered).
+            requestedHosts.clear()
+            redirectTo = "https://evil.example/videoplayback"
+            assertNull(ExcorEngine(FakeHost(), null, client).extract(VIDEO_ID, 128, emptySet(), false, false))
+            assertEquals(listOf("rr1---sn.googlevideo.com"), requestedHosts)
+        } finally {
+            client.close()
+        }
+    }
+
     private data class TestEngine(
         val engine: ExcorEngine,
         val host: FakeHost,

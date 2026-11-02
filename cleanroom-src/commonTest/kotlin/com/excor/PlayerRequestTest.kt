@@ -39,6 +39,19 @@ class PlayerRequestTest {
     }
 
     @Test
+    fun nativeClientSendsNoBrowserOriginAndNoKeyWithoutOne() {
+        val session = ExcorSession(null, null, "US", "en")
+        val visionOs = selectClients(session, emptySet(), emptySet()).first { it.name == "VISIONOS" }
+        val request = assertNotNull(buildPlayerRequest(visionOs, "abcdefghijk", session, null, null, null))
+        // YouTube refuses VISIONOS's player request with HTTP 403 when it carries youtube.com's Referer.
+        assertEquals(null, request.headers["Referer"])
+        assertEquals(null, request.headers["Origin"])
+        assertEquals(null, Url(request.url).parameters["key"])
+        val web = selectClients(session, emptySet(), emptySet()).first { it.name == "TVHTML5" }
+        assertEquals("https://www.youtube.com/", buildPlayerRequest(web, "abcdefghijk", session, "key", 1, null)!!.headers["Referer"])
+    }
+
+    @Test
     fun webRequestNeedsSignatureTimestamp() {
         val session = ExcorSession(null, "visitor", "US", "en")
         val web = selectClients(session, emptySet(), emptySet()).last()

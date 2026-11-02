@@ -10,6 +10,11 @@ internal data class ClientIdentity(
     val userAgent: String,
     val requiresPlayerScript: Boolean,
     val requiresStreamingToken: Boolean,
+    /**
+     * Whether player requests carry youtube.com's Origin and Referer, as a browser page would. A native client sends
+     * neither, and YouTube refuses VISIONOS's player request (HTTP 403) when it carries the Referer.
+     */
+    val browserOrigin: Boolean = true,
 )
 
 private val webEmbedded = ClientIdentity(
@@ -40,6 +45,7 @@ private val visionOs = ClientIdentity(
     userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
     requiresPlayerScript = false,
     requiresStreamingToken = false,
+    browserOrigin = false,
 )
 
 private val web = ClientIdentity(
