@@ -158,6 +158,15 @@ internal class ExcorEngine(
         return home.channel.copy(videos = page.videos, continuation = page.continuation, playlists = page.playlists)
     }
 
+    /** A channel's About panel: two requests (the channel home, then its panel). Null when YouTube gives no panel. */
+    suspend fun channelAbout(channelId: String): ExcorYouTubeChannelAbout? {
+        require(CHANNEL_ID.matches(channelId)) { "not a YouTube channel ID (UC…)" }
+        val session = host.session()
+        val home = decodeChannelHome(postPlayer(buildBrowseRequest(channelId, null, session)) ?: return null, channelId) ?: return null
+        val token = home.aboutToken ?: return null
+        return decodeChannelAbout(postPlayer(buildBrowseRequest(null, token, session)) ?: return null, channelId)
+    }
+
     /** Videos YouTube suggests next to [videoId]; [continuation] gives more. Null when YouTube's answer is not a watch page. */
     suspend fun related(videoId: String, continuation: String?): ExcorYouTubeRelated? {
         require(VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }

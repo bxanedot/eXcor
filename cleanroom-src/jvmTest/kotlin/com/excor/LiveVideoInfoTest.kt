@@ -65,6 +65,9 @@ class LiveVideoInfoTest {
         assertTrue(lists.playlists.size >= 5, "playlists: ${lists.playlists.size}")
         val more = assertNotNull(excor.channel("UC_kRDKYrUlrbtrSiyu5Tflg", assertNotNull(channel.continuation)))
         assertTrue(more.videos.isNotEmpty() && more.videos.none { v -> channel.videos.any { it.videoId == v.videoId } })
+        val about = assertNotNull(excor.channelAbout("UCBR8-60-B28hp2BmDPdntcQ"))
+        assertTrue(about.description != null && (about.viewCount ?: 0) > 1_000_000 && about.country != null && about.subscribersText != null)
+        assertTrue(about.links.isNotEmpty() && about.links.all { it.url.startsWith("http") && "redir_token" !in it.url })
     }
 
     @Test
