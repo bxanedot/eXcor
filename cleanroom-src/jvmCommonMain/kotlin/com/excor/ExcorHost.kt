@@ -13,13 +13,13 @@ interface ExcorHost : ExcorHostServices {
 
 /**
  * A ready [ExcorHost] for apps that need no custom session or persistence:
- * - a signed-out session in [region] and [language];
+ * - a session in [region] and [language], signed out unless [cookie] carries the account's YouTube cookies (a Cookie header value);
  * - an in-memory config store, so player data lasts only as long as this host;
  * - the system clock;
  * - [log] for messages, which never contain stream URLs, cookies or tokens.
  *
- * Pass [filesDir] to keep the player-data cache on disk. Implement [ExcorHost] yourself for cookies, visitor data or a
- * PO-token provider.
+ * Pass [filesDir] to keep the player-data cache on disk. Implement [ExcorHost] yourself for visitor data or a session
+ * that changes while the host lives.
  */
 fun excorDefaultHost(
     httpClient: OkHttpClient = OkHttpClient(),
@@ -27,11 +27,13 @@ fun excorDefaultHost(
     language: String = "en",
     filesDir: File? = null,
     tokenProvider: TokenProvider? = null,
+    cookie: String? = null,
     log: (ExcorLogLevel, String) -> Unit = { _, _ -> },
 ): ExcorHost {
     require(region.length == 2 && region.all(Char::isLetter)) { "region must be a two-letter code" }
     require(language.length in 2..12 && language.all { it.isLetter() || it == '-' }) { "language must be a language tag" }
-    val session = ExcorSession(null, null, region.uppercase(), language)
+    require(cookie == null || cookie.none { it < ' ' || it == '' }) { "cookie must be a single header value" }
+    val session = ExcorSession(cookie?.trim()?.takeIf(String::isNotEmpty), null, region.uppercase(), language)
     return object : ExcorHost {
         override val tokenProvider = tokenProvider
         override val filesDir = filesDir

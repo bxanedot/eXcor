@@ -16,7 +16,7 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 
 **Next, in order:**
 1. **Run the live checks on the owner's PC** (home network, which may differ from the phone's mobile data): `LiveVideoInfoTest`, `LivePlaybackTest`, `LiveMusicTest` (commands under "Build and test"). Record exactly what plays, as G4, G5 and G7 evidence. If the watch page loads there, the TVHTML5 player-script path (G4) can finally be tested.
-2. **Ask the owner about the bot check.** The legitimate options are:
+2. **Bot check: the owner chose both routes (2026-11-03).** Signed-in sessions are built (cookies plus `SAPISIDHASH`; the preview apps take a pasted Cookie header) and need a live check with the owner's account. The PO-token provider is next. Original note: The legitimate options are:
    - a signed-in session: the host supplies cookies through `ExcorSession`;
    - a host-supplied PO token: `TokenProvider`.
 

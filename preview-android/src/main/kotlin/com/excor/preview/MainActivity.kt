@@ -34,6 +34,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -98,9 +99,14 @@ class MainActivity : ComponentActivity() {
     private var job: Job? = null
     private var downloadJob: Job? = null
     private var pendingDownload: (() -> Unit)? = null
+    private var signedIn by mutableStateOf(false)
+    private var signingIn by mutableStateOf(false)
+    private var cookieDraft by mutableStateOf("")
 
     private lateinit var excor: Excor
     private lateinit var browser: Browser
+    // The account's YouTube cookies when signed in: app-private, outside backups, never logged.
+    private val cookieFile by lazy { File(noBackupFilesDir, "youtube-cookie") }
     private lateinit var player: ExoPlayer
     private val http = mediaClient()
     private val clock = SimpleDateFormat("HH:mm:ss", Locale.US)
@@ -114,11 +120,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val region = Locale.getDefault().country.takeIf { it.length == 2 && it.all(Char::isLetter) } ?: "US"
-        val language = Locale.getDefault().language.takeIf { it.length in 2..12 && it.all(Char::isLetter) } ?: "en"
-        excor = Excor(excorDefaultHost(region = region, language = language, filesDir = cacheDir) { level, message -> addLog(level, message) })
-        excor.init()
-        browser = Browser(excor)
+        connect(cookieFile.takeIf(File::isFile)?.readText())
         player = ExoPlayer.Builder(this).build()
         sharedText(intent)?.let { query = it }
         setContent {
@@ -126,6 +128,37 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) { Screen() }
             }
         }
+    }
+
+    private fun connect(cookie: String?) {
+        val region = Locale.getDefault().country.takeIf { it.length == 2 && it.all(Char::isLetter) } ?: "US"
+        val language = Locale.getDefault().language.takeIf { it.length in 2..12 && it.all(Char::isLetter) } ?: "en"
+        excor = Excor(excorDefaultHost(region = region, language = language, filesDir = cacheDir, cookie = cookie) { level, message -> addLog(level, message) })
+        excor.init()
+        browser = Browser(excor)
+        signedIn = cookie != null
+    }
+
+    /** Takes the Cookie header of a signed-in youtube.com browser tab, pasted by the user. */
+    private fun signIn() {
+        val cookie = cookieDraft.trim().removePrefix("Cookie:").trim()
+        status = when {
+            "SAPISID=" !in cookie && "__Secure-3PAPISID=" !in cookie -> "That has no SAPISID cookie, so YouTube would not treat it as signed in."
+            cookie.any { it < ' ' } -> "Paste the header value on one line."
+            else -> {
+                cookieFile.writeText(cookie)
+                connect(cookie)
+                signingIn = false
+                "Signed in. Requests now use your account."
+            }
+        }
+        cookieDraft = ""
+    }
+
+    private fun signOut() {
+        cookieFile.delete()
+        connect(null)
+        status = "Signed out."
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -342,6 +375,26 @@ class MainActivity : ComponentActivity() {
         ) {
             item {
                 Text("eXcor Preview", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 12.dp))
+                if (signedIn) TextButton(onClick = ::signOut) { Text("Signed in to YouTube · Sign out") }
+                else TextButton(onClick = { signingIn = !signingIn }) { Text("Sign in to YouTube") }
+                if (signingIn && !signedIn) {
+                    Text(
+                        "Paste the Cookie header of a youtube.com request from a browser where you are signed in (developer tools, " +
+                            "Network, any youtube.com request, Request headers, Cookie). It stays on this phone, in the app's private storage.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = cookieDraft,
+                            onValueChange = { cookieDraft = it },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            placeholder = { Text("Cookie header") },
+                            visualTransformation = PasswordVisualTransformation(),
+                        )
+                        Button(onClick = ::signIn, modifier = Modifier.padding(top = 8.dp)) { Text("Save") }
+                    }
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Source.entries.forEach { option ->
                         FilterChip(selected = source == option, onClick = { source = option }, label = { Text(option.label) })
