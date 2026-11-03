@@ -101,7 +101,7 @@ internal fun signatureTimestamp(playerScript: String): Int? =
     SIGNATURE_TIMESTAMP.find(playerScript)?.groupValues?.getOrNull(1)?.toIntOrNull()
 
 internal suspend fun runEjs(input: String): String {
-    require(input.length <= 2_000_000) { "Player challenge input is too large" }
+    require(input.length <= 6_000_000) { "Player challenge input is too large" }
     val inputLiteral = JsonPrimitive(input).toString()
     val program = "$EJS_LIB\nObject.assign(globalThis, lib.lib);\n" +
         "globalThis.require = name => { if (name === 'meriyah' || name === 'astring') return lib.lib[name]; throw new Error('Unsupported EJS dependency'); };\n" +
@@ -109,7 +109,8 @@ internal suspend fun runEjs(input: String): String {
     return withContext(Dispatchers.Default) {
         val runtime = QuickJs.create(Dispatchers.Default)
         try {
-            runtime.memoryLimit = 64L * 1024 * 1024
+            // The 2.6 MB player script of 2026-11 parses out of memory at 128 MiB and solves at 256 MiB.
+            runtime.memoryLimit = 256L * 1024 * 1024
             runtime.maxStackSize = 1024L * 1024
             runtime.evaluationTimeoutMillis = 10_000
             runtime.evaluate<String>(program)

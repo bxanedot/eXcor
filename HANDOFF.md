@@ -15,7 +15,7 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 - So on that network, YouTube bot-checks every signed-out client. Not a preview bug. Don't work around it.
 
 **Next, in order:**
-1. **Run the live checks on the owner's PC** (home network, which may differ from the phone's mobile data): `LiveVideoInfoTest`, `LivePlaybackTest`, `LiveMusicTest` (commands under "Build and test"). Record exactly what plays, as G4, G5 and G7 evidence. If the watch page loads there, the TVHTML5 player-script path (G4) can finally be tested.
+1. ~~**Run the live checks on the owner's PC.**~~ Done 2026-11-03 (results in `EXCOR_PROGRESS.md`). Home network: the same bot check as the phone and the cloud; YouTube Music offers songs and albums (now live-tested); the watch page loads, and the player-script path now solves the live player, but YouTube serves nothing to TVHTML5. Still open there: install ffmpeg and rerun `LivePlaybackTest` for the decode and mux checks.
 2. **Ask the owner about the bot check.** The legitimate options are:
    - a signed-in session: the host supplies cookies through `ExcorSession`;
    - a host-supplied PO token: `TokenProvider`.

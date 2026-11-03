@@ -49,6 +49,16 @@ class YouTubeSearchTest {
         assertEquals("EpwDEhBTeW50aGV0aWM", page.continuation)
         assertEquals(1_234L, page.estimatedResults)
 
+        // Newer pages show an artist's official card in place of the channelRenderer.
+        val card = decodeSearchPage("""{"contents":{"twoColumnSearchResultsRenderer":{"primaryContents":{"sectionListRenderer":{"contents":[
+          {"itemSectionRenderer":{"contents":[{"officialCardViewModel":{"header":{"pageHeaderViewModel":{
+            "title":{"dynamicTextViewModel":{"text":{"content":"Mira Vale"},"rendererContext":{"commandContext":{"onTap":{"innertubeCommand":{"browseEndpoint":{"browseId":"UCaaaaaaaaaaaaaaaaaaaaaa"}}}}}}},
+            "image":{"contentPreviewImageViewModel":{"image":{"sources":[{"url":"https://yt3.ggpht.com/a=s176","width":176,"height":176}]}}},
+            "metadata":{"contentMetadataViewModel":{"metadataRows":[{"metadataParts":[{"text":{"content":"@miravale"}}]},
+              {"metadataParts":[{"text":{"content":"1.2M subscribers"}},{"text":{"content":"352 videos"}}]}]}}}}}}]}}]}}}}}""")!!
+        assertEquals(listOf(channel.copy(thumbnails = card.channels.single().thumbnails)), card.channels)
+        assertEquals("https://yt3.ggpht.com/a=s176", card.channels.single().thumbnails.single().url)
+
         val topic = video.copy(title = "Glass River (Official Audio)", channelName = "Mira Vale - Topic").asMusicTrack()
         assertEquals("Glass River", topic.title)
         assertEquals("Mira Vale", topic.artists.single().name)

@@ -74,7 +74,7 @@ internal class PlayerDataDiskStore(
     }
 
     private companion object {
-        const val MAX_ENTRY_BYTES = 2_000_000L
+        const val MAX_ENTRY_BYTES = 8_000_000L
         const val MAX_ENTRIES = 3
     }
 }

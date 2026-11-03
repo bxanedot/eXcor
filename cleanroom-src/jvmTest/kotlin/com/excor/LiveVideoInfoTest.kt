@@ -53,19 +53,19 @@ class LiveVideoInfoTest {
         if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
         val excor = Excor(Host(OkHttpClient()))
         val first = assertNotNull(excor.search("daft punk"))
-        assertTrue(first.videos.size >= 5 && first.videos.all { it.title.isNotBlank() })
-        assertTrue(first.channels.any { it.title.contains("Daft Punk", ignoreCase = true) })
+        assertTrue(first.videos.size >= 5 && first.videos.all { it.title.isNotBlank() }, "first page videos: ${first.videos.size}")
+        assertTrue(first.channels.any { it.title.contains("Daft Punk", ignoreCase = true) }, "channels: ${first.channels.size}")
         val second = assertNotNull(excor.search("daft punk", assertNotNull(first.continuation)))
-        assertTrue(second.videos.isNotEmpty() && second.videos.none { v -> first.videos.any { it.videoId == v.videoId } })
+        assertTrue(second.videos.isNotEmpty() && second.videos.none { v -> first.videos.any { it.videoId == v.videoId } }, "second page: ${second.videos.size} videos, ${second.videos.count { v -> first.videos.any { it.videoId == v.videoId } }} repeated")
 
         val channelsOnly = first.filters.first { it.group == "Type" && it.label == "Channels" }
         val filtered = assertNotNull(excor.search("daft punk", filterParams = assertNotNull(channelsOnly.params)))
-        assertTrue(filtered.channels.size >= 5 && filtered.videos.isEmpty())
+        assertTrue(filtered.channels.size >= 5 && filtered.videos.isEmpty(), "channels filter: ${filtered.channels.size} channels, ${filtered.videos.size} videos")
         assertTrue(filtered.filters.first { it.label == "Channels" }.selected)
         val more = assertNotNull(excor.search("daft punk", assertNotNull(filtered.continuation)))
         assertTrue(more.channels.isNotEmpty() && more.videos.isEmpty(), "the continuation keeps the filter")
         val shorts = first.filters.first { it.group == "Type" && it.label == "Shorts" }
-        assertTrue(assertNotNull(excor.search("daft punk", filterParams = shorts.params)).shorts.isNotEmpty())
+        assertTrue(assertNotNull(excor.search("daft punk", filterParams = shorts.params)).shorts.isNotEmpty(), "shorts filter")
     }
 
     @Test
@@ -135,12 +135,12 @@ class LiveVideoInfoTest {
         assertTrue(top.videoId != null && top.type in setOf(ExcorYouTubeMusicItemType.VIDEO, ExcorYouTubeMusicItemType.SONG) && top.durationSeconds != null, "top result: ${top.type} ${top.title}")
         val videos = assertNotNull(search.filters.firstOrNull { it.params != null && it.label == "Videos" })
         val filtered = assertNotNull(excor.musicSearch("daft punk", filterParams = videos.params))
-        assertTrue(filtered.items.size >= 10 && filtered.items.all { it.videoId != null } && filtered.items.any { it.artists.isNotEmpty() })
+        assertTrue(filtered.items.size >= 10 && filtered.items.all { it.videoId != null } && filtered.items.any { it.artists.isNotEmpty() }, "videos filter: ${filtered.items.map { "${it.type} ${it.videoId != null} ${it.artists.size}" }}")
         val more = assertNotNull(excor.musicSearch("daft punk", assertNotNull(filtered.continuation)))
         assertTrue(more.items.isNotEmpty() && more.items.count { v -> filtered.items.none { it.videoId == v.videoId } } >= 5, "more: ${more.items.size}")
 
         val page = assertNotNull(excor.musicArtist(assertNotNull(artist.browseId)))
-        assertTrue(page.name == "Daft Punk" && page.description != null && page.monthlyAudienceText != null && page.radioPlaylistId != null)
+        assertTrue(page.name == "Daft Punk" && page.description != null && page.monthlyAudienceText != null && page.radioPlaylistId != null, "artist page: name=${page.name} description=${page.description != null} audience=${page.monthlyAudienceText != null} radio=${page.radioPlaylistId != null}")
         assertTrue(page.shelves.isNotEmpty() && page.shelves.all { it.items.isNotEmpty() }, "shelves: ${page.shelves.map { it.title }}")
         val videoShelf = page.shelves.first { it.moreBrowseId != null }
         val playlist = assertNotNull(excor.musicPlaylist(videoShelf.moreBrowseId!!))
@@ -152,6 +152,31 @@ class LiveVideoInfoTest {
         assertTrue(next.tracks.any { t -> radio.tracks.none { it.videoId == t.videoId } }, "the next radio window brings new tracks")
         val artistRadio = assertNotNull(excor.musicRadio(playlistId = page.radioPlaylistId))
         assertTrue(artistRadio.tracks.isNotEmpty())
+    }
+
+    /** Songs and albums, which YouTube Music offers to some networks only (not to the cloud containers tried so far). */
+    @Test
+    fun youTubeMusicSongsAndAlbums() = runBlocking {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable live checks")
+        val excor = Excor(Host(OkHttpClient()))
+        val search = assertNotNull(excor.musicSearch("daft punk"))
+        val songsFilter = search.filters.firstOrNull { it.label == "Songs" && it.params != null }
+            ?: throw SkipException("YouTube Music offers no Songs filter to this network: ${search.filters.map { it.label }}")
+        val songs = assertNotNull(excor.musicSearch("daft punk", filterParams = songsFilter.params)).items
+        assertTrue(songs.size >= 10 && songs.all { it.type == ExcorYouTubeMusicItemType.SONG && it.videoId != null && it.durationSeconds != null }, "songs: ${songs.map { "${it.type} ${it.videoId != null} ${it.durationSeconds}" }}")
+        assertTrue(songs.count { it.album != null && it.albumBrowseId != null && it.artists.isNotEmpty() } >= songs.size / 2, "songs with album and artist")
+
+        val albumsFilter = assertNotNull(search.filters.firstOrNull { it.label == "Albums" && it.params != null })
+        val albums = assertNotNull(excor.musicSearch("daft punk", filterParams = albumsFilter.params)).items
+        assertTrue(albums.size >= 5 && albums.all { it.type == ExcorYouTubeMusicItemType.ALBUM && it.browseId != null }, "albums: ${albums.map { it.type }}")
+        val album = assertNotNull(albums.firstOrNull { it.playlistId != null }, "an album with its playlist")
+        val tracks = assertNotNull(excor.musicPlaylist(album.playlistId!!)).tracks
+        assertTrue(tracks.size >= 5 && tracks.all { it.videoId != null && it.durationSeconds != null }, "album tracks: ${tracks.size}")
+
+        val artist = assertNotNull(excor.musicArtist("UCRr1xG_2WIDs18a6cIiCxeA"))
+        val top = assertNotNull(artist.shelves.firstOrNull { it.title == "Top songs" }, "shelves: ${artist.shelves.map { it.title }}")
+        assertTrue(top.items.isNotEmpty() && top.items.all { it.type == ExcorYouTubeMusicItemType.SONG && it.videoId != null }, "top songs: ${top.items.map { it.type }}")
+        assertTrue(artist.shelves.any { s -> s.items.any { it.type == ExcorYouTubeMusicItemType.ALBUM } }, "an album shelf")
     }
 
     /**

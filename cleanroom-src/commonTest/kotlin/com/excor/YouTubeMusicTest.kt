@@ -46,6 +46,7 @@ class YouTubeMusicTest {
         assertEquals(listOf(ExcorYouTubeMusicArtistRef("Mira Vale", "UCaaaaaaaaaaaaaaaaaaaaaa")), song.artists)
         assertEquals("Tides", song.album)
         assertEquals("MPREb_synthetic", song.albumBrowseId)
+        assertEquals(201L, song.durationSeconds)
         assertEquals(1, song.thumbnails.size)
         assertEquals("UCaaaaaaaaaaaaaaaaaaaaaa", page.items[0].browseId)
         assertEquals("VLPLsynthetic", page.items[4].browseId)
@@ -113,6 +114,11 @@ class YouTubeMusicTest {
         assertEquals(ExcorYouTubeMusicItemType.VIDEO, shelf.items.single().type)
         assertEquals("OLAK5uy_synthetic", shelf.items.single().playlistId)
         assertEquals(1, artist.thumbnails.size)
+        // The newer header variant: both buttons use a watchEndpoint that also names a first video.
+        val mix = decodeMusicArtist("""{"header":{"musicImmersiveHeaderRenderer":{"title":{"runs":[{"text":"Mira Vale"}]},
+            "startRadioButton":{"buttonRenderer":{"navigationEndpoint":{"watchEndpoint":{"videoId":"AAAAAAAAAAA","playlistId":"RDEMsynthetic"}}}},
+            "playButton":{"buttonRenderer":{"navigationEndpoint":{"watchEndpoint":{"videoId":"AAAAAAAAAAA","playlistId":"RDAOsynthetic"}}}}}}}""", "UCaaaaaaaaaaaaaaaaaaaaaa")!!
+        assertEquals("RDEMsynthetic" to "RDAOsynthetic", mix.radioPlaylistId to mix.shufflePlaylistId)
         assertNull(decodeMusicArtist("""{"header":{}}""", "UCaaaaaaaaaaaaaaaaaaaaaa"))
 
         fun row(id: String, title: String) = """{"musicResponsiveListItemRenderer":{"flexColumns":[
