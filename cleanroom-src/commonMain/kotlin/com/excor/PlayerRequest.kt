@@ -65,6 +65,7 @@ internal fun buildPlayerRequest(
         put("X-YouTube-Client-Version", client.clientVersion)
         session.visitorData?.takeIf(String::isNotBlank)?.let { put("X-Goog-Visitor-Id", it) }
         session.cookie?.takeIf { it.isNotBlank() }?.let { put("Cookie", it) }
+        putAll(signedInHeaders(session.cookie, "https://www.youtube.com"))
     }
     return PlayerRequest(url, headers, body.toString())
 }

@@ -25,6 +25,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.prefs.Preferences
 import javax.swing.BorderFactory
 import javax.swing.DefaultListCellRenderer
 import javax.swing.DefaultListModel
@@ -35,6 +36,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JOptionPane
+import javax.swing.JPasswordField
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JSplitPane
@@ -102,9 +104,48 @@ private class PreviewWindow {
 
     // Downloads follow googlevideo's redirects; the final host is checked before anything is written.
     private val downloads = mediaClient()
-    private val excor = Excor(excorDefaultHost(region = region(), language = language()) { level, message -> addLog(level, message) })
-    private val browser = Browser(excor)
+    // The account's YouTube cookies, if the user signed in; kept in the user's own preferences, never logged.
+    private val prefs = Preferences.userRoot().node("com/excor/preview")
+    private var excor = connect(prefs.get(COOKIE_KEY, null))
+    private var browser = Browser(excor)
+    private val signIn = JButton().apply { addActionListener { signInOrOut() } }
     private val tempDir = File(System.getProperty("java.io.tmpdir"), "excor-preview").apply { mkdirs() }
+
+    private fun connect(cookie: String?): Excor =
+        Excor(excorDefaultHost(region = region(), language = language(), cookie = cookie) { level, message -> addLog(level, message) }).also { it.init() }
+
+    private fun updateSignIn() {
+        signIn.text = if (prefs.get(COOKIE_KEY, null) != null) "Sign out" else "Sign in…"
+    }
+
+    /** Signing in takes the Cookie header of a signed-in youtube.com tab, pasted by the user; signing out forgets it. */
+    private fun signInOrOut() {
+        if (prefs.get(COOKIE_KEY, null) != null) {
+            prefs.remove(COOKIE_KEY)
+            setStatus("Signed out.")
+        } else {
+            val field = JPasswordField(40)
+            val message = arrayOf<Any>(
+                "Paste the Cookie header of a youtube.com request from a browser where you are signed in\n" +
+                    "(developer tools, Network tab, any youtube.com request, Request headers, Cookie).\n" +
+                    "It is your account's sign-in: it is stored in your user preferences on this computer only.",
+                field,
+            )
+            if (JOptionPane.showConfirmDialog(frame, message, "Sign in to YouTube", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return
+            val cookie = String(field.password).trim().removePrefix("Cookie:").trim()
+            if ("SAPISID=" !in cookie && "__Secure-3PAPISID=" !in cookie) {
+                JOptionPane.showMessageDialog(frame, "That has no SAPISID cookie, so YouTube would not treat it as signed in.")
+                return
+            }
+            if (cookie.any { it < ' ' }) return JOptionPane.showMessageDialog(frame, "Paste the header value on one line.")
+            if (cookie.length > Preferences.MAX_VALUE_LENGTH) return JOptionPane.showMessageDialog(frame, "That is longer than any YouTube Cookie header.")
+            prefs.put(COOKIE_KEY, cookie)
+            setStatus("Signed in. Requests now use your account.")
+        }
+        excor = connect(prefs.get(COOKIE_KEY, null))
+        browser = Browser(excor)
+        updateSignIn()
+    }
 
     /** Shows the window; [initial], a search or link from the command line, is opened straight away. */
     fun show(initial: String?) {
@@ -125,8 +166,9 @@ private class PreviewWindow {
                 add(JLabel("Search, link or video ID:"))
             }, BorderLayout.WEST)
             add(query, BorderLayout.CENTER)
-            add(go, BorderLayout.EAST)
+            add(JPanel(FlowLayout(FlowLayout.RIGHT, 4, 0)).apply { add(go); add(signIn) }, BorderLayout.EAST)
         }
+        updateSignIn()
 
         resultList.selectionMode = ListSelectionModel.SINGLE_SELECTION
         resultList.cellRenderer = object : DefaultListCellRenderer() {
@@ -189,7 +231,6 @@ private class PreviewWindow {
         frame.setLocationRelativeTo(null)
         frame.isVisible = true
         split.setDividerLocation(0.45)
-        excor.init()
         if (initial != null) {
             query.text = initial
             go()
@@ -422,6 +463,8 @@ private class WrapLayout : FlowLayout(LEFT, 4, 2) {
         Dimension(widest + insets.left + insets.right + 2 * hgap, height + insets.top + insets.bottom + 2 * vgap)
     }
 }
+
+private const val COOKIE_KEY = "youtubeCookie"
 
 /** Swing's event thread as a dispatcher, for the dialogs. */
 private object SwingDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
