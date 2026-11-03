@@ -34,7 +34,7 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 - **Failed channel tabs:** `channel()` reports a tab that fails to load (as the exception above) instead of returning an empty list.
 - **Keyless iTunes budget:** keyless iTunes requests are held to Apple's documented ~20 calls per minute.
 - **Diagnostics:** non-2xx InnerTube answers are logged at WARN, with the endpoint name and status only. Extraction logs at DEBUG why each client was skipped or which probe status it got.
-- **CI:** it publishes the library locally, builds the sample consumer, and scans dependencies (OSV), gating on what ships.
+- **CI:** it publishes the library locally, builds the sample consumer, and scans dependencies (OSV), gating on what ships. Its actions run on Node 24 (checkout v7, setup-java v6, upload-artifact v7).
 - **Tests:** TestNG for tests is 7.5.1 (GHSA-rc2q-x9mf-w3vf).
 
 ### Fixed
@@ -47,6 +47,7 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 - **Publishing:** the library could not be published. The shared metadata did not compile, because common Kotlin has no `RegexOption.DOT_MATCHES_ALL`.
 - **`videoInfo`:** it returned null for most videos from bot-checked networks.
 - **Mixes:** a mix's continuation was lost when its last item did not decode.
+- **YouTube Music top result:** when the search's top result card plays a video or song rather than opening a page, `musicSearch` typed it `UNKNOWN` with no video ID. It is now a `VIDEO`, `SONG` or `EPISODE` with its video ID, music video type, artists and duration. Seen live for "one more time" (2026-11-03).
 
 ### Known limitations
 - **Bot-checked networks:** streams, captions and SABR/UMP can't be verified where YouTube bot-checks every player request. SABR/UMP is not implemented. See `EXCOR_PROGRESS.md` and `docs/release-gates.json`.

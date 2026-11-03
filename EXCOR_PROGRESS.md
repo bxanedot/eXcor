@@ -33,6 +33,10 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 ## Completed in this pass
 
+- **Second cloud session** (2026-11-03): reran every live check from another cloud container; the results match the first session's (see **Commands**). Also:
+  - CI actions moved to their Node 24 majors (checkout v7, setup-java v6, upload-artifact v7; bxanedot/eXcor#64);
+  - `musicSearch`'s top result card is typed when it plays a video or song (it was `UNKNOWN`, without a video ID);
+  - stale docs: the `docs/FEATURE_MATRIX.md` header, and notes in `QUESTIONS.md` on the removed apps.
 - **Preview apps** (2026-11-03, owner's decision): the music-player apps and `historical-engine` are removed. `preview-android` (APK) and `preview-desktop` (Windows EXE through jpackage) use the clean-room library. Checked by hand under Xvfb: search, details, Play video (720p, joined with ffmpeg, clean decode).
 - **Format list** (`formats`, 2026-11-03): every whole-file format of one client, for download choices; the first step toward moving the apps onto the clean-room SDK. Live: 27 formats, 144p to 2160p, all range-readable.
 - **Video extraction** (`extractVideo`, 2026-11-03): video track plus matching audio, both probed. Live: 480p and 1080p H.264 from VISIONOS, muxed with M4A by ffmpeg and fully decoded, seek correct.
@@ -50,24 +54,25 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 - **Offline suite and targets:**
   `./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata`
-  Latest: 164 tests, 17 skipped (the opt-in live tests and benchmarks), 0 failed.
+  Latest (2026-11-03, second cloud session): 165 tests, 17 skipped (the opt-in live tests and benchmarks), 0 failed. This container has no Android SDK, so `:assembleAndroidMain` ran in CI only.
 - **Live YouTube and YouTube Music:**
   `EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest`
-  Latest: 7 of 7 pass; the benchmark is opt-in (`EXCOR_BENCH=1`).
+  Latest (2026-11-03, second cloud session): 7 of 7 pass, including the new top-result check; the benchmark is opt-in (`EXCOR_BENCH=1`).
 - **Live music:** `EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.music.LiveMusicTest`
-  Latest: pass. Spotify and the full Apple Music API are skipped without credentials.
+  Latest (2026-11-03, second cloud session): pass (Deezer end to end, keyless Apple with a cross-provider match). Spotify and the full Apple Music API are skipped without credentials.
 - **Consumer:** `./gradlew publishToMavenLocal && ./gradlew -p samples/jvm-quickstart run`
   Latest: all six steps "ok".
 - **Playback:** `EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest`
   - `extractedAudioDecodesFullyAndSeeks` passes (2026-11-02): VISIONOS Opus, 3,433,755 bytes, ffmpeg decodes 213.06 s against a 213 s video, mid-file seek correct.
   - `extractedVideoAndAudioDecodeAndMux` passes (2026-11-03): 480p H.264, 854x480, 14,103,519 bytes; with `EXCOR_VIDEO_HEIGHT=1080`, 1920x1080, 80,911,999 bytes. Both muxed with M4A audio without re-encoding and decoded to 213.09 s; mid-file seek correct.
   - `publicMusicVideosReturnRangeReadableAudio` passes its first video but fails on the second, `kJQP7kiw5Fk`, which every client gets as "unavailable" here.
+  - Second cloud session (2026-11-03): the same. Audio (3,433,755 bytes, 213.061 s), 480p video muxed with M4A (213.089 s) and the 27-format list pass for `dQw4w9WgXcQ`, all from VISIONOS. `kJQP7kiw5Fk` is `UNPLAYABLE` ("not available") on VISIONOS; `JGwWNGJdvx8`, `FGBhQbmPwH8`, `9bZkp7q19f0`, `jNQXAC9IVRw` and `PkZNo7MFNFg` are `LOGIN_REQUIRED` (bot check). TVHTML5 is skipped because the watch page redirects to Google's captcha page (`google.com/sorry`), so there is no player script; WEB is skipped without a token provider.
 
 ## Known blockers
 
 - **Bot check:** YouTube answers most videos from this environment with `LOGIN_REQUIRED` ("Sign in to confirm you're not a bot") or "unavailable", on every client. Some videos (such as `dQw4w9WgXcQ`) are served to VISIONOS, which is how streaming was verified. The HTML watch page answers with a captcha (HTTP 429). eXcor does not bypass either.
-- **Withheld YouTube Music catalog:** songs, albums and discographies aren't offered to this environment.
-- **Maven Central 429s:** builds here use a local init script that serves a few modules from `~/.m2`. CI is unaffected.
+- **Withheld YouTube Music catalog:** songs, albums and discographies aren't offered to this environment. Rechecked 2026-11-03 from a second cloud container: search filters are Artists, Videos, Episodes, Profiles, Community playlists and Podcasts only, and the Daft Punk artist page has Videos, Live performances and Playlists shelves only.
+- **Maven Central 429s:** `repo.maven.apache.org` rate-limits cloud containers. The second cloud session used a local init script (`~/.gradle/init.d`, not in the repository) that points Maven Central at Google's mirror, `maven-central.storage-download.googleapis.com/maven2/`. CI is unaffected.
 
 ## Next tasks
 
