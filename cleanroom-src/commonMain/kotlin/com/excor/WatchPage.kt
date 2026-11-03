@@ -15,10 +15,13 @@ internal fun parseWatchPage(source: String): WatchPage? {
     if (end < 0) return null
     val player = decodePlayerResponse(source.substring(start, end)) ?: return null
     val apiKey = API_KEY.find(source)?.groupValues?.getOrNull(1)
-    return WatchPage(apiKey, player)
+    // Current pages name the player script in their config (jsUrl, PLAYER_JS_URL), not in the player response's assets.
+    val scriptUrl = player.playerScriptUrl ?: PLAYER_JS_URL.find(source)?.groupValues?.getOrNull(1)
+    return WatchPage(apiKey, player.copy(playerScriptUrl = scriptUrl))
 }
 
 private val API_KEY = Regex("\\\"INNERTUBE_API_KEY\\\"\\s*:\\s*\\\"([^\\\"]{1,256})\\\"")
+private val PLAYER_JS_URL = Regex("\"(?:jsUrl|PLAYER_JS_URL)\"\\s*:\\s*\"(/s/player/[A-Za-z0-9_./-]{1,200}\\.js)\"")
 
 private fun jsonObjectEnd(source: String, start: Int): Int {
     var depth = 0

@@ -184,11 +184,17 @@ internal fun decodeMusicArtist(source: String, channelId: String): ExcorYouTubeM
         description = runsOf(header["description"]),
         monthlyAudienceText = runsOf(header["monthlyListenerCount"]),
         subscribersText = runsOf(header.path("subscriptionButton", "subscribeButtonRenderer", "subscriberCountText")),
-        radioPlaylistId = header.path("startRadioButton", "buttonRenderer", "navigationEndpoint", "watchPlaylistEndpoint", "playlistId")?.let(::stringOf)?.takeIf(PLAYLIST_ID::matches),
-        shufflePlaylistId = header.path("playButton", "buttonRenderer", "navigationEndpoint", "watchPlaylistEndpoint", "playlistId")?.let(::stringOf)?.takeIf(PLAYLIST_ID::matches),
+        radioPlaylistId = buttonPlaylistId(header["startRadioButton"]),
+        shufflePlaylistId = buttonPlaylistId(header["playButton"]),
         shelves = shelves,
         thumbnails = thumbnailsOf(header.path("thumbnail", "musicThumbnailRenderer", "thumbnail")),
     )
+}
+
+// The header's play and radio buttons carry either a watchPlaylistEndpoint or, in a newer variant, a watchEndpoint with a first video.
+private fun buttonPlaylistId(button: JsonElement?): String? {
+    val endpoint = (button as? JsonObject)?.path("buttonRenderer", "navigationEndpoint") as? JsonObject ?: return null
+    return (endpoint.path("watchPlaylistEndpoint", "playlistId") ?: endpoint.path("watchEndpoint", "playlistId"))?.let(::stringOf)?.takeIf(PLAYLIST_ID::matches)
 }
 
 /** A playlist page (`musicPlaylistShelfRenderer`) or a continuation of one; null when it is neither. */
@@ -262,7 +268,8 @@ private fun listItemOf(item: JsonObject): ExcorYouTubeMusicItem? {
         browse = browse,
         playlistId = watch?.textAt("playlistId") ?: playAllPlaylistId(item),
         runs = detailRuns,
-        duration = fixed.firstNotNullOfOrNull(::clockSeconds),
+        // Song rows put the length at the end of the subtitle instead of in a fixed column.
+        duration = fixed.firstNotNullOfOrNull(::clockSeconds) ?: detailRuns.mapNotNull { it.textAt("text") }.firstNotNullOfOrNull(::clockSeconds),
         subtitle = runsOf(columns.getOrNull(1)),
         thumbnails = thumbnailsOf(item.path("thumbnail", "musicThumbnailRenderer", "thumbnail")),
     )
