@@ -78,6 +78,19 @@ private fun selfTest(path: String?) {
     check(cookieProblem(cookieValue("Cookie: PREF=x; SAPISID=abc/def; SID=y")) == null)
     check(cookieProblem("PREF=x; SAPISID=abc…")!!.startsWith("That copy was cut off"))
     check(cookieProblem("PREF=x")!!.contains("SAPISID"))
+    // Browser sign-in: the packaged runtime loads the SQLite driver and reads a Firefox-style cookie store.
+    val profile = java.nio.file.Files.createTempDirectory("excor-self-test").toFile()
+    try {
+        java.sql.DriverManager.getConnection("jdbc:sqlite:${profile.resolve("cookies.sqlite").path}").use { db ->
+            db.createStatement().use {
+                it.execute("CREATE TABLE moz_cookies (name TEXT, value TEXT, host TEXT, expiry INTEGER, lastAccessed INTEGER)")
+                it.execute("INSERT INTO moz_cookies VALUES ('SAPISID', 'abc/def', '.youtube.com', 0, 1), ('SID', 'x', '.youtube.com', 0, 2), ('NID', 'y', '.google.com', 0, 3)")
+            }
+        }
+        check(youTubeCookies(profile.resolve("cookies.sqlite")) == "SAPISID=abc/def; SID=x")
+    } finally {
+        profile.deleteRecursively()
+    }
     val report = "eXcor Preview OK (Java ${System.getProperty("java.version")}, ${excor::class.simpleName})"
     if (path != null) File(path).writeText(report + "\n") else println(report)
 }
@@ -126,29 +139,56 @@ private class PreviewWindow {
         signIn.text = if (prefs.get(COOKIE_KEY, null) != null) "Sign out" else "Sign in…"
     }
 
-    /** Signing in takes the Cookie header of a signed-in youtube.com tab, pasted by the user; signing out forgets it. */
+    /**
+     * Signing in imports the youtube.com cookies of Zen or Firefox, where the user signed in to YouTube, or takes a
+     * pasted Cookie header; signing out forgets them.
+     */
     private fun signInOrOut() {
         if (prefs.get(COOKIE_KEY, null) != null) {
             prefs.remove(COOKIE_KEY)
             setStatus("Signed out.")
         } else {
-            val field = JPasswordField(40)
-            val message = arrayOf<Any>(
-                "Paste the Cookie header of a youtube.com request from a browser where you are signed in\n" +
-                    "(developer tools, Network tab, any youtube.com request, Request headers, Cookie).\n" +
-                    "It is your account's sign-in: it is stored in your user preferences on this computer only.",
-                field,
+            val choice = JOptionPane.showOptionDialog(
+                frame,
+                "Sign in to YouTube in Zen or Firefox first, then import that sign-in here.\n" +
+                    "Only youtube.com cookies are read, and only now; they are stored in your user preferences on this computer.",
+                "Sign in to YouTube", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+                arrayOf("Import from Zen or Firefox", "Paste a Cookie header…", "Cancel"), "Import from Zen or Firefox",
             )
-            if (JOptionPane.showConfirmDialog(frame, message, "Sign in to YouTube", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return
-            val cookie = cookieValue(String(field.password))
-            cookieProblem(cookie)?.let { return JOptionPane.showMessageDialog(frame, it) }
-            if (cookie.length > Preferences.MAX_VALUE_LENGTH) return JOptionPane.showMessageDialog(frame, "That is longer than any YouTube Cookie header.")
-            prefs.put(COOKIE_KEY, cookie)
-            setStatus("Signed in. Requests now use your account.")
+            when (choice) {
+                0 -> {
+                    val cookie = firefoxFamilyYouTubeCookie()
+                        ?: return JOptionPane.showMessageDialog(frame, "No Zen or Firefox profile here is signed in to YouTube. Sign in at youtube.com there and try again.")
+                    cookieProblem(cookie)?.let { return JOptionPane.showMessageDialog(frame, it) }
+                    if (cookie.length > Preferences.MAX_VALUE_LENGTH) return JOptionPane.showMessageDialog(frame, "That browser's YouTube cookies are too long to store.")
+                    prefs.put(COOKIE_KEY, cookie)
+                    setStatus("Signed in with your browser's YouTube session. Requests now use your account.")
+                }
+                1 -> if (!pasteCookie()) return
+                else -> return
+            }
         }
         excor = connect(savedCookie())
         browser = Browser(excor)
         updateSignIn()
+    }
+
+    /** Takes a Cookie header pasted by the user; false when cancelled or unusable. */
+    private fun pasteCookie(): Boolean {
+        val field = JPasswordField(40)
+        val message = arrayOf<Any>(
+            "Paste the Cookie header of a youtube.com request from a browser where you are signed in\n" +
+                "(developer tools, Network tab, any youtube.com request, Request headers, Cookie).\n" +
+                "It is your account's sign-in: it is stored in your user preferences on this computer only.",
+            field,
+        )
+        if (JOptionPane.showConfirmDialog(frame, message, "Sign in to YouTube", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return false
+        val cookie = cookieValue(String(field.password))
+        cookieProblem(cookie)?.let { JOptionPane.showMessageDialog(frame, it); return false }
+        if (cookie.length > Preferences.MAX_VALUE_LENGTH) { JOptionPane.showMessageDialog(frame, "That is longer than any YouTube Cookie header."); return false }
+        prefs.put(COOKIE_KEY, cookie)
+        setStatus("Signed in. Requests now use your account.")
+        return true
     }
 
     /** Shows the window; [initial], a search or link from the command line, is opened straight away. */

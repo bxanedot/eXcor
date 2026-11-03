@@ -16,7 +16,7 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 
 **Next, in order:**
 1. ~~**Run the live checks on the owner's PC.**~~ Done 2026-11-03 (results in `EXCOR_PROGRESS.md`). Home network: the same bot check as the phone and the cloud; YouTube Music offers songs and albums (now live-tested); the watch page loads, and the player-script path now solves the live player, but YouTube serves nothing to TVHTML5. Still open there: install ffmpeg and rerun `LivePlaybackTest` for the decode and mux checks.
-2. **Bot check: the owner chose both routes (2026-11-03).** Signed-in sessions are built (cookies plus `SAPISIDHASH`; the preview apps take a pasted Cookie header) and need a live check with the owner's account. The PO-token provider is next. Original note: The legitimate options are:
+2. **Bot check: the owner chose both routes (2026-11-03).** Signed-in sessions are built (cookies plus `SAPISIDHASH`; the preview apps take a pasted Cookie header, and the desktop app imports Zen or Firefox's youtube.com sign-in) and need a live check with the owner's account. The owner's first paste was cut off by developer tools (a "…" at character 512), which #73 now refuses; the owner's Zen profile is signed in to YouTube, so "Import from Zen or Firefox" should find it. Agents may not use the owner's session themselves: the live check is the owner's. The PO-token provider is next. Original note: The legitimate options are:
    - a signed-in session: the host supplies cookies through `ExcorSession`;
    - a host-supplied PO token: `TokenProvider`.
 

@@ -21,6 +21,8 @@ java { targetCompatibility = JavaVersion.VERSION_26 }
 dependencies {
     implementation(project(":"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    // Reads the youtube.com cookies of Zen or Firefox for "Import from Zen or Firefox".
+    implementation("org.xerial:sqlite-jdbc:3.53.4.0")
 }
 
 application {
