@@ -1,6 +1,6 @@
 # Handoff: eXcor (read this first)
 
-Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which runs on the owner's own machine. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
+Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
 ## What eXcor is
 
@@ -15,7 +15,7 @@ The primary benchmark is InnerTubeX; YouTube.js and NewPipeExtractor are seconda
 **Repository:**
 - GitHub: `bxanedot/eXcor`. The cloud session's remote was named `vyonex-clean`; same repository.
 - Default branch: `main`, head `4f864f0` at the time of writing.
-- Work branch the cloud session used: `claude/clever-curie-tyaxqs`. It is merged and even with `main`; start a new branch for new work.
+- Work branches: the first cloud session used `claude/clever-curie-tyaxqs`, the second `ccr-f49a6d1e-6h9xd0`. While the second ran, another session was still opening PRs from the first branch (#65, album playlist IDs), so list the open PRs before you start, and start a new branch for new work.
 
 ## The owner's rules (standing)
 
@@ -61,7 +61,7 @@ The music-player apps (`app-core`, `android-app`, `desktop-app`, `ios-app`) and 
 You need JDK 27 (Gradle toolchains) and, for the APK, the Android SDK (`ANDROID_HOME`).
 
 ```bash
-# Library: all targets plus the offline suite (164 tests, 17 opt-in skipped, 0 failed at handoff)
+# Library: all targets plus the offline suite (165 tests, 17 opt-in skipped, 0 failed at handoff)
 ./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata
 # iOS tests and frameworks: macOS only (see the macos job in .github/workflows/ci.yml)
 
@@ -117,19 +117,24 @@ Each push makes two runs (push and PR). One fully green run on the head commit i
 - Keyless iTunes gave sporadic 403s.
 - Maven Central rate-limited the container, which needed local init scripts. A normal machine doesn't.
 
+**A second cloud container (2026-11-03) showed the same:**
+- Only `dQw4w9WgXcQ` played, on VISIONOS: the audio decode, the 480p mux and the 27-format list passed again.
+- `kJQP7kiw5Fk` was `UNPLAYABLE`; `JGwWNGJdvx8`, `FGBhQbmPwH8`, `9bZkp7q19f0`, `jNQXAC9IVRw` and `PkZNo7MFNFg` were `LOGIN_REQUIRED`.
+- The watch page redirected to Google's captcha page (`google.com/sorry`), so TVHTML5 had no player script and G4 stays untested.
+- YouTube Music still offered no Songs or Albums filter.
+- Metadata (7 of 7) and the music providers passed.
+
 ## Next tasks, in order
 
-1. **Run the live checks on this machine's normal network first:** `LiveVideoInfoTest`, `LivePlaybackTest`, `LiveMusicTest`.
-   - If many more videos play here, `publicMusicVideosReturnRangeReadableAudio` (it failed on `kJQP7kiw5Fk` in the cloud) should pass. Update G5 and the docs with exactly what you measured.
+1. **Run the live checks on the owner's normal network:** `LiveVideoInfoTest`, `LivePlaybackTest`, `LiveMusicTest`. Two cloud containers have now given the same answers, so only a non-cloud network can move G4, G5 and G7.
+   - If many more videos play there, `publicMusicVideosReturnRangeReadableAudio` (it fails on `kJQP7kiw5Fk` in the cloud) should pass. Update G5 and the docs with exactly what you measured.
    - If the watch page loads, the player-script path (TVHTML5, signature and `n`) can finally be checked live. That is G4.
-   - If YouTube Music offers Songs and Albums here, verify them. That is G7.
+   - If YouTube Music offers Songs and Albums there, verify them. That is G7.
 2. **Ask the owner how the preview apps behaved on their phone and PC.** Nobody had tried them by hand when this was written. CI only checks that they start, and the desktop flow was exercised under Xvfb. Fix what they report.
-3. **CI housekeeping:** actions warn that Node 20 is deprecated (`actions/checkout@v4`, `setup-java@v4`, `upload-artifact@v4`). Move to the current major versions once you've checked them.
-4. **Stale docs:**
-   - The `docs/FEATURE_MATRIX.md` header still describes an old catalog prototype and run 40968192280.
-   - `QUESTIONS.md` and the superseded `CODEX_HANDOFF.md` mention the removed apps; they are historical records, so annotate rather than rewrite.
-5. **SABR/UMP (G6)** stays blocked unless a normal network serves responses with no direct URLs, or an independent spec appears. Don't derive it from GPL code.
-6. **G10:** a remote release only on the owner's say-so.
+3. **SABR/UMP (G6)** stays blocked unless a normal network serves responses with no direct URLs, or an independent spec appears. Don't derive it from GPL code.
+4. **G10:** a remote release only on the owner's say-so.
+
+Done by the second cloud session: CI actions on Node 24 (checkout v7, setup-java v6, upload-artifact v7; #64), the `docs/FEATURE_MATRIX.md` header, notes in `QUESTIONS.md` on the removed apps (`CODEX_HANDOFF.md` already carried one), and a `musicSearch` fix: a top result card that plays a video was typed `UNKNOWN` with no video ID.
 
 ## Lessons learned (save yourself the time)
 
@@ -147,3 +152,8 @@ Each push makes two runs (push and PR). One fully green run on the head commit i
 - On the Windows runner, `Start-Process -Wait` is needed to wait for the GUI-subsystem exe.
 
 **Swing:** inside `JPanel.apply { }`, a field named `height` resolves to the panel's own `height`.
+
+**Cloud containers:**
+- `repo.maven.apache.org` answers 429. A local `~/.gradle/init.d/*.gradle.kts` that rewrites that host to `https://maven-central.storage-download.googleapis.com/maven2/` (Google's mirror of Maven Central) in `pluginManagement`, `dependencyResolutionManagement`, `buildscript` and project repositories gets the build through. Keep it out of the repository.
+- The second container had no Android SDK, so `:assembleAndroidMain` and the preview APK were left to CI.
+- To look at a live response's shape, dump it with URLs, tracking params and long tokens removed, read it, and delete the dump. Don't commit captures.

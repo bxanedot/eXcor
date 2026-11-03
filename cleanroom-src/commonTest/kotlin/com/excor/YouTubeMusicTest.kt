@@ -139,4 +139,28 @@ class YouTubeMusicTest {
         // The WEB client is unchanged for the rest of YouTube.
         assertEquals("https://www.youtube.com", buildSearchRequest("q", null, session).headers["Origin"])
     }
+
+    @Test
+    fun aTopResultThatPlaysIsAVideoOrSong() {
+        fun watch(id: String, type: String) =
+            """{"watchEndpoint":{"videoId":"$id","watchEndpointMusicSupportedConfigs":{"watchEndpointMusicConfig":{"musicVideoType":"$type"}}}}"""
+        fun card(id: String, type: String, label: String, onTap: Boolean) = """{"musicCardShelfRenderer":{
+            "title":{"runs":[{"text":"Glass River","navigationEndpoint":${watch(id, type)}}]},
+            "subtitle":{"runs":[{"text":"$label"},{"text":" • "},${artistRun("Mira Vale", "UCaaaaaaaaaaaaaaaaaaaaaa")},{"text":" • "},{"text":"68M views"},{"text":" • "},{"text":"5:22"}]}
+            ${if (onTap) ""","onTap":${watch(id, type)}""" else ""}}}"""
+        fun page(card: String) = """{"contents":{"tabbedSearchResultsRenderer":{"tabs":[{"tabRenderer":{"content":{"sectionListRenderer":{"contents":[$card]}}}}]}}}"""
+
+        val video = decodeMusicSearch(page(card("AAAAAAAAAAA", "MUSIC_VIDEO_TYPE_OMV", "Video", onTap = true)))!!.items.single()
+        assertEquals(ExcorYouTubeMusicItemType.VIDEO, video.type)
+        assertEquals("AAAAAAAAAAA", video.videoId)
+        assertEquals("MUSIC_VIDEO_TYPE_OMV", video.musicVideoType)
+        assertEquals(322L, video.durationSeconds)
+        assertEquals(listOf(ExcorYouTubeMusicArtistRef("Mira Vale", "UCaaaaaaaaaaaaaaaaaaaaaa")), video.artists)
+        assertNull(video.browseId)
+
+        // Without onTap, the title's link still plays it; an audio track is a song.
+        val song = decodeMusicSearch(page(card("BBBBBBBBBBB", "MUSIC_VIDEO_TYPE_ATV", "Song", onTap = false)))!!.items.single()
+        assertEquals(ExcorYouTubeMusicItemType.SONG, song.type)
+        assertEquals("BBBBBBBBBBB", song.videoId)
+    }
 }

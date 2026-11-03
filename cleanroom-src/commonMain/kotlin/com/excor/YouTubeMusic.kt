@@ -352,19 +352,24 @@ private fun pageTypeOf(pageType: String?): ExcorYouTubeMusicItemType = when (pag
     else -> ExcorYouTubeMusicItemType.UNKNOWN
 }
 
-/** The search's top result card, which links to a page (usually the artist) rather than being a list item. */
+/**
+ * The search's top result card. It either links to a page (usually the artist), with a browse endpoint, or plays a
+ * video or song, with a watch endpoint on the card and its title; a playable card's subtitle ends with the duration.
+ */
 private fun topResultOf(card: JsonObject): ExcorYouTubeMusicItem? {
     val title = runsOf(card["title"]) ?: return null
+    val titleLink = ((card.path("title", "runs") as? JsonArray)?.firstOrNull() as? JsonObject)?.get("navigationEndpoint") as? JsonObject
+    val browse = (card.path("onTap", "browseEndpoint") ?: titleLink?.get("browseEndpoint")) as? JsonObject
+    val watch = if (browse == null) (card.path("onTap", "watchEndpoint") ?: titleLink?.get("watchEndpoint")) as? JsonObject else null
+    val runs = (card.path("subtitle", "runs") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }
     return itemOf(
         title = title,
-        videoId = null,
-        musicVideoType = null,
-        browse = card.path("onTap", "browseEndpoint") as? JsonObject ?: card.path("title", "runs")?.let { r ->
-            ((r as? JsonArray)?.firstOrNull() as? JsonObject)?.path("navigationEndpoint", "browseEndpoint") as? JsonObject
-        },
-        playlistId = null,
-        runs = (card.path("subtitle", "runs") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject },
-        duration = null,
+        videoId = watch?.textAt("videoId")?.takeIf(VIDEO_ID::matches),
+        musicVideoType = watch?.path("watchEndpointMusicSupportedConfigs", "watchEndpointMusicConfig", "musicVideoType")?.let(::stringOf),
+        browse = browse,
+        playlistId = watch?.textAt("playlistId"),
+        runs = runs,
+        duration = if (watch != null) runs.mapNotNull { it.textAt("text") }.lastOrNull()?.let(::clockSeconds) else null,
         subtitle = runsOf(card["subtitle"]),
         thumbnails = thumbnailsOf(card.path("thumbnail", "musicThumbnailRenderer", "thumbnail")),
     )

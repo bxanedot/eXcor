@@ -32,17 +32,17 @@
       "evidence": "Live 2026-11-02: VISIONOS (no player script, no streaming token) answers OK with direct URLs for dQw4w9WgXcQ, and eXcor extracts from it. Its player request no longer sends youtube.com's Referer, which YouTube answers with 403. PlayerJsTest passes offline",
       "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest",
       "blockers": [
-        "The signature and n-parameter path (player script) has no playable response to test against here: the watch page answers with a captcha (HTTP 429)"
+        "The signature and n-parameter path (player script) has no playable response to test against from cloud containers: the watch page answers with a captcha (HTTP 429 in the first cloud session; a redirect to google.com/sorry in the second, 2026-11-03)"
       ]
     },
     {
       "id": "G5",
       "name": "Streaming",
       "status": "partial",
-      "evidence": "Live 2026-11-02 (LivePlaybackTest.extractedAudioDecodesFullyAndSeeks): eXcor extracted Opus/WebM audio for dQw4w9WgXcQ, the full 3,433,755-byte file decoded with ffmpeg without errors (213.06 s against a 213 s video), and a mid-file range read landed at the requested offset. The probe follows googlevideo's 302 to another allowlisted node. Video, live 2026-11-03 (LivePlaybackTest.extractedVideoAndAudioDecodeAndMux): extractVideo picked 480p H.264 (854x480, 14,103,519 bytes) and, with EXCOR_VIDEO_HEIGHT=1080, 1080p H.264 (1920x1080, 80,911,999 bytes) from VISIONOS; each was downloaded in 4 MiB range reads, muxed with its M4A audio by ffmpeg without re-encoding, fully decoded (213.09 s), and range-read from the middle",
+      "evidence": "Live 2026-11-02 (LivePlaybackTest.extractedAudioDecodesFullyAndSeeks): eXcor extracted Opus/WebM audio for dQw4w9WgXcQ, the full 3,433,755-byte file decoded with ffmpeg without errors (213.06 s against a 213 s video), and a mid-file range read landed at the requested offset. The probe follows googlevideo's 302 to another allowlisted node. Video, live 2026-11-03 (LivePlaybackTest.extractedVideoAndAudioDecodeAndMux): extractVideo picked 480p H.264 (854x480, 14,103,519 bytes) and, with EXCOR_VIDEO_HEIGHT=1080, 1080p H.264 (1920x1080, 80,911,999 bytes) from VISIONOS; each was downloaded in 4 MiB range reads, muxed with its M4A audio by ffmpeg without re-encoding, fully decoded (213.09 s), and range-read from the middle. Rerun 2026-11-03 from a second cloud container: the audio decode, the 480p mux and the 27-format list pass again for dQw4w9WgXcQ",
       "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest",
       "blockers": [
-        "Most videos are still bot-checked or unavailable to every client from this environment (kJQP7kiw5Fk unavailable; JGwWNGJdvx8, FGBhQbmPwH8, 9bZkp7q19f0 bot-checked), so publicMusicVideosReturnRangeReadableAudio fails on its second video here"
+        "Most videos are still bot-checked or unavailable to every client from cloud containers (first session: kJQP7kiw5Fk unavailable; JGwWNGJdvx8, FGBhQbmPwH8, 9bZkp7q19f0 bot-checked. Second session, 2026-11-03: the same, and jNQXAC9IVRw and PkZNo7MFNFg bot-checked too), so publicMusicVideosReturnRangeReadableAudio fails on its second video there"
       ]
     },
     {
@@ -59,7 +59,7 @@
       "id": "G7",
       "name": "YouTube Music",
       "status": "passing",
-      "evidence": "Live: search with filters and continuations, suggestions, artist pages, playlists, radio. Songs and albums are withheld from this environment",
+      "evidence": "Live: search with filters and continuations, suggestions, artist pages, playlists, radio; a top result card that plays is typed with its video ID (2026-11-03). Songs and albums are withheld from cloud containers (rechecked 2026-11-03)",
       "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest",
       "blockers": [
         "Songs, albums and discographies cannot be observed here"

@@ -130,6 +130,9 @@ class LiveVideoInfoTest {
         val search = assertNotNull(excor.musicSearch("daft punk"))
         val artist = assertNotNull(search.items.firstOrNull { it.type == ExcorYouTubeMusicItemType.ARTIST && it.title == "Daft Punk" }, "artist result: ${search.items.map { it.type }}")
         assertTrue(search.items.any { it.videoId != null } && search.filters.isNotEmpty())
+        // A top result card that plays (here, the music video) is typed and carries its video ID, like a list item.
+        val top = assertNotNull(excor.musicSearch("one more time")).items.first()
+        assertTrue(top.videoId != null && top.type in setOf(ExcorYouTubeMusicItemType.VIDEO, ExcorYouTubeMusicItemType.SONG) && top.durationSeconds != null, "top result: ${top.type} ${top.title}")
         val videos = assertNotNull(search.filters.firstOrNull { it.params != null && it.label == "Videos" })
         val filtered = assertNotNull(excor.musicSearch("daft punk", filterParams = videos.params))
         assertTrue(filtered.items.size >= 10 && filtered.items.all { it.videoId != null } && filtered.items.any { it.artists.isNotEmpty() })

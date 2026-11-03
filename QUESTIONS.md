@@ -1,6 +1,8 @@
 # eXcor open questions
 
 > Earlier items record pre-amendment API shapes, fixtures and test results. The owner-approved deliverables use eXcor names as mapped in `BRIEF.md`.
+>
+> **Removed apps (2026-11-03):** items 46–48 and 64 describe the music-player apps (`app-core`, `android-app`, `desktop-app`, `ios-app`) and `historical-engine`, which the owner dropped and which are removed. They are kept as a record. The preview apps that replace them are `preview-android` and `preview-desktop`; see [`HANDOFF.md`](HANDOFF.md).
 
 Each item names the reading chosen; nothing was looked up in the old code.
 
@@ -308,7 +310,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     then decides, which may be a dub in the listener's language. Other languages are not offered
     yet. Unchecked against a capture: the multi-audio capture hit a bot check from the build
     machine (item 41), so the tests add the fields yt-dlp reads to the captured formats.
-46. **App, milestone A1: `app-core` (owner, 2026-10-27: the app starts now, in this repository).**
+46. *(Removed 2026-11-03; kept as a record.)* **App, milestone A1: `app-core` (owner, 2026-10-27: the app starts now, in this repository).**
     A Kotlin Multiplatform subproject next to the library (the root project), for the Android app
     first and an iOS app later. `Queue` is immutable: play order, the current track, repeat (off,
     all, one). Shuffle reorders what comes after the current track, once. "Next" on repeat-one
@@ -326,7 +328,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     it needs, because `Excor` itself is a per-platform class; tests use a fake. 13 tests run on the
     JVM and, in CI, on the iOS simulator. The deprecated `androidLibrary {}` block in both builds is
     now `android {}`, as AGP 9.4 asks.
-47. **App, milestone A2: the Android shell.** `android-app/` (Compose, Media3 1.11), minimum Android
+47. *(Removed 2026-11-03; kept as a record.)* **App, milestone A2: the Android shell.** `android-app/` (Compose, Media3 1.11), minimum Android
     8.0. One screen: a link field (also filled by "Share" from another app), the opened page's
     title, byline and tracks, "Play all", and a now-playing line with previous, play/pause and next
     that also says why a track did not play. A video, a playlist or mix (first page), an album or an
@@ -348,7 +350,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     anywhere yet: this machine has no KVM for an emulator, and the CI emulators open no link because
     YouTube asks the build machines to sign in (item 41). The Gradle daemon now gets 3 GB
     (`gradle.properties`); merging the app's dex files ran out of the default 512 MB.
-48. **App: downloads.** A "Download" on each track and "Download all" on a page open a dialog: audio
+48. *(Removed 2026-11-03; kept as a record.)* **App: downloads.** A "Download" on each track and "Download all" on a page open a dialog: audio
     or video, then a quality. For one track the list is what YouTube offers for it (asked when the
     dialog opens): every audio format that can be saved ("Opus · 140 kbps · 3 MB") and every height
     that merges into one file ("1080p60 · MP4 · 85 MB"). For many tracks it is "best audio" or "best
@@ -539,7 +541,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
     about 20 calls a minute; a refusal throws with its HTTP status. Its terms say promotional content
     (previews, album art) is only to promote store content: what an app shows or saves is the app's
     call, not a clearance given here.
-64. **The apps on the historical engine (owner, 2026-11-01: "Build old engine apart").** After the root
+64. *(Removed 2026-11-03; kept as a record.)* **The apps on the historical engine (owner, 2026-11-01: "Build old engine apart").** After the root
     build moved to `cleanroom-src/`, `app-core`, the Android app and the desktop app no longer compiled
     (about 400 errors), and CI had stopped building them. They now build on `historical-engine/`, a
     separate Gradle module that compiles `src/` with its own `ejs/` copy and the older fixtures. It is
