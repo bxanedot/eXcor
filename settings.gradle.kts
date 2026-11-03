@@ -12,12 +12,6 @@ plugins {
 
 rootProject.name = "eXcor"
 
-// The historical engine in src/, quarantined: built only for the apps, never part of the clean-room root artifact.
-include(":historical-engine")
-// The Android app's shared logic, on top of the historical engine.
-include(":app-core")
-// The Android app itself.
-include(":android-app")
-
-// JVM desktop shell: Windows, macOS and Linux use the same Kotlin engine.
-include(":desktop-app")
+// Preview apps for trying the library by hand: an Android APK and a Windows EXE. Not published.
+include(":preview-android")
+include(":preview-desktop")

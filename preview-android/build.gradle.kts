@@ -1,0 +1,45 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+// A preview app for trying the library by hand on Android: search, video details, audio and video playback, formats
+// and the library's log. Built as a debug APK; never published.
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21"
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+android {
+    namespace = "com.excor.preview"
+    compileSdk = 37
+    defaultConfig {
+        applicationId = "com.excor.preview"
+        minSdk = 26
+        targetSdk = 37
+        versionCode = 1
+        versionName = "0.2.0"
+    }
+    buildFeatures { compose = true }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    jvmToolchain(27)
+    compilerOptions { jvmTarget = JvmTarget.JVM_17 }
+}
+
+dependencies {
+    implementation(project(":"))
+    implementation(platform("androidx.compose:compose-bom:2026.09.00"))
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.media3:media3-exoplayer:1.11.1")
+    implementation("androidx.media3:media3-ui:1.11.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+}

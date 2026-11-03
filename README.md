@@ -8,7 +8,7 @@ The current library exposes package `com.excor`, Gradle coordinates `com.excor:e
 
 The KMP library provides audio format selection, player-response and player-script handling, URL validation, host-supplied session and PO-token interfaces, remembered stream headers, refusal tracking, and player-data caching. It returns a direct audio stream only when the URL passes the HTTPS YouTube/GoogleVideo `/videoplayback` allowlist. It does not mint PO tokens.
 
-`Excor.music` puts Spotify, Apple Music and Deezer metadata behind one API, along with cross-provider matching, incremental playlist and library sync, audio-variant and DRM reporting, and authorized-playback decisions. Deezer and Apple's keyless endpoints are verified live; Spotify and the Apple Music API are tested offline only. See [music providers](docs/MUSIC_PROVIDERS.md) and [limitations](docs/MUSIC_LIMITATIONS.md). YouTube Music search, artists, playlists and radio are available through `Excor` (see below); `Excor.music` itself does not cover YouTube Music. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical app and implementation folders remain in the repository pending a separate provenance and integration audit; they are not compiled by the clean-room root build. `app-core`, the Android app and the desktop app have not been migrated to the new root library; they build on `historical-engine/`, a separate module compiling the quarantined `src/` that is never published (QUESTIONS item 64). See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+`Excor.music` puts Spotify, Apple Music and Deezer metadata behind one API, along with cross-provider matching, incremental playlist and library sync, audio-variant and DRM reporting, and authorized-playback decisions. Deezer and Apple's keyless endpoints are verified live; Spotify and the Apple Music API are tested offline only. See [music providers](docs/MUSIC_PROVIDERS.md) and [limitations](docs/MUSIC_LIMITATIONS.md). YouTube Music search, artists, playlists and radio are available through `Excor` (see below); `Excor.music` itself does not cover YouTube Music. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical implementation in `src/` remains in the repository pending a separate provenance audit; nothing compiles it any more. The earlier music-player apps were removed on 2026-11-03 (owner's decision) in favor of the preview apps below, which use this library. See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
 The experimental API and its authorization, paging, and provider limitations are documented in [Catalog metadata](docs/CATALOG.md).
 
@@ -102,6 +102,20 @@ if (streams != null) {
 The best picture under `maxHeight` wins, then the higher frame rate, then the most widely decodable codec (H.264, VP9, AV1). The audio comes from the same response, in the matching container where one exists (M4A with MP4 video, Opus/WebM with WebM video), so the two can be played together or muxed without re-encoding. Both tracks pass the playback probe before they are returned. If the response has no playable separate audio, a progressive format is used instead. Segmented ("OTF") formats are not selected.
 
 `excor.formats(videoId)` lists every whole-file audio and video format one client offers (itag, codec, size, frame rate, bitrate, length, byte ranges), for download choices. All of them are fetched with `list.headers`. One representative format is probed, since a response's URLs are signed together. If a listed URL is refused, call `exclude(videoId, list.profileId)` and ask again. A `TokenProvider` is an integration boundary: applications may supply tokens they are authorized to obtain, while eXcor never creates them.
+
+## Preview apps
+
+Two small apps for trying the library by hand. They are built on the clean-room library and are not published.
+
+- **Android** (`preview-android`): a debug APK. Search YouTube, or paste or share a link. The screen shows the video's details, plays its audio or its video (picture and sound from separate tracks, merged by ExoPlayer), lists its formats, and shows the library's log.
+- **Windows** (`preview-desktop`): an app folder with `eXcor Preview.exe` and its own Java runtime, so nothing needs to be installed. It has the same search and details. Play audio and Play video download the media and open it in the system's player; Save format saves any listed format. Video above the qualities YouTube serves as one file needs [ffmpeg](https://ffmpeg.org) on the PATH to join the separate tracks. It also runs on macOS and Linux.
+
+CI builds both on every push: download `excor-preview-apk` and `excor-preview-windows` from a run's artifacts. To build them locally:
+
+```bash
+./gradlew :preview-android:assembleDebug   # preview-android/build/outputs/apk/debug/preview-android-debug.apk
+./gradlew :preview-desktop:packageApp      # preview-desktop/build/app/eXcor Preview/ (the .exe on Windows)
+```
 
 ## Build and test
 

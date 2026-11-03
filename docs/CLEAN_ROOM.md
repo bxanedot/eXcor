@@ -13,7 +13,7 @@ The `cleanroom-src/` Kotlin implementation is an independent implementation of t
 
 ## Repository boundary
 
-The new Kotlin source is selected from `cleanroom-src/` by the root Gradle build. Existing `src/`, `ejs/`, `app-core/` and `android-app/` content is retained as a separate historical implementation. Its prior provenance record is not a legal clearance and does not establish that it is part of the clean-room build. The app modules currently depend on the older API and need an audited migration before they can consume eXcor; until then they build on `historical-engine/`, a separate unpublished module that compiles `src/`, so nothing from it enters the clean-room artifact.
+The new Kotlin source is selected from `cleanroom-src/` by the root Gradle build. Existing `src/` and `ejs/` content is retained as a separate historical implementation. Its prior provenance record is not a legal clearance and does not establish that it is part of the clean-room build. Nothing compiles it: the apps that used it, and the `historical-engine/` module that built it for them, were removed on 2026-11-03. The preview apps that replaced them use only the clean-room library.
 
 The old captured responses in `fixtures/` are not used by the clean-room tests. New tests use synthetic data in `fixtures/cleanroom/`. The old captures contain third-party content and remain subject to the limits described in `fixtures/README.md` and `QUESTIONS.md`.
 
