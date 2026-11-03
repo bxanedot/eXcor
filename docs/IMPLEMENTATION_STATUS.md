@@ -14,7 +14,7 @@ Updated 2026-11-02, based on `main` after bxanedot/eXcor#53. This repository rem
 | Spotify metadata and remote control | Offline-tested only; live checks need a host-supplied token (`EXCOR_SPOTIFY_TOKEN`) and run skipped here |
 | YouTube Music | Live-verified 2026-11-02: search with filters and continuations, suggestions, artist pages, playlists and radio queues, through `Excor`. Songs, albums and discographies are withheld from this environment |
 | Native Swift `eXcorKit` | Under `swift/`; built and tested on the macOS CI job |
-| Apps | The Android and desktop apps (through `app-core`, `apps` job) and the iOS app (macOS job) build in CI against `historical-engine`; none is integrated with the clean-room API |
+| Apps | The music-player apps were removed on 2026-11-03. The preview apps use the clean-room library: an Android APK (`preview` job, linted, started on API 26 and 36 emulators) and a desktop app packaged with jpackage (self-test and start on Linux; `eXcor Preview.exe` built and self-tested on Windows) |
 | CI | Green on Linux, Windows, macOS, apps and Android devices (API 26 and 36) for every merged PR through bxanedot/eXcor#53 |
 | Provenance | Active clean-room sources are logged in `PROVENANCE.md`; the clean-room disclosure is in `CLEAN_ROOM.md` |
 

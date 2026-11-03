@@ -5,6 +5,8 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 ## Unreleased (after 0.2.0)
 
 ### Added
+- **Preview apps:** an Android APK and a Windows EXE (`preview-android`, `preview-desktop`) for trying the library by hand: search, details, audio and video playback, formats and the library's log. CI uploads both as artifacts.
+- **`excorVideoIdOf(link)`:** the video ID in a bare ID or a YouTube link (watch, youtu.be, shorts, live, embed, music.youtube.com); null for other hosts.
 - **Video extraction:** `extractVideo` returns a video track (width, height, frame rate, codec, quality label, length, DASH byte ranges) and the audio to play with it, from the same client response, both probed as playable. Audio is matched to the video's container; a progressive format is used when the response has no playable separate audio. Verified live at 480p and 1080p with an ffmpeg mux and full decode.
 - **Format list:** `formats` lists every whole-file audio and video format one client offers, with codec, size, frame rate, bitrate, length and byte ranges, for download choices. One probe per list. Verified live: 27 formats, 144p to 2160p, all range-readable.
 - **YouTube metadata:**
@@ -23,6 +25,9 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 - **Setup:** `excorDefaultHost()` for JVM and Android.
 - **Packaging:** `samples/jvm-quickstart`, and README Installation and Quick start sections.
 - **Opt-in tooling:** a YouTube benchmark (`EXCOR_BENCH=1`) and live tests (`EXCOR_LIVE=1`).
+
+### Removed
+- **Music-player apps:** `app-core`, the Android, desktop and iOS apps, and `historical-engine`, which compiled the old `src/` engine only for them (owner's decision, 2026-11-03). The `src/` sources themselves stay, uncompiled, pending the provenance audit.
 
 ### Changed
 - **Retries:** InnerTube metadata reads retry HTTP 429, 500, 502, 503, 504 and transport errors. Three attempts at most; a Retry-After of up to 5 s is honored, otherwise exponential backoff with jitter. Once retries run out, metadata calls throw `ExcorRequestException` where they used to return null. A null result now means only that YouTube answered without the expected page.

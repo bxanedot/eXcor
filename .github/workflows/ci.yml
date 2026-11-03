@@ -52,10 +52,36 @@ jobs:
             21
       - run: ./gradlew $GRADLE_ARGS :jvmTest :jvmJar :assembleAndroidMain
         shell: bash
+      # The desktop preview as a Windows app: a folder with "eXcor Preview.exe" and its own Java runtime, plus an
+      # installer when the runner has the WiX toolset jpackage needs for one.
+      - run: ./gradlew $GRADLE_ARGS :preview-desktop:packageApp
+        shell: bash
+      - name: Windows preview passes its self-test
+        shell: pwsh
+        run: |
+          $report = Join-Path $env:RUNNER_TEMP "self-test.txt"
+          Start-Process -Wait -FilePath "preview-desktop/build/app/eXcor Preview/eXcor Preview.exe" -ArgumentList "--self-test", "`"$report`""
+          Get-Content $report
+          if (-not (Select-String -Path $report -Pattern "eXcor Preview OK" -Quiet)) { exit 1 }
+      - name: Windows installer (when WiX is available)
+        shell: bash
+        run: |
+          if command -v candle.exe > /dev/null || command -v wix.exe > /dev/null || ls -d "/c/Program Files (x86)"/WiX* > /dev/null 2>&1; then
+            ./gradlew $GRADLE_ARGS :preview-desktop:packageApp -PpreviewPackageType=exe
+          else
+            echo "::notice::No WiX toolset on this runner; the portable app folder is the Windows build."
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: excor-preview-windows
+          path: |
+            preview-desktop/build/app/
+            preview-desktop/build/installer/*.exe
+          if-no-files-found: error
 
-  # The apps run on the historical engine in src/ (historical-engine/), quarantined pending the provenance review and
-  # not part of the clean-room artifact above; built and tested here so they cannot break unnoticed again.
-  apps:
+  # The preview apps, for trying the library by hand: the Android APK (uploaded as an artifact), and the desktop app,
+  # which must package, pass its self-test and start.
+  preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,19 +91,25 @@ jobs:
           java-version: |
             27
             21
-      - run: >
-          ./gradlew $GRADLE_ARGS :historical-engine:jvmTest :app-core:jvmTest
-          :android-app:assembleDebug :android-app:lintDebug :desktop-app:distZip
-      - name: Desktop app starts
+      - run: ./gradlew $GRADLE_ARGS :preview-android:assembleDebug :preview-android:lintDebug :preview-desktop:packageApp
+      - name: Desktop preview passes its self-test and starts
         run: |
-          unzip -q desktop-app/build/distributions/desktop-app.zip -d "$RUNNER_TEMP"
+          app="preview-desktop/build/app/eXcor Preview/bin/eXcor Preview"
+          "$app" --self-test "$RUNNER_TEMP/self-test.txt"
+          grep -q "eXcor Preview OK" "$RUNNER_TEMP/self-test.txt"
           set +e
-          JAVA_HOME=$JAVA_HOME_27_X64 timeout 30 xvfb-run -a "$RUNNER_TEMP/desktop-app/bin/desktop-app" > "$RUNNER_TEMP/desktop.log" 2>&1
+          timeout 30 xvfb-run -a "$app" > "$RUNNER_TEMP/desktop.log" 2>&1
           result=$?
           set -e
           cat "$RUNNER_TEMP/desktop.log"
           # 124: still running when the timeout stopped it, so it started and did not crash.
           [ "$result" -eq 124 ] && ! grep -q Exception "$RUNNER_TEMP/desktop.log"
+      - run: cp preview-android/build/outputs/apk/debug/preview-android-debug.apk excor-preview.apk
+      # A debug build signed with this run's throwaway key, for trying the library on a phone.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: excor-preview-apk
+          path: excor-preview.apk
 
   android-device:
     runs-on: ubuntu-latest
@@ -95,13 +127,13 @@ jobs:
           java-version: |
             27
             21
-      - run: ./gradlew $GRADLE_ARGS :historical-engine:assembleAndroidDeviceTest :android-app:assembleDebug
+      - run: ./gradlew $GRADLE_ARGS :preview-android:assembleDebug
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: MergeCheck on an API ${{ matrix.api }} emulator
+      - name: Boot an API ${{ matrix.api }} emulator
         run: |
           image="system-images;android-${{ matrix.api }};default;x86_64"
           adb=$ANDROID_HOME/platform-tools/adb
@@ -114,30 +146,18 @@ jobs:
           $ANDROID_HOME/emulator/emulator -avd check -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect &
           # Under the timeout too, so an emulator that exits fails the step instead of holding it to the job limit.
           timeout 600 sh -c "$adb wait-for-device && until [ \"\$($adb shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
-          $adb install -r historical-engine/build/outputs/apk/androidTest/historical-engine-androidTest.apk
-          # am instrument exits 0 either way; the report says how it went.
-          $adb shell am instrument -w com.excor.historical.test/com.excor.MergeCheck | tee report.txt
-          grep -q 'MergeCheck: OK' report.txt
-      # Opens no link, so it makes no request beyond the library's background warm-up.
-      - name: App starts on the API ${{ matrix.api }} emulator
+      - name: Preview app starts and opens a shared link on the API ${{ matrix.api }} emulator
         run: |
           adb=$ANDROID_HOME/platform-tools/adb
-          $adb install -r android-app/build/outputs/apk/debug/android-app-debug.apk
-          $adb shell am start -W -n com.excor.android/.MainActivity
-          # A shared text reaches the running screen (it fills the link field).
-          $adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT not-a-link -n com.excor.android/.MainActivity
-          sleep 10
-          # Still running, with the media service the screen connects to, and nothing in the crash log.
-          $adb shell pidof com.excor.android
-          $adb shell dumpsys activity services com.excor.android | grep -q PlaybackService
+          $adb install -r preview-android/build/outputs/apk/debug/preview-android-debug.apk
+          $adb shell am start -W -n com.excor.preview/.MainActivity
+          # A shared link reaches the running screen and loads the video's details.
+          $adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT https://youtu.be/dQw4w9WgXcQ -n com.excor.preview/.MainActivity
+          sleep 15
+          # Still running, and nothing in the crash log.
+          $adb shell pidof com.excor.preview
           $adb logcat -d -b crash > crash.txt
-          if grep -q com.excor.android crash.txt; then cat crash.txt; exit 1; fi
-      # A debug build signed with this run's throwaway key, for trying the app on a phone.
-      - if: matrix.api == 36
-        uses: actions/upload-artifact@v4
-        with:
-          name: excor-android-debug
-          path: android-app/build/outputs/apk/debug/android-app-debug.apk
+          if grep -q com.excor.preview crash.txt; then cat crash.txt; exit 1; fi
 
   macos:
     runs-on: macos-15
@@ -159,13 +179,6 @@ jobs:
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
           -F build/XCFrameworks/release/eXcor.xcframework/ios-arm64_x86_64-simulator
           apicheck/ExcorApiCheck.swift
-      - name: iOS app build
-        run: |
-          ./gradlew $GRADLE_ARGS :historical-engine:assembleExcorAppReleaseXCFramework
-          brew install xcodegen
-          xcodegen generate --spec ios-app/project.yml --project ios-app
-          xcodebuild -project ios-app/eXcorIOS.xcodeproj -scheme eXcorIOS -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
       - name: Swift package tests
         shell: bash
         working-directory: swift

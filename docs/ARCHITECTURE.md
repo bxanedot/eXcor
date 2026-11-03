@@ -2,7 +2,7 @@
 
 ## Build boundary
 
-The root Gradle project publishes the draft KMP library from `cleanroom-src/`. Its public Kotlin API is in `com.excor`. The preserved `src/` implementation and application modules are not compiled into this artifact. The apps build on `historical-engine/`, a separate unpublished module that compiles `src/` until they are migrated.
+The root Gradle project publishes the draft KMP library from `cleanroom-src/`. Its public Kotlin API is in `com.excor`. The preserved `src/` implementation is not compiled at all. The preview apps (`preview-android`, `preview-desktop`) are separate unpublished modules that use the library.
 
 ## Request path
 

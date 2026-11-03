@@ -5,7 +5,7 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 **Project facts:**
 - **Code:** Kotlin Multiplatform, package `com.excor`, coordinates `com.excor:eXcor:0.2.0`, built from `cleanroom-src/`.
 - **Targets:** JVM (JDK 26 bytecode), Android (minSdk 26, Java 17 bytecode), iOS arm64, simulator arm64 and x64, plus the XCFramework `eXcor`.
-- **Separate deliverables:** the `eXcorKit` Swift package under `swift/`, and the apps under `historical-engine` (unpublished).
+- **Separate deliverables:** the `eXcorKit` Swift package under `swift/`, and the preview apps `preview-android` (APK) and `preview-desktop` (Windows EXE), both unpublished and built on the library.
 
 ## Subsystems
 
