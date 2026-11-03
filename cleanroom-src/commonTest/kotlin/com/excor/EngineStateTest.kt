@@ -327,6 +327,45 @@ class EngineStateTest {
         }
     }
 
+    @Test
+    fun formatListHasEveryWholeFileFormatAfterOneProbe() = runTest {
+        var probes = 0
+        var refuse = false
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                "/youtubei/v1/player" -> respond(fixture("player-response-video.json"), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                "/videoplayback" -> {
+                    probes++
+                    if (refuse) respond("", HttpStatusCode.Forbidden) else respond("x", HttpStatusCode.PartialContent)
+                }
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        }) { followRedirects = false }
+        try {
+            val list = assertNotNull(ExcorEngine(FakeHost(), null, client).formats(VIDEO_ID, emptySet()))
+            assertEquals(1, probes)
+            assertEquals("VISIONOS", list.clientName)
+            // The segmented 1080p60 format is left out; everything else is listed.
+            assertEquals(listOf(18, 400, 137, 248, 399, 298, 140, 251), list.formats.map { it.itag })
+            val progressive = list.formats.single { it.itag == 18 }
+            assertTrue(progressive.hasAudio && progressive.hasVideo)
+            val avc = list.formats.single { it.itag == 137 }
+            assertTrue(avc.hasVideo && !avc.hasAudio)
+            assertEquals(ExcorVideoCodec.H264, avc.videoCodec)
+            assertEquals(5_000_000L, avc.contentLength)
+            val opus = list.formats.single { it.itag == 251 }
+            assertTrue(opus.hasAudio && !opus.hasVideo)
+            assertNull(opus.videoCodec)
+            assertEquals(2, opus.audioChannels)
+
+            refuse = true
+            assertNull(ExcorEngine(FakeHost(), null, client).formats(VIDEO_ID, emptySet()))
+        } finally {
+            client.close()
+        }
+    }
+
     private data class TestEngine(
         val engine: ExcorEngine,
         val host: FakeHost,

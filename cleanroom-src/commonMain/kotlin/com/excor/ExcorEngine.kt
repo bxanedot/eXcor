@@ -402,6 +402,53 @@ internal class ExcorEngine(
         }
     }
 
+    /**
+     * Every whole-file format of the first client whose response plays: one representative format (the best audio, or
+     * the best video when there is no audio) is probed, since a response's URLs are signed together.
+     */
+    suspend fun formats(videoId: String, skipClients: Set<String>): ExcorFormatList? {
+        require(VIDEO_ID.matches(videoId)) { "Excor video ID is invalid" }
+        val session = host.session()
+        return firstFromClients(videoId, skipClients, session) { client ->
+            val whole = client.formats.filter { !it.segmented && isAllowedPlaybackUrl(it.url) && it.audioType.substringBefore('/') in setOf("audio", "video") }
+            val representative = rankAudioFormats(whole, 160, requireM4a = false).firstOrNull()
+                ?: rankVideoFormats(whole, Int.MAX_VALUE, ExcorVideoCodec.entries.toSet()).firstOrNull()
+                ?: return@firstFromClients null
+            if (!isPlayable(representative.url, client.headers)) {
+                log(ExcorLogLevel.DEBUG, "${client.identity.name}: format list failed the playback probe", videoId)
+                return@firstFromClients null
+            }
+            log(ExcorLogLevel.INFO, "listed ${whole.size} formats from ${client.identity.name}", videoId)
+            ExcorFormatList(
+                videoId = videoId,
+                clientName = client.identity.name,
+                profileId = client.identity.profileId,
+                headers = client.headers,
+                formats = whole.map { format ->
+                    val hasVideo = format.audioType.startsWith("video/")
+                    ExcorMediaFormat(
+                        itag = format.itag,
+                        url = format.url,
+                        mimeType = format.mimeType,
+                        kbps = format.kbps,
+                        contentLength = format.contentLength,
+                        hasAudio = !hasVideo || format.containsAudio,
+                        hasVideo = hasVideo,
+                        width = format.width,
+                        height = format.height,
+                        fps = format.fps,
+                        qualityLabel = format.qualityLabel,
+                        videoCodec = if (hasVideo) format.videoCodec else null,
+                        audioChannels = format.channels,
+                        sampleRate = format.sampleRate,
+                        initRange = format.initRange,
+                        indexRange = format.indexRange,
+                    )
+                },
+            )
+        }
+    }
+
     private class ClientResponse(
         val identity: ClientIdentity,
         val response: PlayerResponse,

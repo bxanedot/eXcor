@@ -32,6 +32,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 ## Completed in this pass
 
+- **Format list** (`formats`, 2026-11-03): every whole-file format of one client, for download choices; the first step toward moving the apps onto the clean-room SDK. Live: 27 formats, 144p to 2160p, all range-readable.
 - **Video extraction** (`extractVideo`, 2026-11-03): video track plus matching audio, both probed. Live: 480p and 1080p H.264 from VISIONOS, muxed with M4A by ffmpeg and fully decoded, seek correct.
 - **YouTube Music** (`YouTubeMusic.kt`): typed search, suggestions, artist pages, playlists and radio. Live-verified.
 - **`excorDefaultHost()`:** constructing `Excor` needs no boilerplate.
@@ -47,7 +48,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 - **Offline suite and targets:**
   `./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata`
-  Latest: 159 tests, 15 skipped (the opt-in live tests and benchmarks), 0 failed.
+  Latest: 162 tests, 17 skipped (the opt-in live tests and benchmarks), 0 failed.
 - **Live YouTube and YouTube Music:**
   `EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest`
   Latest: 7 of 7 pass; the benchmark is opt-in (`EXCOR_BENCH=1`).
