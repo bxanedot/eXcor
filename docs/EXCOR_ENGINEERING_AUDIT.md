@@ -25,6 +25,7 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | Player script and signature handling | `PlayerJs.kt`, `cleanroom-src/ejs` | Tested | `PlayerJsTest`; no playable response to apply it to here |
 | Stream selection and URL validation | `Selection.kt`, `UrlPolicy.kt`, `UrlParameters.kt` | Tested | `SelectionTest`, `UrlPolicyTest` |
 | Direct audio streams | `ExcorEngine.kt`, `PlayerRequest.kt`, `Clients.kt` | Verified (for videos YouTube serves here) | `LivePlaybackTest.extractedAudioDecodesFullyAndSeeks`: full download, ffmpeg decode, duration match, mid-file seek. `EngineStateTest.extractionWorksWithoutTheWatchPageAndFollowsOnlyAllowedMediaRedirects`. Most videos remain bot-checked from here |
+| Video streams (video track plus matching audio) | `ExcorEngine.kt` (`extractVideo`), `Selection.kt` (`rankVideoFormats`), `PlayerModels.kt` | Verified (for videos YouTube serves here) | `LivePlaybackTest.extractedVideoAndAudioDecodeAndMux` (480p and 1080p H.264, ffmpeg mux and full decode, seek); `VideoSelectionTest`; `EngineStateTest.videoExtractionPairsTheBestPlayableVideoWithAudioInTheSameContainer` |
 | SABR/UMP | — | Missing | A `serverAbrStreamingUrl` now appears in VISIONOS responses, alongside direct URLs that play; there is no documented SABR request specification to implement against independently |
 | Captions, transcripts | — | Blocked | No `captions` in the bot-checked player response; `get_transcript` answers "Precondition check failed" |
 | Hashtag pages | — | Blocked | Robot check |

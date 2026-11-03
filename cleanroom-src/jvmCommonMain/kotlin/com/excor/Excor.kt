@@ -109,6 +109,19 @@ class Excor(host: ExcorHost) {
         skipClients: Set<String> = emptySet(),
         requireM4a: Boolean = false,
     ): ExcorStream? = engine.extract(videoId, maxKbps, skipClients, requireM4a, watchFallback = false)
+    /**
+     * A video track of at most [maxHeight] pixels in one of [codecs], with the audio to play alongside it. The best
+     * picture wins, then frame rate, then the most widely decodable codec. Both tracks are probed as playable before
+     * they're returned. Null when no client offers a playable video; throws with YouTube's reason when it refuses one.
+     */
+    @Throws(Throwable::class)
+    suspend fun extractVideo(
+        videoId: String,
+        maxHeight: Int = 1080,
+        codecs: Set<ExcorVideoCodec> = setOf(ExcorVideoCodec.H264, ExcorVideoCodec.VP9, ExcorVideoCodec.AV1),
+        maxAudioKbps: Int = 160,
+        skipClients: Set<String> = emptySet(),
+    ): ExcorVideoStreams? = engine.extractVideo(videoId, maxHeight, codecs, maxAudioKbps, skipClients)
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
     fun onRefused(url: String): String? = engine.onRefused(url)
     fun exclude(videoId: String, profileId: String) = engine.exclude(videoId, profileId)

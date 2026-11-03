@@ -9,6 +9,15 @@ internal data class PlayerFormat(
     val sampleRate: Int?,
     val signatureCipher: String? = null,
     val itag: Int? = null,
+    val width: Int? = null,
+    val height: Int? = null,
+    val fps: Int? = null,
+    val qualityLabel: String? = null,
+    val contentLength: Long? = null,
+    val initRange: LongRange? = null,
+    val indexRange: LongRange? = null,
+    /** True for segmented ("OTF") formats, which can't be fetched as one file with byte ranges. */
+    val segmented: Boolean = false,
 ) {
     override fun toString(): String = "PlayerFormat(mimeType=$mimeType, bitrate=$bitrate, itag=$itag)"
 
@@ -66,3 +75,50 @@ private fun PlayerFormat.effectiveScore(): Long = effectiveBitrate() + when (cha
 }
 
 private fun Int?.orZero(): Int = this ?: 0
+
+internal enum class VideoContainer { MP4, WEBM, OTHER }
+
+internal val PlayerFormat.container: VideoContainer
+    get() = when (audioType.substringAfter('/')) {
+        "mp4" -> VideoContainer.MP4
+        "webm" -> VideoContainer.WEBM
+        else -> VideoContainer.OTHER
+    }
+
+internal val PlayerFormat.videoCodec: ExcorVideoCodec
+    get() {
+        val codecs = mimeType.substringAfter("codecs=", "").trim('"', ' ').lowercase()
+        return when {
+            codecs.startsWith("avc1") -> ExcorVideoCodec.H264
+            codecs.startsWith("vp9") || codecs.startsWith("vp09") -> ExcorVideoCodec.VP9
+            codecs.startsWith("av01") -> ExcorVideoCodec.AV1
+            else -> ExcorVideoCodec.OTHER
+        }
+    }
+
+/** A progressive format carries its own audio: a second codec in its MIME type, or audio fields. */
+internal val PlayerFormat.containsAudio: Boolean
+    get() = channels != null || sampleRate != null || mimeType.substringAfter("codecs=", "").contains(',')
+
+/**
+ * Video formats that fit [maxHeight] and [codecs], best first: the tallest picture, then the higher frame rate, then
+ * the most widely decodable codec (H.264, then VP9, then AV1), then the higher bitrate. Separate video tracks rank
+ * before progressive ones at the same height, since progressive formats top out at low bitrates. Formats of unknown
+ * height and segmented formats are left out.
+ */
+internal fun rankVideoFormats(
+    formats: List<PlayerFormat>,
+    maxHeight: Int,
+    codecs: Set<ExcorVideoCodec>,
+): List<PlayerFormat> = formats
+    .filter {
+        it.audioType.startsWith("video/") && !it.segmented && isAllowedPlaybackUrl(it.url) &&
+            it.height != null && it.height in 1..maxHeight && it.videoCodec in codecs
+    }
+    .sortedWith(
+        compareByDescending<PlayerFormat> { it.height }
+            .thenByDescending { it.fps ?: 30 }
+            .thenBy { it.containsAudio }
+            .thenBy { it.videoCodec.ordinal }
+            .thenByDescending { it.effectiveBitrate() },
+    )

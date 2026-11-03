@@ -20,6 +20,47 @@ data class ExcorStream(
 
 enum class ExcorAudioFormat { M4A, WEBM_OPUS, OTHER }
 
+/** A video codec, from the format's MIME type. Ordered from the most to the least widely decodable. */
+enum class ExcorVideoCodec { H264, VP9, AV1, OTHER }
+
+/**
+ * One video track. [containsAudio] is true for a progressive format (picture and sound in one file); otherwise the
+ * track is picture only and plays alongside [ExcorVideoStreams.audio]. [initRange] and [indexRange] are the byte
+ * ranges of the container's initialization and segment-index data, for building a DASH representation.
+ */
+data class ExcorVideoTrack(
+    val url: String,
+    val mimeType: String,
+    val codec: ExcorVideoCodec,
+    val width: Int?,
+    val height: Int,
+    val fps: Int?,
+    val qualityLabel: String?,
+    val kbps: Int,
+    val contentLength: Long?,
+    val initRange: LongRange?,
+    val indexRange: LongRange?,
+    val containsAudio: Boolean,
+    val headers: Map<String, String>,
+) {
+    override fun toString(): String =
+        "ExcorVideoTrack(mimeType=$mimeType, ${width}x$height, fps=$fps, kbps=$kbps, containsAudio=$containsAudio, " +
+            "headers=${headers.keys})"
+}
+
+/**
+ * A video and the audio to play with it, both from the same client response and both probed as playable. [audio] is
+ * null only when [video] is progressive and carries its own sound. The audio container matches the video's (M4A with
+ * MP4 video, Opus/WebM with WebM video) when the response offers one, so the pair can be muxed without re-encoding.
+ */
+data class ExcorVideoStreams(
+    val videoId: String,
+    val video: ExcorVideoTrack,
+    val audio: ExcorStream?,
+    val clientName: String,
+    val profileId: String,
+)
+
 data class ExcorAudioCandidate(
     val url: String,
     val kbps: Int,

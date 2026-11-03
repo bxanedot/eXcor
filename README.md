@@ -83,7 +83,23 @@ if (stream != null) {
 }
 ```
 
-`maxKbps` selects low-bitrate audio at 64 kbps or below; above that threshold it does not cap the selected bitrate. `requireM4a` restricts selection to AAC/M4A. A `TokenProvider` is an integration boundary: applications may supply tokens they are authorized to obtain, while eXcor never creates them.
+`maxKbps` selects low-bitrate audio at 64 kbps or below; above that threshold it does not cap the selected bitrate. `requireM4a` restricts selection to AAC/M4A.
+
+### Video
+
+```kotlin
+val streams = excor.extractVideo(
+    videoId = "dQw4w9WgXcQ",
+    maxHeight = 1080,                                   // the tallest picture allowed
+    codecs = setOf(ExcorVideoCodec.H264, ExcorVideoCodec.VP9),
+)
+if (streams != null) {
+    val video = streams.video   // url, headers, width x height, fps, codec, initRange/indexRange
+    val audio = streams.audio   // null only when the video is progressive (carries its own sound)
+}
+```
+
+The best picture under `maxHeight` wins, then the higher frame rate, then the most widely decodable codec (H.264, VP9, AV1). The audio comes from the same response, in the matching container where one exists (M4A with MP4 video, Opus/WebM with WebM video), so the two can be played together or muxed without re-encoding. Both tracks pass the playback probe before they are returned. If the response has no playable separate audio, a progressive format is used instead. Segmented ("OTF") formats are not selected. A `TokenProvider` is an integration boundary: applications may supply tokens they are authorized to obtain, while eXcor never creates them.
 
 ## Build and test
 

@@ -11,8 +11,10 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class EngineStateTest {
     @Test
@@ -263,6 +265,63 @@ class EngineStateTest {
             redirectTo = "https://evil.example/videoplayback"
             assertNull(ExcorEngine(FakeHost(), null, client).extract(VIDEO_ID, 128, emptySet(), false, false))
             assertEquals(listOf("rr1---sn.googlevideo.com"), requestedHosts)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun videoExtractionPairsTheBestPlayableVideoWithAudioInTheSameContainer() = runTest {
+        val failingItags = mutableSetOf<String>()
+        val probedItags = mutableListOf<String>()
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                "/youtubei/v1/player" -> respond(fixture("player-response-video.json"), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                "/videoplayback" -> {
+                    val itag = request.url.parameters["itag"].orEmpty()
+                    probedItags += itag
+                    if (itag in failingItags) respond("", HttpStatusCode.Forbidden) else respond("x", HttpStatusCode.PartialContent)
+                }
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        }) { followRedirects = false }
+        val all = setOf(ExcorVideoCodec.H264, ExcorVideoCodec.VP9, ExcorVideoCodec.AV1)
+        try {
+            val best = assertNotNull(ExcorEngine(FakeHost(), null, client).extractVideo(VIDEO_ID, 1080, all, 160, emptySet()))
+            assertEquals("VISIONOS", best.clientName)
+            assertEquals(1080, best.video.height)
+            assertEquals(ExcorVideoCodec.H264, best.video.codec)
+            assertEquals(0L..740L, best.video.initRange)
+            assertFalse(best.video.containsAudio)
+            // MP4 video gets M4A audio even though the Opus track has the higher bitrate.
+            assertEquals("audio/mp4", assertNotNull(best.audio).mimeType.substringBefore(';'))
+            assertEquals(best.video.headers, best.audio?.headers)
+
+            // VP9 only: WebM video with Opus audio.
+            val vp9 = assertNotNull(ExcorEngine(FakeHost(), null, client).extractVideo(VIDEO_ID, 1080, setOf(ExcorVideoCodec.VP9), 160, emptySet()))
+            assertEquals(ExcorVideoCodec.VP9, vp9.video.codec)
+            assertEquals("audio/webm", assertNotNull(vp9.audio).mimeType.substringBefore(';'))
+
+            // A video that fails its probe gives way to the next candidate.
+            failingItags += setOf("137", "248", "399")
+            val fallback = assertNotNull(ExcorEngine(FakeHost(), null, client).extractVideo(VIDEO_ID, 1080, all, 160, emptySet()))
+            assertEquals(720, fallback.video.height)
+            assertEquals(60, fallback.video.fps)
+
+            // With no playable separate audio, only the progressive format is usable, and it carries its own sound.
+            failingItags += setOf("140", "251")
+            probedItags.clear()
+            val progressive = assertNotNull(ExcorEngine(FakeHost(), null, client).extractVideo(VIDEO_ID, 1080, all, 160, emptySet()))
+            assertEquals(360, progressive.video.height)
+            assertTrue(progressive.video.containsAudio)
+            assertNull(progressive.audio)
+            // Each audio track is probed once, and no picture-only video is probed without audio to go with it.
+            assertEquals(listOf("140", "251", "18"), probedItags)
+
+            // Nothing playable at all.
+            failingItags += "18"
+            assertNull(ExcorEngine(FakeHost(), null, client).extractVideo(VIDEO_ID, 1080, all, 160, emptySet()))
         } finally {
             client.close()
         }
