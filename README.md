@@ -105,10 +105,10 @@ The best picture under `maxHeight` wins, then the higher frame rate, then the mo
 
 ## Preview apps
 
-Two small apps for trying the library by hand. They are built on the clean-room library and are not published.
+Two small apps for trying the library by hand, for the platforms the owner uses (Android and Windows); the library itself also targets the JVM and iOS. They are built on the clean-room library and are not published. Where YouTube's bot check refuses every signed-out client on a network, they say so in the status line; they don't get around it.
 
-- **Android** (`preview-android`): a debug APK. Search YouTube, or paste or share a link. The screen shows the video's details, plays its audio or its video (picture and sound from separate tracks, merged by ExoPlayer), lists its formats, and shows the library's log.
-- **Windows** (`preview-desktop`): an app folder with `eXcor Preview.exe` and its own Java runtime, so nothing needs to be installed. It has the same search and details. Play audio and Play video download the media and open it in the system's player; Save format saves any listed format. Video above the qualities YouTube serves as one file needs [ffmpeg](https://ffmpeg.org) on the PATH to join the separate tracks. It also runs on macOS and Linux.
+- **Android** (`preview-android`): a debug APK, Android 8 and later. Search YouTube Music (the default) or YouTube, or paste or share a link. YouTube Music searches show its own filter chips for the query (Songs, Videos, Albums, Artists, Community playlists… as it offers them) and typed results; albums and playlists open as track lists, artists as their shelves, and Back returns. A song or video shows its details, plays its audio or its video (picture and sound from separate tracks, merged by ExoPlayer), and lists its formats. Download audio, Download video and tapping a listed format save to Downloads/eXcor; video is joined with its sound on the phone without re-encoding (H.264 with AAC as MP4; VP9 with Opus as WebM, from Android 10). The screen also shows the library's log.
+- **Windows** (`preview-desktop`): an app folder with `eXcor Preview.exe` and its own Java runtime, so nothing needs to be installed. It has the same YouTube Music and YouTube search, filters, album, playlist and artist pages, and details. Play audio and Play video download the media and open it in the system's player; Save format saves any listed format. Video above the qualities YouTube serves as one file needs [ffmpeg](https://ffmpeg.org) on the PATH to join the separate tracks. It also runs on macOS and Linux.
 
 CI builds both on every push: download `excor-preview-apk` and `excor-preview-windows` from a run's artifacts. To build them locally:
 

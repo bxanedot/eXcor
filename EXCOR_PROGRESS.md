@@ -33,6 +33,10 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 ## Completed in this pass
 
+- **Preview apps, from the owner's phone test** (2026-11-03): the owner reported that the APK says "Sign in to confirm you're not a bot" and that Play audio fails with it, that search had no artist, playlist, album or song filters, and that the Android app had no downloads. Now:
+  - both apps search YouTube Music by default, with its own filter chips, typed rows, album, playlist and artist pages, Back and More (shared code in `preview-common/`); live-checked from the desktop app under Xvfb: the Videos chip, clearing it, an artist's shelves, "show all" (92 videos), a community playlist, a song's details, and Play audio for `dQw4w9WgXcQ` through the shared range download (3,449,447 bytes of AAC, 213.09 s);
+  - Android downloads to Downloads/eXcor: audio, video joined with its sound on the phone (MediaExtractor and MediaMuxer), and any listed format; `JoinCheck` passes on the CI emulators: API 36 joins MP4 (60 video and 88 audio samples), a plain .m4a (88) and WebM (60 and 101), each read back whole; API 26 joins MP4 and .m4a and refuses WebM, as intended. No real YouTube download has run on a phone yet;
+  - the bot check is named as such in the status line. The owner's network bot-checks every signed-out client too; the legitimate routes are a signed-in session or a host `TokenProvider`, which is the owner's call.
 - **Second cloud session** (2026-11-03): reran every live check from another cloud container; the results match the first session's (see **Commands**). Also:
   - CI actions moved to their Node 24 majors (checkout v7, setup-java v6, upload-artifact v7; bxanedot/eXcor#64);
   - `musicSearch`'s top result card is typed when it plays a video or song (it was `UNKNOWN`, without a video ID);
