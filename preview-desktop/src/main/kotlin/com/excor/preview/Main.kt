@@ -298,7 +298,7 @@ private class PreviewWindow {
         current = info
         formats = emptyList()
         ui { details.text = describe(info); details.caretPosition = 0 }
-        setStatus(readyText(info))
+        setStatus("Ready.")
     }
 
     private fun playAudio(info: ExcorVideoInfo) = task("Finding audio") {
@@ -428,10 +428,6 @@ private object SwingDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
     override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 }
 
-/** The metadata request's playability is the web client's; playback asks other clients, so it is only a hint. */
-private fun readyText(info: ExcorVideoInfo): String =
-    if (info.playabilityStatus == null || info.playabilityStatus == "OK") "Ready."
-    else "Ready. The web client reports ${info.playabilityReason ?: info.playabilityStatus}; playback tries other clients."
 
 private fun region(): String = Locale.getDefault().country.takeIf { it.length == 2 && it.all(Char::isLetter) } ?: "US"
 
@@ -450,8 +446,6 @@ private fun describe(info: ExcorVideoInfo): String = buildString {
     appendLine(info.title)
     appendLine(listOfNotNull(info.author, info.durationSeconds?.let(::duration), info.viewCount?.let { "%,d views".format(it) }).joinToString(" · "))
     appendLine("Video ID: ${info.videoId}")
-    // From the web client that answers metadata requests; playback asks other clients, which may still serve it.
-    info.playabilityStatus?.let { appendLine("Web client playability: $it${info.playabilityReason?.let { reason -> " ($reason)" } ?: ""}") }
     info.description?.takeIf { it.isNotBlank() }?.let { append("\n").append(it.take(1_500)) }
 }
 

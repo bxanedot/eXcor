@@ -21,7 +21,7 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
    - a host-supplied PO token: `TokenProvider`.
 
    Either is the owner's decision. Build nothing until they choose, and never bypass the check.
-3. **Preview UI nits from the screenshots:**
+3. ~~**Preview UI nits from the screenshots:**~~ Done 2026-11-03: the Android action rows wrap, the metadata-client playability line is gone from both apps, and the Android status lines stop at two lines (failures stay in full in the log). Not yet seen on a phone.
    - the action rows scroll sideways, and "Play audio" was half off-screen;
    - the "web client reports Video unavailable" line misleads; it's the metadata client, not playback;
    - the long status lines stack.
