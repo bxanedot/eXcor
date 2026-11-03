@@ -11,8 +11,8 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: |
@@ -43,8 +43,8 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: |
@@ -71,7 +71,7 @@ jobs:
           else
             echo "::notice::No WiX toolset on this runner; the portable app folder is the Windows build."
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: excor-preview-windows
           path: |
@@ -84,8 +84,8 @@ jobs:
   preview:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: |
@@ -106,7 +106,7 @@ jobs:
           [ "$result" -eq 124 ] && ! grep -q Exception "$RUNNER_TEMP/desktop.log"
       - run: cp preview-android/build/outputs/apk/debug/preview-android-debug.apk excor-preview.apk
       # A debug build signed with this run's throwaway key, for trying the library on a phone.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: excor-preview-apk
           path: excor-preview.apk
@@ -120,8 +120,8 @@ jobs:
       matrix:
         api: [26, 36]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: |
@@ -162,8 +162,8 @@ jobs:
   macos:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: |
