@@ -3,6 +3,7 @@
 The continuation file for the production-engineering directive of 2026-11-02. If work is interrupted, resume from **Next tasks**; don't repeat the audit.
 
 **Related files:**
+- `HANDOFF.md`: start here in a new session (rules, layout, commands, next tasks).
 - `docs/EXCOR_ENGINEERING_AUDIT.md`: the subsystem inventory.
 - `docs/release-gates.json`: the G1–G12 status, evidence and commands.
 - `docs/COMPETITOR_MATRIX.md`: the comparison with InnerTubeX.

@@ -1,3 +1,5 @@
+> **Superseded (2026-11-03):** this describes an earlier plan (a multiplatform music app on `app-core`), which the owner dropped; those apps are removed. Read [`HANDOFF.md`](HANDOFF.md) instead.
+
 # Codex handoff — eXcor shared engine, Android + desktop + iOS
 
 Date: 2026-10-28
