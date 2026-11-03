@@ -19,10 +19,10 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G1 Existing eXcor preserved | Passing | Additive changes only |
 | G2 Build correctness | Passing | Now includes the shared metadata compile |
 | G3 InnerTube operations | Passing | Live-verified |
-| G4 Player compatibility | Partial | VISIONOS path verified live; the player-script path is untested here |
+| G4 Player compatibility | Partial | VISIONOS path verified live; on the owner's network the live player script now loads and solves n and sig, but YouTube serves no video to TVHTML5 there |
 | G5 Streaming | Partial | Audio and video extraction, full ffmpeg decode and seek verified for a video YouTube serves here (video at 480p and 1080p, muxed with its audio); most videos are bot-checked |
 | G6 SABR/UMP | Blocked | Not implemented; responses here carry direct URLs that play |
-| G7 YouTube Music | Passing | For what this environment can observe; songs and albums are withheld |
+| G7 YouTube Music | Passing | Songs and albums verified live on the owner's network (2026-11-03); cloud containers don't get them |
 | G8 Reliability | Partial | Typed failures after bounded retries, WARN diagnostics; no live fault injection |
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
 | G10 Release packaging | Partial | Local publish works; no remote release is authorized |
@@ -33,6 +33,12 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 ## Completed in this pass
 
+- **First local run, owner's PC, home network** (2026-11-03): offline suite 168 tests, 18 skipped, 0 failed. Live: `LiveVideoInfoTest` 8 of 9 pass (the benchmark is opt-in), `LiveMusicTest` 2 of 5 (the rest need credentials or `EXCOR_BENCH`), `LivePlaybackTest` 1 of 4: the format list passes; audio decode and video mux skipped (no ffmpeg on that PC); `publicMusicVideosReturnRangeReadableAudio` fails on `kJQP7kiw5Fk`, bot-checked (`LOGIN_REQUIRED`) on every client, as in the cloud. Fixed from what that network showed:
+  - YouTube search: the artist's channel now comes as an `officialCardViewModel`; it's read as a channel again;
+  - YouTube Music artist pages: the radio and shuffle buttons now use a `watchEndpoint`, so `radioPlaylistId` was null;
+  - YouTube Music songs had no duration (it's at the end of the subtitle); verified with a new live test, `youTubeMusicSongsAndAlbums`, since this network offers Songs, Albums and a Top songs shelf;
+  - the player-script path (G4) never started: the watch page loads here, but the script URL is in the page config, not `assets.js`; the 2.66 MB script exceeded a 2 MB cap; and the EJS solver needs 256 MiB of QuickJS memory, not 64 (128 runs out). It now solves n and sig against the live player (about 6 s cold), and TVHTML5 sends its request; YouTube answers it `UNPLAYABLE` or `LOGIN_REQUIRED`;
+  - unlabeled live-test assertions now say what they saw.
 - **Preview apps, from the owner's phone test** (2026-11-03): the owner reported that the APK says "Sign in to confirm you're not a bot" and that Play audio fails with it, that search had no artist, playlist, album or song filters, and that the Android app had no downloads. Now:
   - both apps search YouTube Music by default, with its own filter chips, typed rows, album, playlist and artist pages, Back and More (shared code in `preview-common/`); live-checked from the desktop app under Xvfb: the Videos chip, clearing it, an artist's shelves, "show all" (92 videos), a community playlist, a song's details, and Play audio for `dQw4w9WgXcQ` through the shared range download (3,449,447 bytes of AAC, 213.09 s);
   - Android downloads to Downloads/eXcor: audio, video joined with its sound on the phone (MediaExtractor and MediaMuxer), and any listed format; `JoinCheck` passes on the CI emulators: API 36 joins MP4 (60 video and 88 audio samples), a plain .m4a (88) and WebM (60 and 101), each read back whole; API 26 joins MP4 and .m4a and refuses WebM, as intended. No real YouTube download has run on a phone yet;
@@ -74,8 +80,8 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 ## Known blockers
 
-- **Bot check:** YouTube answers most videos from this environment with `LOGIN_REQUIRED` ("Sign in to confirm you're not a bot") or "unavailable", on every client. Some videos (such as `dQw4w9WgXcQ`) are served to VISIONOS, which is how streaming was verified. The HTML watch page answers with a captcha (HTTP 429). eXcor does not bypass either.
-- **Withheld YouTube Music catalog:** songs, albums and discographies aren't offered to this environment. Rechecked 2026-11-03 from a second cloud container: search filters are Artists, Videos, Episodes, Profiles, Community playlists and Podcasts only, and the Daft Punk artist page has Videos, Live performances and Playlists shelves only.
+- **Bot check:** YouTube answers most videos from this environment with `LOGIN_REQUIRED` ("Sign in to confirm you're not a bot") or "unavailable", on every client. Some videos (such as `dQw4w9WgXcQ`) are served to VISIONOS, which is how streaming was verified. The HTML watch page answers cloud containers with a captcha (HTTP 429). The owner's home network and phone bot-check the same way, though the watch page loads there. eXcor does not bypass either.
+- **Withheld YouTube Music catalog (cloud only):** songs, albums and discographies aren't offered to cloud containers; the owner's home network gets them (2026-11-03). Rechecked 2026-11-03 from a second cloud container: search filters are Artists, Videos, Episodes, Profiles, Community playlists and Podcasts only, and the Daft Punk artist page has Videos, Live performances and Playlists shelves only.
 - **Maven Central 429s:** `repo.maven.apache.org` rate-limits cloud containers. The second cloud session used a local init script (`~/.gradle/init.d`, not in the repository) that points Maven Central at Google's mirror, `maven-central.storage-download.googleapis.com/maven2/`. CI is unaffected.
 
 ## Next tasks

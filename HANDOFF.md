@@ -15,13 +15,13 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 - So on that network, YouTube bot-checks every signed-out client. Not a preview bug. Don't work around it.
 
 **Next, in order:**
-1. **Run the live checks on the owner's PC** (home network, which may differ from the phone's mobile data): `LiveVideoInfoTest`, `LivePlaybackTest`, `LiveMusicTest` (commands under "Build and test"). Record exactly what plays, as G4, G5 and G7 evidence. If the watch page loads there, the TVHTML5 player-script path (G4) can finally be tested.
+1. ~~**Run the live checks on the owner's PC.**~~ Done 2026-11-03 (results in `EXCOR_PROGRESS.md`). Home network: the same bot check as the phone and the cloud; YouTube Music offers songs and albums (now live-tested); the watch page loads, and the player-script path now solves the live player, but YouTube serves nothing to TVHTML5. Still open there: install ffmpeg and rerun `LivePlaybackTest` for the decode and mux checks.
 2. **Bot check: the owner chose both routes (2026-11-03).** Signed-in sessions are built (cookies plus `SAPISIDHASH`; the preview apps take a pasted Cookie header) and need a live check with the owner's account. The PO-token provider is next. Original note: The legitimate options are:
    - a signed-in session: the host supplies cookies through `ExcorSession`;
    - a host-supplied PO token: `TokenProvider`.
 
    Either is the owner's decision. Build nothing until they choose, and never bypass the check.
-3. **Preview UI nits from the screenshots:**
+3. ~~**Preview UI nits from the screenshots:**~~ Done 2026-11-03: the Android action rows wrap, the metadata-client playability line is gone from both apps, and the Android status lines stop at two lines (failures stay in full in the log). Not yet seen on a phone.
    - the action rows scroll sideways, and "Play audio" was half off-screen;
    - the "web client reports Video unavailable" line misleads; it's the metadata client, not playback;
    - the long status lines stack.

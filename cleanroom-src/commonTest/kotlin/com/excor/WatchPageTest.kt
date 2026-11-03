@@ -15,6 +15,13 @@ class WatchPageTest {
     }
 
     @Test
+    fun readsPlayerScriptFromPageConfig() {
+        val page = """<script>ytcfg.set({"PLAYER_JS_URL":"/s/player/abc123/player_ias.vflset/en_US/base.js"});</script>
+            <script>var ytInitialPlayerResponse = {"playabilityStatus":{"status":"OK"}};</script>"""
+        assertEquals("/s/player/abc123/player_ias.vflset/en_US/base.js", parseWatchPage(page)?.playerResponse?.playerScriptUrl)
+    }
+
+    @Test
     fun rejectsMissingPlayerResponse() {
         assertNull(parseWatchPage("<html>no player data</html>"))
     }

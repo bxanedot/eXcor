@@ -960,7 +960,7 @@ internal class ExcorEngine(
         val VIDEO_ID = Regex("[A-Za-z0-9_-]{11}")
         const val DESKTOP_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
         const val WATCH_PAGE_LIMIT = 5_000_000
-        const val PLAYER_SCRIPT_LIMIT = 2_000_000
+        const val PLAYER_SCRIPT_LIMIT = 5_000_000
         const val PLAYER_RESPONSE_LIMIT = 2_000_000
         const val INNERTUBE_ATTEMPTS = 3
         const val MAX_MEDIA_REDIRECTS = 3

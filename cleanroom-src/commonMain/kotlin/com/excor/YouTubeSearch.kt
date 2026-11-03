@@ -93,6 +93,7 @@ internal fun decodeSearchPage(source: String): ExcorYouTubeSearchPage? {
         for (item in items.mapNotNull { it as? JsonObject }) {
             (item["videoRenderer"] as? JsonObject)?.let(::videoOf)?.let(videos::add)
             (item["channelRenderer"] as? JsonObject)?.let(::channelOf)?.let(channels::add)
+            (item.path("officialCardViewModel", "header", "pageHeaderViewModel") as? JsonObject)?.let(::officialChannelOf)?.let(channels::add)
             (item["lockupViewModel"] as? JsonObject)?.let(::playlistOf)?.let(playlists::add)
             (item.path("gridShelfViewModel", "contents") as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.get("shortsLockupViewModel") as? JsonObject }
                 .mapNotNull(::shortOf).let(shorts::addAll)
@@ -147,6 +148,23 @@ private fun channelOf(c: JsonObject): ExcorYouTubeChannelResult? {
         // With a handle shown, YouTube moves the subscriber count into videoCountText.
         subscribersText = (c.path(if (handle != null) "videoCountText" else "subscriberCountText", "simpleText") as? JsonPrimitive)?.contentOrNull,
         thumbnails = thumbnailsOf(c["thumbnail"], setOf("yt3.ggpht.com", "yt3.googleusercontent.com")),
+    )
+}
+
+// An artist's official card, which newer search pages show in place of a channelRenderer.
+private fun officialChannelOf(h: JsonObject): ExcorYouTubeChannelResult? {
+    val title = h.path("title", "dynamicTextViewModel") as? JsonObject ?: return null
+    val parts = (h.path("metadata", "contentMetadataViewModel", "metadataRows") as? JsonArray).orEmpty()
+        .flatMap { ((it as? JsonObject)?.get("metadataParts") as? JsonArray).orEmpty() }
+        .mapNotNull { ((it as? JsonObject)?.path("text", "content") as? JsonPrimitive)?.contentOrNull }
+    val image = h.path("image", "contentPreviewImageViewModel", "image", "sources")
+    return ExcorYouTubeChannelResult(
+        channelId = (title.path("rendererContext", "commandContext", "onTap", "innertubeCommand", "browseEndpoint", "browseId") as? JsonPrimitive)
+            ?.contentOrNull?.takeIf(CHANNEL_ID::matches) ?: return null,
+        title = (title.path("text", "content") as? JsonPrimitive)?.contentOrNull ?: return null,
+        handle = parts.firstOrNull { it.startsWith("@") },
+        subscribersText = parts.firstOrNull { !it.startsWith("@") },
+        thumbnails = thumbnailsOf(image?.let { JsonObject(mapOf("thumbnails" to it)) }, setOf("yt3.ggpht.com", "yt3.googleusercontent.com")),
     )
 }
 
