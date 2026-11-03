@@ -260,13 +260,24 @@ private fun listItemOf(item: JsonObject): ExcorYouTubeMusicItem? {
         videoId = videoId,
         musicVideoType = watch?.path("watchEndpointMusicSupportedConfigs", "watchEndpointMusicConfig", "musicVideoType")?.let(::stringOf),
         browse = browse,
-        playlistId = watch?.textAt("playlistId"),
+        playlistId = watch?.textAt("playlistId") ?: playAllPlaylistId(item),
         runs = detailRuns,
         duration = fixed.firstNotNullOfOrNull(::clockSeconds),
         subtitle = runsOf(columns.getOrNull(1)),
         thumbnails = thumbnailsOf(item.path("thumbnail", "musicThumbnailRenderer", "thumbnail")),
     )
 }
+
+/**
+ * The playlist an album's or playlist's play button starts. Album rows and cards link to their page by a browse ID
+ * (MPREb_…) and carry the album's playlist (OLAK5uy_…) only on that button, as a watchPlaylistEndpoint.
+ */
+private fun playAllPlaylistId(item: JsonObject): String? = sequenceOf("overlay", "thumbnailOverlay")
+    .mapNotNull { key ->
+        item.path(key, "musicItemThumbnailOverlayRenderer", "content", "musicPlayButtonRenderer", "playNavigationEndpoint", "watchPlaylistEndpoint", "playlistId")
+            ?.let(::stringOf)
+    }
+    .firstOrNull()
 
 private fun twoRowItemOf(item: JsonObject): ExcorYouTubeMusicItem? {
     val title = runsOf(item["title"]) ?: return null
@@ -276,7 +287,7 @@ private fun twoRowItemOf(item: JsonObject): ExcorYouTubeMusicItem? {
         videoId = watch?.textAt("videoId")?.takeIf(VIDEO_ID::matches),
         musicVideoType = watch?.path("watchEndpointMusicSupportedConfigs", "watchEndpointMusicConfig", "musicVideoType")?.let(::stringOf),
         browse = item.path("navigationEndpoint", "browseEndpoint") as? JsonObject,
-        playlistId = watch?.textAt("playlistId"),
+        playlistId = watch?.textAt("playlistId") ?: playAllPlaylistId(item),
         runs = (item.path("subtitle", "runs") as? JsonArray).orEmpty().mapNotNull { it as? JsonObject },
         duration = null,
         subtitle = runsOf(item["subtitle"]),
