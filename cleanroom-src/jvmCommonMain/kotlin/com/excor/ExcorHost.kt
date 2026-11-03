@@ -32,7 +32,7 @@ fun excorDefaultHost(
 ): ExcorHost {
     require(region.length == 2 && region.all(Char::isLetter)) { "region must be a two-letter code" }
     require(language.length in 2..12 && language.all { it.isLetter() || it == '-' }) { "language must be a language tag" }
-    require(cookie == null || cookie.none { it < ' ' || it == '' }) { "cookie must be a single header value" }
+    require(cookie == null || cookie.all { it in ' '..'~' }) { "cookie must be a single header value in printable ASCII" }
     val session = ExcorSession(cookie?.trim()?.takeIf(String::isNotEmpty), null, region.uppercase(), language)
     return object : ExcorHost {
         override val tokenProvider = tokenProvider

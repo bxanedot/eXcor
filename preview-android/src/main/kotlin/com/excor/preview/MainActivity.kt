@@ -123,7 +123,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        connect(cookieFile.takeIf(File::isFile)?.readText())
+        // A cookie saved by an earlier build may be unusable (a cut-off copy); it is dropped rather than break every request.
+        val saved = cookieFile.takeIf(File::isFile)?.readText()
+        if (saved != null && cookieProblem(saved) != null) cookieFile.delete()
+        connect(saved?.takeIf { cookieProblem(it) == null })
         player = ExoPlayer.Builder(this).build()
         sharedText(intent)?.let { query = it }
         setContent {
@@ -144,16 +147,15 @@ class MainActivity : ComponentActivity() {
 
     /** Takes the Cookie header of a signed-in youtube.com browser tab, pasted by the user. */
     private fun signIn() {
-        val cookie = cookieDraft.trim().removePrefix("Cookie:").trim()
-        status = when {
-            "SAPISID=" !in cookie && "__Secure-3PAPISID=" !in cookie -> "That has no SAPISID cookie, so YouTube would not treat it as signed in."
-            cookie.any { it < ' ' } -> "Paste the header value on one line."
-            else -> {
+        val cookie = cookieValue(cookieDraft)
+        status = when (val problem = cookieProblem(cookie)) {
+            null -> {
                 cookieFile.writeText(cookie)
                 connect(cookie)
                 signingIn = false
                 "Signed in. Requests now use your account."
             }
+            else -> problem
         }
         cookieDraft = ""
     }

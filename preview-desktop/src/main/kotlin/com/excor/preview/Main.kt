@@ -74,6 +74,10 @@ private fun selfTest(path: String?) {
     val album = ExcorYouTubeMusicItem(ExcorYouTubeMusicItemType.ALBUM, "Album", browseId = "MPREb_x", playlistId = "OLAK5uy_x")
     check(musicRow(album).target == Target.Playlist("OLAK5uy_x"))
     check(musicRow(ExcorYouTubeMusicItem(ExcorYouTubeMusicItemType.ARTIST, "Artist", browseId = "UCx")).target == Target.Artist("UCx"))
+    // Sign-in: a cut-off developer-tools copy (with "…") and a cookie without SAPISID are refused; a whole one is taken.
+    check(cookieProblem(cookieValue("Cookie: PREF=x; SAPISID=abc/def; SID=y")) == null)
+    check(cookieProblem("PREF=x; SAPISID=abc…")!!.startsWith("That copy was cut off"))
+    check(cookieProblem("PREF=x")!!.contains("SAPISID"))
     val report = "eXcor Preview OK (Java ${System.getProperty("java.version")}, ${excor::class.simpleName})"
     if (path != null) File(path).writeText(report + "\n") else println(report)
 }
@@ -106,10 +110,14 @@ private class PreviewWindow {
     private val downloads = mediaClient()
     // The account's YouTube cookies, if the user signed in; kept in the user's own preferences, never logged.
     private val prefs = Preferences.userRoot().node("com/excor/preview")
-    private var excor = connect(prefs.get(COOKIE_KEY, null))
+    private var excor = connect(savedCookie())
     private var browser = Browser(excor)
     private val signIn = JButton().apply { addActionListener { signInOrOut() } }
     private val tempDir = File(System.getProperty("java.io.tmpdir"), "excor-preview").apply { mkdirs() }
+
+    // A cookie saved by an earlier build may be unusable (a cut-off copy); it is dropped rather than break every request.
+    private fun savedCookie(): String? =
+        prefs.get(COOKIE_KEY, null)?.let { if (cookieProblem(it) == null) it else null.also { prefs.remove(COOKIE_KEY) } }
 
     private fun connect(cookie: String?): Excor =
         Excor(excorDefaultHost(region = region(), language = language(), cookie = cookie) { level, message -> addLog(level, message) }).also { it.init() }
@@ -132,17 +140,13 @@ private class PreviewWindow {
                 field,
             )
             if (JOptionPane.showConfirmDialog(frame, message, "Sign in to YouTube", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return
-            val cookie = String(field.password).trim().removePrefix("Cookie:").trim()
-            if ("SAPISID=" !in cookie && "__Secure-3PAPISID=" !in cookie) {
-                JOptionPane.showMessageDialog(frame, "That has no SAPISID cookie, so YouTube would not treat it as signed in.")
-                return
-            }
-            if (cookie.any { it < ' ' }) return JOptionPane.showMessageDialog(frame, "Paste the header value on one line.")
+            val cookie = cookieValue(String(field.password))
+            cookieProblem(cookie)?.let { return JOptionPane.showMessageDialog(frame, it) }
             if (cookie.length > Preferences.MAX_VALUE_LENGTH) return JOptionPane.showMessageDialog(frame, "That is longer than any YouTube Cookie header.")
             prefs.put(COOKIE_KEY, cookie)
             setStatus("Signed in. Requests now use your account.")
         }
-        excor = connect(prefs.get(COOKIE_KEY, null))
+        excor = connect(savedCookie())
         browser = Browser(excor)
         updateSignIn()
     }
