@@ -13,6 +13,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +46,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -212,10 +215,8 @@ class MainActivity : ComponentActivity() {
     private fun open(videoId: String) = task("Loading $videoId") {
         formatList = null
         info = excor.videoInfo(videoId) ?: error("YouTube has no video $videoId")
-        // The metadata request's playability is the web client's; playback asks other clients, so it is only a hint.
-        val video = info
-        status = if (video == null || video.playabilityStatus == null || video.playabilityStatus == "OK") "Ready."
-        else "Ready. The web client reports ${video.playabilityReason ?: video.playabilityStatus}; playback tries other clients."
+        // Not the metadata client's playability: playback asks other clients, and reports its own failure.
+        status = "Ready."
     }
 
     private fun mediaSource(url: String, headers: Map<String, String>): MediaSource {
@@ -359,8 +360,9 @@ class MainActivity : ComponentActivity() {
                     )
                     Button(onClick = ::go, modifier = Modifier.padding(top = 8.dp)) { Text("Go") }
                 }
-                Text(status, style = MaterialTheme.typography.bodyMedium)
-                if (downloadStatus.isNotEmpty()) Text(downloadStatus, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                // Two lines each; failures are logged in full below.
+                Text(status, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (downloadStatus.isNotEmpty()) Text(downloadStatus, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             item {
                 // One player view: a 16:9 picture for video, just the controls for audio.
@@ -417,6 +419,7 @@ class MainActivity : ComponentActivity() {
         if (listing.next != null) item { OutlinedButton(onClick = ::more) { Text("More") } }
     }
 
+    @OptIn(ExperimentalLayoutApi::class)
     @Composable
     private fun Details(video: ExcorVideoInfo) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -427,16 +430,16 @@ class MainActivity : ComponentActivity() {
                     .joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { playAudio(video.videoId) }) { Text("Play audio") }
                 Button(onClick = { playVideo(video.videoId) }) { Text("Play video") }
                 OutlinedButton(onClick = { listFormats(video.videoId) }) { Text("Formats") }
             }
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { downloadAudio(video) }) { Text("Download audio") }
                 OutlinedButton(onClick = { downloadVideo(video) }) { Text("Download video") }
             }
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf(360, 480, 720, 1080, 1440, 2160).forEach { height ->
                     FilterChip(selected = maxHeight == height, onClick = { maxHeight = height }, label = { Text("${height}p") })
                 }
