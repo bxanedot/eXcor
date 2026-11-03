@@ -332,7 +332,122 @@ internal class ExcorEngine(
         skipClients: Set<String>,
         requireM4a: Boolean,
         session: ExcorSession,
+    ): ExcorStream? = firstFromClients(videoId, skipClients, session) { client ->
+        val ranked = rankAudioFormats(client.formats, maxKbps, requireM4a)
+        log(ExcorLogLevel.DEBUG, "${client.identity.name}: ${client.response.formats.size} formats, ${client.formats.size} usable, ${ranked.size} audio candidates", videoId)
+        firstPlayableAudio(videoId, client, ranked)?.also {
+            log(ExcorLogLevel.INFO, "selected ${it.mimeType} from ${client.identity.name}", videoId)
+        }
+    }
+
+    suspend fun extractVideo(
+        videoId: String,
+        maxHeight: Int,
+        codecs: Set<ExcorVideoCodec>,
+        maxAudioKbps: Int,
+        skipClients: Set<String>,
+    ): ExcorVideoStreams? {
+        require(VIDEO_ID.matches(videoId)) { "Excor video ID is invalid" }
+        require(maxHeight > 0) { "maxHeight must be positive" }
+        val session = host.session()
+        return firstFromClients(videoId, skipClients, session) { client ->
+            val videos = rankVideoFormats(client.formats, maxHeight, codecs)
+            log(ExcorLogLevel.DEBUG, "${client.identity.name}: ${client.formats.size} usable formats, ${videos.size} video candidates", videoId)
+            // The audio is chosen once per container: M4A goes with MP4 video and Opus/WebM with WebM video, falling back
+            // to any playable audio.
+            val audioByContainer = mutableMapOf<VideoContainer, ExcorStream?>()
+            val failedAudio = mutableSetOf<String>()
+            suspend fun audioFor(container: VideoContainer): ExcorStream? = audioByContainer.getOrPut(container) {
+                val matching = when (container) {
+                    VideoContainer.MP4 -> rankAudioFormats(client.formats, maxAudioKbps, requireM4a = true)
+                    VideoContainer.WEBM -> rankAudioFormats(client.formats, maxAudioKbps, requireM4a = false)
+                        .filter { it.audioType == "audio/webm" }
+                    VideoContainer.OTHER -> emptyList()
+                }
+                val any = rankAudioFormats(client.formats, maxAudioKbps, requireM4a = false)
+                firstPlayableAudio(videoId, client, (matching + any).distinct(), failedAudio)
+            }
+            for (format in videos) {
+                // Without playable separate audio, only a progressive format (with its own sound) can be used.
+                val audio = if (format.containsAudio) null else audioFor(format.container) ?: continue
+                if (!isPlayable(format.url, client.headers)) {
+                    log(ExcorLogLevel.DEBUG, "${client.identity.name}: ${format.mimeType} ${format.height}p failed the playback probe", videoId)
+                    continue
+                }
+                val track = ExcorVideoTrack(
+                    url = format.url,
+                    mimeType = format.mimeType,
+                    codec = format.videoCodec,
+                    width = format.width,
+                    height = format.height ?: continue,
+                    fps = format.fps,
+                    qualityLabel = format.qualityLabel,
+                    kbps = format.kbps,
+                    contentLength = format.contentLength,
+                    initRange = format.initRange,
+                    indexRange = format.indexRange,
+                    containsAudio = format.containsAudio,
+                    headers = client.headers,
+                )
+                remember(
+                    ExcorStream(
+                        videoId, format.url, format.kbps, format.mimeType, client.response.loudnessDb,
+                        client.identity.name, client.identity.profileId, client.headers,
+                    ),
+                )
+                log(ExcorLogLevel.INFO, "selected ${format.height}p ${format.mimeType} from ${client.identity.name}", videoId)
+                return@firstFromClients ExcorVideoStreams(videoId, track, audio, client.identity.name, client.identity.profileId)
+            }
+            null
+        }
+    }
+
+    private class ClientResponse(
+        val identity: ClientIdentity,
+        val response: PlayerResponse,
+        val formats: List<PlayerFormat>,
+        val headers: Map<String, String>,
+    )
+
+    private suspend fun firstPlayableAudio(
+        videoId: String,
+        client: ClientResponse,
+        ranked: List<PlayerFormat>,
+        failed: MutableSet<String> = mutableSetOf(),
     ): ExcorStream? {
+        for (format in ranked) {
+            if (format.url in failed) continue
+            if (!isPlayable(format.url, client.headers)) {
+                failed += format.url
+                log(ExcorLogLevel.DEBUG, "${client.identity.name}: ${format.mimeType} failed the playback probe", videoId)
+                continue
+            }
+            val stream = ExcorStream(
+                videoId = videoId,
+                url = format.url,
+                kbps = format.kbps,
+                mimeType = format.mimeType,
+                loudnessDb = client.response.loudnessDb,
+                clientName = client.identity.name,
+                profileId = client.identity.profileId,
+                headers = client.headers,
+            )
+            remember(stream)
+            return stream
+        }
+        return null
+    }
+
+    /**
+     * Asks each playback client in turn and returns the first non-null result of [pick] on a playable response. Throws
+     * with YouTube's playability reason when no client produced a result and at least one reported why.
+     */
+    private suspend fun <T : Any> firstFromClients(
+        videoId: String,
+        skipClients: Set<String>,
+        session: ExcorSession,
+        pick: suspend (ClientResponse) -> T?,
+    ): T? {
         // The watch page gives the API key and player script, but YouTube can answer it with a captcha page while the
         // player API still serves clients that need neither; those are tried without it.
         val page = fetchWatchPage(videoId, session)
@@ -390,27 +505,7 @@ internal class ExcorEngine(
             val responsePlayerUrl = response.playerScriptUrl ?: playerUrl
             val formats = playableFormats(response, responsePlayerUrl, token?.streamingDataToken, session)
             val headers = mediaHeaders(identity.userAgent, session)
-            val ranked = rankAudioFormats(formats, maxKbps, requireM4a)
-            log(ExcorLogLevel.DEBUG, "${identity.name}: ${response.formats.size} formats, ${formats.size} usable, ${ranked.size} audio candidates", videoId)
-            for (format in ranked) {
-                if (!isPlayable(format.url, headers)) {
-                    log(ExcorLogLevel.DEBUG, "${identity.name}: ${format.mimeType} failed the playback probe", videoId)
-                    continue
-                }
-                val stream = ExcorStream(
-                    videoId = videoId,
-                    url = format.url,
-                    kbps = format.kbps,
-                    mimeType = format.mimeType,
-                    loudnessDb = response.loudnessDb,
-                    clientName = identity.name,
-                    profileId = identity.profileId,
-                    headers = headers,
-                )
-                remember(stream)
-                log(ExcorLogLevel.INFO, "selected ${format.mimeType} from ${identity.name}", videoId)
-                return stream
-            }
+            pick(ClientResponse(identity, response, formats, headers))?.let { return it }
         }
         if (playabilityReason != null) throw IllegalStateException("Excor $playabilityReason for video $videoId")
         return null

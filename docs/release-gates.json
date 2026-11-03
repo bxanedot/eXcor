@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-02",
+  "updated": "2026-11-03",
   "gates": [
     {
       "id": "G1",
@@ -39,7 +39,7 @@
       "id": "G5",
       "name": "Streaming",
       "status": "partial",
-      "evidence": "Live 2026-11-02 (LivePlaybackTest.extractedAudioDecodesFullyAndSeeks): eXcor extracted Opus/WebM audio for dQw4w9WgXcQ, the full 3,433,755-byte file decoded with ffmpeg without errors (213.06 s against a 213 s video), and a mid-file range read landed at the requested offset. The probe follows googlevideo's 302 to another allowlisted node",
+      "evidence": "Live 2026-11-02 (LivePlaybackTest.extractedAudioDecodesFullyAndSeeks): eXcor extracted Opus/WebM audio for dQw4w9WgXcQ, the full 3,433,755-byte file decoded with ffmpeg without errors (213.06 s against a 213 s video), and a mid-file range read landed at the requested offset. The probe follows googlevideo's 302 to another allowlisted node. Video, live 2026-11-03 (LivePlaybackTest.extractedVideoAndAudioDecodeAndMux): extractVideo picked 480p H.264 (854x480, 14,103,519 bytes) and, with EXCOR_VIDEO_HEIGHT=1080, 1080p H.264 (1920x1080, 80,911,999 bytes) from VISIONOS; each was downloaded in 4 MiB range reads, muxed with its M4A audio by ffmpeg without re-encoding, fully decoded (213.09 s), and range-read from the middle",
       "command": "EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest",
       "blockers": [
         "Most videos are still bot-checked or unavailable to every client from this environment (kJQP7kiw5Fk unavailable; JGwWNGJdvx8, FGBhQbmPwH8, 9bZkp7q19f0 bot-checked), so publicMusicVideosReturnRangeReadableAudio fails on its second video here"

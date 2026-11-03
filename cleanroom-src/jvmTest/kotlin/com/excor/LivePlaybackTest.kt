@@ -62,6 +62,106 @@ class LivePlaybackTest {
         }
     }
 
+    /**
+     * A video extraction gives a real picture track and the audio to go with it:
+     * - both tracks are downloaded in full, in 4 MiB range reads, as a player would;
+     * - ffprobe reports the picture size the track claims, and ffmpeg muxes the two without re-encoding and decodes
+     *   every video and audio frame without error, with the duration matching the video's length;
+     * - a range read from the middle of the video track starts where it was asked to.
+     * The height is capped (EXCOR_VIDEO_HEIGHT, default 480) to keep the download small.
+     */
+    @Test
+    fun extractedVideoAndAudioDecodeAndMux() {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
+        if (listOf("ffmpeg", "ffprobe").any { tool -> runCatching { ProcessBuilder(tool, "-version").start().waitFor() }.getOrNull() != 0 }) {
+            throw SkipException("ffmpeg and ffprobe are needed to decode the media")
+        }
+        val http = OkHttpClient()
+        val excor = Excor(LiveHost(http))
+        runBlocking {
+            val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
+            val maxHeight = System.getenv("EXCOR_VIDEO_HEIGHT")?.toIntOrNull() ?: 480
+            val info = assertNotNull(excor.videoInfo(videoId))
+            val streams = excor.extractVideo(videoId, maxHeight = maxHeight)
+                ?: throw SkipException("YouTube serves no playable video for $videoId to this network")
+            val video = streams.video
+            assertTrue(video.height <= maxHeight, "picked ${video.height}p over the $maxHeight cap")
+
+            val dir = kotlin.io.path.createTempDirectory("excor-video").toFile()
+            try {
+                val videoFile = File(dir, if ("webm" in video.mimeType) "video.webm" else "video.mp4")
+                val videoBytes = download(http, video.url, video.headers, videoFile)
+                video.contentLength?.let { assertTrue(it == videoBytes, "downloaded $videoBytes of $it bytes") }
+
+                val (width, height) = ffprobe(videoFile, "v:0", "stream=width,height").lines().filter { it.isNotBlank() }.map { it.trim().toInt() }
+                assertTrue(height == video.height && (video.width == null || width == video.width), "file is ${width}x$height, track says ${video.width}x${video.height}")
+
+                val inputs = mutableListOf("-i", videoFile.path)
+                streams.audio?.let { audio ->
+                    val audioFile = File(dir, if ("webm" in audio.mimeType) "audio.webm" else "audio.m4a")
+                    download(http, audio.url, audio.headers, audioFile)
+                    inputs += listOf("-i", audioFile.path)
+                }
+                val muxed = File(dir, "muxed.mkv")
+                val mux = ProcessBuilder(listOf("ffmpeg", "-v", "error", "-y") + inputs + listOf("-c", "copy", muxed.path)).redirectErrorStream(true).start()
+                val muxErrors = mux.inputStream.bufferedReader().readText()
+                assertTrue(mux.waitFor() == 0 && muxErrors.isBlank(), "ffmpeg mux errors: ${muxErrors.take(300)}")
+
+                val decode = ProcessBuilder("ffmpeg", "-v", "error", "-i", muxed.path, "-f", "null", "-").redirectErrorStream(true).start()
+                val decodeErrors = decode.inputStream.bufferedReader().readText()
+                assertTrue(decode.waitFor() == 0 && decodeErrors.isBlank(), "ffmpeg decode errors: ${decodeErrors.take(300)}")
+                val codecs = ffprobe(muxed, null, "stream=codec_type").lines().map { it.trim() }.filter { it.isNotEmpty() }
+                assertTrue("video" in codecs && "audio" in codecs, "muxed file has $codecs")
+                val seconds = ffprobe(muxed, null, "format=duration").trim().toDouble()
+                val expected = info.durationSeconds ?: seconds.toLong()
+                assertTrue(kotlin.math.abs(seconds - expected) <= 2.0, "decoded ${seconds}s, video is ${expected}s")
+
+                val middle = videoBytes / 2
+                val seek = Request.Builder().url(video.url).header("Range", "bytes=$middle-${middle + 65_535}").apply {
+                    video.headers.forEach { (name, value) -> header(name, value) }
+                }.build()
+                http.newCall(seek).execute().use { response ->
+                    assertTrue(response.code == 206, "seek read answered ${response.code}")
+                    assertTrue(response.header("Content-Range")?.startsWith("bytes $middle-") == true, "seek landed at ${response.header("Content-Range")}")
+                }
+                println(
+                    "decoded ${video.qualityLabel} ${video.codec} (${width}x$height, ${video.fps} fps, $videoBytes bytes) " +
+                        "with ${streams.audio?.mimeType ?: "its own audio"} from ${streams.clientName}: ${seconds}s, streams $codecs; seek ok",
+                )
+            } finally {
+                dir.deleteRecursively()
+            }
+        }
+    }
+
+    private fun download(http: OkHttpClient, url: String, headers: Map<String, String>, file: File): Long {
+        val chunk = 4L * 1024 * 1024
+        var offset = 0L
+        file.outputStream().use { out ->
+            while (true) {
+                val request = Request.Builder().url(url).header("Range", "bytes=$offset-${offset + chunk - 1}").apply {
+                    headers.forEach { (name, value) -> header(name, value) }
+                }.build()
+                val (read, total) = http.newCall(request).execute().use { response ->
+                    assertTrue(response.code == 206 || (response.code == 200 && offset == 0L), "range read at $offset answered ${response.code}")
+                    val total = response.header("Content-Range")?.substringAfter('/')?.toLongOrNull()
+                    response.body!!.byteStream().copyTo(out) to total
+                }
+                offset += read
+                if (read == 0L || total == null || offset >= total) break
+            }
+        }
+        assertTrue(offset > 100_000, "a complete media file, got $offset bytes")
+        return offset
+    }
+
+    private fun ffprobe(file: File, select: String?, entries: String): String {
+        val command = mutableListOf("ffprobe", "-v", "error")
+        if (select != null) command += listOf("-select_streams", select)
+        command += listOf("-show_entries", entries, "-of", "default=nw=1:nk=1", file.path)
+        return ProcessBuilder(command).start().inputStream.bufferedReader().readText()
+    }
+
     @Test
     fun publicMusicVideosReturnRangeReadableAudio() {
         if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")

@@ -53,7 +53,22 @@ private fun decodeFormat(value: JsonElement): PlayerFormat? {
         sampleRate = obj.intValue("audioSampleRate"),
         signatureCipher = obj.stringValue("signatureCipher") ?: obj.stringValue("cipher"),
         itag = obj.intValue("itag"),
+        width = obj.intValue("width"),
+        height = obj.intValue("height"),
+        fps = obj.intValue("fps"),
+        qualityLabel = obj.stringValue("qualityLabel")?.filter { it >= ' ' && it != '\u007f' }?.take(32),
+        contentLength = obj.stringValue("contentLength")?.toLongOrNull()?.takeIf { it > 0 },
+        initRange = obj.rangeValue("initRange"),
+        indexRange = obj.rangeValue("indexRange"),
+        segmented = obj.stringValue("type") == "FORMAT_STREAM_TYPE_OTF",
     )
+}
+
+private fun JsonObject.rangeValue(key: String): LongRange? {
+    val range = objectValue(key) ?: return null
+    val start = range.stringValue("start")?.toLongOrNull() ?: return null
+    val end = range.stringValue("end")?.toLongOrNull() ?: return null
+    return if (start in 0..end) start..end else null
 }
 
 private fun JsonObject.objectValue(key: String): JsonObject? = get(key) as? JsonObject

@@ -19,7 +19,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G2 Build correctness | Passing | Now includes the shared metadata compile |
 | G3 InnerTube operations | Passing | Live-verified |
 | G4 Player compatibility | Partial | VISIONOS path verified live; the player-script path is untested here |
-| G5 Streaming | Partial | Extraction, full ffmpeg decode and seek verified for a video YouTube serves here; most videos are bot-checked |
+| G5 Streaming | Partial | Audio and video extraction, full ffmpeg decode and seek verified for a video YouTube serves here (video at 480p and 1080p, muxed with its audio); most videos are bot-checked |
 | G6 SABR/UMP | Blocked | Not implemented; responses here carry direct URLs that play |
 | G7 YouTube Music | Passing | For what this environment can observe; songs and albums are withheld |
 | G8 Reliability | Partial | Typed failures after bounded retries, WARN diagnostics; no live fault injection |
@@ -32,6 +32,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 ## Completed in this pass
 
+- **Video extraction** (`extractVideo`, 2026-11-03): video track plus matching audio, both probed. Live: 480p and 1080p H.264 from VISIONOS, muxed with M4A by ffmpeg and fully decoded, seek correct.
 - **YouTube Music** (`YouTubeMusic.kt`): typed search, suggestions, artist pages, playlists and radio. Live-verified.
 - **`excorDefaultHost()`:** constructing `Excor` needs no boilerplate.
 - **Publishing fix:** the library couldn't be published (shared metadata compile error). It is fixed, and CI now publishes and builds a consumer.
@@ -46,7 +47,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 
 - **Offline suite and targets:**
   `./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata`
-  Latest: 150 tests, 14 skipped (the opt-in live tests and benchmarks), 0 failed.
+  Latest: 159 tests, 15 skipped (the opt-in live tests and benchmarks), 0 failed.
 - **Live YouTube and YouTube Music:**
   `EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest`
   Latest: 7 of 7 pass; the benchmark is opt-in (`EXCOR_BENCH=1`).
@@ -56,6 +57,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
   Latest: all six steps "ok".
 - **Playback:** `EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest`
   - `extractedAudioDecodesFullyAndSeeks` passes (2026-11-02): VISIONOS Opus, 3,433,755 bytes, ffmpeg decodes 213.06 s against a 213 s video, mid-file seek correct.
+  - `extractedVideoAndAudioDecodeAndMux` passes (2026-11-03): 480p H.264, 854x480, 14,103,519 bytes; with `EXCOR_VIDEO_HEIGHT=1080`, 1920x1080, 80,911,999 bytes. Both muxed with M4A audio without re-encoding and decoded to 213.09 s; mid-file seek correct.
   - `publicMusicVideosReturnRangeReadableAudio` passes its first video but fails on the second, `kJQP7kiw5Fk`, which every client gets as "unavailable" here.
 
 ## Known blockers
