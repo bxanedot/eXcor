@@ -1,0 +1,149 @@
+# Handoff: eXcor (read this first)
+
+Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which runs on the owner's own machine. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
+
+## What eXcor is
+
+**eXcor** is a clean-room, Apache-2.0 Kotlin Multiplatform library (`com.excor:eXcor:0.2.0`, package `com.excor`) for YouTube and YouTube Music. It works on JVM, Android and iOS. It provides:
+- metadata: video info, search, playlists, mixes, channels, comments and chapters;
+- YouTube Music: search, artists, playlists and radio;
+- audio streams (`extract`), video plus matching audio (`extractVideo`) and a format list (`formats`);
+- cross-provider music catalogs (Spotify, Apple Music, Deezer) through `Excor.music`.
+
+The primary benchmark is InnerTubeX; YouTube.js and NewPipeExtractor are secondary.
+
+**Repository:**
+- GitHub: `bxanedot/eXcor`. The cloud session's remote was named `vyonex-clean`; same repository.
+- Default branch: `main`, head `4f864f0` at the time of writing.
+- Work branch the cloud session used: `claude/clever-curie-tyaxqs`. It is merged and even with `main`; start a new branch for new work.
+
+## The owner's rules (standing)
+
+**Autonomy:**
+- Work autonomously and keep going ("never stop until we have achieved the goal").
+- Committing, pushing, opening PRs and **merging PRs once CI is green** are authorized.
+- Ask only when a decision truly belongs to the owner, such as dropping a feature.
+
+**Clean-room and content:**
+- Clean room only. Never read, copy, translate or import GPL/LGPL/AGPL extractor code. InnerTubeX is GPL-3.0: its README and black-box behaviour may guide requirements; its code may not.
+- yt-dlp (Unlicense) is fine as a reference. Its EJS solver is vendored in `cleanroom-src/ejs`.
+- Don't access `bxanedot/vyonex` or `bxanedot/vyon`. Don't copy legacy code from `src/`.
+
+**Security:**
+- Never bypass bot checks, captchas, consent screens, DRM or access restrictions.
+- Never print or commit stream URLs, cookies, tokens or auth headers, in logs, tests or docs.
+- Don't redistribute IP-bearing captures. Don't claim legal clearance.
+
+**Honesty and releases:**
+- Never claim unverified features. Say what was verified, how, and where.
+- Never remove or weaken a failing test to get green.
+- No remote releases or publishing (Maven Central, GitHub Releases) without the owner's explicit authorization. CI artifacts are fine.
+
+**Commits:** end commit messages with the attribution lines the tool asks for. Put no model names in commits or PRs.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `cleanroom-src/` | The library: `commonMain`, `jvmCommonMain` (JVM and Android), `iosMain`, tests, `ejs/` |
+| `preview-android/` | Preview app, debug APK (Compose, Media3). Search, details, play audio and video, formats, log |
+| `preview-desktop/` | Preview app, Swing. `packageApp` uses jpackage to build `eXcor Preview.exe` with a bundled runtime, plus an installer when WiX is present. `--self-test <file>` checks the package |
+| `samples/jvm-quickstart/` | A standalone consumer that installs the library the way the README says |
+| `swift/` | The `eXcorKit` Swift package |
+| `docs/` | `EXCOR_ENGINEERING_AUDIT.md`, `release-gates.json` (G1–G12), `FEATURE_MATRIX.md`, `COMPETITOR_MATRIX.md`, `PERFORMANCE.md`, `ERROR_HANDLING.md`, `CLEAN_ROOM.md`, `PROVENANCE.md` and others |
+| `src/`, `ejs/` (root) | The quarantined historical engine. **Nothing compiles it.** Leave it alone until the provenance audit |
+| `fixtures/` | Test fixtures, all hand-written or redacted |
+
+The music-player apps (`app-core`, `android-app`, `desktop-app`, `ios-app`) and `historical-engine` were removed on 2026-11-03 at the owner's request. Don't bring them back.
+
+## Build and test
+
+You need JDK 27 (Gradle toolchains) and, for the APK, the Android SDK (`ANDROID_HOME`).
+
+```bash
+# Library: all targets plus the offline suite (164 tests, 17 opt-in skipped, 0 failed at handoff)
+./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata
+# iOS tests and frameworks: macOS only (see the macos job in .github/workflows/ci.yml)
+
+# Live checks (real network)
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest      # metadata, YouTube Music
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest       # audio/video download, ffmpeg decode, seek
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.music.LiveMusicTest    # Deezer, keyless Apple
+EXCOR_BENCH=1 EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTest   # benchmark
+# Playback tests need ffmpeg and ffprobe on PATH. Options: EXCOR_DECODE_ID=<video>, EXCOR_VIDEO_HEIGHT=1080
+
+# Preview apps
+./gradlew :preview-android:assembleDebug :preview-android:lintDebug
+./gradlew :preview-desktop:packageApp            # build/app/eXcor Preview/ (the .exe on Windows)
+./gradlew :preview-desktop:packageApp -PpreviewPackageType=exe   # Windows installer; needs WiX
+
+# Installability
+./gradlew publishToMavenLocal && ./gradlew -p samples/jvm-quickstart run
+```
+
+On Windows, use `gradlew.bat`, and `set EXCOR_LIVE=1` (cmd) or `$env:EXCOR_LIVE=1` (PowerShell).
+
+**CI** (`.github/workflows/ci.yml`) runs on every push and PR:
+
+| Job | Runs |
+|---|---|
+| linux | tests, publish, sample, OSV scan |
+| windows | tests; packages and self-tests the EXE; uploads `excor-preview-windows` |
+| preview | APK and lint; desktop self-test and Xvfb start; uploads `excor-preview-apk` |
+| android-device (26, 36) | installs the APK in an emulator and checks it starts |
+| macos | iOS tests, XCFramework, Swift checks |
+
+Each push makes two runs (push and PR). One fully green run on the head commit is enough to merge. A macOS job occasionally gets cancelled without a runner; re-run it once.
+
+## Where things stand (release gates; details in `docs/release-gates.json`)
+
+| Gate | Status | Note |
+|---|---|---|
+| G1 preserved, G2 build, G3 InnerTube, G7 YouTube Music, G9 usability | Passing | G7: songs and albums were withheld from the cloud network, so they were never observed live |
+| G4 player compatibility | Partial | The VISIONOS path is verified. The player-script path (signature and n) is untested live, because the watch page was captcha'd |
+| G5 streaming | Partial | Audio, video (480p and 1080p) and the format list are verified for `dQw4w9WgXcQ`; most other videos were bot-checked from the cloud |
+| G6 SABR/UMP | Blocked | Not implemented. There is no independent spec, and the direct URLs play |
+| G8 reliability | Partial | Typed failures, bounded retries, WARN diagnostics; no live fault injection |
+| G10 release packaging | Partial | Local publish works; no remote release is authorized |
+| G11 competitive analysis | Partial | `docs/COMPETITOR_MATRIX.md` |
+| G12 security | Partial | The OSV scan gates on shipped dependencies; tooling findings are report-only |
+
+**What the cloud network showed (yours may differ, and that's the point of running there):**
+- YouTube answered most player requests with `LOGIN_REQUIRED` ("confirm you're not a bot") on every client.
+- `dQw4w9WgXcQ` played on VISIONOS (clientId 101, version 1.02, no player script, no PO token).
+- The HTML watch page answered HTTP 429 (captcha).
+- VISIONOS player requests must not carry youtube.com's Referer, or YouTube answers 403. The code handles this.
+- googlevideo answers media requests with a 302 to another node. The probe follows up to 3 redirects, using an absolute Location verbatim, because rebuilding it breaks the signature.
+- Keyless iTunes gave sporadic 403s.
+- Maven Central rate-limited the container, which needed local init scripts. A normal machine doesn't.
+
+## Next tasks, in order
+
+1. **Run the live checks on this machine's normal network first:** `LiveVideoInfoTest`, `LivePlaybackTest`, `LiveMusicTest`.
+   - If many more videos play here, `publicMusicVideosReturnRangeReadableAudio` (it failed on `kJQP7kiw5Fk` in the cloud) should pass. Update G5 and the docs with exactly what you measured.
+   - If the watch page loads, the player-script path (TVHTML5, signature and `n`) can finally be checked live. That is G4.
+   - If YouTube Music offers Songs and Albums here, verify them. That is G7.
+2. **Ask the owner how the preview apps behaved on their phone and PC.** Nobody had tried them by hand when this was written. CI only checks that they start, and the desktop flow was exercised under Xvfb. Fix what they report.
+3. **CI housekeeping:** actions warn that Node 20 is deprecated (`actions/checkout@v4`, `setup-java@v4`, `upload-artifact@v4`). Move to the current major versions once you've checked them.
+4. **Stale docs:**
+   - The `docs/FEATURE_MATRIX.md` header still describes an old catalog prototype and run 40968192280.
+   - `QUESTIONS.md` and the superseded `CODEX_HANDOFF.md` mention the removed apps; they are historical records, so annotate rather than rewrite.
+5. **SABR/UMP (G6)** stays blocked unless a normal network serves responses with no direct URLs, or an independent spec appears. Don't derive it from GPL code.
+6. **G10:** a remote release only on the owner's say-so.
+
+## Lessons learned (save yourself the time)
+
+**Mock engine:**
+- Ktor `MockEngine` clients must set `followRedirects = false`, as `Excor` does, or redirect-allowlist tests pass for the wrong reason.
+- Use a fresh `ExcorEngine` per extraction scenario; it remembers streams.
+
+**Common code (`commonMain`, `commonTest`):**
+- `commonTest` has no `java.io`; use `IllegalStateException`.
+- Common Kotlin has no `RegexOption.DOT_MATCHES_ALL`; use `[\s\S]`. This once broke publishing.
+
+**Live tests and CI:**
+- Live tests print only engine log messages, which never contain URLs or tokens. Keep it that way.
+- The jvmTest result XMLs keep earlier targeted runs. Delete `build/test-results/jvmTest` before counting tests.
+- On the Windows runner, `Start-Process -Wait` is needed to wait for the GUI-subsystem exe.
+
+**Swing:** inside `JPanel.apply { }`, a field named `height` resolves to the panel's own `height`.
