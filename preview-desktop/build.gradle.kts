@@ -1,6 +1,7 @@
-// A preview app for trying the library by hand on the desktop: search, video details, audio and video playback in the
-// system's player, formats, saving, and the library's log. `packageApp` makes a self-contained app folder with its own
-// Java runtime; on Windows that folder holds "eXcor Preview.exe". Never published.
+// A preview app for trying the library by hand on the desktop: YouTube Music and YouTube search, albums, playlists and
+// artists, video details, audio and video playback in the system's player, formats, saving, and the library's log.
+// `packageApp` makes a self-contained app folder with its own Java runtime; on Windows that folder holds
+// "eXcor Preview.exe". Never published.
 plugins {
     kotlin("jvm")
     application
@@ -8,7 +9,11 @@ plugins {
 
 repositories { mavenCentral(); google() }
 
-kotlin { jvmToolchain(27) }
+kotlin {
+    jvmToolchain(27)
+    // The browsing and download code shared with the Android preview.
+    sourceSets.named("main") { kotlin.srcDir("../preview-common/kotlin") }
+}
 
 // Kotlin 2.4 emits JVM 26 at most; the Java task must target the same, or the build stops.
 java { targetCompatibility = JavaVersion.VERSION_26 }

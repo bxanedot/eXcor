@@ -1,7 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// A preview app for trying the library by hand on Android: search, video details, audio and video playback, formats
-// and the library's log. Built as a debug APK; never published.
+// A preview app for trying the library by hand on Android: YouTube Music and YouTube search, albums, playlists and
+// artists, video details, audio and video playback, downloads, formats and the library's log. Built as a debug APK;
+// never published.
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose") version "2.4.21"
@@ -19,9 +20,13 @@ android {
         applicationId = "com.excor.preview"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
+        versionCode = 2
         versionName = "0.2.0"
+        // A plain Instrumentation rather than androidx.test's runner, which needs JUnit 4 (EPL-1.0).
+        testInstrumentationRunner = "com.excor.preview.JoinCheck"
     }
+    // The browsing and download code shared with the desktop preview.
+    sourceSets.getByName("main").kotlin.srcDir("../preview-common/kotlin")
     buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

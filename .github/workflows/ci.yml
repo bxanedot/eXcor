@@ -127,7 +127,7 @@ jobs:
           java-version: |
             27
             21
-      - run: ./gradlew $GRADLE_ARGS :preview-android:assembleDebug
+      - run: ./gradlew $GRADLE_ARGS :preview-android:assembleDebug :preview-android:assembleDebugAndroidTest
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -158,6 +158,14 @@ jobs:
           $adb shell pidof com.excor.preview
           $adb logcat -d -b crash > crash.txt
           if grep -q com.excor.preview crash.txt; then cat crash.txt; exit 1; fi
+      # Downloads join YouTube's separate picture and sound on the phone with MediaExtractor and MediaMuxer. JoinCheck
+      # joins synthetic clips with this emulator's own media stack and checks every sample arrives.
+      - name: Picture and sound join on the API ${{ matrix.api }} emulator
+        run: |
+          adb=$ANDROID_HOME/platform-tools/adb
+          $adb install -r preview-android/build/outputs/apk/androidTest/debug/preview-android-debug-androidTest.apk
+          $adb shell am instrument -w com.excor.preview.test/com.excor.preview.JoinCheck | tee join-check.txt
+          grep -q "result=ok" join-check.txt
 
   macos:
     runs-on: macos-15
