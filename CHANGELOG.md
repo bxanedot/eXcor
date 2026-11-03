@@ -6,6 +6,8 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 
 ### Added
 - **Preview apps:** an Android APK and a Windows EXE (`preview-android`, `preview-desktop`) for trying the library by hand: search, details, audio and video playback, formats and the library's log. CI uploads both as artifacts.
+  - Both: YouTube Music search (the default) with its own filter chips, typed results, album, playlist and artist pages with Back and More; YouTube search; a plain explanation when YouTube's bot check refuses every signed-out client.
+  - Android: downloads to Downloads/eXcor: audio (plain .m4a or Opus/WebM), video joined with its sound on the phone (MediaExtractor and MediaMuxer, no re-encoding), and any listed format as served. CI runs `JoinCheck` on the API 26 and 36 emulators.
 - **`excorVideoIdOf(link)`:** the video ID in a bare ID or a YouTube link (watch, youtu.be, shorts, live, embed, music.youtube.com); null for other hosts.
 - **Video extraction:** `extractVideo` returns a video track (width, height, frame rate, codec, quality label, length, DASH byte ranges) and the audio to play with it, from the same client response, both probed as playable. Audio is matched to the video's container; a progressive format is used when the response has no playable separate audio. Verified live at 480p and 1080p with an ffmpeg mux and full decode.
 - **Format list:** `formats` lists every whole-file audio and video format one client offers, with codec, size, frame rate, bitrate, length and byte ranges, for download choices. One probe per list. Verified live: 27 formats, 144p to 2160p, all range-readable.

@@ -46,8 +46,9 @@ The primary benchmark is InnerTubeX; YouTube.js and NewPipeExtractor are seconda
 | Path | What |
 |---|---|
 | `cleanroom-src/` | The library: `commonMain`, `jvmCommonMain` (JVM and Android), `iosMain`, tests, `ejs/` |
-| `preview-android/` | Preview app, debug APK (Compose, Media3). Search, details, play audio and video, formats, log |
-| `preview-desktop/` | Preview app, Swing. `packageApp` uses jpackage to build `eXcor Preview.exe` with a bundled runtime, plus an installer when WiX is present. `--self-test <file>` checks the package |
+| `preview-android/` | Preview app, debug APK (Compose, Media3). YouTube Music and YouTube search with filters, album, playlist and artist pages, details, play audio and video, downloads to Downloads/eXcor (`TrackJoiner`, `Saver`), formats, log. `src/androidTest`: `JoinCheck`, a plain Instrumentation run by CI |
+| `preview-desktop/` | Preview app, Swing. The same browsing; `packageApp` uses jpackage to build `eXcor Preview.exe` with a bundled runtime, plus an installer when WiX is present. `--self-test <file>` checks the package |
+| `preview-common/` | Kotlin sources compiled into both preview apps: the browsing model (`Browse.kt`) and range downloads (`Download.kt`). No Android or Swing types |
 | `samples/jvm-quickstart/` | A standalone consumer that installs the library the way the README says |
 | `swift/` | The `eXcorKit` Swift package |
 | `docs/` | `EXCOR_ENGINEERING_AUDIT.md`, `release-gates.json` (G1–G12), `FEATURE_MATRIX.md`, `COMPETITOR_MATRIX.md`, `PERFORMANCE.md`, `ERROR_HANDLING.md`, `CLEAN_ROOM.md`, `PROVENANCE.md` and others |
@@ -130,7 +131,10 @@ Each push makes two runs (push and PR). One fully green run on the head commit i
    - If many more videos play there, `publicMusicVideosReturnRangeReadableAudio` (it fails on `kJQP7kiw5Fk` in the cloud) should pass. Update G5 and the docs with exactly what you measured.
    - If the watch page loads, the player-script path (TVHTML5, signature and `n`) can finally be checked live. That is G4.
    - If YouTube Music offers Songs and Albums there, verify them. That is G7.
-2. **Ask the owner how the preview apps behaved on their phone and PC.** Nobody had tried them by hand when this was written. CI only checks that they start, and the desktop flow was exercised under Xvfb. Fix what they report.
+2. **Preview apps: get the owner's verdict on the new build.** On 2026-11-03 the owner tried the APK on their phone. Play audio failed with "Sign in to confirm you're not a bot", search had no artist, playlist, album or song filters, and there were no downloads. The filters, album/playlist/artist pages and Android downloads are now built. Still open:
+   - whether the downloads work on the owner's phone: their network bot-checks playback, so only a video YouTube serves there can be downloaded;
+   - the bot check itself: a signed-in session or a host-supplied PO token (`TokenProvider`) are the legitimate routes. Ask the owner before building either; never bypass the check.
+   - the Windows EXE by hand: CI packages and self-tests it, and the flow was exercised under Xvfb on Linux.
 3. **SABR/UMP (G6)** stays blocked unless a normal network serves responses with no direct URLs, or an independent spec appears. Don't derive it from GPL code.
 4. **G10:** a remote release only on the owner's say-so.
 
@@ -151,7 +155,9 @@ Done by the second cloud session: CI actions on Node 24 (checkout v7, setup-java
 - The jvmTest result XMLs keep earlier targeted runs. Delete `build/test-results/jvmTest` before counting tests.
 - On the Windows runner, `Start-Process -Wait` is needed to wait for the GUI-subsystem exe.
 
-**Swing:** inside `JPanel.apply { }`, a field named `height` resolves to the panel's own `height`.
+**Swing:** inside `JPanel.apply { }`, a field named `height` resolves to the panel's own `height`. A `FlowLayout` doesn't wrap in a `BorderLayout`: the desktop chips use the small `WrapLayout` in `Main.kt`.
+
+**Android preview:** with no Android SDK in the container, CI's preview and android-device jobs are the compiler, lint and device. `JoinCheck` prints `result=ok` from `am instrument`; its clips are made with ffmpeg (commands in its KDoc).
 
 **Cloud containers:**
 - `repo.maven.apache.org` answers 429. A local `~/.gradle/init.d/*.gradle.kts` that rewrites that host to `https://maven-central.storage-download.googleapis.com/maven2/` (Google's mirror of Maven Central) in `pluginManagement`, `dependencyResolutionManagement`, `buildscript` and project repositories gets the build through. Keep it out of the repository.
