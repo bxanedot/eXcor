@@ -63,6 +63,29 @@ class YouTubeMusicTest {
     }
 
     @Test
+    fun albumsCarryThePlaylistTheirPlayButtonStarts() {
+        fun overlay(key: String) = """"$key":{"musicItemThumbnailOverlayRenderer":{"content":{"musicPlayButtonRenderer":{"playNavigationEndpoint":
+            {"watchPlaylistEndpoint":{"playlistId":"OLAK5uy_synthetic0123456789"}}}}}}"""
+        val albumBrowse = """"navigationEndpoint":{"browseEndpoint":{"browseId":"MPREb_synthetic","browseEndpointContextSupportedConfigs":{"browseEndpointContextMusicConfig":{"pageType":"MUSIC_PAGE_TYPE_ALBUM"}}}}"""
+        val page = decodeMusicSearch("""{"contents":{"tabbedSearchResultsRenderer":{"tabs":[{"tabRenderer":{"content":{"sectionListRenderer":{"contents":[
+            {"musicShelfRenderer":{"contents":[{"musicResponsiveListItemRenderer":{"flexColumns":[{"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Tides"}]}}}],
+              $albumBrowse,${overlay("overlay")}}}]}}]}}}}]}}}""")!!
+        val album = page.items.single()
+        assertEquals(ExcorYouTubeMusicItemType.ALBUM, album.type)
+        assertEquals("MPREb_synthetic", album.browseId)
+        assertEquals("OLAK5uy_synthetic0123456789", album.playlistId)
+
+        // Album cards on artist pages carry it the same way, on the thumbnail overlay.
+        val artist = decodeMusicArtist("""{"header":{"musicImmersiveHeaderRenderer":{"title":{"runs":[{"text":"Mira Vale"}]}}},
+            "contents":{"singleColumnBrowseResultsRenderer":{"tabs":[{"tabRenderer":{"content":{"sectionListRenderer":{"contents":[
+            {"musicCarouselShelfRenderer":{"header":{"musicCarouselShelfBasicHeaderRenderer":{"title":{"runs":[{"text":"Albums"}]}}},"contents":[
+              {"musicTwoRowItemRenderer":{"title":{"runs":[{"text":"Tides"}]},$albumBrowse,${overlay("thumbnailOverlay")}}}]}}]}}}}]}}}""", "UCaaaaaaaaaaaaaaaaaaaaaa")!!
+        val card = artist.shelves.single().items.single()
+        assertEquals(ExcorYouTubeMusicItemType.ALBUM, card.type)
+        assertEquals("OLAK5uy_synthetic0123456789", card.playlistId)
+    }
+
+    @Test
     fun suggestionsArtistPlaylistAndQueue() {
         assertEquals(listOf("mira vale", "mira vale live"), decodeMusicSuggestions("""{"contents":[{"searchSuggestionsSectionRenderer":{"contents":[
             {"searchSuggestionRenderer":{"suggestion":{"runs":[{"text":"mira","bold":true},{"text":" vale"}]}}},
