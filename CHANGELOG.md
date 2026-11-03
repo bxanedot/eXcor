@@ -6,6 +6,7 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 
 ### Added
 - **Video extraction:** `extractVideo` returns a video track (width, height, frame rate, codec, quality label, length, DASH byte ranges) and the audio to play with it, from the same client response, both probed as playable. Audio is matched to the video's container; a progressive format is used when the response has no playable separate audio. Verified live at 480p and 1080p with an ffmpeg mux and full decode.
+- **Format list:** `formats` lists every whole-file audio and video format one client offers, with codec, size, frame rate, bitrate, length and byte ranges, for download choices. One probe per list. Verified live: 27 formats, 144p to 2160p, all range-readable.
 - **YouTube metadata:**
   - `videoInfo`, falling back to the watch page when YouTube's bot check withholds details (`fromWatchPage`);
   - `search`, with YouTube's own filters, Shorts, continuations and suggestions;

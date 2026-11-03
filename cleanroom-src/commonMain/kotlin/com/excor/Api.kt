@@ -53,6 +53,47 @@ data class ExcorVideoTrack(
  * null only when [video] is progressive and carries its own sound. The audio container matches the video's (M4A with
  * MP4 video, Opus/WebM with WebM video) when the response offers one, so the pair can be muxed without re-encoding.
  */
+/**
+ * One downloadable format from a video's format list. [hasAudio] and [hasVideo] are both true for a progressive format.
+ * [videoCodec] is null for audio-only formats.
+ */
+data class ExcorMediaFormat(
+    val itag: Int?,
+    val url: String,
+    val mimeType: String,
+    val kbps: Int,
+    val contentLength: Long?,
+    val hasAudio: Boolean,
+    val hasVideo: Boolean,
+    val width: Int?,
+    val height: Int?,
+    val fps: Int?,
+    val qualityLabel: String?,
+    val videoCodec: ExcorVideoCodec?,
+    val audioChannels: Int?,
+    val sampleRate: Int?,
+    val initRange: LongRange?,
+    val indexRange: LongRange?,
+) {
+    override fun toString(): String =
+        "ExcorMediaFormat(itag=$itag, mimeType=$mimeType, kbps=$kbps, height=$height, hasAudio=$hasAudio)"
+}
+
+/**
+ * Every whole-file format one client offers for a video, for download choices. All URLs are fetched with [headers]. The
+ * URLs aren't remembered individually, so when one is refused, call `exclude(videoId, profileId)` and ask again.
+ */
+data class ExcorFormatList(
+    val videoId: String,
+    val clientName: String,
+    val profileId: String,
+    val headers: Map<String, String>,
+    val formats: List<ExcorMediaFormat>,
+) {
+    override fun toString(): String =
+        "ExcorFormatList(videoId=$videoId, clientName=$clientName, formats=${formats.size}, headers=${headers.keys})"
+}
+
 data class ExcorVideoStreams(
     val videoId: String,
     val video: ExcorVideoTrack,

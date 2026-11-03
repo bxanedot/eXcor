@@ -109,6 +109,13 @@ class Excor(host: ExcorHost) {
         maxAudioKbps: Int = 160,
         skipClients: Set<String> = emptySet(),
     ): ExcorVideoStreams? = engine.extractVideo(videoId, maxHeight, codecs, maxAudioKbps, skipClients)
+
+    /**
+     * Every whole-file audio and video format one client offers for [videoId], for download choices. Null when no client
+     * offers a playable response; throws with YouTube's reason when it refuses the video.
+     */
+    @Throws(Throwable::class)
+    suspend fun formats(videoId: String, skipClients: Set<String> = emptySet()): ExcorFormatList? = engine.formats(videoId, skipClients)
     fun headersFor(url: String): Map<String, String>? = engine.headersFor(url)
     fun onRefused(url: String): String? = engine.onRefused(url)
     fun exclude(videoId: String, profileId: String) = engine.exclude(videoId, profileId)

@@ -99,7 +99,9 @@ if (streams != null) {
 }
 ```
 
-The best picture under `maxHeight` wins, then the higher frame rate, then the most widely decodable codec (H.264, VP9, AV1). The audio comes from the same response, in the matching container where one exists (M4A with MP4 video, Opus/WebM with WebM video), so the two can be played together or muxed without re-encoding. Both tracks pass the playback probe before they are returned. If the response has no playable separate audio, a progressive format is used instead. Segmented ("OTF") formats are not selected. A `TokenProvider` is an integration boundary: applications may supply tokens they are authorized to obtain, while eXcor never creates them.
+The best picture under `maxHeight` wins, then the higher frame rate, then the most widely decodable codec (H.264, VP9, AV1). The audio comes from the same response, in the matching container where one exists (M4A with MP4 video, Opus/WebM with WebM video), so the two can be played together or muxed without re-encoding. Both tracks pass the playback probe before they are returned. If the response has no playable separate audio, a progressive format is used instead. Segmented ("OTF") formats are not selected.
+
+`excor.formats(videoId)` lists every whole-file audio and video format one client offers (itag, codec, size, frame rate, bitrate, length, byte ranges), for download choices. All of them are fetched with `list.headers`. One representative format is probed, since a response's URLs are signed together. If a listed URL is refused, call `exclude(videoId, list.profileId)` and ask again. A `TokenProvider` is an integration boundary: applications may supply tokens they are authorized to obtain, while eXcor never creates them.
 
 ## Build and test
 

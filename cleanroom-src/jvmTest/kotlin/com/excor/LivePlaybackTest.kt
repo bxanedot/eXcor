@@ -134,6 +134,27 @@ class LivePlaybackTest {
         }
     }
 
+    /** The format list has audio and video, and every listed format answers a range read with the list's headers. */
+    @Test
+    fun formatListIsRangeReadable() {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
+        val http = OkHttpClient()
+        val excor = Excor(LiveHost(http))
+        runBlocking {
+            val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
+            val list = excor.formats(videoId) ?: throw SkipException("YouTube serves no playable response for $videoId to this network")
+            assertTrue(list.formats.any { it.hasVideo && !it.hasAudio } && list.formats.any { it.hasAudio && !it.hasVideo }, "list has ${list.formats}")
+            val refused = list.formats.filter { format ->
+                val request = Request.Builder().url(format.url).header("Range", "bytes=0-1023").apply {
+                    list.headers.forEach { (name, value) -> header(name, value) }
+                }.build()
+                http.newCall(request).execute().use { it.code != 206 && it.code != 200 }
+            }
+            assertTrue(refused.isEmpty(), "refused: $refused")
+            println("listed ${list.formats.size} formats from ${list.clientName}; heights ${list.formats.mapNotNull { it.height }.distinct().sortedDescending()}; all range-readable")
+        }
+    }
+
     private fun download(http: OkHttpClient, url: String, headers: Map<String, String>, file: File): Long {
         val chunk = 4L * 1024 * 1024
         var offset = 0L
