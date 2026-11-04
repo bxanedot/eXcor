@@ -80,7 +80,8 @@ internal fun selectClients(
     val ordered = if (session.cookie.isNullOrBlank()) {
         listOf(tvSamsung, visionOs, web)
     } else {
-        listOf(webEmbedded, tvSamsung, web)
+        // TVHTML5 answers a web session with "The page needs to be reloaded", so it is left out; VISIONOS stays.
+        listOf(visionOs, webEmbedded, web)
     }
     val skipped = (skipClients + excludedProfiles).mapTo(mutableSetOf()) { it.lowercase() }
     return ordered.filterNot { it.name.lowercase() in skipped || it.profileId.lowercase() in skipped }
