@@ -15,6 +15,8 @@ internal data class ClientIdentity(
      * neither, and YouTube refuses VISIONOS's player request (HTTP 403) when it carries the Referer.
      */
     val browserOrigin: Boolean = true,
+    /** Whether the account's cookies go with this client's requests; VISIONOS is a native client and works signed out. */
+    val sendsCookie: Boolean = true,
 )
 
 private val webEmbedded = ClientIdentity(
@@ -46,6 +48,7 @@ private val visionOs = ClientIdentity(
     requiresPlayerScript = false,
     requiresStreamingToken = false,
     browserOrigin = false,
+    sendsCookie = false,
 )
 
 private val web = ClientIdentity(
@@ -80,7 +83,8 @@ internal fun selectClients(
     val ordered = if (session.cookie.isNullOrBlank()) {
         listOf(tvSamsung, visionOs, web)
     } else {
-        listOf(webEmbedded, tvSamsung, web)
+        // TVHTML5 answers a web session with "The page needs to be reloaded", so it is left out; VISIONOS stays, cookie-free.
+        listOf(visionOs, webEmbedded, web)
     }
     val skipped = (skipClients + excludedProfiles).mapTo(mutableSetOf()) { it.lowercase() }
     return ordered.filterNot { it.name.lowercase() in skipped || it.profileId.lowercase() in skipped }

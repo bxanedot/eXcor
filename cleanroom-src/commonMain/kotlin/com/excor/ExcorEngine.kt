@@ -528,8 +528,9 @@ internal class ExcorEngine(
                 continue
             }
 
+            val clientSession = if (identity.sendsCookie) session else session.copy(cookie = null)
             val request = buildPlayerRequest(
-                identity, videoId, session, apiKey,
+                identity, videoId, clientSession, apiKey,
                 playerData?.entry?.signatureTimestamp, token,
             ) ?: continue
             val body = try {
@@ -551,7 +552,7 @@ internal class ExcorEngine(
             }
             val responsePlayerUrl = response.playerScriptUrl ?: playerUrl
             val formats = playableFormats(response, responsePlayerUrl, token?.streamingDataToken, session)
-            val headers = mediaHeaders(identity.userAgent, session)
+            val headers = mediaHeaders(identity.userAgent, clientSession)
             pick(ClientResponse(identity, response, formats, headers))?.let { return it }
         }
         if (playabilityReason != null) throw IllegalStateException("Excor $playabilityReason for video $videoId")

@@ -14,11 +14,12 @@ class ClientsTest {
     }
 
     @Test
-    fun loggedInOrderMatchesYtDlp() {
-        assertEquals(
-            listOf("WEB_EMBEDDED_PLAYER", "TVHTML5", "WEB"),
-            selectClients(session(cookie = "session"), emptySet(), emptySet()).map(ClientIdentity::name),
-        )
+    fun loggedInOrderDropsTheTvClientAndKeepsVisionOs() {
+        // Live 2026-11-04, signed in with a web session: TVHTML5 answered "The page needs to be reloaded." for every
+        // video, so it is not tried; VISIONOS, which works signed out, stays and is sent without the cookie.
+        val clients = selectClients(session(cookie = "session"), emptySet(), emptySet())
+        assertEquals(listOf("VISIONOS", "WEB_EMBEDDED_PLAYER", "WEB"), clients.map(ClientIdentity::name))
+        assertEquals(listOf(false, true, true), clients.map(ClientIdentity::sendsCookie))
     }
 
     @Test
