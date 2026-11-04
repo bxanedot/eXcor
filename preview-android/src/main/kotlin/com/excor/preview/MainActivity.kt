@@ -1,9 +1,14 @@
 package com.excor.preview
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.webkit.CookieManager
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -104,6 +109,7 @@ class MainActivity : ComponentActivity() {
     private var pendingDownload: (() -> Unit)? = null
     private var signedIn by mutableStateOf(false)
     private var signingIn by mutableStateOf(false)
+    private var googleLogin by mutableStateOf(false)
     private var cookieDraft by mutableStateOf("")
 
     private lateinit var excor: Excor
@@ -131,7 +137,7 @@ class MainActivity : ComponentActivity() {
         sharedText(intent)?.let { query = it }
         setContent {
             MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-                Surface(Modifier.fillMaxSize()) { Screen() }
+                Surface(Modifier.fillMaxSize()) { if (googleLogin) GoogleLogin() else Screen() }
             }
         }
     }
@@ -160,10 +166,56 @@ class MainActivity : ComponentActivity() {
         cookieDraft = ""
     }
 
+    /** Called as the sign-in page loads youtube.com: once Google has set the account's cookies, the session is kept. */
+    private fun googleLoginDone(cookie: String?) {
+        if (cookie == null || cookieProblem(cookie) != null) return
+        cookieFile.writeText(cookie)
+        connect(cookie)
+        googleLogin = false
+        status = "Signed in with Google. Requests now use your account."
+    }
+
     private fun signOut() {
+        CookieManager.getInstance().removeAllCookies(null)
         cookieFile.delete()
         connect(null)
         status = "Signed out."
+    }
+
+    /**
+     * Google's own sign-in page in a WebView: the user types their credentials there, and the app keeps only the
+     * youtube.com cookies it ends with. Google refuses WebViews that say so in their user agent, so this one reports
+     * as Chrome. If Google refuses anyway, pasting a Cookie header still works.
+     */
+    @SuppressLint("SetJavaScriptEnabled")
+    @Composable
+    private fun GoogleLogin() {
+        BackHandler { googleLogin = false }
+        Column(Modifier.fillMaxSize().safeDrawingPadding()) {
+            TextButton(onClick = { googleLogin = false }) { Text("‹ Cancel") }
+            AndroidView(
+                factory = { context ->
+                    WebView(context).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.userAgentString = settings.userAgentString.replace("; wv", "").replace("Version/4.0 ", "")
+                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageFinished(view: WebView, url: String?) {
+                                if (Uri.parse(url ?: return).host?.endsWith("youtube.com") == true) {
+                                    googleLoginDone(CookieManager.getInstance().getCookie("https://www.youtube.com"))
+                                }
+                            }
+                        }
+                        loadUrl(
+                            "https://accounts.google.com/ServiceLogin?service=youtube&hl=en&continue=" +
+                                "https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26next%3Dhttps%253A%252F%252Fwww.youtube.com%252F",
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -379,7 +431,10 @@ class MainActivity : ComponentActivity() {
             item {
                 Text("eXcor Preview", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 12.dp))
                 if (signedIn) TextButton(onClick = ::signOut) { Text("Signed in to YouTube · Sign out") }
-                else TextButton(onClick = { signingIn = !signingIn }) { Text("Sign in to YouTube") }
+                else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { googleLogin = true }) { Text("Sign in with Google") }
+                    TextButton(onClick = { signingIn = !signingIn }) { Text("Paste a cookie") }
+                }
                 if (signingIn && !signedIn) {
                     Text(
                         "Paste the Cookie header of a youtube.com request from a browser where you are signed in (developer tools, " +
