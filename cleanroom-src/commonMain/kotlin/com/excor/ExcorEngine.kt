@@ -544,7 +544,7 @@ internal class ExcorEngine(
                 null
             } ?: continue
             if (response.playabilityStatus != "OK") {
-                log(ExcorLogLevel.DEBUG, "${identity.name}: playability ${response.playabilityStatus}", videoId)
+                log(ExcorLogLevel.DEBUG, "${identity.name}: playability ${response.playabilityStatus}${response.playabilityReason?.let { " ($it)" } ?: ""}", videoId)
                 playabilityReason = response.playabilityReason
                     ?: response.playabilityStatus?.let { "YouTube reports playback status $it" }
                 continue
