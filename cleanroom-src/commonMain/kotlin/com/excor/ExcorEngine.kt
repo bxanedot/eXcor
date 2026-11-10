@@ -14,7 +14,6 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsChannel
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.URLBuilder
@@ -746,7 +745,7 @@ internal class ExcorEngine(
             response.bodyAsChannel().cancel()
             return PostOutcome.Done(null)
         }
-        return PostOutcome.Done(response.bodyAsText().takeIf { it.length <= PLAYER_RESPONSE_LIMIT })
+        return PostOutcome.Done(readBoundedResponseText(response, PLAYER_RESPONSE_LIMIT))
     }
 
     private suspend fun getText(url: String, headers: Map<String, String>, limit: Int): String? {
@@ -757,7 +756,7 @@ internal class ExcorEngine(
             response.bodyAsChannel().cancel()
             return null
         }
-        return response.bodyAsText().takeIf { it.length <= limit }
+        return readBoundedResponseText(response, limit)
     }
 
     /**
