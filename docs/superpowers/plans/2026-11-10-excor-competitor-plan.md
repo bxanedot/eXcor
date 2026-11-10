@@ -1,0 +1,87 @@
+# eXcor: competitor engineering plan — 2026-11-10
+
+**Goal:** make the Apache-2.0 clean-room eXcor library a credible, independently reliable alternative to InnerTubeX for supported YouTube and YouTube Music extraction. Success means verifiable streams, stable API, secure operation, installability and low solo-maintainer burden — not hype or the number of APIs.
+
+**Owner/audience:** solo maintainer; no known external users. Primary outcomes are open-source quality and reputation.
+
+## Baseline and honest limits
+
+- Main baseline: bbeee33f70e1ced3987e0ff1c70163310c108af2; artifact com.excor:eXcor:0.2.0, Kotlin Multiplatform JVM/Android/iOS, separate native Swift package and unpublished preview apps.
+- Search, metadata, channels, comments, YouTube Music, direct audio and video formats have offline tests and qualified live evidence. Playback is frequently blocked by YouTube's own access checks, so live success must not be generalized.
+- The repository's release-gates.json reports G1, G2, G3, G7 and G9 passing; G4, G5, G8, G10, G11 and G12 partial; G6 (SABR/UMP) blocked.
+- InnerTubeX's public README documents direct/HLS/SABR transport, UMP seeking, cipher handling, isolated sessions, token-provider interfaces and diagnostics. Its 2026-11-07 changelog shows ongoing iOS and streaming work. eXcor does not currently demonstrate parity in all of those areas.
+- YouTube.js serves JavaScript/Deno/browser developers; NewPipeExtractor targets Java and several content services. Platform breadth alone does not prove extractor performance.
+
+**Nonnegotiable boundaries:** Only implement in the clean-room source tree, not quarantined historical src/ or root ejs/. Never copy GPL/LGPL/AGPL extractor source, including InnerTubeX or NewPipeExtractor. Use competitor README and observable public interfaces only for requirements. Do not evade bot checks, consent or DRM. Do not store or log credentials, signed URLs, private captures or token values. Remote release and publishing require owner authorization.
+
+## Priority and sequence
+
+### P0 — Security, reliability and diagnostic consistency
+
+- [x] Redact common URL/credential patterns in untrusted playability status/reason before diagnostics and exception text.
+- [x] Add synthetic regression tests covering secrets, bounds and controls without altering ordinary messages.
+- [ ] Confirm full JVM, Android and iOS CI for the exact PR commit, and review the resulting tests.
+- [ ] Audit all remaining logs, exceptions and data-class string representations for potentially sensitive values.
+- [ ] Extend deterministic offline fault injection: retry exhaustion, Retry-After, cancellation during backoff, oversized payloads, redirected media and stale authenticated sessions.
+
+Acceptance: green CI with no public-API regression; synthetic secrets never appear in diagnostics; proven faults receive explicit typed outcomes. G8/G12 remain partial until the entire surface is reviewed.
+
+### P1 — Player and direct streaming reliability (highest leverage)
+
+- [ ] Use an opt-in test matrix run by the owner on an authorized network: stable public video IDs, music videos, live content when available, inaccessible/private/deleted cases and videos requiring player-script cipher.
+- [ ] Verify signature and n transforms against independently observed player behavior, preserving fail-closed behavior for unsupported variants.
+- [ ] Run range reads, full ffmpeg decode, mid-file seek and audio/video mux of eligible direct streams; validate content lengths, MIME types, 403 refusal and redirects.
+- [ ] Verify signed-in session replacement and cancellation without copying or uploading account credentials.
+- [ ] Reproduce each discovered regression in an offline synthetic test before repair.
+
+Acceptance: qualified real playback/seek/cipher evidence on the supported platforms. Report network access denials separately from parser/transport failures. Do not mark G4/G5 passing without reproducible evidence.
+
+### P2 — SABR/UMP decision and implementation track
+
+- [ ] Define the minimum transport contract independently: representation catalog, bounded UMP frames, stream bootstrap, order, gaps, seek, finish and cancellation. Do not infer it by reading GPL competitor code.
+- [ ] Compare three documented options: A) remain direct/HLS-only with an explicit competitive gap; B) implement bounded SABR behind an internal experimental adapter; C) support a separately licensed host-provided transport interface.
+- [ ] Choose B only if an independently usable specification and authorized test fixtures exist. Implement and review bounded framing, bootstrap, audio seek, video selection, and fail-closed error cases separately.
+- [ ] Test oversized/truncated frames, malformed lengths, infinite streams, missing segments, redirects and credential isolation before any live transport claim.
+
+Acceptance: G6 either supported with tested playable streams or honestly documented as out of scope for a narrower preview. A framing parser alone is not SABR parity.
+
+### P3 — Feature and platform parity
+
+- [ ] Reverify search, channels, YouTube Music songs/albums/discography and continuations with documented owner-network evidence.
+- [ ] Add captions/transcripts only with permitted endpoints and independently verifiable fixtures; otherwise expose an explicit unavailable/unsupported result.
+- [ ] Check JVM, Android, Kotlin/Native iOS, and the separate native Swift eXcorKit individually; do not imply parity without tests.
+- [ ] Keep optional Spotify/Apple/Deezer catalog expansion subordinate to YouTube extractor reliability.
+
+### P4 — Reproducible black-box competition
+
+- [ ] Make a comparator that uses only published public APIs of eXcor, InnerTubeX, YouTube.js and NewPipeExtractor.
+- [ ] Run each under the same machine/network, eligible video set and timeout budget. Record cold/warm p50 and p95 startup, requests, heap/allocation where measurable, success/failure classifications, seek behavior and sample count.
+- [ ] Classify access denial, unsupported transport and parsing faults separately; do not claim competitors failed when the network denies requests.
+- [ ] Update COMPETITOR_MATRIX.md with dated evidence and precise source links; never publish signed URLs, tokens or sessions.
+
+### P5 — Solo-maintainer release quality
+
+- [ ] Complete source/fixture provenance and license review, API/ABI compatibility, dependency vulnerability scan and reproducible builds.
+- [ ] Provide copyable Kotlin sample, Android/JVM quickstart, clear error guide, changelog, security policy and accurate supported/unsupported feature matrix.
+- [ ] Invite a small amount of independent feedback when ready; do not state any active users or adoption without evidence.
+- [ ] Request owner authorization before publishing artifacts or making a ready-to-use announcement.
+
+## Go / no-go
+
+**Current outcome: NO-GO** for a ready-to-use InnerTubeX competitor. G6 is missing, player/stream verification is partial, error/security review and comparative tests are incomplete and public publication is not authorized.
+
+Release-candidate criteria:
+1. Green supported-target CI with fault/cancellation/security regression coverage.
+2. Owner-operated, reproducible player-script and direct-stream live checks (including decode/Range/seek), with clearly separated access denials.
+3. Explicit tested transport scope and no implied SABR support without working playback.
+4. Completed API/installability and provenance/security/license gates.
+5. Current capability and black-box competition matrices with honest samples and limitations.
+6. Owner-approved publication decision.
+
+## Execution record
+
+The first implementation slice in this branch adds bounded redaction of YouTube-supplied player status text and synthetic tests. This improves diagnostics safety but does **not** upgrade release gates or claim competitive parity until CI is reviewed.
+
+**Next focused PR:** offline network fault-injection tests in EngineStateTest, then legitimate owner-network playback verification. Record exact commit, platform, commands and pass/fail outcomes in EXCOR_PROGRESS.md and release-gates.json after those runs.
+
+References: HANDOFF.md, EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.
