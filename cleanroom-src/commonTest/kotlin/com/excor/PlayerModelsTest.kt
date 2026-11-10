@@ -37,6 +37,7 @@ class PlayerModelsTest {
         assertEquals("LOGIN_REQUIRED", response?.playabilityStatus)
         assertEquals("Sign in to confirm your age", response?.playabilityReason)
     }
+
     @Test
     fun redactsUrlsAndCredentialsInUntrustedPlayabilityText() {
         val response = assertNotNull(
@@ -62,5 +63,4 @@ class PlayerModelsTest {
         assertEquals("x".repeat(200), response.playabilityReason)
         assertEquals("beforeafter", safePlaybackReason("before\r\nafter"))
     }
-
 }
