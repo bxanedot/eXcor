@@ -152,8 +152,8 @@ internal fun decodeVideoInfo(source: String, videoId: String): ExcorVideoInfo? {
         isFamilySafe = micro?.flag("isFamilySafe"),
         isShortsEligible = micro?.flag("isShortsEligible"),
         availableCountries = (micro?.get("availableCountries") as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }?.toSet(),
-        playabilityStatus = playability?.text("status"),
-        playabilityReason = playability?.text("reason")?.filter { it >= ' ' && it != '\u007f' }?.take(200),
+        playabilityStatus = playability?.text("status")?.let(::safePlaybackReason)?.take(64),
+        playabilityReason = playability?.text("reason")?.let(::safePlaybackReason),
     )
 }
 
@@ -162,8 +162,8 @@ internal fun playabilityOf(source: String): Pair<String, String?>? {
     if (source.length > 2_000_000) return null
     val root = runCatching { Json.parseToJsonElement(source) }.getOrNull() as? JsonObject ?: return null
     val playability = root["playabilityStatus"] as? JsonObject ?: return null
-    val status = playability.text("status") ?: return null
-    return status to playability.text("reason")?.filter { it >= ' ' && it != '\u007f' }?.take(200)
+    val status = playability.text("status")?.let(::safePlaybackReason)?.take(64) ?: return null
+    return status to playability.text("reason")?.let(::safePlaybackReason)
 }
 
 /**

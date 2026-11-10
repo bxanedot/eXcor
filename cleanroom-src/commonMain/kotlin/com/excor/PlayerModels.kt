@@ -32,9 +32,10 @@ internal fun decodePlayerResponse(source: String): PlayerResponse? {
         ?.primitiveContent()
         ?.toDoubleOrNull()
     return PlayerResponse(
-        playabilityStatus = root.objectValue("playabilityStatus")?.stringValue("status"),
+        playabilityStatus = root.objectValue("playabilityStatus")?.stringValue("status")
+            ?.let(::safePlaybackReason)?.take(64),
         playabilityReason = root.objectValue("playabilityStatus")?.stringValue("reason")
-            ?.filter { it >= ' ' && it != '\u007f' }?.take(200),
+            ?.let(::safePlaybackReason),
         formats = formats,
         playerScriptUrl = root.objectValue("assets")?.stringValue("js"),
         loudnessDb = loudness,
