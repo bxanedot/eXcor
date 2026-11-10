@@ -57,7 +57,14 @@ internal class ExcorEngine(
     fun initializeFallback() = Unit
 
     fun onSessionChanged() {
-        state.update { it.copy(remembered = emptyMap(), exclusions = emptyMap()) }
+        state.update {
+            it.copy(
+                sessionEpoch = it.sessionEpoch + 1,
+                remembered = emptyMap(),
+                exclusions = emptyMap(),
+                playerData = emptyMap(),
+            )
+        }
         if (host.configStore.enabled) scope.launch { warmUp() }
     }
 
@@ -100,10 +107,12 @@ internal class ExcorEngine(
         watchFallback: Boolean,
     ): ExcorStream? {
         require(VIDEO_ID.matches(videoId)) { "Excor video ID is invalid" }
+        val epoch = state.value.sessionEpoch
         val session = host.session()
-        if (!watchFallback) return extractPrimary(videoId, maxKbps, skipClients, requireM4a, session)
+        ensureSessionCurrent(epoch)
+        if (!watchFallback) return extractPrimary(videoId, maxKbps, skipClients, requireM4a, session, epoch)
         val primary = try {
-            extractPrimary(videoId, maxKbps, skipClients, requireM4a, session)
+            extractPrimary(videoId, maxKbps, skipClients, requireM4a, session, epoch)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
@@ -111,7 +120,7 @@ internal class ExcorEngine(
         }
         if (primary != null) return primary
         return try {
-            extractFromWatchPage(videoId, maxKbps, skipClients, requireM4a, session)
+            extractFromWatchPage(videoId, maxKbps, skipClients, requireM4a, session, epoch)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
@@ -307,9 +316,12 @@ internal class ExcorEngine(
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {
+            val epoch = state.value.sessionEpoch
             val session = host.session()
+            ensureSessionCurrent(epoch)
             val page = fetchWatchPage(videoId, session) ?: return emptyList()
             val formats = playableFormats(page.playerResponse, page.playerResponse.playerScriptUrl, null, session)
+            ensureSessionCurrent(epoch)
             formats.filter { it.audioType.startsWith("audio/") && isAllowedPlaybackUrl(it.url) }
                 .map { format ->
                     val audioFormat = when {
@@ -332,7 +344,8 @@ internal class ExcorEngine(
         skipClients: Set<String>,
         requireM4a: Boolean,
         session: ExcorSession,
-    ): ExcorStream? = firstFromClients(videoId, skipClients, session) { client ->
+        epoch: Long,
+    ): ExcorStream? = firstFromClients(videoId, skipClients, session, epoch) { client ->
         val ranked = rankAudioFormats(client.formats, maxKbps, requireM4a)
         log(ExcorLogLevel.DEBUG, "${client.identity.name}: ${client.response.formats.size} formats, ${client.formats.size} usable, ${ranked.size} audio candidates", videoId)
         firstPlayableAudio(videoId, client, ranked)?.also {
@@ -349,8 +362,10 @@ internal class ExcorEngine(
     ): ExcorVideoStreams? {
         require(VIDEO_ID.matches(videoId)) { "Excor video ID is invalid" }
         require(maxHeight > 0) { "maxHeight must be positive" }
+        val epoch = state.value.sessionEpoch
         val session = host.session()
-        return firstFromClients(videoId, skipClients, session) { client ->
+        ensureSessionCurrent(epoch)
+        return firstFromClients(videoId, skipClients, session, epoch) { client ->
             val videos = rankVideoFormats(client.formats, maxHeight, codecs)
             log(ExcorLogLevel.DEBUG, "${client.identity.name}: ${client.formats.size} usable formats, ${videos.size} video candidates", videoId)
             // The audio is chosen once per container: M4A goes with MP4 video and Opus/WebM with WebM video, falling back
@@ -389,12 +404,13 @@ internal class ExcorEngine(
                     containsAudio = format.containsAudio,
                     headers = client.headers,
                 )
-                remember(
+                if (!remember(
                     ExcorStream(
                         videoId, format.url, format.kbps, format.mimeType, client.response.loudnessDb,
                         client.identity.name, client.identity.profileId, client.headers,
                     ),
-                )
+                    client.sessionEpoch,
+                )) throw CancellationException("Excor session changed")
                 log(ExcorLogLevel.INFO, "selected ${format.height}p ${format.mimeType} from ${client.identity.name}", videoId)
                 return@firstFromClients ExcorVideoStreams(videoId, track, audio, client.identity.name, client.identity.profileId)
             }
@@ -408,8 +424,10 @@ internal class ExcorEngine(
      */
     suspend fun formats(videoId: String, skipClients: Set<String>): ExcorFormatList? {
         require(VIDEO_ID.matches(videoId)) { "Excor video ID is invalid" }
+        val epoch = state.value.sessionEpoch
         val session = host.session()
-        return firstFromClients(videoId, skipClients, session) { client ->
+        ensureSessionCurrent(epoch)
+        return firstFromClients(videoId, skipClients, session, epoch) { client ->
             val whole = client.formats.filter { !it.segmented && isAllowedPlaybackUrl(it.url) && it.audioType.substringBefore('/') in setOf("audio", "video") }
             val representative = rankAudioFormats(whole, 160, requireM4a = false).firstOrNull()
                 ?: rankVideoFormats(whole, Int.MAX_VALUE, ExcorVideoCodec.entries.toSet()).firstOrNull()
@@ -454,6 +472,7 @@ internal class ExcorEngine(
         val response: PlayerResponse,
         val formats: List<PlayerFormat>,
         val headers: Map<String, String>,
+        val sessionEpoch: Long,
     )
 
     private suspend fun firstPlayableAudio(
@@ -479,7 +498,7 @@ internal class ExcorEngine(
                 profileId = client.identity.profileId,
                 headers = client.headers,
             )
-            remember(stream)
+            if (!remember(stream, client.sessionEpoch)) throw CancellationException("Excor session changed")
             return stream
         }
         return null
@@ -493,11 +512,14 @@ internal class ExcorEngine(
         videoId: String,
         skipClients: Set<String>,
         session: ExcorSession,
+        epoch: Long,
         pick: suspend (ClientResponse) -> T?,
     ): T? {
+        ensureSessionCurrent(epoch)
         // The watch page gives the API key and player script, but YouTube can answer it with a captcha page while the
         // player API still serves clients that need neither; those are tried without it.
         val page = fetchWatchPage(videoId, session)
+        ensureSessionCurrent(epoch)
         val apiKey = page?.apiKey
         val playerUrl = page?.playerResponse?.playerScriptUrl
         val excluded = activeExclusions(videoId)
@@ -552,8 +574,13 @@ internal class ExcorEngine(
             val responsePlayerUrl = response.playerScriptUrl ?: playerUrl
             val formats = playableFormats(response, responsePlayerUrl, token?.streamingDataToken, session)
             val headers = mediaHeaders(identity.userAgent, session)
-            pick(ClientResponse(identity, response, formats, headers))?.let { return it }
+            ensureSessionCurrent(epoch)
+            pick(ClientResponse(identity, response, formats, headers, epoch))?.let { candidate ->
+                ensureSessionCurrent(epoch)
+                return candidate
+            }
         }
+        ensureSessionCurrent(epoch)
         if (playabilityReason != null) throw IllegalStateException("Excor $playabilityReason for video $videoId")
         return null
     }
@@ -564,7 +591,9 @@ internal class ExcorEngine(
         skipClients: Set<String>,
         requireM4a: Boolean,
         session: ExcorSession,
+        epoch: Long,
     ): ExcorStream? {
+        ensureSessionCurrent(epoch)
         val skipped = skipClients.mapTo(mutableSetOf()) { it.lowercase() }
         val excluded = activeExclusions(videoId)
         if ("web" in skipped || "web_watch_page" in skipped || "web" in excluded || "web_watch_page" in excluded) return null
@@ -578,7 +607,7 @@ internal class ExcorEngine(
                 videoId, format.url, format.kbps, format.mimeType,
                 page.playerResponse.loudnessDb, "WEB", "WEB_WATCH_PAGE", headers,
             )
-            remember(stream)
+            if (!remember(stream, epoch)) throw CancellationException("Excor session changed")
             log(ExcorLogLevel.INFO, "watch-page fallback selected ${format.mimeType}", videoId)
             return stream
         }
@@ -831,12 +860,19 @@ internal class ExcorEngine(
         return active.mapTo(mutableSetOf()) { it.lowercase() }
     }
 
-    private fun remember(stream: ExcorStream) {
-        state.update { old ->
+    /** A stream created under a previous session must never repopulate the current session's cache. */
+    private fun remember(stream: ExcorStream, epoch: Long): Boolean {
+        while (true) {
+            val old = state.value
+            if (old.sessionEpoch != epoch) return false
             val entries = if (old.remembered.size >= MAX_REMEMBERED_URLS) linkedMapOf() else old.remembered.toMutableMap()
             entries[stream.url] = stream
-            old.copy(remembered = entries)
+            if (state.compareAndSet(old, old.copy(remembered = entries))) return true
         }
+    }
+
+    private fun ensureSessionCurrent(epoch: Long) {
+        if (state.value.sessionEpoch != epoch) throw CancellationException("Excor session changed")
     }
 
     private suspend fun savePlayerData(url: String, value: PlayerCacheEntry, persist: Boolean = true) {
@@ -900,6 +936,7 @@ internal class ExcorEngine(
     }
 
     private data class EngineState(
+        val sessionEpoch: Long = 0,
         val remembered: Map<String, ExcorStream> = emptyMap(),
         val exclusions: Map<String, Map<String, Long>> = emptyMap(),
         val playerData: Map<String, PlayerCacheEntry> = emptyMap(),
