@@ -93,3 +93,13 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
    - typed request failures (`docs/ERROR_HANDLING.md`) and `CHANGELOG.md`.
 2. If the intermittent nulls seen once in a full live run recur, read the WARN logs (endpoint and status) and fix the cause.
 3. On a normal network: run `LivePlaybackTest`. If playback works there, SABR/UMP work can start against real responses.
+
+## 2026-11-10 — competitor-readiness work branch
+
+The owner's current goal is a production-quality, solo-maintained eXcor extractor competitive with InnerTubeX, with no known external users. Work started on feature/competitive-readiness-20261110 from main commit bbeee33f70e1ced3987e0ff1c70163310c108af2.
+
+- Added a clean-room, common-source diagnostic sanitizer for untrusted player status/reason values and synthetic tests guarding URL/credential-pattern exposure, control characters and bounds. A stand-alone Kotlin smoke check passed locally; the full Gradle and platform CI checks are **pending**.
+- Refreshed docs/COMPETITOR_MATRIX.md from public documentation and recorded a prioritized plan at docs/superpowers/plans/2026-11-10-excor-competitor-plan.md.
+- This PR does **not** deliver SABR/UMP, new live-player evidence, or a release. All current release-gate statuses remain unchanged.
+
+**Next:** review CI at the PR head, inspect any failure, then pursue deterministic network/cancellation fault-injection tests and legitimate owner-network playback checks. Do not claim parity based on this PR.
