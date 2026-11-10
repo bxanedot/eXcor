@@ -39,6 +39,25 @@ class VideoInfoTest {
         assertNull(decodeVideoInfo("not json", "AAAAAAAAAAA"))
     }
 
+
+    @Test
+    fun metadataAndFallbackRedactUntrustedPlayerReason() {
+        val untrusted = "Visit https://rr1.googlevideo.com/videoplayback?sig=synthetic-url Cookie: SID=synthetic-cookie token=synthetic-token"
+        val info = decodeVideoInfo(
+            response.replace("Video unavailable", untrusted), "AAAAAAAAAAA",
+        )!!
+        val fallback = playabilityOf(
+            """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"$untrusted"}}""",
+        )!!
+        for (reason in listOf(info.playabilityReason.orEmpty(), fallback.second.orEmpty())) {
+            assertFalse("synthetic-url" in reason)
+            assertFalse("synthetic-cookie" in reason)
+            assertFalse("synthetic-token" in reason)
+            assertTrue("[link removed]" in reason)
+        }
+        assertEquals("LOGIN_REQUIRED", fallback.first)
+    }
+
     @Test
     fun asMusicTrackDropsVideoTagsAndSplitsArtist() {
         val track = decodeVideoInfo(response, "AAAAAAAAAAA")!!.asMusicTrack()
