@@ -6,9 +6,11 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -20,6 +22,7 @@ import kotlin.test.assertTrue
 /**
  * Synthetic, deterministic failure cases. No credentials, expiring stream URLs or network access are required.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class FaultInjectionTest {
     @Test
     fun maxAcceptedRetryAfterIsFiveSeconds() = runTest {
@@ -66,17 +69,22 @@ class FaultInjectionTest {
     @Test
     fun cancellationDuringRetryAfterStopsFurtherRequests() = runTest {
         var calls = 0
+        val requestArrived = CompletableDeferred<Unit>()
         val client = HttpClient(MockEngine {
             calls++
+            requestArrived.complete(Unit)
             respond("", HttpStatusCode.TooManyRequests, headersOf(HttpHeaders.RetryAfter, "5"))
         })
         try {
             val engine = ExcorEngine(FaultHost(), null, client)
-            assertFailsWith<TimeoutCancellationException> {
-                withTimeout(250L) { engine.search("q", "continuation") }
-            }
-            assertEquals(1, calls, "cancellation must stop scheduled retries")
-            assertEquals(250L, testScheduler.currentTime)
+            val pending = async { engine.search("q", "continuation") }
+            requestArrived.await()
+            testScheduler.runCurrent()
+            pending.cancel()
+            assertFailsWith<CancellationException> { pending.await() }
+            testScheduler.advanceTimeBy(6_000L)
+            testScheduler.runCurrent()
+            assertEquals(1, calls, "a cancelled retry must not make another network request")
         } finally {
             client.close()
         }
@@ -84,26 +92,23 @@ class FaultInjectionTest {
 
     @Test
     fun declaredOversizeAndActualOversizeResponsesAreRejected() = runTest {
-        var calls = 0
         val tooLarge = "x".repeat(2_000_001)
-        val client = HttpClient(MockEngine {
-            calls++
-            if (calls == 1) {
+        for (declared in listOf(true, false)) {
+            var calls = 0
+            val client = HttpClient(MockEngine {
+                calls++
                 respond(
-                    "small body", HttpStatusCode.OK,
-                    headersOf(HttpHeaders.ContentLength, "2000001"),
+                    tooLarge, HttpStatusCode.OK,
+                    if (declared) headersOf(HttpHeaders.ContentLength, "2000001") else headersOf(),
                 )
-            } else {
-                respond(tooLarge, HttpStatusCode.OK)
+            })
+            try {
+                val engine = ExcorEngine(FaultHost(), null, client)
+                assertNull(engine.search("q", "continuation"), "oversized response must fail closed")
+                assertEquals(1, calls, "oversized successful responses are not retried")
+            } finally {
+                client.close()
             }
-        })
-        try {
-            val engine = ExcorEngine(FaultHost(), null, client)
-            assertNull(engine.search("q", "continuation"), "oversized declared Content-Length must fail closed")
-            assertNull(engine.search("q", "continuation"), "oversized actual response must fail closed")
-            assertEquals(2, calls, "oversized successful responses are not retried")
-        } finally {
-            client.close()
         }
     }
 
