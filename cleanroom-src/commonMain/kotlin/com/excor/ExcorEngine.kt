@@ -316,9 +316,12 @@ internal class ExcorEngine(
     suspend fun audioCandidates(videoId: String): List<ExcorAudioCandidate> {
         if (!VIDEO_ID.matches(videoId)) return emptyList()
         return try {
+            val epoch = state.value.sessionEpoch
             val session = host.session()
+            ensureSessionCurrent(epoch)
             val page = fetchWatchPage(videoId, session) ?: return emptyList()
             val formats = playableFormats(page.playerResponse, page.playerResponse.playerScriptUrl, null, session)
+            ensureSessionCurrent(epoch)
             formats.filter { it.audioType.startsWith("audio/") && isAllowedPlaybackUrl(it.url) }
                 .map { format ->
                     val audioFormat = when {
