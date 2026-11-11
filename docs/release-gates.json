@@ -109,11 +109,11 @@
       "id": "G12",
       "name": "Security",
       "status": "partial",
-      "evidence": "URL allowlist, safe data-class/log rendering, bounded responses and OSV dependency scan remain in place. PR #76 diagnostic sanitization and PR #82 bounded response reads merged after supported-target CI; #80/#81 add redirect credential-isolation and stale-session protection. The dependency scan found no known vulnerabilities in 115 shipped packages on 2026-11-02. Full diagnostic-surface review remains open.",
+      "evidence": "URL allowlist, safe data-class/log rendering, bounded responses and the shipped-dependency OSV scan remain in place. PR #87 merged as 3f451811af946e6d1253d81567d0399d622a4d5c after all six supported-target jobs passed in run 42965037745; it adds synthetic redaction coverage for transport/player diagnostics. G12 remains partial pending broader release-security evidence; Android lint findings are report-only and supplied by tooling dependencies.",
       "command": "see the 'Dependency vulnerability scan' step in .github/workflows/ci.yml",
       "blockers": [
-        "Android lint tooling has report-only findings (guava, commons-lang3, httpclient, bouncycastle); these are supplied by the Android Gradle plugin and are not shipped.",
-        "The remaining exception and data-class diagnostic audit is in draft PR #87 (current head 60622027a17bd25a742a26a2481e35dbd1bdce7f); it is not counted until the exact-head supported-target CI passes and the change merges."
+        "Android lint/tooling findings are report-only; document any actionable dependency findings before release.",
+        "Diagnostic redaction is merged and tested, but no complete release-side security audit has been attested."
       ]
     }
   ]

@@ -20,11 +20,11 @@
 
 - [x] Redact common URL/credential patterns in untrusted playability status/reason before diagnostics and exception text.
 - [x] Add synthetic regression tests covering secrets, bounds and controls without altering ordinary messages.
-- [ ] Confirm full JVM, Android and iOS CI for the exact PR commit, and review the resulting tests.
-- [ ] Audit all remaining logs, exceptions and data-class string representations for potentially sensitive values.
-- [ ] Extend deterministic offline fault injection: retry exhaustion, Retry-After, cancellation during backoff, oversized payloads, redirected media and stale authenticated sessions.
+- [x] Confirm full JVM, Android and iOS CI for exact PR #87 commit `157da30337a4b5c146c8e12b353c5a7ca01a7151`; all six jobs passed in run `42965037745`.
+- [x] Audit remaining logs, exceptions and data-class string representations; PR #87 adds synthetic regression coverage for sensitive diagnostics.
+- [x] Extend deterministic offline fault injection for retry exhaustion, Retry-After, cancellation during backoff, oversized payloads, media redirects and stale authenticated sessions; covered by merged PRs #80–#82.
 
-Acceptance: green CI with no public-API regression; synthetic secrets never appear in diagnostics; proven faults receive explicit typed outcomes. G8/G12 remain partial until the entire surface is reviewed.
+Acceptance: green CI with no public-API regression; synthetic secrets never appear in diagnostics; proven faults receive explicit typed outcomes. G8/G12 remain partial pending owner-run live fault verification and broader release-security evidence.
 
 ### P1 — Player and direct streaming reliability (highest leverage)
 
@@ -82,6 +82,6 @@ Release-candidate criteria:
 
 The first implementation slice in this branch adds bounded redaction of YouTube-supplied player status text and synthetic tests. This improves diagnostics safety but does **not** upgrade release gates or claim competitive parity until CI is reviewed.
 
-**Next focused PR:** offline network fault-injection tests in EngineStateTest, then legitimate owner-network playback verification. Record exact commit, platform, commands and pass/fail outcomes in EXCOR_PROGRESS.md and release-gates.json after those runs.
+**Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
 References: HANDOFF.md, EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.
