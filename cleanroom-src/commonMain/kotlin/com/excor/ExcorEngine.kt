@@ -878,7 +878,10 @@ internal class ExcorEngine(
         profileId: String,
         now: Long,
     ): Map<String, Map<String, Long>> {
-        val active = pruneExclusions(exclusions, now).toMutableMap()
+        val active = linkedMapOf<String, Map<String, Long>>()
+        pruneExclusions(exclusions, now).forEach { (existingVideoId, profiles) ->
+            active[existingVideoId] = profiles
+        }
         if (videoId.length !in 1..MAX_EXCLUSION_KEY_LENGTH || profileId.length !in 1..MAX_EXCLUSION_KEY_LENGTH) {
             return active
         }
