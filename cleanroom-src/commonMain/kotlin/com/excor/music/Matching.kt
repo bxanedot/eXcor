@@ -33,7 +33,10 @@ data class ExcorTrackMatch(
 )
 
 /** A title split into its comparable base, its version markers and any featured artists it names. */
-data class ExcorParsedTitle(val base: String, val markers: Set<ExcorVersionMarker>, val featured: List<String>)
+data class ExcorParsedTitle(val base: String, val markers: Set<ExcorVersionMarker>, val featured: List<String>) {
+    override fun toString(): String =
+        "ExcorParsedTitle(base=present, markers=${markers.size}, featured=${featured.size})"
+}
 
 fun excorParseTitle(title: String, version: String? = null): ExcorParsedTitle {
     val markers = mutableSetOf<ExcorVersionMarker>()

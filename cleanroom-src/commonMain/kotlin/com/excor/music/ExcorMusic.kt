@@ -43,12 +43,17 @@ data class ExcorMusicConfig(
 data class ExcorMultiSearchResult(
     val results: Map<ExcorCatalogProvider, ExcorMusicSearchResult>,
     val errors: Map<ExcorCatalogProvider, ExcorCatalogException>,
-)
+) {
+    override fun toString(): String = "ExcorMultiSearchResult(providers=${results.size}, errors=${errors.size})"
+}
 
 data class ExcorCrossProviderMatches(
     val matches: Map<ExcorCatalogProvider, List<ExcorTrackMatch>>,
     val errors: Map<ExcorCatalogProvider, ExcorCatalogException>,
-)
+) {
+    override fun toString(): String =
+        "ExcorCrossProviderMatches(providers=${matches.size}, candidates=${matches.values.sumOf { it.size }}, errors=${errors.size})"
+}
 
 /**
  * One source track of a playlist conversion. [matches] are the target's non-DIFFERENT candidates, best first;
@@ -57,6 +62,8 @@ data class ExcorCrossProviderMatches(
  */
 data class ExcorConvertedTrack(val source: ExcorMusicTrack, val matches: List<ExcorTrackMatch>, val error: ExcorCatalogException? = null) {
     val best: ExcorTrackMatch? get() = matches.firstOrNull()
+    override fun toString(): String =
+        "ExcorConvertedTrack(source=present, matches=${matches.size}, error=${error ?: "missing"})"
 }
 
 /** A playlist matched onto another provider. [truncated] is true when the playlist had more than the tracks read. */
@@ -65,7 +72,10 @@ data class ExcorPlaylistConversion(
     val target: ExcorCatalogProvider,
     val tracks: List<ExcorConvertedTrack>,
     val truncated: Boolean,
-)
+) {
+    override fun toString(): String =
+        "ExcorPlaylistConversion(target=$target, playlist=present, tracks=${tracks.size}, truncated=$truncated)"
+}
 
 /**
  * What a track's provider declares about its audio. Declared, not delivered: eXcor returns no stream for these
@@ -83,9 +93,13 @@ data class ExcorAudioCapabilities(
 )
 
 /** Where an enriched field came from. [confidence] is the match confidence; 1 for the track's own provider. */
-data class ExcorFieldSource(val provider: ExcorCatalogProvider, val id: String, val confidence: Double)
+data class ExcorFieldSource(val provider: ExcorCatalogProvider, val id: String, val confidence: Double) {
+    override fun toString(): String = "ExcorFieldSource(provider=$provider, id=present, confidence=$confidence)"
+}
 
-data class ExcorEnrichedTrack(val track: ExcorMusicTrack, val sources: Map<ExcorMusicField, ExcorFieldSource>)
+data class ExcorEnrichedTrack(val track: ExcorMusicTrack, val sources: Map<ExcorMusicField, ExcorFieldSource>) {
+    override fun toString(): String = "ExcorEnrichedTrack(track=present, sources=${sources.size})"
+}
 
 class ExcorPlaybackException(val status: ExcorPlaybackStatus) : Exception("eXcor playback not possible: $status")
 

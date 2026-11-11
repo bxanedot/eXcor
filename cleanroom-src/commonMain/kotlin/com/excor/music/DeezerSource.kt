@@ -414,9 +414,14 @@ internal class DeezerSource(
     }
 }
 
-data class ExcorDeezerGenre(val id: String, val name: String, val artwork: List<ExcorArtwork>)
+data class ExcorDeezerGenre(val id: String, val name: String, val artwork: List<ExcorArtwork>) {
+    override fun toString(): String = "ExcorDeezerGenre(name=present, artwork=${artwork.size})"
+}
 
-data class ExcorDeezerRadio(val id: String, val title: String, val description: String?, val artwork: List<ExcorArtwork>)
+data class ExcorDeezerRadio(val id: String, val title: String, val description: String?, val artwork: List<ExcorArtwork>) {
+    override fun toString(): String =
+        "ExcorDeezerRadio(title=present, description=${description != null}, artwork=${artwork.size})"
+}
 
 data class ExcorDeezerCharts(
     val tracks: List<ExcorMusicTrack>,
@@ -424,4 +429,8 @@ data class ExcorDeezerCharts(
     val artists: List<ExcorMusicArtistProfile>,
     val playlists: List<ExcorMusicPlaylist>,
     val podcasts: List<ExcorPodcastShow>,
-)
+) {
+    override fun toString(): String =
+        "ExcorDeezerCharts(tracks=${tracks.size}, albums=${albums.size}, artists=${artists.size}, " +
+            "playlists=${playlists.size}, podcasts=${podcasts.size})"
+}
