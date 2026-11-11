@@ -37,13 +37,19 @@ data class ExcorYouTubeMix(
 }
 
 /** A chapter of a video; it runs until the next chapter's [startMs] or the end of the video. */
-data class ExcorYouTubeChapter(val title: String, val startMs: Long)
+data class ExcorYouTubeChapter(val title: String, val startMs: Long) {
+    override fun toString(): String =
+        "ExcorYouTubeChapter(title=${title.isNotEmpty()}, startMs=$startMs)"
+}
 
 /**
  * A song YouTube credits in a video's description ("Music" section). [credits] are YouTube's labelled credit lines as
  * shown, in the session's language, such as "Writers" to the writers' names.
  */
 data class ExcorYouTubeSong(val title: String, val artist: String?, val album: String?, val credits: Map<String, String>) {
+    override fun toString(): String =
+        "ExcorYouTubeSong(title=${title.isNotEmpty()}, artist=${artist != null}, album=${album != null}, credits=${credits.size})"
+
     /**
      * The song as a music track for [com.excor.music.ExcorMusic.matchAcrossProviders], keyed by the video it was
      * credited in. YouTube's credit is cleaner than a title split, but carries no ISRC, so matching still scores it as

@@ -54,6 +54,10 @@ data class ExcorYouTubeVideoResult(
     val officialArtistChannel: Boolean,
     val thumbnails: List<ExcorArtwork>,
 ) {
+    override fun toString(): String =
+        "ExcorYouTubeVideoResult(videoId=present, title=${title.isNotEmpty()}, channel=${channelId != null}, " +
+            "duration=${durationSeconds != null}, live=$isLive)"
+
     /** The result as a music track, read the same way as [ExcorVideoInfo.asMusicTrack]. */
     fun asMusicTrack(): ExcorMusicTrack = youtubeMusicTrack(videoId, title, channelName, channelId, durationSeconds, thumbnails)
 }
@@ -65,10 +69,17 @@ data class ExcorYouTubeChannelResult(
     /** YouTube's display text, such as "7.21M subscribers". */
     val subscribersText: String?,
     val thumbnails: List<ExcorArtwork>,
-)
+) {
+    override fun toString(): String =
+        "ExcorYouTubeChannelResult(channelId=present, title=${title.isNotEmpty()}, handle=${handle != null}, " +
+            "subscribers=${subscribersText != null})"
+}
 
 /** [isMix] marks YouTube's generated mixes (IDs starting with "RD"), which differ per listener. */
-data class ExcorYouTubePlaylistResult(val playlistId: String, val title: String, val isMix: Boolean)
+data class ExcorYouTubePlaylistResult(val playlistId: String, val title: String, val isMix: Boolean) {
+    override fun toString(): String =
+        "ExcorYouTubePlaylistResult(playlistId=present, title=${title.isNotEmpty()}, isMix=$isMix)"
+}
 
 // A continuation token already carries the query's filters, so params go only with a first page.
 internal fun buildSearchRequest(query: String?, continuation: String?, session: ExcorSession, filterParams: String? = null): PlayerRequest = innertubeRequest("search", session) {

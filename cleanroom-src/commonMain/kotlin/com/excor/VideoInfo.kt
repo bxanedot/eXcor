@@ -57,6 +57,11 @@ data class ExcorVideoInfo(
     val playable: Boolean get() = playabilityStatus == "OK"
     val url: String get() = "https://www.youtube.com/watch?v=$videoId"
 
+    override fun toString(): String =
+        "ExcorVideoInfo(playable=$playable, status=${playabilityStatus != null}, reason=${playabilityReason != null}, " +
+            "description=${description != null}, keywords=${keywords.size}, private=${isPrivate != null}, " +
+            "live=$isLive, fromWatchPage=$fromWatchPage)"
+
     /**
      * The video as a music track for [com.excor.music.ExcorMusic.matchAcrossProviders]. Auto-generated "Artist - Topic"
      * channels give the artist directly; otherwise an "Artist - Title" video title is split. The result is a best

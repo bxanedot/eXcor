@@ -95,6 +95,42 @@ class DiagnosticModelSafetyTest {
         )
         val musicPlaylist = ExcorYouTubeMusicPlaylist(marker, marker, marker, marker, listOf(musicItem), marker)
         val queue = ExcorYouTubeMusicQueue(marker, listOf(musicItem), marker)
+        val musicArtistRef = ExcorYouTubeMusicArtistRef(marker, marker)
+        val post = ExcorYouTubePost(marker, marker, marker, marker, emptyList())
+        val channelLink = ExcorYouTubeChannelLink(marker, marker)
+        val about = ExcorYouTubeChannelAbout(marker, marker, marker, marker, 1, marker, marker, listOf(channelLink))
+        val searchVideo = ExcorYouTubeVideoResult(marker, marker, marker, marker, 30, 1, marker, true, false, emptyList())
+        val searchChannel = ExcorYouTubeChannelResult(marker, marker, marker, marker, emptyList())
+        val searchPlaylist = ExcorYouTubePlaylistResult(marker, marker, true)
+        val chapter = ExcorYouTubeChapter(marker, 1000)
+        val song = ExcorYouTubeSong(marker, marker, marker, mapOf(marker to marker))
+        val videoInfo = ExcorVideoInfo(
+            videoId = marker,
+            title = marker,
+            author = marker,
+            channelId = marker,
+            channelHandle = marker,
+            durationSeconds = 30,
+            viewCount = 1,
+            likeCount = 1,
+            description = marker,
+            keywords = listOf(marker),
+            category = marker,
+            publishDate = marker,
+            uploadDate = marker,
+            thumbnails = emptyList(),
+            isLive = false,
+            isLiveContent = false,
+            isPrivate = true,
+            isUnlisted = true,
+            isFamilySafe = false,
+            isShortsEligible = true,
+            availableCountries = setOf(marker),
+            playabilityStatus = marker,
+            playabilityReason = marker,
+            publishedText = marker,
+            fromWatchPage = false,
+        )
 
         val related = ExcorYouTubeRelated(listOf(playlistVideo), marker)
         val mix = ExcorYouTubeMix(marker, marker, listOf(playlistVideo), marker, 1)
@@ -117,7 +153,8 @@ class DiagnosticModelSafetyTest {
         )
         val rendered = listOf(
             channel, search, filter, playlist, playlistVideo, musicItem, musicSearch, shelf, musicArtist,
-            musicPlaylist, queue, related, mix, comment, comments, entry, syncPage, state, syncResult,
+            musicPlaylist, queue, musicArtistRef, post, about, channelLink, searchVideo, searchChannel, searchPlaylist,
+            chapter, song, videoInfo, related, mix, comment, comments, entry, syncPage, state, syncResult,
         ).joinToString()
 
         assertFalse(marker in rendered, "Diagnostic rendering exposed opaque continuation or private content")

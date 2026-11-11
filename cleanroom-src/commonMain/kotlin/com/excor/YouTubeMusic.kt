@@ -18,7 +18,10 @@ import kotlinx.serialization.json.put
 enum class ExcorYouTubeMusicItemType { SONG, VIDEO, EPISODE, ARTIST, ALBUM, PLAYLIST, PROFILE, PODCAST, UNKNOWN }
 
 /** An artist or channel credited on an item; [channelId] is null when YouTube Music gives the name without a link. */
-data class ExcorYouTubeMusicArtistRef(val name: String, val channelId: String?)
+data class ExcorYouTubeMusicArtistRef(val name: String, val channelId: String?) {
+    override fun toString(): String =
+        "ExcorYouTubeMusicArtistRef(name=${name.isNotEmpty()}, channelId=${channelId != null})"
+}
 
 /**
  * One YouTube Music item: a playable song, video or episode (with [videoId]) or a browsable artist, album, playlist,

@@ -49,6 +49,9 @@ data class ExcorYouTubePost(
     val images: List<ExcorArtwork>,
 ) {
     val url: String get() = "https://www.youtube.com/post/$postId"
+
+    override fun toString(): String =
+        "ExcorYouTubePost(postId=present, text=${text != null}, published=${publishedText != null}, images=${images.size})"
 }
 
 /** Channel tabs eXcor reads, matched by the tab's address so YouTube's localized titles do not matter. */
@@ -68,10 +71,17 @@ data class ExcorYouTubeChannelAbout(
     val joinedText: String?,
     val country: String?,
     val links: List<ExcorYouTubeChannelLink>,
-)
+) {
+    override fun toString(): String =
+        "ExcorYouTubeChannelAbout(channelId=present, description=${description != null}, viewCount=${viewCount != null}, " +
+            "joined=${joinedText != null}, country=${country != null}, links=${links.size})"
+}
 
 /** A link the channel lists, with its destination taken out of YouTube's redirect. */
-data class ExcorYouTubeChannelLink(val title: String, val url: String)
+data class ExcorYouTubeChannelLink(val title: String, val url: String) {
+    override fun toString(): String =
+        "ExcorYouTubeChannelLink(title=${title.isNotEmpty()}, url=present)"
+}
 
 internal class ChannelHome(val channel: ExcorYouTubeChannel, val tabParams: Map<ExcorYouTubeChannelTab, String>, val aboutToken: String? = null)
 
