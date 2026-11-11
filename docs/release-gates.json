@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-03",
+  "updated": "2026-11-11",
   "gates": [
     {
       "id": "G1",
@@ -50,10 +50,10 @@
       "id": "G6",
       "name": "SABR/UMP",
       "status": "blocked",
-      "evidence": "Not implemented. A serverAbrStreamingUrl now appears in VISIONOS responses here, but those responses also carry direct URLs, which play",
+      "evidence": "No network/playback transport is implemented. PR #84 merged an offline bounded UMP frame decoder, and PR #86 merged offline HTTP-response continuation assembly after all six supported-target CI jobs passed. Neither makes network requests or decodes media. G6 remains blocked; SABR/UMP playback 0/20.",
       "command": null,
       "blockers": [
-        "No documented, independently usable SABR request specification; the direct URLs from the same response are used instead"
+        "No complete independently validated request/response contract, authorized playable stream, full decode, or seek evidence."
       ]
     },
     {
@@ -70,10 +70,11 @@
       "id": "G8",
       "name": "Reliability",
       "status": "partial",
-      "evidence": "Typed request failures (ExcorRequestException: RATE_LIMITED, SERVER_ERROR, NETWORK) after bounded retries; WARN diagnostics naming endpoint and status; bounded bodies, cancellation, failed-tab reporting, per-track errors, request budgets; all tested offline (docs/ERROR_HANDLING.md)",
+      "evidence": "Supported-target CI passed for merged PR #80 synthetic tests: bounded Retry-After/backoff, cancellation, declared/actual oversized responses, foreign media redirects and credential-safe logs. PR #81 adds session-generation invalidation for player, media and format results, also passing all six supported-target CI jobs. Live endpoint fault injection is still unverified.",
       "command": "./gradlew :jvmTest",
       "blockers": [
-        "No fault-injection run against live endpoints; one full live run returned two unexplained nulls (passed on reruns), now diagnosable through WARN logs"
+        "No owner-run fault-injection against an authorized live endpoint; synthetic coverage does not establish live playback reliability.",
+        "Two nulls in an earlier live run passed on reruns and have not been reproduced."
       ]
     },
     {
@@ -108,10 +109,11 @@
       "id": "G12",
       "name": "Security",
       "status": "partial",
-      "evidence": "URL allowlist, secret redaction in toString and logs, link destinations restricted to http(s), bounded responses; CI scans dependencies with OSV-Scanner 2.0.0, gating on shipped runtime dependencies (115 packages, no known vulnerabilities on 2026-11-02)",
+      "evidence": "URL allowlist, safe data-class/log rendering, bounded responses and OSV dependency scan remain in place. PR #76 diagnostic sanitization and PR #82 bounded response reads merged after supported-target CI; #80/#81 add redirect credential-isolation and stale-session protection. The dependency scan found no known vulnerabilities in 115 shipped packages on 2026-11-02. Full diagnostic-surface review remains open.",
       "command": "see the 'Dependency vulnerability scan' step in .github/workflows/ci.yml",
       "blockers": [
-        "Report-only findings in Android lint tooling (guava, commons-lang3, httpclient, bouncycastle), which comes with the Android Gradle plugin and is not shipped"
+        "Android lint tooling has report-only findings (guava, commons-lang3, httpclient, bouncycastle); these are supplied by the Android Gradle plugin and are not shipped.",
+        "The remaining exception and data-class diagnostic audit is in draft PR #87 and is not counted until it merges with supported-target CI."
       ]
     }
   ]
