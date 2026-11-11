@@ -131,17 +131,45 @@ data class ExcorAudioCandidate(
         "ExcorAudioCandidate(kbps=$kbps, mimeType=${mimeType.isNotEmpty()}, format=present)"
 }
 
+/**
+ * YouTube session material supplied by the host. Header-bound values must be printable ASCII and bounded: cookies to
+ * 8 KiB, visitor data to 4 KiB, and region/language to 64 characters each. Empty locale fields use request defaults.
+ */
 data class ExcorSession(
     val cookie: String?,
     val visitorData: String?,
     val region: String,
     val language: String,
 ) {
+    init {
+        require(cookie == null || cookie.isBoundedPrintableAscii(MAX_COOKIE_LENGTH)) {
+            "cookie must be at most 8192 printable ASCII characters"
+        }
+        require(visitorData == null || visitorData.isBoundedPrintableAscii(MAX_VISITOR_DATA_LENGTH)) {
+            "visitorData must be at most 4096 printable ASCII characters"
+        }
+        require(region.isBoundedPrintableAscii(MAX_LOCALE_LENGTH)) {
+            "region must be at most 64 printable ASCII characters"
+        }
+        require(language.isBoundedPrintableAscii(MAX_LOCALE_LENGTH)) {
+            "language must be at most 64 printable ASCII characters"
+        }
+    }
+
     override fun toString(): String =
         "ExcorSession(cookie=${presence(cookie)}, visitorData=${presence(visitorData)}, region=${presence(region)}, language=${presence(language)})"
 
     private fun presence(value: String?): String = if (value.isNullOrEmpty()) "missing" else "present"
+
+    private companion object {
+        const val MAX_COOKIE_LENGTH = 8_192
+        const val MAX_VISITOR_DATA_LENGTH = 4_096
+        const val MAX_LOCALE_LENGTH = 64
+    }
 }
+
+private fun String.isBoundedPrintableAscii(limit: Int): Boolean =
+    length <= limit && all { it.code in 0x20..0x7e }
 
 enum class ExcorLogLevel { DEBUG, INFO, WARN, ERROR }
 
