@@ -2,14 +2,14 @@
 
 Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
-## Current state — 2026-11-11 (verified 2026-11-11 11:26:08 UTC)
+## Current state — 2026-11-11 (verified 2026-11-11 11:58:07 UTC)
 
-- Latest code checkpoint: PR #104 merged as `752831b939c7ff4bdd8df0fb5ce1c22eec40d1f3`. Exact-head CI passed all six supported-target jobs for PR #104 (run `43009288965`). Main CI after merge, run `43011623054`, was queued at this checkpoint.
-- The score report for main `752831b` is **53/100; release NO-GO**. G6 remains blocked at 0/20; PR #104 does not earn readiness points.
+- Latest code checkpoint: PR #105 merged as `860983bf736316d584401f46c474f5d7a8581254`. Exact-head CI passed all six supported-target jobs for PR #105 (run `43014757593`). Post-merge main CI run `43016170529` was queued at this checkpoint.
+- Readiness remains **53/100; release NO-GO**. The score refresh for main `860983b` is in progress. G6 remains blocked at 0/20; PR #105 does not earn readiness points.
 - Issue #77 is closed after the deterministic acceptance checklist passed across PRs #80–82, #87 and #102. G8 remains partial because owner-run live fault injection is unverified.
 - **G4/G5:** partial. Issue #78 remains open and has no owner-run authorized playback/cipher results.
 - **G6:** blocked, SABR/UMP playback 0/20. No network negotiation, playable media, full decode or seek evidence exists.
-- **G12:** partial. PR #103 removes session cookies and visitor IDs from direct media requests. PR #104 prevents bearer-token and custom-header responses from entering the catalog cache, even with explicit cache opt-in. Signed-in playback and the broader release-security audit remain unverified.
+- **G12:** partial. PR #103 keeps session cookies and visitor IDs off media requests; PR #104 excludes authorized catalog responses from the URL cache; PR #105 redacts visitor IDs from playback diagnostics. Signed-in playback and the broader release-security audit remain unverified.
 - **G10/G11:** partial. Remote publishing is unauthorized; reproducible black-box comparison remains incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 

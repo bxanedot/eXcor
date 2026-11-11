@@ -12,21 +12,21 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
 
-## Current verified checkpoint — 2026-11-11 11:26:08
+## Current verified checkpoint — 2026-11-11 11:58:07
 
-**Latest code checkpoint:** PR #104 merged as `752831b939c7ff4bdd8df0fb5ce1c22eec40d1f3`. Its exact head `80f0fdb1fa64a6e399c5cda88e5ccd7b1fe7bc13` passed all six supported-target jobs in CI run [43009288965](https://github.com/bxanedot/eXcor/actions/runs/43009288965). The post-merge main CI run `43011623054` was queued at this checkpoint.
+**Latest code checkpoint:** PR #105 merged as `860983bf736316d584401f46c474f5d7a8581254`. Its exact head `6dc35a73dc85c9ad14df235ca6eca3c64f33247` passed all six supported-target jobs in CI run [43014757593](https://github.com/bxanedot/eXcor/actions/runs/43014757593). Post-merge main CI run `43016170529` was queued at this checkpoint.
 
-**Readiness remains 53/100; release NO-GO.** The score report for main `752831b` keeps G6 blocked at 0/20. PR #104 hardens the catalog cache but does not qualify for score credit or establish live playback/full security-audit evidence.
+**Readiness remains 53/100; release NO-GO.** The score refresh for main `860983b` is in progress; G6 remains blocked at 0/20. PR #105 adds diagnostic redaction coverage but does not qualify for score credit or establish live playback/full security-audit evidence.
 
 - **Issue #77:** closed after the deterministic retry, transport, session, diagnostic-redaction and bounded exclusion-cache acceptance checks passed. PRs #80–82, #87 and #102 hold the synthetic coverage.
 - **G4/G5:** partial. Issue #78 remains open with no owner-run authorized playback/cipher matrix results.
 - **G6:** blocked, SABR/UMP playback 0/20. No network transport, playable SABR media, full decode or seek evidence.
 - **G8:** partial. Synthetic retry/session/cache coverage is recorded; owner-run live fault injection remains unverified.
-- **G12:** partial. PRs #103 and #104 keep session credentials off media requests and prevent authenticated catalog responses from entering the URL-only cache. Signed-in playback and the broader release-security audit remain unverified.
+- **G12:** partial. PR #103 removes session cookies and visitor IDs from media requests; PR #104 prevents authenticated catalog responses from entering the URL-only cache; PR #105 redacts visitor IDs from untrusted playback reasons. Signed-in playback and the broader release-security audit remain unverified.
 - **G10/G11:** partial. Remote publishing remains unauthorized; reproducible black-box comparison is incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used.
 
-**Next:** continue the broader security review and wait for issue #78's owner-authorized playback/cipher matrix. Keep G4/G5/G6 unchanged without repeatable live evidence. Preserve the clean-room boundary.
+**Next:** continue the broader security review and track issue #78's owner-authorized playback/cipher matrix. Keep G4/G5/G6 unchanged without repeatable live evidence. Preserve the clean-room boundary.
 ## Release gates
 
 | Gate | Status | Note |
