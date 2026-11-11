@@ -80,7 +80,7 @@ internal class ExcorEngine(
                 exclusions = recordExclusion(old.exclusions, videoId, profileId, now, sequence),
             )
         }
-        log(ExcorLogLevel.WARN, "excluded profile $profileId for video $videoId for ten minutes", videoId)
+        log(ExcorLogLevel.WARN, "excluded playback profile", videoId.takeIf { VIDEO_ID.matches(it) })
     }
 
     fun onRefused(url: String): String? {
