@@ -23,7 +23,11 @@ internal data class PlayerJsOutput(
     val preparedPlayer: String?,
     val signatures: Map<String, String>,
     val throttling: Map<String, String>,
-)
+) {
+    override fun toString(): String =
+        "PlayerJsOutput(preparedPlayer=${if (preparedPlayer == null) "missing" else "present"}, " +
+            "signatures=${signatures.size}, throttling=${throttling.size})"
+}
 
 internal suspend fun solvePlayerJs(
     playerScript: String?,
