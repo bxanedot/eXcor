@@ -38,12 +38,13 @@ Acceptance: qualified real playback/seek/cipher evidence on the supported platfo
 
 ### P2 — SABR/UMP decision and implementation track
 
-- [ ] Define the minimum transport contract independently: representation catalog, bounded UMP frames, stream bootstrap, order, gaps, seek, finish and cancellation. Do not infer it by reading GPL competitor code.
-- [ ] Compare three documented options: A) remain direct/HLS-only with an explicit competitive gap; B) implement bounded SABR behind an internal experimental adapter; C) support a separately licensed host-provided transport interface.
-- [ ] Choose B only if an independently usable specification and authorized test fixtures exist. Implement and review bounded framing, bootstrap, audio seek, video selection, and fail-closed error cases separately.
+- [x] Assess whether the minimum transport contract can be defined independently. The current source review found no viewer-side SABR request/response contract or authorized fixtures; document the unknowns and re-entry criteria in `docs/UMP_FRAMING_RESEARCH.md` and closed issue #79.
+- [x] Compare three documented options: A) remain direct/HLS-only with an explicit competitive gap; B) implement bounded SABR behind an internal experimental adapter; C) support a separately licensed host-provided transport interface. The dated decision record chooses A as interim scope, defers B and C, and gives re-entry criteria.
+- [x] Record a no-go for B until an independently usable specification and authorized test fixtures exist. No SABR negotiation, media decode, or seek path is implied by the offline framing prototype.
+- [ ] If the re-entry criteria become available, implement and review bounded framing, bootstrap, audio seek, video selection, and fail-closed error cases separately.
 - [ ] Test oversized/truncated frames, malformed lengths, infinite streams, missing segments, redirects and credential isolation before any live transport claim.
 
-Acceptance: G6 either supported with tested playable streams or honestly documented as out of scope for a narrower preview. A framing parser alone is not SABR parity.
+The feasibility decision is complete; SABR implementation is deferred. G6 remains blocked until authorized audio/video decode and seek evidence satisfies the re-entry criteria. A framing parser alone is not SABR parity.
 
 ### P3 — Feature and platform parity
 
@@ -87,6 +88,10 @@ The first implementation slice in this branch adds bounded redaction of YouTube-
 The JVM quickstart now contains the opt-in direct-audio playback runner. Its code/build status does not upgrade G4/G5: the owner still needs to verify playback, key-driven seeking and full decode on an authorized network, and report only sanitized outcomes.
 
 The clean-room KMP API now has an experimental HLS master-manifest handoff: it solves supported path challenges, applies only host-provided PO tokens, bounds and validates the manifest response, and follows only validated GoogleVideo manifest redirects. Synthetic tests cover URL policy, token handling, session-header isolation and hostile redirects. It does not proxy child playlists or segments and has no live HLS playback evidence; G5 stays partial and G6 stays blocked.
+
+The Android preview now has a **Try HLS (experimental)** action that feeds `extractHls` output and its media headers to Media3's HLS source. It reports player-ready and sanitized player-error categories. It adds an owner-operated way to exercise HLS, not live evidence; the HLS row in `docs/PLAYBACK_EVIDENCE_MATRIX.md` remains NOT RUN.
+
+The SABR/UMP feasibility decision is recorded in `docs/UMP_FRAMING_RESEARCH.md` and closed issue #79: keep direct plus experimental HLS as the interim transport scope; do not implement an SABR network adapter without the independently usable contract, synthetic vectors, and authorized decode/seek evidence listed there. G6 remains blocked; this decision does not complete the broader competitor goal.
 
 **Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
