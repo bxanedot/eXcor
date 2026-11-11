@@ -8,6 +8,38 @@ import kotlin.test.assertNull
 
 class PlayerModelsTest {
     @Test
+    fun playerResponseStringOmitsURLsAndCredentialText() {
+        val url = "https://rr1.googlevideo.com/videoplayback?pot=secret-stream&sig=secret-signature"
+        val response = PlayerResponse(
+            playabilityStatus = "LOGIN_REQUIRED",
+            playabilityReason = "Authorization: Bearer secret-auth $url",
+            formats = listOf(
+                PlayerFormat(
+                    url = url,
+                    mimeType = "audio/webm",
+                    bitrate = 128_000,
+                    averageBitrate = null,
+                    channels = 2,
+                    sampleRate = 48_000,
+                    signatureCipher = "url=$url&s=secret-cipher",
+                ),
+            ),
+            playerScriptUrl = "https://www.youtube.com/s/player/test.js?key=secret-script",
+            loudnessDb = null,
+        )
+
+        val output = response.toString()
+        listOf(
+            "rr1.googlevideo.com",
+            "secret-stream",
+            "secret-signature",
+            "secret-auth",
+            "secret-cipher",
+            "secret-script",
+        ).forEach { assertFalse(it in output, "PlayerResponse exposed a sensitive value") }
+    }
+
+    @Test
     fun malformedResponseReturnsNoFormats() {
         assertNull(decodePlayerResponse("{"))
         assertNull(decodePlayerResponse("[]"))
