@@ -14,7 +14,7 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 ## Current verified checkpoint — 2026-11-11 11:58:07
 
-**Latest code checkpoint:** PR #105 merged as `860983bf736316d584401f46c474f5d7a8581254`. Its exact head `6dc35a73dc85c9ad14df235ca6eca3c64f33247` passed all six supported-target jobs in CI run [43014757593](https://github.com/bxanedot/eXcor/actions/runs/43014757593). Post-merge main CI run `43016170529` was queued at this checkpoint.
+**Latest code checkpoint:** PR #105 merged as `860983bf736316d584401f46c474f5d7a8581254`. Its exact head `6dc35a73dc85c9ad14df235ca6eca3c64f33247` passed all six supported-target jobs in CI run [43014757593](https://github.com/bxanedot/eXcor/actions/runs/43014757593). Post-merge main CI run `43016170529` had started before this checkpoint.
 
 **Readiness remains 53/100; release NO-GO.** The score refresh for main `860983b` is in progress; G6 remains blocked at 0/20. PR #105 adds diagnostic redaction coverage but does not qualify for score credit or establish live playback/full security-audit evidence.
 

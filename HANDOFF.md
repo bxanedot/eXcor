@@ -4,7 +4,7 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 
 ## Current state — 2026-11-11 (verified 2026-11-11 11:58:07 UTC)
 
-- Latest code checkpoint: PR #105 merged as `860983bf736316d584401f46c474f5d7a8581254`. Exact-head CI passed all six supported-target jobs for PR #105 (run `43014757593`). Post-merge main CI run `43016170529` was queued at this checkpoint.
+- Latest code checkpoint: PR #105 merged as `860983bf736316d584401f46c474f5d7a8581254`. Exact-head CI passed all six supported-target jobs for PR #105 (run `43014757593`). Post-merge main CI run `43016170529` had started before this checkpoint.
 - Readiness remains **53/100; release NO-GO**. The score refresh for main `860983b` is in progress. G6 remains blocked at 0/20; PR #105 does not earn readiness points.
 - Issue #77 is closed after the deterministic acceptance checklist passed across PRs #80–82, #87 and #102. G8 remains partial because owner-run live fault injection is unverified.
 - **G4/G5:** partial. Issue #78 remains open and has no owner-run authorized playback/cipher results.
