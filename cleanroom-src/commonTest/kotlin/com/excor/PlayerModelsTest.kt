@@ -8,6 +8,24 @@ import kotlin.test.assertNull
 
 class PlayerModelsTest {
     @Test
+    fun playerFormatDiagnosticOmitsUntrustedMimeText() {
+        val marker = "synthetic-private-mime-value"
+        val format = PlayerFormat(
+            url = "https://rr1.googlevideo.com/videoplayback?signature=synthetic-private-signature",
+            mimeType = marker,
+            bitrate = 128_000,
+            averageBitrate = null,
+            channels = 2,
+            sampleRate = 48_000,
+        )
+
+        val rendered = format.toString()
+        assertFalse(marker in rendered, "Untrusted MIME text escaped through PlayerFormat.toString")
+        assertFalse("googlevideo.com" in rendered)
+        assertTrue("mimeType=true" in rendered)
+    }
+
+    @Test
     fun watchPageAndCacheEntryStringsOmitUntrustedValues() {
         val secret = "synthetic-player-secret"
         val url = "https://rr1.googlevideo.com/videoplayback?pot=$secret&sig=synthetic-signature"
