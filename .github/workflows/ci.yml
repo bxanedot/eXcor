@@ -32,6 +32,16 @@ jobs:
       - run: ./gradlew $GRADLE_ARGS -p samples/jvm-quickstart build
       - name: Build and test the standalone eXcor comparison adapter
         run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/excor-jvm build
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: samples/black-box-comparison/youtubejs-node/package-lock.json
+      - name: Check the standalone YouTube.js comparison adapter
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+        working-directory: samples/black-box-comparison/youtubejs-node
       - name: Build the standalone NewPipe comparison adapter
         run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/newpipe-jvm assemble installDist
       - name: Build and test the separate InnerTubeX comparison adapter

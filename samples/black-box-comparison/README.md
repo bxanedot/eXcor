@@ -43,9 +43,25 @@ At runtime, the adapter uses the documented `InnerTubeExtractor.extract` API wit
 
 `extractMs` covers the extractor call, including metadata returned as part of that call. `metadataMs` remains null because extraction exposes metadata with the stream rather than as a separately timed operation. `requestCount` includes instrumented InnerTubeX client calls and media requests; `mediaRequestCount` and `rangeRequests` count media attempts. `startupMs`, decode and both seek results remain null/`NOT_TESTED`. `PASS` means extraction plus a bounded initial media read completed; it is not full playback or seek evidence. A stream that only uses a non-direct transport is reported as `UNSUPPORTED` in this direct-audio lane. Keep this GPL-linked adapter separate from eXcor and do not distribute it before licensing review.
 
+## YouTube.js Node adapter
+
+The standalone project in [`youtubejs-node`](youtubejs-node/) pins MIT-licensed `youtubei.js@18.3.0` and uses the public `Innertube.create({ fetch })` and `getBasicInfo` APIs. Build it with Node.js 22:
+
+```powershell
+cd samples/black-box-comparison/youtubejs-node
+npm ci --ignore-scripts
+$runDateUtc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$mainCommit = git -C ../../.. rev-parse main
+node comparison-adapter.mjs --video-id dQw4w9WgXcQ --comparison-id run-home-01 --main-commit $mainCommit --run-date-utc $runDateUtc --network-category home --content-category music_video --phase cold --sample-index 1 --timeout-seconds 30
+```
+
+The adapter selects the highest-bitrate audio format that already has a direct URL. It disables player retrieval and never evaluates downloaded player JavaScript; cipher-only formats are reported as `UNSUPPORTED`. The custom fetch wrapper caps known API request bodies at 1 MiB and response bodies at 5 MiB. The separate media probe validates HTTPS hosts and redirects and reads at most 64 KiB. Fetch credentials are omitted, credential headers are removed, and no signed URL, header or raw exception text is emitted. CI installs the pinned lockfile with scripts disabled and checks JavaScript syntax without making YouTube requests.
+
+For a cold sample, `extractMs` includes YouTube.js session creation, `getBasicInfo`, and direct-audio selection. A warm sample reuses one instance and resets counters after warm-up. `metadataMs` and `startupMs` remain null; decode and backward/forward seek remain `NOT_TESTED`. `PASS` means format selection and the initial bounded media read completed.
+
 ## NewPipeExtractor JVM adapter
 
 The standalone adapter in [`newpipe-jvm`](newpipe-jvm/) pins NewPipeExtractor `v0.27.1` and emits the same sanitized sample contract. It uses the public `Downloader` boundary for request counts and timings, selects URL-backed progressive HTTP audio, and probes at most the first 64 KiB. It does not decode or test seeks. The dependency is GPL-3.0-or-later and stays outside eXcor's library graph; review licensing before distributing the linked adapter. Build it with `./gradlew -p samples/black-box-comparison/newpipe-jvm assemble installDist`. The build resolves the pinned dependency but makes no YouTube requests.
 ## Current limits
 
-The eXcor, InnerTubeX and NewPipeExtractor JVM adapters cover extraction and an initial-range probe only. The YouTube.js adapter and matched comparative measurements remain outstanding. Exact-head CI must pass before either pinned competitor artifact is considered verified. GPL-3.0 adapters for InnerTubeX and NewPipeExtractor must remain separate processes and outside the eXcor library dependency graph. Obtain licensing review before distributing any linked adapter binaries. Owner-run live playback remains separate from this report tool.
+The eXcor, InnerTubeX, YouTube.js and NewPipeExtractor adapters cover extraction and an initial-range probe only. NewPipeExtractor v0.27.1 passed all six exact-head CI jobs in run `43102342730`; YouTube.js passed all six in run `43105597786`. The InnerTubeX adapter remains in PR #120 pending exact-head CI. Matched comparative measurements remain outstanding. GPL-3.0 adapters for InnerTubeX and NewPipeExtractor stay separate from eXcor's dependency graph; obtain licensing review before distributing linked adapter binaries. Owner-run live playback remains separate from this report tool.
