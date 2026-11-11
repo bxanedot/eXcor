@@ -14,6 +14,11 @@ repositories {
 
 dependencies {
     implementation("com.excor:eXcor:0.2.0")
+    testImplementation("org.testng:testng:7.5.1")
+}
+
+tasks.withType<Test>().configureEach {
+    useTestNG()
 }
 
 // The library's JVM artifact is JDK 26 bytecode (see the README), so the app targets 26 as well.
