@@ -36,6 +36,11 @@ data class ExcorAudioFormat(
     val codecString: String? = null,
 ) {
     val lossless: Boolean get() = codec.lossless
+
+    override fun toString(): String =
+        "ExcorAudioFormat(codec=$codec, container=${container ?: "unknown"}, bitrateKbps=$bitrateKbps, " +
+            "sampleRateHz=$sampleRateHz, bitDepth=$bitDepth, channels=$channels, spatial=$spatial, " +
+            "codecString=${if (codecString.isNullOrEmpty()) "missing" else "present"})"
 }
 
 /**
@@ -129,7 +134,9 @@ data class ExcorAudioOption(
     val format: ExcorAudioFormat,
     val protected: Boolean = false,
     val entitled: Boolean = true,
-)
+) {
+    override fun toString(): String = "ExcorAudioOption(id=present, format=present, protected=$protected, entitled=$entitled)"
+}
 
 /** User and device limits. An empty [supportedCodecs] means every codec. */
 data class ExcorAudioPreferences(
@@ -148,7 +155,10 @@ enum class ExcorAudioRejection { NOT_ENTITLED, PROTECTED, CODEC_UNSUPPORTED, SPA
 data class ExcorAudioSelection(
     val chosen: ExcorAudioOption?,
     val rejected: Map<String, ExcorAudioRejection>,
-)
+) {
+    override fun toString(): String =
+        "ExcorAudioSelection(chosen=${chosen != null}, rejected=${rejected.size})"
+}
 
 /**
  * Picks one option deterministically: options that break a limit are rejected with the reason, then the rest are ranked

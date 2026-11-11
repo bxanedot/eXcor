@@ -90,7 +90,12 @@ data class ExcorAudioCapabilities(
     val spatial: Boolean?,
     val previewAvailable: Boolean?,
     val protection: ExcorProtectionInfo?,
-)
+) {
+    override fun toString(): String =
+        "ExcorAudioCapabilities(provider=$provider, traits=${traits.size}, formats=${formats.size}, " +
+            "lossless=$lossless, hiResLossless=$hiResLossless, spatial=$spatial, " +
+            "previewAvailable=$previewAvailable, protected=${protection?.protected})"
+}
 
 /** Where an enriched field came from. [confidence] is the match confidence; 1 for the track's own provider. */
 data class ExcorFieldSource(val provider: ExcorCatalogProvider, val id: String, val confidence: Double) {

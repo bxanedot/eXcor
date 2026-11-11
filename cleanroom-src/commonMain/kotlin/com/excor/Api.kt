@@ -14,8 +14,7 @@ data class ExcorStream(
     val headers: Map<String, String>,
 ) {
     override fun toString(): String =
-        "ExcorStream(videoId=$videoId, kbps=$kbps, mimeType=$mimeType, clientName=$clientName, " +
-            "profileId=$profileId, headers=${headers.keys})"
+        "ExcorStream(videoId=present, kbps=$kbps, mimeType=${mimeType.isNotEmpty()}, client=present, headers=${headers.size})"
 }
 
 enum class ExcorAudioFormat { M4A, WEBM_OPUS, OTHER }
@@ -44,8 +43,8 @@ data class ExcorVideoTrack(
     val headers: Map<String, String>,
 ) {
     override fun toString(): String =
-        "ExcorVideoTrack(mimeType=$mimeType, ${width}x$height, fps=$fps, kbps=$kbps, containsAudio=$containsAudio, " +
-            "headers=${headers.keys})"
+        "ExcorVideoTrack(mimeType=${mimeType.isNotEmpty()}, width=${width != null}, height=$height, fps=$fps, " +
+            "kbps=$kbps, containsAudio=$containsAudio, headers=${headers.size})"
 }
 
 /**
@@ -76,7 +75,7 @@ data class ExcorMediaFormat(
     val indexRange: LongRange?,
 ) {
     override fun toString(): String =
-        "ExcorMediaFormat(itag=$itag, mimeType=$mimeType, kbps=$kbps, height=$height, hasAudio=$hasAudio)"
+        "ExcorMediaFormat(itag=$itag, mimeType=${mimeType.isNotEmpty()}, kbps=$kbps, height=${height != null}, hasAudio=$hasAudio)"
 }
 
 /**
@@ -91,7 +90,7 @@ data class ExcorFormatList(
     val formats: List<ExcorMediaFormat>,
 ) {
     override fun toString(): String =
-        "ExcorFormatList(videoId=$videoId, clientName=$clientName, formats=${formats.size}, headers=${headers.keys})"
+        "ExcorFormatList(videoId=present, client=present, formats=${formats.size}, headers=${headers.size})"
 }
 
 data class ExcorVideoStreams(
@@ -100,7 +99,10 @@ data class ExcorVideoStreams(
     val audio: ExcorStream?,
     val clientName: String,
     val profileId: String,
-)
+) {
+    override fun toString(): String =
+        "ExcorVideoStreams(videoId=present, video=present, audio=${audio != null}, client=present)"
+}
 
 data class ExcorAudioCandidate(
     val url: String,
@@ -108,7 +110,8 @@ data class ExcorAudioCandidate(
     val mimeType: String,
     val format: ExcorAudioFormat,
 ) {
-    override fun toString(): String = "ExcorAudioCandidate(kbps=$kbps, mimeType=$mimeType, format=$format)"
+    override fun toString(): String =
+        "ExcorAudioCandidate(kbps=$kbps, mimeType=${mimeType.isNotEmpty()}, format=present)"
 }
 
 data class ExcorSession(
@@ -118,7 +121,7 @@ data class ExcorSession(
     val language: String,
 ) {
     override fun toString(): String =
-        "ExcorSession(cookie=${presence(cookie)}, visitorData=${presence(visitorData)}, region=$region, language=$language)"
+        "ExcorSession(cookie=${presence(cookie)}, visitorData=${presence(visitorData)}, region=${presence(region)}, language=${presence(language)})"
 
     private fun presence(value: String?): String = if (value.isNullOrEmpty()) "missing" else "present"
 }

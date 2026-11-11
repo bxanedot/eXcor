@@ -6,6 +6,12 @@ import com.excor.catalog.ExcorCatalogKind
 import com.excor.catalog.ExcorCatalogPage
 import com.excor.catalog.ExcorCatalogProvider
 import com.excor.music.ExcorMusicTrack
+import com.excor.music.ExcorAudioCapabilities
+import com.excor.music.ExcorAudioCodec
+import com.excor.music.ExcorAudioFormat
+import com.excor.music.ExcorAudioOption
+import com.excor.music.ExcorAudioRejection
+import com.excor.music.ExcorAudioSelection
 import com.excor.music.ExcorSpotifyPlaybackState
 import com.excor.music.ExcorSpotifyDevice
 import com.excor.music.ExcorPodcastShow
@@ -276,6 +282,62 @@ class DiagnosticModelSafetyTest {
         assertTrue("artists=1" in item.toString())
         assertTrue("items=1" in page.toString())
         assertTrue("nextPageToken=present" in page.toString())
+    }
+
+    @Test
+    fun streamAndAudioDiagnosticStringsRedactSignedUrlsAndOpaqueIds() {
+        val marker = "synthetic-private-stream-marker"
+        val signedUrl = "https://video.example/videoplayback?signature=$marker"
+        val audioFormat = ExcorAudioFormat(codec = ExcorAudioCodec.AAC, codecString = marker)
+        val audioOption = ExcorAudioOption(id = marker, format = audioFormat)
+        val stream = ExcorStream(
+            videoId = marker, url = signedUrl, kbps = 128, mimeType = marker, loudnessDb = null,
+            clientName = marker, profileId = marker, headers = mapOf(marker to marker),
+        )
+        val videoTrack = ExcorVideoTrack(
+            url = signedUrl, mimeType = marker, codec = ExcorVideoCodec.H264, width = 1920, height = 1080,
+            fps = 30, qualityLabel = marker, kbps = 1000, contentLength = 1024,
+            initRange = null, indexRange = null, containsAudio = false, headers = mapOf(marker to marker),
+        )
+        val mediaFormat = ExcorMediaFormat(
+            itag = 18, url = signedUrl, mimeType = marker, kbps = 128, contentLength = 1024,
+            hasAudio = true, hasVideo = true, width = 640, height = 360, fps = 30,
+            qualityLabel = marker, videoCodec = ExcorVideoCodec.H264, audioChannels = 2, sampleRate = 48_000,
+            initRange = null, indexRange = null,
+        )
+        val formats = ExcorFormatList(
+            videoId = marker, clientName = marker, profileId = marker, headers = mapOf(marker to marker),
+            formats = listOf(mediaFormat),
+        )
+        val streams = ExcorVideoStreams(
+            videoId = marker, video = videoTrack, audio = stream, clientName = marker, profileId = marker,
+        )
+        val candidate = ExcorAudioCandidate(url = signedUrl, kbps = 128, mimeType = marker, format = audioFormat)
+        val selection = ExcorAudioSelection(
+            chosen = audioOption,
+            rejected = mapOf(marker to ExcorAudioRejection.PROTECTED),
+        )
+        val capabilities = ExcorAudioCapabilities(
+            provider = ExcorCatalogProvider.APPLE_MUSIC,
+            traits = emptySet(),
+            formats = listOf(audioFormat),
+            lossless = false,
+            hiResLossless = false,
+            spatial = false,
+            previewAvailable = true,
+            protection = null,
+        )
+        val session = ExcorSession(cookie = marker, visitorData = marker, region = marker, language = marker)
+        val rendered = listOf(
+            stream, videoTrack, mediaFormat, formats, streams, candidate, audioFormat, audioOption,
+            selection, capabilities, session,
+        ).joinToString()
+
+        assertFalse(marker in rendered, "Diagnostics exposed a signed URL, identifier, header, or session value")
+        assertFalse("signature=" in rendered)
+        assertTrue("formats=1" in formats.toString())
+        assertTrue("rejected=1" in selection.toString())
+        assertTrue("cookie=present" in session.toString())
     }
 
 }
