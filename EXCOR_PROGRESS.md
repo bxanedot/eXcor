@@ -122,7 +122,7 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 ## 2026-11-11 — merged UMP boundedness guard and current audit state
 
 - PR #90 merged as `cdc9ad86ca51bdf6ab8d85540c1e3437d1e32bab`; all six supported-target CI jobs passed in run `42944572854`. It rejects non-empty UMP parts that make zero payload-byte progress in a complete response and adds synthetic initial/continuation coverage. This is a boundedness rule, not evidence of SABR request handling or playback. G6 remains blocked; SABR/UMP playback is 0/20.
-- PR #87 remains a draft at head `20dce490ad183b11f95084ccca1f9ffbe4db36e5`, based on current main. In run `42951256663`, Linux, Windows, Preview and Android API 26/36 passed; macOS was still queued at this checkpoint. The security/diagnostic changes receive no score credit before merge.
+- PR #87 remains a draft at head `8a99c270146b9152fc11942bde62ee044461bbc8`, based on current main `b1f8aff942038270070245930ff77af689f0e76e`. Its exact-head run `42954529496` is queued at this checkpoint; the older run is stale and is not counted. The security/diagnostic changes receive no score credit before merge.
 - Issue #78 still has no owner-run playback result. No credentials, signed URLs, raw captures or bot-check bypasses were used.
 
 **Evidence-weighted readiness remains 53/100. Release remains NO-GO.**

@@ -5,7 +5,7 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 ## Current state — 2026-11-11
 
 - `main` is `cdc9ad86ca51bdf6ab8d85540c1e3437d1e32bab` after PR #90. Its exact CI run `42944572854` passed all six supported-target jobs.
-- PR #87 remains draft at `20dce490ad183b11f95084ccca1f9ffbe4db36e5`, based on that main commit. Run `42951256663` has five successful jobs; macOS is queued. Keep it unmerged until all six checks pass on the exact head, then review and merge under the owner's standing authorization.
+- PR #87 remains draft at `8a99c270146b9152fc11942bde62ee044461bbc8`, based on current main `b1f8aff942038270070245930ff77af689f0e76e`. Its exact-head run `42954529496` is queued; the earlier run is stale. Keep it unmerged until all six checks pass on this exact head, then review and merge under the owner's standing authorization.
 - G6 remains blocked: eXcor has offline-only UMP framing and HTTP-response assembly, but no SABR request/stream transport, network playback, full decode or seek evidence. The public-domain UMP description covers framing/continuations, not the complete SABR service contract.
 - The owner playback matrix in issue #78 still has no results. Read `EXCOR_PROGRESS.md` and `docs/release-gates.json` before changing any readiness claims. Score remains 53/100; release remains NO-GO.
 
