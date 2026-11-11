@@ -31,7 +31,14 @@ data class ExcorMusicConfig(
     val platform: ExcorPlatformCapabilities = ExcorPlatformCapabilities(),
     val lyrics: ExcorLyricsProvider? = null,
     val matchOptions: ExcorMatchOptions = ExcorMatchOptions(),
-)
+) {
+    override fun toString(): String =
+        "ExcorMusicConfig(tokens=${presence(tokens)}, appleMusicUserToken=${presence(appleMusicUserToken)}, " +
+            "appleStorefront=$appleStorefront, spotifyMarket=$spotifyMarket, spotifyExtendedQuota=$spotifyExtendedQuota, " +
+            "adapters=${adapters.size}, lyrics=${presence(lyrics)})"
+
+    private fun presence(value: Any?): String = if (value == null) "missing" else "present"
+}
 
 data class ExcorMultiSearchResult(
     val results: Map<ExcorCatalogProvider, ExcorMusicSearchResult>,
