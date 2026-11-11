@@ -953,7 +953,7 @@ internal class ExcorEngine(
     }
 
     private fun log(level: ExcorLogLevel, message: String, trackId: String? = null) =
-        host.log(level, "Excor $message", trackId)
+        host.log(level, safeDiagnosticText("Excor $message"), trackId?.takeIf { VIDEO_ID.matches(it) })
 
     private fun watchHeaders(session: ExcorSession): Map<String, String> = youtubeHeaders(session, DESKTOP_UA)
 
