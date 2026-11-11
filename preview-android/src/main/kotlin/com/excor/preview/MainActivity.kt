@@ -59,9 +59,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -87,9 +91,9 @@ import java.util.Locale
 
 /**
  * The eXcor preview: search YouTube Music (with its own filters: songs, videos, albums, artists, playlists…) or
- * YouTube, or paste a link; open albums, playlists and artists; play a video's audio or picture; download audio,
- * video or any listed format to Downloads/eXcor. The log shows the library's own messages, which never contain URLs
- * or tokens.
+ * YouTube, or paste a link; open albums, playlists and artists; play a video's audio, picture or experimental HLS;
+ * download audio, video or any listed format to Downloads/eXcor. The log shows the library's own messages, which
+ * never contain URLs or tokens.
  */
 @UnstableApi
 class MainActivity : ComponentActivity() {
@@ -104,6 +108,7 @@ class MainActivity : ComponentActivity() {
     private var formatList by mutableStateOf<ExcorFormatList?>(null)
     private var maxHeight by mutableIntStateOf(720)
     private var showVideo by mutableStateOf(false)
+    private var activeHlsLabel: String? = null
     private var job: Job? = null
     private var downloadJob: Job? = null
     private var pendingDownload: (() -> Unit)? = null
@@ -133,7 +138,20 @@ class MainActivity : ComponentActivity() {
         val saved = cookieFile.takeIf(File::isFile)?.readText()
         if (saved != null && cookieProblem(saved) != null) cookieFile.delete()
         connect(saved?.takeIf { cookieProblem(it) == null })
-        player = ExoPlayer.Builder(this).build()
+        player = ExoPlayer.Builder(this).build().apply {
+            addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    val label = activeHlsLabel ?: return
+                    if (playbackState == Player.STATE_READY) status = "HLS player ready · $label"
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    val label = activeHlsLabel ?: return
+                    status = "HLS playback failed (${error.errorCodeName}) · $label"
+                    addLog(ExcorLogLevel.WARN, status)
+                }
+            })
+        }
         sharedText(intent)?.let { query = it }
         setContent {
             MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
@@ -311,8 +329,15 @@ class MainActivity : ComponentActivity() {
         return ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(url))
     }
 
+    private fun hlsMediaSource(url: String, headers: Map<String, String>): MediaSource {
+        val factory = DefaultHttpDataSource.Factory().setDefaultRequestProperties(headers)
+        val item = MediaItem.Builder().setUri(url).setMimeType(MimeTypes.APPLICATION_M3U8).build()
+        return HlsMediaSource.Factory(factory).createMediaSource(item)
+    }
+
     private fun playAudio(videoId: String) = task("Finding audio") {
         val stream = excor.extract(videoId, 160) ?: error("no playable audio")
+        activeHlsLabel = null
         showVideo = false
         player.setMediaSource(mediaSource(stream.url, stream.headers))
         player.prepare()
@@ -322,6 +347,7 @@ class MainActivity : ComponentActivity() {
 
     private fun playVideo(videoId: String) = task("Finding video") {
         val streams = excor.extractVideo(videoId, maxHeight = maxHeight) ?: error("no playable video")
+        activeHlsLabel = null
         val video = streams.video
         val picture = mediaSource(video.url, video.headers)
         val audio = streams.audio
@@ -331,6 +357,17 @@ class MainActivity : ComponentActivity() {
         player.play()
         status = "Playing ${video.qualityLabel ?: "${video.height}p"} ${video.codec} · " +
             (audio?.let { "${it.mimeType.substringBefore(';')} ${it.kbps} kbps" } ?: "progressive") + " · ${streams.clientName}"
+    }
+
+    private fun playHls(videoId: String) = task("Finding HLS manifest") {
+        val stream = excor.extractHls(videoId) ?: error("no HLS manifest available from the current clients")
+        val liveLabel = if (stream.isLive) " · live" else ""
+        activeHlsLabel = "${stream.clientName} · ${stream.profileId}$liveLabel"
+        showVideo = true
+        player.setMediaSource(hlsMediaSource(stream.url, stream.headers))
+        player.prepare()
+        player.play()
+        status = "Loading experimental HLS · $activeHlsLabel"
     }
 
     private fun listFormats(videoId: String) = task("Listing formats") {
@@ -543,6 +580,7 @@ class MainActivity : ComponentActivity() {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { playAudio(video.videoId) }) { Text("Play audio") }
                 Button(onClick = { playVideo(video.videoId) }) { Text("Play video") }
+                OutlinedButton(onClick = { playHls(video.videoId) }) { Text("Try HLS (experimental)") }
                 OutlinedButton(onClick = { listFormats(video.videoId) }) { Text("Formats") }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -54,6 +54,7 @@ The separate `publicMusicVideosReturnRangeReadableAudio` test requires several p
 | E | Eligible response requiring player JavaScript | Confirm `s` and/or `n` transform then **actual full decode and seek** | Cipher transform tested; no live eligible stream verified |
 | F | Fault handling | 429, 5xx, cancellation, expiry, refusal and session switch remain bounded and correctly classified | Synthetic cases pass on supported CI; owner-run live fault injection incomplete |
 | G | Stream denied by service | Capture only generalized reason/status and which public client path failed | Known `LOGIN_REQUIRED`, `UNPLAYABLE` cases |
+| H | Experimental HLS on owner's Android device | Tap **Try HLS (experimental)** in the preview; record whether Media3 reaches ready and plays. For a seekable VOD, test backward/forward seek; classify manifest, child-request, decoder and access refusals separately | Not run; synthetic extraction only, no live HLS playback evidence |
 
 For each row, mark **PASS**, **FAIL**, **BLOCKED** or **NOT RUN**. Do not mark cipher support PASS just because a token or transformed URL was constructed; actual playback/seek verification is required. Do not infer a transport (SABR/UMP, HLS or direct file) from a playlist name or marketing description.
 
