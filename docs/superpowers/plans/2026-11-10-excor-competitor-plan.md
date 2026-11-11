@@ -54,7 +54,8 @@ Acceptance: G6 either supported with tested playable streams or honestly documen
 
 ### P4 — Reproducible black-box competition
 
-- [ ] Build eXcor's own opt-in JVM playback/diagnostics runner for the supported direct-stream scope: paced playback, real backward/forward transport seeks, range and full-decode checks, bounded timeout/cancellation, and sanitized per-run outcomes. Keep HLS/DASH and SABR/UMP gaps explicit rather than inferring parity from direct streams.
+- [x] Add an opt-in JVM direct-audio playback runner with paced loopback streaming, a bounded player session, optional duration probe/full decode, URL and redirect checks, and sanitized request/status/Range-offset reports.
+- [ ] Owner-run the runner on an authorized network and verify real backward/forward key-driven seeks, Range behavior, and full decode for eligible streams. Keep HLS/DASH and SABR/UMP gaps explicit.
 - [ ] Make a comparator that uses only published public APIs of eXcor, InnerTubeX, YouTube.js and NewPipeExtractor.
 - [ ] Run each under the same machine/network, eligible video set and timeout budget. Record cold/warm p50 and p95 startup, requests, heap/allocation where measurable, success/failure classifications, seek behavior and sample count.
 - [ ] Classify access denial, unsupported transport and parsing faults separately; do not claim competitors failed when the network denies requests.
@@ -82,6 +83,8 @@ Release-candidate criteria:
 ## Execution record
 
 The first implementation slice in this branch adds bounded redaction of YouTube-supplied player status text and synthetic tests. This improves diagnostics safety but does **not** upgrade release gates or claim competitive parity until CI is reviewed.
+
+The JVM quickstart now contains the opt-in direct-audio playback runner. Its code/build status does not upgrade G4/G5: the owner still needs to verify playback, key-driven seeking and full decode on an authorized network, and report only sanitized outcomes.
 
 **Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
