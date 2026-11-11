@@ -1,5 +1,9 @@
 # eXcor
 
+[![eXcor readiness score](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbxanedot%2FeXcor%2Fautomation%2Fexcor-competitiveness%2Fscore%2Fbadge.json)](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md)
+
+**Live competitiveness tracker:** [0–100 score and missing capabilities](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) · [methodology](docs/COMPETITIVENESS_CHECKER.md). The score is evidence-weighted readiness, **not** a live-video playback success rate.
+
 **eXcor** is an Apache-2.0 Kotlin Multiplatform library for resolving directly fetchable YouTube audio streams from video IDs. This clean-room implementation is a draft SDK, not a production-ready release.
 
 The current library exposes package `com.excor`, Gradle coordinates `com.excor:eXcor:0.2.0`, and an iOS XCFramework named `eXcor`. The implementation is built from `cleanroom-src/`; it does not use the older implementation source retained in this repository.
