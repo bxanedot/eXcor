@@ -717,7 +717,7 @@ internal class ExcorEngine(
             if (result.status == 429) ExcorRequestFailure.RATE_LIMITED else ExcorRequestFailure.SERVER_ERROR,
             result.status,
         )
-        is PostResult.Failed -> throw ExcorRequestException(ExcorRequestFailure.NETWORK, null, result.cause)
+        is PostResult.Failed -> throw ExcorRequestException(ExcorRequestFailure.NETWORK, null)
     }
 
     private suspend fun postWithRetries(request: PlayerRequest): PostResult {
