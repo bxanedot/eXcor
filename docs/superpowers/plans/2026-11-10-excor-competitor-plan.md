@@ -23,6 +23,7 @@
 - [x] Confirm full JVM, Android and iOS CI for exact PR #87 commit `157da30337a4b5c146c8e12b353c5a7ca01a7151`; all six jobs passed in run `42965037745`.
 - [x] Audit remaining logs, exceptions and data-class string representations; PR #87 adds synthetic regression coverage for sensitive diagnostics.
 - [x] Extend deterministic offline fault injection for retry exhaustion, Retry-After, cancellation during backoff, oversized payloads, media redirects and stale authenticated sessions; covered by merged PRs #80–#82.
+- [x] Bound host-supplied `ExcorSession` cookie, visitor-data, region and language values before header use; PR #124 passed all six supported-target jobs at exact head `3fa71184c0b01cb6bc7d12259b973ea1c6f268d8` in run `43115947382`.
 
 Acceptance: green CI with no public-API regression; synthetic secrets never appear in diagnostics; proven faults receive explicit typed outcomes. G8/G12 remain partial pending owner-run live fault verification and broader release-security evidence.
 
@@ -58,7 +59,7 @@ The feasibility decision is complete; SABR implementation is deferred. G6 remain
 - [x] Add an opt-in JVM direct-audio playback runner with paced loopback streaming, a bounded player session, optional duration probe/full decode, URL and redirect checks, and sanitized request/status/Range-offset reports.
 - [ ] Owner-run the runner on an authorized network and verify real backward/forward key-driven seeks, Range behavior, and full decode for eligible streams. Keep HLS/DASH and SABR/UMP gaps explicit.
 - [x] Add separate public-API adapters for eXcor, InnerTubeX, YouTube.js and NewPipeExtractor; keep GPL-linked comparators in independent processes.
-- [ ] Verify the InnerTubeX v0.11.6 adapter with exact-head CI; YouTube.js and NewPipeExtractor exact-head builds passed in runs `43105597786` and `43102342730`.
+- [x] Verify the InnerTubeX v0.11.6 adapter with exact-head CI; PR #120 passed all six jobs at exact head `4e4931cf1011fa8ad37acd89319798365593c59d` in run `43109304794`. YouTube.js and NewPipeExtractor exact-head builds passed in runs `43105597786` and `43102342730`.
 - [x] Verify the separate NewPipeExtractor v0.27.1 adapter with exact-head CI; all six jobs passed in run `43102342730`.
 - [x] Verify the hardened YouTube.js adapter at its exact head; all six jobs passed in run `43105597786`.
 - [ ] Run each under the same machine/network, eligible video set and timeout budget. Record cold/warm p50 and p95 startup, requests, heap/allocation where measurable, success/failure classifications, seek behavior and sample count.
