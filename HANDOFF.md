@@ -10,6 +10,7 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 - G4 and G5 remain partial because live ciphered playback and broad repeatable stream verification are not established. Issue #78 still has no owner-run playback results. Issue #79 remains open for the clean-room transport feasibility decision.
 - The score report for main `2ab246a` was generated while CI was queued and still shows that old state; the actual main CI run later passed. This branch adds a score refresh when the main CI workflow completes, while keeping the hourly run as a backstop.
 - Preserve the clean-room rules below: use active `cleanroom-src/` only, do not inspect root `src/` or root `ejs/`, do not inspect competitor implementation code, and do not bypass YouTube access checks. Owner-only playback verification must remain on the owner's device and account.
+
 ## Historical handoff (written 2026-11-03)
 
 **State:** `main` is at the merge of #67. Everything from the cloud sessions is merged (#64–#67); no PR of theirs is open except, possibly, the one that adds this section. If it's still open, merge it once CI is green. Both cloud work branches (`claude/clever-curie-tyaxqs`, `ccr-f49a6d1e-6h9xd0`) are done; start a new branch.
