@@ -1,11 +1,15 @@
 name: eXcor competitiveness score (0-100)
 
-# Evidence score + GitHub CI health. No YouTube account or stream requests.
+# Evidence score + GitHub CI health. Refresh after main CI completes; hourly as a backstop. No YouTube account or stream requests.
 on:
   push:
     branches: [main]
   schedule:
     - cron: '17 * * * *'
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

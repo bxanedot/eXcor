@@ -10,7 +10,21 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 ## Current objective
 
-Finish the YouTube and YouTube Music surface that this environment can verify, keep the library installable, and record precisely what is blocked.
+Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
+
+## Current verified checkpoint — 2026-11-11 07:30 UTC
+
+**Main:** `2ab246a9cca1c7dc139321d8ee167ac2ec5e40e8`. PR #95 and PR #93 are merged. Main CI run `42977876497` passed Linux, Windows, preview, Android API 26, Android API 36 and macOS. PR #93's exact-head attempt-2 run `42973557875` passed the same six jobs.
+
+**Evidence-weighted readiness: 53/100. Release: NO-GO.** The score report is not a playback-success percentage. Its status-branch artifact names main `2ab246a`, but the `ci.status` value was recorded as `queued` before main CI finished. The actual main CI run later passed. This branch adds a score-workflow trigger after main CI completion; hourly refresh remains as a backstop.
+
+- **G4/G5:** partial. Owner-run player/cipher, repeatable multi-video playback, decode and seek evidence remains incomplete. Issue #78 has the prepared protocol but no owner results.
+- **G6:** blocked, SABR/UMP playback 0/20. Offline frame parsing and HTTP response assembly are not SABR request negotiation or playable media. Issue #79 remains open for independent contract/provenance research and a go/no-go decision.
+- **G8/G12:** partial. Synthetic reliability and redaction coverage is merged; owner-run live fault verification and broader release-security evidence remain.
+- **G10/G11:** partial. Remote publishing is unauthorized; a reproducible black-box comparison has not been completed.
+- No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
+
+**Next:** continue the issue #78 owner-operated playback matrix only on the owner's authorized device/network. Separately finish issue #79's source and fixture inventory; keep G6 blocked unless an independently defensible transport contract and authorized playable fixtures become available.
 
 ## Release gates
 

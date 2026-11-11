@@ -2,12 +2,14 @@
 
 Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
-## Current state — 2026-11-11 (updated 2026-11-11 06:35:48 UTC)
+## Current state — 2026-11-11 (verified 2026-11-11 07:30 UTC)
 
-- `main` is `3f451811af946e6d1253d81567d0399d622a4d5c` after PR #87 merged. Main push CI run `42971235445` passed all six supported-target jobs. The readiness score is 53/100; release remains NO-GO.
-- PR #87 merged as `3f451811af946e6d1253d81567d0399d622a4d5c` from head `157da30337a4b5c146c8e12b353c5a7ca01a7151` after exact-head run `42965037745` passed all six supported-target jobs. It adds synthetic diagnostic redactions; G6 and owner-run playback evidence remain unchanged.
-- PR #93 remains the draft documentation refresh. This update records PR #87's merge and refreshes the evidence and plan; check the latest head's exact CI before merging. G6 remains blocked: eXcor has offline-only UMP framing and response assembly, but no SABR request/stream transport, network playback, full decode or seek evidence. The public-domain UMP description covers framing/continuations, not the complete SABR service contract.
-- The owner playback matrix in issue #78 still has no results. Read `EXCOR_PROGRESS.md` and `docs/release-gates.json` before changing any readiness claims. Score remains 53/100; release remains NO-GO.
+- Main is `2ab246a9cca1c7dc139321d8ee167ac2ec5e40e8`, with PR #95 and PR #93 merged. PR #95 added main-branch filtering to the readiness CI lookup; PR #93 refreshed competitor, provenance, handoff and gate evidence.
+- Main CI run `42977876497` passed all six supported-target jobs at `2ab246a9cca1c7dc139321d8ee167ac2ec5e40e8`. PR #93's attempt-2 run `42973557875` also passed all six jobs at its exact head.
+- The evidence-weighted score is 53/100 and release is NO-GO. G6 remains blocked and SABR/UMP playback is 0/20; eXcor has offline UMP framing and response assembly, but no SABR negotiation, media playback, decode or seek evidence.
+- G4 and G5 remain partial because live ciphered playback and broad repeatable stream verification are not established. Issue #78 still has no owner-run playback results. Issue #79 remains open for the clean-room transport feasibility decision.
+- The score report for main `2ab246a` was generated while CI was queued and still shows that old state; the actual main CI run later passed. This branch adds a score refresh when the main CI workflow completes, while keeping the hourly run as a backstop.
+- Preserve the clean-room rules below: use active `cleanroom-src/` only, do not inspect root `src/` or root `ejs/`, do not inspect competitor implementation code, and do not bypass YouTube access checks. Owner-only playback verification must remain on the owner's device and account.
 
 ## Historical handoff (written 2026-11-03)
 
