@@ -83,6 +83,21 @@ class UmpResponseAssemblyTest {
     }
 
     @Test
+    fun rejectsNonEmptyPartsThatMakeNoPayloadProgress() {
+        val decoder = UmpResponseAssembler()
+        decoder.acceptResponse(byteArrayOf(20, 0, 21, 5, 1, 2))
+
+        assertFailsWith<UmpFramingException> {
+            decoder.acceptResponse(byteArrayOf(20, 0, 21, 3))
+        }
+        assertFailsWith<UmpFramingException> { decoder.finish() }
+
+        assertFailsWith<UmpFramingException> {
+            UmpResponseAssembler().acceptResponse(byteArrayOf(20, 0, 21, 3))
+        }
+    }
+
+    @Test
     fun rejectsResponseAndPartSizeLimitsBeforeAllocating() {
         assertFailsWith<UmpFramingException> {
             UmpResponseAssembler(maxResponseBytes = 4)
