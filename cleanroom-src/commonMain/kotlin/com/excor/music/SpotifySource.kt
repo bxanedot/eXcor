@@ -520,7 +520,10 @@ data class ExcorSpotifyPlaybackState(
     val deviceName: String?,
     val deviceType: String?,
     val track: ExcorMusicTrack?,
-)
+) {
+    override fun toString(): String =
+            "ExcorSpotifyPlaybackState(isPlaying=$isPlaying, progress=${progressMs != null}, deviceType=${deviceType != null}, track=${track != null})"
+}
 
 /**
  * A Spotify link, `spotify:` URI, or a 32-hex-digit GID (as some tools print) converted to the base-62 ID.
@@ -570,5 +573,8 @@ fun spotifyIdOfGid(gid: String): String {
     return digits.reverse().toString().padStart(22, '0')
 }
 
-data class ExcorSpotifyDevice(val id: String, val name: String, val type: String?, val active: Boolean, val restricted: Boolean)
+data class ExcorSpotifyDevice(val id: String, val name: String, val type: String?, val active: Boolean, val restricted: Boolean) {
+    override fun toString(): String =
+            "ExcorSpotifyDevice(type=${type ?: "unknown"}, active=$active, restricted=$restricted, id=present, name=present)"
+}
 
