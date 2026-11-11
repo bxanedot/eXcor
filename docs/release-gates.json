@@ -50,7 +50,7 @@
       "id": "G6",
       "name": "SABR/UMP",
       "status": "blocked",
-      "evidence": "No network/playback transport is implemented. PR #84 merged an offline bounded UMP frame decoder; PR #86 proposes offline HTTP-response continuation assembly and remains under review. Neither requests nor decodes media. G6 remains blocked; SABR/UMP playback 0/20.",
+      "evidence": "No network/playback transport is implemented. PR #84 merged an offline bounded UMP frame decoder, and PR #86 merged offline HTTP-response continuation assembly after all six supported-target CI jobs passed. Neither makes network requests or decodes media. G6 remains blocked; SABR/UMP playback 0/20.",
       "command": null,
       "blockers": [
         "No complete independently validated request/response contract, authorized playable stream, full decode, or seek evidence."

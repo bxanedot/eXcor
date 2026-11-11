@@ -111,8 +111,8 @@ The owner's current goal is a production-quality, solo-maintained eXcor extracto
 
 - PR #83 merged as `429c179089a8f44b655e2477647c929c50d695a5` after all six supported-target CI jobs passed. It adds a safe owner-run playback evidence protocol; it does not add live playback evidence. Issue #78 remains open.
 - PR #84 merged as `11ae5d5414af2311ed457b4408f908a2347ba129` after all six CI jobs passed. This is offline-only UMP frame decoding. It does not negotiate or play SABR streams; G6 remains blocked and SABR/UMP playback remains 0/20.
-- PR #86 proposes bounded assembly across separate complete HTTP response bodies. It is still under review and its macOS checks were queued in the latest check. It does not change the G6 gate.
-- PR #87 is a draft security/diagnostics audit PR. Its supported-target CI is pending and none of its changes are included in the readiness score.
+- PR #86 merged as `3083d5b5ba09ea1f43083720bc7beed360111919` after all six supported-target CI jobs passed. It adds offline-only UMP response assembly across separate HTTP response bodies; it does not implement network negotiation or play media. G6 remains blocked and SABR/UMP playback remains 0/20.
+- PR #87 remains a draft security/diagnostics audit. Its current head adds synthetic-only redaction coverage for transport/player values, injected credential providers, private music pages/playlists, YouTube continuation models and sync state. Full supported-target CI is still pending; none of these changes are included in the readiness score.
 - Merged PRs #76, #80, #81 and #82 have supported-target CI evidence recorded on issue #77. They add diagnostic redaction, deterministic retry/redirect fault tests, session-generation invalidation, and bounded response reads. G8 and G12 remain partial because owner-run live fault injection, complete diagnostic-surface review, and reproducible playback/cipher evidence are still outstanding.
 
 The InnerTubeX matrix was rechecked against its public README and changelog on 2026-11-10; the latest documented release remains v0.11.6 (2026-11-07). No competitor implementation source was inspected.
