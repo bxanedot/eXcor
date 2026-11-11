@@ -26,9 +26,9 @@ internal fun rewriteHlsManifestUrl(
     if (challenges.size > 1) return null
     distinctChallenges.singleOrNull()?.let { challenge ->
         val value = solvedN[challenge]?.takeIf(HLS_URL_SEGMENT::matches) ?: return null
-        val valueRange = challenges.single().groups[1]?.range ?: return null
-        val start = pathRange.first + valueRange.first
-        val end = pathRange.first + valueRange.last + 1
+        val match = challenges.single()
+        val start = pathRange.first + match.range.first + match.value.length - challenge.length
+        val end = start + challenge.length
         result = result.replaceRange(start, end, value)
     }
 
