@@ -6,11 +6,14 @@ private val playbackReasonCredentials = Regex(
 )
 private val playbackReasonBearer = Regex("""(?i)\bbearer\s+[^\s,;]+""")
 
-/** Bounds and removes common secrets from untrusted player status text before logging or surfacing it in errors. */
-internal fun safePlaybackReason(raw: String): String = raw
+/** Bounds and removes common secrets from untrusted diagnostic text before logging or surfacing it in errors. */
+internal fun safeDiagnosticText(raw: String): String = raw
     .replace(playbackReasonUrl, "[link removed]")
     .replace(playbackReasonCredentials, "[credential removed]")
     .replace(playbackReasonBearer, "[credential removed]")
     .filter { it >= ' ' && it != '\u007f' }
     .trim()
     .take(200)
+
+/** Applies the diagnostic sanitizer to untrusted player status and reason text. */
+internal fun safePlaybackReason(raw: String): String = safeDiagnosticText(raw)

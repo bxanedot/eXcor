@@ -41,6 +41,18 @@ import kotlin.test.assertTrue
 
 class DiagnosticModelSafetyTest {
     @Test
+    fun diagnosticTextRedactsUntrustedHeadersUrlsAndControls() {
+        val raw = "selected audio/mp4\nAuthorization: Bearer secret https://example.invalid/videoplayback?sig=secret-url"
+        val safe = safeDiagnosticText(raw)
+
+        listOf("Authorization", "secret", "example.invalid").forEach {
+            assertFalse(it in safe, "Untrusted value escaped diagnostic sanitization")
+        }
+        assertFalse('\n' in safe)
+        assertTrue(safe.length <= 200)
+    }
+
+    @Test
     fun opaqueContinuationAndUserStateDoNotAppearInModelStrings() {
         val marker = "synthetic-diagnostic-private-value"
         val playlistVideo = ExcorYouTubePlaylistVideo(
