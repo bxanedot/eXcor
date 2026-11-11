@@ -6,6 +6,13 @@ import com.excor.catalog.ExcorCatalogKind
 import com.excor.catalog.ExcorCatalogPage
 import com.excor.catalog.ExcorCatalogProvider
 import com.excor.music.ExcorMusicTrack
+import com.excor.music.ExcorPlaybackOption
+import com.excor.music.ExcorPlaybackStatus
+import com.excor.music.ExcorProtectedPlaybackAdapter
+import com.excor.music.ExcorProtectionInfo
+import com.excor.music.ExcorProtectionSource
+import com.excor.music.ExcorAuthorizationRequest
+import com.excor.music.ExcorPkce
 import com.excor.music.ExcorAudioCapabilities
 import com.excor.music.ExcorAudioCodec
 import com.excor.music.ExcorAudioFormat
@@ -338,6 +345,35 @@ class DiagnosticModelSafetyTest {
         assertTrue("formats=1" in formats.toString())
         assertTrue("rejected=1" in selection.toString())
         assertTrue("cookie=present" in session.toString())
+    }
+
+    @Test
+    fun hostAdapterAndOAuthCallbackDetailsAreNotRendered() {
+        val marker = "synthetic-host-private-value"
+        val adapter = object : ExcorProtectedPlaybackAdapter {
+            override val provider = ExcorCatalogProvider.SPOTIFY
+            override suspend fun isReady() = true
+            override suspend fun isEntitled(track: ExcorMusicTrack): Boolean? = true
+            override suspend fun play(track: ExcorMusicTrack) = Unit
+            override fun toString() = marker
+        }
+        val option = ExcorPlaybackOption(
+            status = ExcorPlaybackStatus.PROTECTED_AUTHORIZED_ADAPTER,
+            adapter = adapter,
+            protection = ExcorProtectionInfo(true, source = ExcorProtectionSource.PROVIDER_STATEMENT),
+        )
+        val authorization = ExcorAuthorizationRequest(
+            url = "https://accounts.spotify.com/authorize?state=$marker&code_challenge=$marker",
+            state = marker,
+            redirectUri = "myapp://callback?account=$marker",
+            pkce = ExcorPkce.of("a".repeat(64)),
+        )
+
+        val rendered = "$option\n$authorization"
+        assertFalse(marker in rendered, "Playback adapter or OAuth state escaped through toString")
+        assertFalse("myapp://" in rendered, "Host callback URI escaped through toString")
+        assertTrue("adapter=true" in option.toString())
+        assertTrue("redirectUri=present" in authorization.toString())
     }
 
 }
