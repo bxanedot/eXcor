@@ -1,7 +1,7 @@
-import { Innertube, Platform } from "youtubei.js";
+import { Innertube } from "youtubei.js";
 import { performance } from "node:perf_hooks";
 
-const ADAPTER_VERSION = "0.1.0-youtubei.js18.3.0";
+const ADAPTER_VERSION = "0.1.1-youtubei.js18.3.0";
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 const COMMIT = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
@@ -9,6 +9,8 @@ const LOCALE = /^[a-z]{2,3}(?:-[A-Z]{2})?$/;
 const SAFE_MIME = /^[A-Za-z0-9.+-]{1,80}\/[A-Za-z0-9.+-]{1,80}$/;
 const SAFE_CODEC = /^[A-Za-z0-9._+-]{1,80}$/;
 const MAX_MEDIA_BYTES = 65_536;
+const MAX_API_BODY_BYTES = 5 * 1024 * 1024;
+const MAX_API_REQUEST_BYTES = 1024 * 1024;
 const REDIRECTS = new Set([301, 302, 303, 307, 308]);
 
 class SampleFailure extends Error {
@@ -35,15 +37,8 @@ function parseOptions(args) {
   ]);
   if (args.length === 1 && args[0] === "--help") return { help: true };
   const values = new Map();
-  let allowPlayerJsEval = false;
   for (let index = 0; index < args.length;) {
     const key = args[index];
-    if (key === "--allow-player-js-eval") {
-      if (allowPlayerJsEval) throw new Error("invalid arguments");
-      allowPlayerJsEval = true;
-      index += 1;
-      continue;
-    }
     if (!allowed.has(key) || values.has(key) || index + 1 >= args.length) {
       throw new Error("invalid arguments");
     }
@@ -78,12 +73,54 @@ function parseOptions(args) {
   return {
     videoId, comparisonId, mainCommit, runDateUtc, os: detectOs(),
     networkCategory, contentCategory, locale, timeoutSeconds, phase, sampleIndex,
-    allowPlayerJsEval,
   };
 }
 
 function combinedSignal(existing, deadlineSignal) {
   return existing ? AbortSignal.any([existing, deadlineSignal]) : deadlineSignal;
+}
+
+class ApiBodyLimitError extends Error {
+  constructor() {
+    super("API body limit exceeded");
+    this.name = "ApiBodyLimitError";
+  }
+}
+
+function requestBodySize(input, init) {
+  const body = init.body ?? null;
+  if (body === null && input instanceof Request && input.body !== null) return null;
+  if (body === null) return 0;
+  if (typeof body === "string") return Buffer.byteLength(body);
+  if (body instanceof ArrayBuffer) return body.byteLength;
+  if (ArrayBuffer.isView(body)) return body.byteLength;
+  if (body instanceof URLSearchParams) return Buffer.byteLength(body.toString());
+  if (typeof Blob !== "undefined" && body instanceof Blob) return body.size;
+  return null;
+}
+
+function boundedApiResponse(response) {
+  const contentLength = response.headers.get("content-length");
+  if (contentLength !== null && /^\d+$/.test(contentLength) && Number(contentLength) > MAX_API_BODY_BYTES) {
+    void response.body?.cancel().catch(() => {});
+    throw new ApiBodyLimitError();
+  }
+  if (!response.body) return response;
+
+  let received = 0;
+  const body = response.body.pipeThrough(new TransformStream({
+    transform(chunk, controller) {
+      if (!(chunk instanceof Uint8Array)) throw new ApiBodyLimitError();
+      received += chunk.byteLength;
+      if (received > MAX_API_BODY_BYTES) throw new ApiBodyLimitError();
+      controller.enqueue(chunk);
+    },
+  }));
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  headers.delete("content-encoding");
+  headers.delete("transfer-encoding");
+  return new Response(body, { status: response.status, statusText: response.statusText, headers });
 }
 
 function allowedApiUrl(value) {
@@ -103,6 +140,10 @@ function allowedApiUrl(value) {
 
 function createApiFetch(state, deadlineSignal) {
   return async (input, init = {}) => {
+    const requestBytes = requestBodySize(input, init);
+    if (requestBytes === null || requestBytes > MAX_API_REQUEST_BYTES) {
+      throw new SampleFailure("FAIL", "HTTP");
+    }
     const headers = new Headers(input instanceof Request ? input.headers : undefined);
     new Headers(init.headers).forEach((value, name) => headers.set(name, value));
     for (const name of ["authorization", "cookie", "cookie2", "proxy-authorization"]) {
@@ -128,7 +169,9 @@ function createApiFetch(state, deadlineSignal) {
         const failure = classifyError(error, deadlineSignal);
         throw new SampleFailure(failure.outcome, failure.failureClass);
       }
-      if (!REDIRECTS.has(response.status)) return response;
+      if (!REDIRECTS.has(response.status)) {
+        return boundedApiResponse(response);
+      }
       const location = response.headers.get("location");
       try {
         await response.body?.cancel();
@@ -173,6 +216,12 @@ function allowedMediaUrl(value) {
 }
 
 function classifyError(error, deadlineSignal) {
+  let current = error;
+  for (let depth = 0; current && depth < 8; depth += 1, current = current.cause) {
+    if (current instanceof ApiBodyLimitError || current?.name === "ApiBodyLimitError") {
+      return { outcome: "FAIL", failureClass: "HTTP" };
+    }
+  }
   if (deadlineSignal.aborted || error?.name === "AbortError" || error?.name === "TimeoutError") {
     return { outcome: "FAIL", failureClass: "TIMEOUT" };
   }
@@ -314,7 +363,7 @@ async function createClient(options, state, deadlineSignal) {
     lang: options.locale.split("-")[0],
     location: region,
     enable_session_cache: false,
-    retrieve_player: true,
+    retrieve_player: false,
   });
 }
 
@@ -322,11 +371,15 @@ async function getAudioFormat(innertube, options, state, deadlineSignal) {
   const extractionStarted = performance.now();
   try {
     if (!innertube) innertube = await createClient(options, state, deadlineSignal);
-    const format = await innertube.getStreamingData(options.videoId, {
-      type: "audio",
-      format: "any",
-      quality: "best",
-    });
+    const info = await innertube.getBasicInfo(options.videoId);
+    const format = (info.streaming_data?.adaptive_formats ?? [])
+      .filter((candidate) => candidate.has_audio === true && candidate.has_video !== true &&
+        typeof candidate.url === "string" && candidate.url.length > 0)
+      .sort((left, right) => (right.average_bitrate ?? right.bitrate ?? 0) -
+        (left.average_bitrate ?? left.bitrate ?? 0))[0] ?? null;
+    if (!format) {
+      throw new SampleFailure("UNSUPPORTED", "UNSUPPORTED_TRANSPORT");
+    }
     return {
       innertube,
       format,
@@ -410,7 +463,7 @@ function makeSample(options, state, result) {
       sessionCategory: "signed_out",
       timeoutSeconds: options.timeoutSeconds,
       locale: options.locale,
-      decoderVersion: "v8-" + (options.allowPlayerJsEval ? "function-" : "noeval-") + process.versions.v8,
+      decoderVersion: "v8-no-player-js-" + process.versions.v8,
     },
     adapter: "youtubejs",
     adapterVersion: ADAPTER_VERSION,
@@ -429,7 +482,7 @@ function printUsage() {
   process.stdout.write(
     "Usage: node comparison-adapter.mjs --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC " +
     "--network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N " +
-    "[--locale en-US] [--timeout-seconds 30] [--allow-player-js-eval]\n",
+    "[--locale en-US] [--timeout-seconds 30]\n",
   );
 }
 
@@ -468,15 +521,6 @@ async function main() {
   };
 
   try {
-    // The official guide documents this interpreter hook for deciphering player-script URLs.
-    Platform.shim.eval = async (data) => {
-      if (!options.allowPlayerJsEval) {
-        const error = new Error("player-script evaluation is disabled");
-        error.name = "UnsupportedTransportError";
-        throw error;
-      }
-      return new Function(data.output)();
-    };
     let client = null;
     if (options.phase === "warm") {
       try {
