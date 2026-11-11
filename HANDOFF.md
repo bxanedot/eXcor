@@ -2,14 +2,14 @@
 
 Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
-## Current state — 2026-11-11 (verified 2026-11-11 13:19:25 UTC)
+## Current state — 2026-11-11 (verified 2026-11-11 13:52:57 UTC)
 
-- Latest code checkpoint: PR #107 merged as `88fa980c6c6dcf8c06eacfc99e6c5588b9f69d4c`. Exact head `78395d6797f4773b518d053e0a2d26ecafdd88d8` passed all six supported-target CI jobs in run [43025409016](https://github.com/bxanedot/eXcor/actions/runs/43025409016). Engine diagnostics now share URL/credential redaction, control filtering and length bounds; synthetic coverage checks untrusted text and newlines.
-- Readiness remains **53/100; release NO-GO**. The score refresh for merge commit `88fa980` records post-merge main CI run `43027913435` as queued at this checkpoint. G6 remains blocked at 0/20; PR #107 earns no score points.
+- Latest code checkpoint: PR #108 merged as `9a01d0371c67c1350baee5ab9308e1360473c81e`. Exact head `b4cd4ca079a25c125ccdda05ef3bdba0fd5e4562` passed all six supported-target CI jobs in run [43029076515](https://github.com/bxanedot/eXcor/actions/runs/43029076515). Caller-facing player rejection exceptions now pass upstream reason text through the shared URL/credential/control/length sanitizer; synthetic coverage checks cookies, signed URLs and tokens.
+- Readiness is **53/100; release NO-GO**. Score refresh run 43032632110 records main SHA `9a01d03` at 53/100. Main CI run 43032631977 was running all six jobs at this checkpoint; G6 remains blocked at 0/20.
 - Issue #77 is closed after the deterministic acceptance checklist passed. G8 remains partial because owner-run live fault injection is unverified.
 - **G4/G5:** partial. Issue #78 remains open and has no owner-run authorized playback/cipher results.
 - **G6:** blocked, SABR/UMP playback 0/20. No network negotiation, playable media, full decode or seek evidence exists.
-- **G12:** partial. PRs #103–#107 harden media credential isolation, authenticated-response caching and diagnostic redaction. Signed-in playback and the broader release-security audit remain unverified.
+- **G12:** partial. PRs #103–#108 harden media credential isolation, authenticated-response caching and logged/caller-facing diagnostic redaction. Signed-in playback and the broader release-security audit remain unverified.
 - **G10/G11:** partial. Remote publishing is unauthorized; reproducible black-box comparison remains incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 

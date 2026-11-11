@@ -12,17 +12,17 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
 
-## Current verified checkpoint — 2026-11-11 13:19:25
+## Current verified checkpoint — 2026-11-11 13:52:57
 
-**Latest code checkpoint:** PR #107 merged as `88fa980c6c6dcf8c06eacfc99e6c5588b9f69d4c`. Its exact head `78395d6797f4773b518d053e0a2d26ecafdd88d8` passed all six supported-target jobs in [CI run 43025409016](https://github.com/bxanedot/eXcor/actions/runs/43025409016). The shared engine logging boundary now redacts common credentials and URLs, removes control characters, bounds messages, and accepts only valid 11-character YouTube video IDs as track IDs. A synthetic regression covers untrusted MIME-like text, credential strings, URLs and newlines.
+**Latest code checkpoint:** PR #108 merged as `9a01d0371c67c1350baee5ab9308e1360473c81e`. Its exact head `b4cd4ca079a25c125ccdda05ef3bdba0fd5e4562` passed all six supported-target jobs in [CI run 43029076515](https://github.com/bxanedot/eXcor/actions/runs/43029076515). Player rejection reasons from YouTube are sanitized before they appear in caller-facing exceptions. A synthetic regression checks cookie-like text, signed media URLs and token redaction.
 
-**Readiness remains 53/100; release NO-GO.** The score refresh for merge commit `88fa980` records post-merge main CI run `43027913435` as queued at this checkpoint. PR #107 is diagnostic hardening only and earns no score credit. G6 remains blocked at 0/20.
+**Readiness remains 53/100; release NO-GO.** Score refresh run 43032632110 records merge commit `9a01d03` at 53/100. Its CI snapshot listed main run 43032631977 as queued; all six jobs were running when this checkpoint was written. PR #108 is diagnostic hardening and earns no score credit. G6 remains blocked at 0/20.
 
 - **Issue #77:** closed after the deterministic retry, transport, session, diagnostic-redaction and bounded exclusion-cache acceptance checks passed.
 - **G4/G5:** partial. Issue #78 remains open with no owner-run authorized playback/cipher matrix results.
 - **G6:** blocked, SABR/UMP playback 0/20. No network transport, playable SABR media, full decode or seek evidence.
 - **G8:** partial. Synthetic retry/session/cache coverage is recorded; owner-run live fault injection remains unverified.
-- **G12:** partial. PRs #103–#107 harden media credential isolation, authenticated-response caching and diagnostic redaction. Signed-in playback and the broader release-security audit remain unverified.
+- **G12:** partial. PRs #103–#108 harden media credential isolation, authenticated-response caching, logged diagnostic redaction and caller-facing rejection messages. Signed-in playback and the broader release-security audit remain incomplete.
 - **G10/G11:** partial. Remote publishing remains unauthorized; reproducible black-box comparison is incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used.
 
@@ -43,7 +43,7 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
 | G10 Release packaging | Partial | Local publish works; no remote release is authorized |
 | G11 Competitive analysis | Partial | InnerTubeX from its README; YouTube.js and NewPipeExtractor document only platforms, services and installation |
-| G12 Security | Partial | CI OSV scan gates on shipped dependencies; PRs #103–#107 add media credential isolation, authorized-response cache exclusion and bounded diagnostic redaction. PR #107 passed all six exact-head CI targets; signed-in playback and the broader release-security audit remain unverified |
+| G12 Security | Partial | CI OSV scan gates on shipped dependencies; PRs #103–#108 add media credential isolation, authorized-response cache exclusion and bounded logged/caller-facing diagnostic redaction. PR #108 passed all six exact-head CI targets; signed-in playback and the broader release-security audit remain unverified |
 
 **Not a release candidate:** SABR network negotiation and playback (G6) are not implemented. Offline framing and bounded assembly do not establish SABR parity. G4 and G5 are verified only for videos YouTube serves to this environment; most are bot-checked.
 
