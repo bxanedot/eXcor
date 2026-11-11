@@ -17,6 +17,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Check evidence score contract
         run: python3 -m unittest discover -s scripts/tests -p test_competitiveness_score.py -v
+      - name: Check black-box comparison report contract
+        run: python3 -m unittest discover -s samples/black-box-comparison/tests -p 'test_*.py' -v
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

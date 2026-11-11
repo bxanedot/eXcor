@@ -27,27 +27,43 @@ The documented interfaces are sufficient to build separate adapters, but they do
 
 ## Adapter output contract
 
-Each adapter should emit exactly one JSON object per sample with these normalized fields:
+Each adapter should emit exactly one JSON object per sample with these normalized fields. The offline report validator in `samples/black-box-comparison/report.py` enforces this schema and aggregates only comparable groups:
 
 ```json
 {
   "schemaVersion": 1,
+  "comparison": {
+    "id": "run-20261111-home-01",
+    "mainCommit": "<full 40- or 64-character eXcor commit>",
+    "runDateUtc": "2026-11-11T18:30:00Z",
+    "os": "linux",
+    "networkCategory": "home",
+    "contentCategory": "music_video",
+    "sessionCategory": "signed_out",
+    "timeoutSeconds": 120,
+    "locale": "en-US",
+    "decoderVersion": "ffmpeg-7.1"
+  },
   "adapter": "excor",
   "adapterVersion": "0.2.0",
   "runtime": "jvm",
-  "lane": "direct-audio",
+  "lane": "direct_audio",
+  "phase": "cold",
+  "sampleIndex": 1,
   "videoId": "dQw4w9WgXcQ",
   "outcome": "PASS",
   "failureClass": null,
   "measurements": {
     "metadataMs": 0,
     "extractMs": 0,
+    "startupMs": 0,
     "firstMediaByteMs": null,
     "decodeMs": null,
     "requestCount": 0,
     "mediaRequestCount": 0,
     "bytesRead": 0,
     "rangeRequests": 0,
+    "heapDeltaBytes": null,
     "backwardSeek": "NOT_TESTED",
     "forwardSeek": "NOT_TESTED",
     "decode": "NOT_TESTED",
@@ -57,4 +73,4 @@ Each adapter should emit exactly one JSON object per sample with these normalize
 }
 ```
 
-Allowed outcomes are `PASS`, `BLOCKED`, `UNSUPPORTED`, `FAIL`, and `NOT_RUN`. `failureClass` distinguishes `ACCESS_DENIED`, `UNSUPPORTED_TRANSPORT`, `HTTP`, `PARSE`, `DECODE`, `TIMEOUT`, or `OTHER`. Keep raw stdout/stderr private to the adapter process and discard it after parsing; reject unknown fields so a URL, header, response body, cookie, token, or visitor ID cannot silently enter the report. Record cold first-use and warm same-instance samples separately. Compute p50/p95 only for successful samples in the same lane and environment, and report both that eligible count and the total attempted count. This schema is a design target; no comparator adapters or performance measurements are claimed yet.
+Allowed outcomes are `PASS`, `BLOCKED`, `UNSUPPORTED`, `FAIL`, and `NOT_RUN`. `failureClass` distinguishes `ACCESS_DENIED`, `UNSUPPORTED_TRANSPORT`, `HTTP`, `PARSE`, `DECODE`, `TIMEOUT`, or `OTHER`. Keep raw stdout/stderr private to the adapter process and discard it after parsing; the validator rejects unknown fields and constrains string formats, but adapters must still avoid placing secrets in accepted fields. Record cold first-use and warm same-instance samples separately. The report tool preserves each sanitized sample, counts access blocks separately, and computes nearest-rank p50/p95 only from PASS samples in identical adapter/version, lane, phase, and comparison-environment groups; each metric reports its eligible count. This is reporting infrastructure only: no competitor adapters or performance measurements are claimed yet.

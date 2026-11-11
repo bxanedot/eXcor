@@ -95,6 +95,8 @@ The SABR/UMP feasibility decision is recorded in `docs/UMP_FRAMING_RESEARCH.md` 
 
 The 2026-11-11 public API feasibility review in `docs/BLACK_BOX_COMPARISON_RESEARCH.md` confirms documented extraction and request-instrumentation surfaces for all four comparison targets. InnerTubeX and NewPipeExtractor are GPL-3.0, so do not add their libraries to eXcor's dependency graph; any separately launched benchmark adapters need licensing review before distribution. The note defines direct-audio and native-transport lanes plus a sanitized result contract. This is research/design only: no competitor adapters or comparative measurements exist, and G11 remains partial.
 
+The dependency-free report validator in `samples/black-box-comparison/` now enforces the sanitized sample contract, preserves blocked/unsupported/failure outcomes, and calculates p50/p95 only within equivalent adapter, lane, phase and environment groups. CI covers its synthetic input validation. This does not run or compare any extractor: separate public-API adapters and owner-run measurements are still required; G11 remains partial.
+
 **Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
 References: HANDOFF.md, EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.
