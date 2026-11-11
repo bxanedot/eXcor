@@ -25,6 +25,7 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 
 **Next:** continue the issue #78 owner-operated playback matrix only on the owner's authorized device/network. Separately finish issue #79's source and fixture inventory; keep G6 blocked unless an independently defensible transport contract and authorized playable fixtures become available.
+
 ## Release gates
 
 | Gate | Status | Note |
