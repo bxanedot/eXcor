@@ -312,7 +312,7 @@ class DiagnosticModelSafetyTest {
         val streams = ExcorVideoStreams(
             videoId = marker, video = videoTrack, audio = stream, clientName = marker, profileId = marker,
         )
-        val candidate = ExcorAudioCandidate(url = signedUrl, kbps = 128, mimeType = marker, format = audioFormat)
+        val candidate = ExcorAudioCandidate(url = signedUrl, kbps = 128, mimeType = marker, format = com.excor.ExcorAudioFormat.M4A)
         val selection = ExcorAudioSelection(
             chosen = audioOption,
             rejected = mapOf(marker to ExcorAudioRejection.PROTECTED),
