@@ -45,6 +45,19 @@ class EngineStateTest {
     }
 
     @Test
+    fun exclusionDiagnosticsDoNotLogUntrustedArguments() = runTestEngine {
+        val videoId = "abcdefghijk\\nAuthorization: Bearer secret"
+        val profileId = "profile\\nCookie: secret"
+        engine.exclude(videoId, profileId)
+
+        assertEquals(1, host.logs.size)
+        assertTrue(host.logs.single().contains("excluded playback profile"))
+        assertFalse(host.logs.single().contains("Authorization"))
+        assertFalse(host.logs.single().contains("Cookie"))
+        assertFalse(host.logs.single().contains("secret"))
+    }
+
+    @Test
     fun profileExclusionCacheEvictsTheOldestAfterSixteenProfiles() = runTestEngine {
         engine.exclude(VIDEO_ID, "VISIONOS")
         repeat(16) { engine.exclude(VIDEO_ID, "synthetic-profile-$it") }
@@ -423,7 +436,10 @@ class EngineStateTest {
         var now = 0L
         override suspend fun session() = ExcorSession(null, "visitor", "US", "en")
         override fun nowMs() = now
-        override fun log(level: ExcorLogLevel, message: String, trackId: String?) = Unit
+        val logs = mutableListOf<String>()
+        override fun log(level: ExcorLogLevel, message: String, trackId: String?) {
+            logs += listOfNotNull(message, trackId).joinToString("|")
+        }
     }
 
     private companion object {
