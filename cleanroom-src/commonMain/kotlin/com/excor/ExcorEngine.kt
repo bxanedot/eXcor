@@ -605,7 +605,7 @@ internal class ExcorEngine(
         val page = fetchWatchPage(videoId, session) ?: return null
         if (page.playerResponse.playabilityStatus != "OK") return null
         val formats = playableFormats(page.playerResponse, page.playerResponse.playerScriptUrl, null, session)
-        val headers = watchHeaders(session)
+        val headers = mediaHeaders(DESKTOP_UA, session)
         for (format in rankAudioFormats(formats, maxKbps, requireM4a)) {
             if (!isPlayable(format.url, headers)) continue
             val stream = ExcorStream(
@@ -954,16 +954,6 @@ internal class ExcorEngine(
 
     private fun log(level: ExcorLogLevel, message: String, trackId: String? = null) =
         host.log(level, "Excor $message", trackId)
-
-    private fun mediaHeaders(userAgent: String, session: ExcorSession): Map<String, String> = buildMap {
-        put("User-Agent", userAgent)
-        put("Accept", "*/*")
-        put("Accept-Language", acceptLanguage(session))
-        put("Referer", "https://www.youtube.com/")
-        put("Origin", "https://www.youtube.com")
-        session.visitorData?.takeIf(String::isNotBlank)?.let { put("X-Goog-Visitor-Id", it) }
-        session.cookie?.takeIf(String::isNotBlank)?.let { put("Cookie", it) }
-    }
 
     private fun watchHeaders(session: ExcorSession): Map<String, String> = youtubeHeaders(session, DESKTOP_UA)
 
