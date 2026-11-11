@@ -28,4 +28,32 @@ class MusicHttpBudgetTest {
         assertEquals(42, http.requests)
         client.close()
     }
+
+    @Test
+    fun explicitCacheOptInCannotReuseAuthorizedResponses() = runTest {
+        var requests = 0
+        val client = HttpClient(MockEngine {
+            requests++
+            respond(
+                """{"request":$requests}""",
+                HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
+        })
+        val http = MusicHttp(client, { testScheduler.currentTime })
+        val url = "https://api.music.apple.com/v1/catalog/us/songs/42"
+
+        http.getJson(ExcorCatalogProvider.APPLE_MUSIC, url, bearer = "private", cacheable = true)
+        http.getJson(
+            ExcorCatalogProvider.APPLE_MUSIC,
+            url,
+            headers = mapOf("Music-User-Token" to "private"),
+            cacheable = true,
+        )
+        http.getJson(ExcorCatalogProvider.APPLE_MUSIC, url)
+        http.getJson(ExcorCatalogProvider.APPLE_MUSIC, url)
+
+        assertEquals(3, requests)
+        client.close()
+    }
 }

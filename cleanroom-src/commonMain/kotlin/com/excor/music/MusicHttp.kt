@@ -56,7 +56,10 @@ internal class MusicHttp(
         headers: Map<String, String> = emptyMap(),
         cacheable: Boolean = bearer == null && headers.isEmpty(),
     ): JsonElement {
-        val cacheable = cacheable && currentCoroutineContext()[FreshReadsKey] == null
+        val cacheable = cacheable &&
+            bearer == null &&
+            headers.isEmpty() &&
+            currentCoroutineContext()[FreshReadsKey] == null
         if (cacheable) cached(url)?.let { return it }
         val element = send(provider, url) {
             http.get(url) {
