@@ -103,3 +103,18 @@ The owner's current goal is a production-quality, solo-maintained eXcor extracto
 - This PR does **not** deliver SABR/UMP, new live-player evidence, or a release. All current release-gate statuses remain unchanged.
 
 **Next:** review CI at the PR head, inspect any failure, then pursue deterministic network/cancellation fault-injection tests and legitimate owner-network playback checks. Do not claim parity based on this PR.
+
+
+## 2026-11-11 — verified competitor-readiness checkpoint
+
+**Evidence-weighted readiness score: 53/100**, unchanged from the checkpoint recorded on issue #77. The score is not a playback success percentage.
+
+- PR #83 merged as `429c179089a8f44b655e2477647c929c50d695a5` after all six supported-target CI jobs passed. It adds a safe owner-run playback evidence protocol; it does not add live playback evidence. Issue #78 remains open.
+- PR #84 merged as `11ae5d5414af2311ed457b4408f908a2347ba129` after all six CI jobs passed. This is offline-only UMP frame decoding. It does not negotiate or play SABR streams; G6 remains blocked and SABR/UMP playback remains 0/20.
+- PR #86 merged as `3083d5b5ba09ea1f43083720bc7beed360111919` after all six supported-target CI jobs passed. It adds offline-only UMP response assembly across separate HTTP response bodies; it does not implement network negotiation or play media. G6 remains blocked and SABR/UMP playback remains 0/20.
+- PR #87 remains a draft security/diagnostics audit. Its current head adds synthetic-only redaction coverage for transport/player values, injected credential providers, private music pages/playlists, YouTube continuation models and sync state. Full supported-target CI is still pending; none of these changes are included in the readiness score.
+- Merged PRs #76, #80, #81 and #82 have supported-target CI evidence recorded on issue #77. They add diagnostic redaction, deterministic retry/redirect fault tests, session-generation invalidation, and bounded response reads. G8 and G12 remain partial because owner-run live fault injection, complete diagnostic-surface review, and reproducible playback/cipher evidence are still outstanding.
+
+The InnerTubeX matrix was rechecked against its public README and changelog on 2026-11-10; the latest documented release remains v0.11.6 (2026-11-07). No competitor implementation source was inspected.
+
+**Release decision: NO-GO.** No credentials, signed URLs, raw captures, or bot-check bypasses were used.
