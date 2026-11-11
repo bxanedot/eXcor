@@ -65,6 +65,19 @@ Every call is `suspend`:
 
  [Feature matrix](docs/FEATURE_MATRIX.md) lists what is verified live and what is blocked.
 
+## Playback diagnostics (JVM sample)
+
+The standalone quickstart includes an opt-in, signed-out direct-audio playback runner. Publish the library locally, then run it with `ffplay` installed:
+
+```sh
+./gradlew publishToMavenLocal
+./gradlew -p samples/jvm-quickstart run --args="--playback VIDEO_ID --seconds 90"
+```
+
+Use Left/Right Arrow in ffplay to try backward/forward seeking, then press `q`. The runner prints request/status counts, bytes relayed, and observed Range offsets. Offset observations alone do not prove that a seek key was pressed. Add `--full-decode` to probe duration and decode the whole audio stream with `ffprobe` and `ffmpeg` (bounded to 30 minutes). That option can transfer the entire stream.
+
+The player receives only a random-path loopback URL. The signed media URL and allowed request headers stay in the quickstart process and are not printed. The runner covers direct whole-file audio only; it does not add HLS, DASH-manifest, or SABR/UMP playback. YouTube access refusals are reported as such.
+
 ## Streams
 
 The host implements `ExcorHost` (or uses `excorDefaultHost`) to provide the HTTP client, session, clock, logging, cache settings, and optional PO-token provider.
