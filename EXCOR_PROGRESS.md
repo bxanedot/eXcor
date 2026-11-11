@@ -12,19 +12,21 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
 
-## Current verified checkpoint — 2026-11-11 07:30 UTC
+## Current verified checkpoint — 2026-11-11 08:29 UTC
 
-**Main:** `2ab246a9cca1c7dc139321d8ee167ac2ec5e40e8`. PR #95 and PR #93 are merged. Main CI run `42977876497` passed Linux, Windows, preview, Android API 26, Android API 36 and macOS. PR #93's exact-head attempt-2 run `42973557875` passed the same six jobs.
+**Main:** `a23278b8700ca2164d6c0c2ef9f71af28ac99674`. PR #96 and PR #97 are merged. PR #96 added a score refresh after main CI completes; PR #97 records the clean-room SABR/UMP no-go decision.
 
-**Evidence-weighted readiness: 53/100. Release: NO-GO.** The score report is not a playback-success percentage. Its status-branch artifact names main `2ab246a`, but the `ci.status` value was recorded as `queued` before main CI finished. The actual main CI run later passed. This branch adds a score-workflow trigger after main CI completion; hourly refresh remains as a backstop.
+PR #96 exact-head CI run `42980593554` and PR #97 exact-head CI run `42981433312` passed all six supported-target jobs. Main CI after PR #96 passed all six jobs at `1ae193a61dbd673b2df20fb4a5e5c12a69a2cc77` (run `42982907219`). The main CI run for `a23278b` is in progress (run `42985652336`): Linux, Windows, preview, Android API 26 and Android API 36 passed; macOS is running.
 
-- **G4/G5:** partial. Owner-run player/cipher, repeatable multi-video playback, decode and seek evidence remains incomplete. Issue #78 has the prepared protocol but no owner results.
-- **G6:** blocked, SABR/UMP playback 0/20. Offline frame parsing and HTTP response assembly are not SABR request negotiation or playable media. Issue #79 remains open for independent contract/provenance research and a go/no-go decision.
+**Evidence-weighted readiness: 53/100. Release: NO-GO.** The score report is not a playback-success percentage. The current report names main `a23278b`, keeps G6 blocked at 0/20, and records CI as `in_progress`. The post-CI workflow-run refresh is pending.
+
+- **G4/G5:** partial. Owner-run player/cipher, repeatable multi-video playback, decode and seek evidence remains incomplete. Issue #78 has no owner results.
+- **G6:** blocked, SABR/UMP playback 0/20. Issue #79 is closed with a NO-GO decision for implementation in this release track. Its source review, evidence gaps and reopening criteria are in `docs/UMP_FRAMING_RESEARCH.md`.
 - **G8/G12:** partial. Synthetic reliability and redaction coverage is merged; owner-run live fault verification and broader release-security evidence remain.
 - **G10/G11:** partial. Remote publishing is unauthorized; a reproducible black-box comparison has not been completed.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 
-**Next:** continue the issue #78 owner-operated playback matrix only on the owner's authorized device/network. Separately finish issue #79's source and fixture inventory; keep G6 blocked unless an independently defensible transport contract and authorized playable fixtures become available.
+**Next:** continue issue #78's owner-operated playback matrix only on the owner's authorized device/network. Reopen SABR implementation work only when the independently usable contract, synthetic vectors, hard bounds and owner-authorized audio/video decode-and-seek evidence in `docs/UMP_FRAMING_RESEARCH.md` exist. Do not upgrade gates based on framing, documentation, or CI alone.
 
 ## Release gates
 

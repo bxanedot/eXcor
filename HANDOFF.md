@@ -2,14 +2,16 @@
 
 Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
-## Current state — 2026-11-11 (verified 2026-11-11 07:30 UTC)
+## Current state — 2026-11-11 (verified 2026-11-11 08:29 UTC)
 
-- Main is `2ab246a9cca1c7dc139321d8ee167ac2ec5e40e8`, with PR #95 and PR #93 merged. PR #95 added main-branch filtering to the readiness CI lookup; PR #93 refreshed competitor, provenance, handoff and gate evidence.
-- Main CI run `42977876497` passed all six supported-target jobs at `2ab246a9cca1c7dc139321d8ee167ac2ec5e40e8`. PR #93's attempt-2 run `42973557875` also passed all six jobs at its exact head.
-- The evidence-weighted score is 53/100 and release is NO-GO. G6 remains blocked and SABR/UMP playback is 0/20; eXcor has offline UMP framing and response assembly, but no SABR negotiation, media playback, decode or seek evidence.
-- G4 and G5 remain partial because live ciphered playback and broad repeatable stream verification are not established. Issue #78 still has no owner-run playback results. Issue #79 remains open for the clean-room transport feasibility decision.
-- The score report for main `2ab246a` was generated while CI was queued and still shows that old state; the actual main CI run later passed. This branch adds a score refresh when the main CI workflow completes, while keeping the hourly run as a backstop.
-- Preserve the clean-room rules below: use active `cleanroom-src/` only, do not inspect root `src/` or root `ejs/`, do not inspect competitor implementation code, and do not bypass YouTube access checks. Owner-only playback verification must remain on the owner's device and account.
+- Main is `a23278b8700ca2164d6c0c2ef9f71af28ac99674`. PR #96 and PR #97 are merged. PR #96 refreshed the checkpoint and added the main-CI completion trigger to the competitiveness score workflow; PR #97 records the clean-room SABR/UMP no-go decision.
+- Exact-head CI passed all six supported-target jobs for PR #96 (run `42980593554`) and PR #97 (run `42981433312`). Main CI after PR #96 passed all six jobs at `1ae193a61dbd673b2df20fb4a5e5c12a69a2cc77` (run `42982907219`). Main CI after PR #97 is still in progress at `a23278b`: Linux, Windows, preview, Android API 26 and Android API 36 passed; macOS is running in run `42985652336`.
+- The current score is **53/100; release NO-GO**. Score run `42985652202` records main `a23278b`, G6 blocked at 0/20, and CI `in_progress`. The score workflow's refresh after run `42985652336` completes is pending.
+- **G4/G5:** partial. Owner-run player/cipher, repeatable multi-video playback, decode and seek evidence remains incomplete. Issue #78 still has the prepared protocol but no owner results.
+- **G6:** blocked, SABR/UMP playback 0/20. Issue #79 is closed with a NO-GO decision for a network adapter in this release track. The decision record and reopening criteria are in `docs/UMP_FRAMING_RESEARCH.md`; no transport negotiation, playable media, decode or seek evidence exists.
+- **G8/G12:** partial. Synthetic reliability and redaction coverage is merged; owner-run live fault verification and broader release-security evidence remain.
+- **G10/G11:** partial. Remote publishing is unauthorized; a reproducible black-box comparison has not been completed.
+- No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 
 ## Historical handoff (written 2026-11-03)
 

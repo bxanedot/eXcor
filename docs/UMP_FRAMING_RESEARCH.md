@@ -1,6 +1,6 @@
 # UMP framing: independent, offline prototype
 
-Status: **prototype on feature branch only**. The `UmpFrameDecoder` is not wired into playback, makes no network requests and has not been verified against real YouTube UMP traffic. It must **not** be counted as G6 or InnerTubeX streaming parity.
+Status: **merged prototype in main (PRs #84, #86, #90 and #91); offline only**. The `UmpFrameDecoder` is not wired into playback, makes no network requests and has not been verified against real YouTube UMP traffic. It must **not** be counted as G6 or InnerTubeX streaming parity.
 
 ## Legal and technical source
 
@@ -34,7 +34,7 @@ Before enabling any network call, obtain permission to test a video that YouTube
 
 Then validate integer widths and cross-response continuation semantics, implement independent framing fixtures, test bounded media emission and cancellation, and only finally add a separate opt-in transport path with full decode + seek verification. Document unsupported service responses rather than circumventing them.
 
-**G6 remains BLOCKED; SABR/UMP competitiveness remains 0/20.** See issue #79, `docs/release-gates.json`, and `docs/PLAYBACK_EVIDENCE_MATRIX.md` (proposed in #83).
+**G6 remains BLOCKED; SABR/UMP competitiveness remains 0/20.** See [closed issue #79](https://github.com/bxanedot/eXcor/issues/79) for the no-go decision, `docs/release-gates.json`, and `docs/PLAYBACK_EVIDENCE_MATRIX.md`.
 
 ## Decision record — 2026-11-11
 
