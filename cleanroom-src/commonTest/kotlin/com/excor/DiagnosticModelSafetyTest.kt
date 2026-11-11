@@ -1,5 +1,9 @@
 package com.excor
 
+import com.excor.catalog.ExcorCatalogArtist
+import com.excor.catalog.ExcorCatalogItem
+import com.excor.catalog.ExcorCatalogKind
+import com.excor.catalog.ExcorCatalogPage
 import com.excor.catalog.ExcorCatalogProvider
 import com.excor.music.ExcorMusicTrack
 import com.excor.music.ExcorSpotifyPlaybackState
@@ -243,6 +247,35 @@ class DiagnosticModelSafetyTest {
         assertTrue("episodes=1" in show.toString())
         assertTrue("track=true" in playback.toString())
         assertTrue("active=true" in device.toString())
+    }
+
+    @Test
+    fun genericCatalogStringsRedactNamesTitlesAndIdentifiers() {
+        val marker = "synthetic-private-catalog-value"
+        val artist = ExcorCatalogArtist(
+            provider = ExcorCatalogProvider.APPLE_MUSIC,
+            id = marker,
+            name = marker,
+            url = "https://music.example/artist/$marker",
+        )
+        val item = ExcorCatalogItem(
+            provider = ExcorCatalogProvider.APPLE_MUSIC,
+            kind = ExcorCatalogKind.TRACK,
+            id = marker,
+            title = marker,
+            url = "https://music.example/item/$marker",
+            artists = listOf(artist),
+            albumId = marker,
+            albumTitle = marker,
+            genres = listOf(marker),
+        )
+        val page = ExcorCatalogPage(items = listOf(item), nextPageToken = marker)
+        val rendered = listOf(artist, item, page).joinToString()
+
+        assertFalse(marker in rendered, "Catalog diagnostics exposed private labels or identifiers")
+        assertTrue("artists=1" in item.toString())
+        assertTrue("items=1" in page.toString())
+        assertTrue("nextPageToken=present" in page.toString())
     }
 
 }

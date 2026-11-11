@@ -50,7 +50,7 @@ data class ExcorCatalogArtist(
     val url: String? = null,
 ) {
     override fun toString(): String =
-        "ExcorCatalogArtist(provider=$provider, id=$id, name=$name, url=${if (url == null) "missing" else "present"})"
+        "ExcorCatalogArtist(provider=$provider, id=present, name=present, url=${if (url == null) "missing" else "present"})"
 }
 
 data class ExcorArtwork(
@@ -80,7 +80,8 @@ data class ExcorCatalogItem(
     val artwork: List<ExcorArtwork> = emptyList(),
 ) {
     override fun toString(): String =
-        "ExcorCatalogItem(provider=$provider, kind=$kind, id=$id, title=$title, artists=${artists.size}, artwork=${artwork.size}, url=${if (url == null) "missing" else "present"})"
+        "ExcorCatalogItem(provider=$provider, kind=$kind, id=present, title=present, album=${if (albumId == null) "missing" else "present"}, " +
+            "artists=${artists.size}, artwork=${artwork.size}, url=${if (url == null) "missing" else "present"})"
 }
 
 data class ExcorCatalogPage(
