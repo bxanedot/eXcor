@@ -575,6 +575,6 @@ fun spotifyIdOfGid(gid: String): String {
 
 data class ExcorSpotifyDevice(val id: String, val name: String, val type: String?, val active: Boolean, val restricted: Boolean) {
     override fun toString(): String =
-            "ExcorSpotifyDevice(type=${type ?: "unknown"}, active=$active, restricted=$restricted, id=present, name=present)"
+            "ExcorSpotifyDevice(type=${type != null}, active=$active, restricted=$restricted, id=present, name=present)"
 }
 
