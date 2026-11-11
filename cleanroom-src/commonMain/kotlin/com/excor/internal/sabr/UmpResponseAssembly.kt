@@ -7,7 +7,8 @@ package com.excor.internal.sabr
  * Every response begins with a complete type-20 header. If the preceding response ended
  * during a part's payload, the next response must repeat that part type, declaring exactly
  * the previously outstanding payload length. This strict rule deliberately rejects
- * inconsistent or ambiguous continuation data.
+ * inconsistent or ambiguous continuation data. A non-empty part must make payload progress
+ * in each complete response, so empty continuation bodies cannot be accepted indefinitely.
  */
 internal class UmpResponseAssembler(
     private val maxPartBytes: Int = 8 * 1024 * 1024,
@@ -76,6 +77,7 @@ internal class UmpResponseAssembler(
                 written = 0
             }
             val count = minOf(data.size - written, body.size - offset)
+            if (count == 0 && data.size > written) throw UmpFramingException("UMP part made no progress")
             if (count > 0) body.copyInto(data, written, offset, offset + count)
             written += count
             offset += count
