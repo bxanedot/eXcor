@@ -42,6 +42,8 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npm run build
         working-directory: samples/black-box-comparison/youtubejs-node
+      - name: Build the standalone NewPipe comparison adapter
+        run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/newpipe-jvm assemble installDist
       # Known vulnerabilities (OSV) in what ships: the published variants' runtime dependencies fail the build. Build
       # tooling (Android lint) and test-only dependencies are reported without failing. The lockfile exists only for
       # this step; normal builds don't lock.

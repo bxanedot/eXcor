@@ -99,10 +99,10 @@
       "id": "G11",
       "name": "Competitive analysis",
       "status": "partial",
-      "evidence": "docs/COMPETITOR_MATRIX.md and docs/BLACK_BOX_COMPARISON_RESEARCH.md record public-documentation feasibility and version pins for eXcor, InnerTubeX, YouTube.js, and NewPipeExtractor without using or copying competitor implementation code. PR #117 adds an offline validator and JSONL/Markdown report aggregation; PR #118 adds a standalone eXcor JVM adapter using the published artifact; PR #121 adds a separate YouTube.js Node adapter using the pinned MIT package, direct-URL audio selection, bounded API bodies, and no player-code execution. InnerTubeX adapter work is in PR #120 and NewPipeExtractor adapter work is in PR #122. The adapters measure extraction and a bounded initial media read only; no matched comparative results are claimed.",
+      "evidence": "docs/COMPETITOR_MATRIX.md and docs/BLACK_BOX_COMPARISON_RESEARCH.md record public-documentation feasibility and version pins for eXcor, InnerTubeX, YouTube.js, and NewPipeExtractor without using or copying competitor implementation code. PR #117 adds an offline validator and JSONL/Markdown report aggregation; PR #118 adds a standalone eXcor JVM adapter; PR #122 adds the isolated GPL-3.0-or-later NewPipeExtractor v0.27.1 adapter and passed all six exact-head CI jobs in run 43102342730. PR #121 adds a standalone MIT YouTube.js adapter that selects direct-URL audio without player-code execution and bounds API/media bodies; its hardened revision requires exact-head CI review. All adapters measure extraction and an initial media read only; no matched comparative results are claimed.",
       "command": null,
       "blockers": [
-        "Exact-head CI review for adapters in PRs #120, #121, and #122 remains outstanding; matched owner-run samples are absent, including full decode and backward/forward seek measurements"
+        "The InnerTubeX adapter and hardened YouTube.js adapter revision require exact-head CI review; no matched owner-run comparative samples exist, including full decode and backward/forward seek measurements"
       ]
     },
     {

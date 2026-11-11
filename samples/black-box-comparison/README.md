@@ -37,19 +37,23 @@ Use the same comparison ID, commit, UTC run time, environment categories and tim
 
 ## YouTube.js Node adapter
 
-The separate project in [`youtubejs-node`](youtubejs-node/) pins the MIT package `youtubei.js@18.3.0`. It uses the documented `Innertube.create` and `getStreamingData` APIs with `type: "audio"`; it has no eXcor SDK dependency. Install and run it from that directory with Node.js 20 or newer:
+The standalone project in [`youtubejs-node`](youtubejs-node/) pins MIT-licensed `youtubei.js@18.3.0` and uses the public `Innertube.create({ fetch })` and `getBasicInfo` APIs. Build it with Node.js 22:
 
 ```powershell
+cd samples/black-box-comparison/youtubejs-node
 npm ci --ignore-scripts
 $runDateUtc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 $mainCommit = git -C ../../.. rev-parse main
 node comparison-adapter.mjs --video-id dQw4w9WgXcQ --comparison-id run-home-01 --main-commit $mainCommit --run-date-utc $runDateUtc --network-category home --content-category music_video --phase cold --sample-index 1 --timeout-seconds 30
 ```
 
-Running the adapter makes signed-out YouTube requests. It uses the documented `Innertube.create({ fetch })` hook for request counting, disables player retrieval, and selects only URL-backed audio formats. It never evaluates downloaded player JavaScript; videos that require deciphering and have no direct audio URL are reported as `UNSUPPORTED`. The custom fetch boundary caps API request bodies at 1 MiB and response bodies at 5 MiB; the separate media probe validates HTTPS hosts and redirects and reads at most 64 KiB. Fetch credentials are omitted, credential headers are removed, and no URL, header or raw exception text is emitted. The npm lockfile pins transitive dependencies; CI installs with lifecycle scripts disabled and checks JavaScript syntax without making YouTube requests.
+The adapter selects the highest-bitrate audio format that already has a direct URL. It disables player retrieval and never evaluates downloaded player JavaScript; cipher-only formats are reported as `UNSUPPORTED`. The custom fetch wrapper caps known API request bodies at 1 MiB and response bodies at 5 MiB. The separate media probe validates HTTPS hosts and redirects and reads at most 64 KiB. Fetch credentials are omitted, credential headers are removed, and no signed URL, header or raw exception text is emitted. CI installs the pinned lockfile with scripts disabled and checks JavaScript syntax without making YouTube requests.
 
-For a cold sample, `extractMs` includes YouTube.js session creation, `getBasicInfo`, and selection of the highest-bitrate URL-backed audio format. For a warm sample, the adapter warms one instance, clears counters, then measures another call on the same instance. `requestCount` includes each custom API-fetch call, validated API redirect, and media request attempt. API redirects are followed only for GET/HEAD requests to allowlisted HTTPS YouTube hosts; media redirects are separately validated. `firstMediaByteMs` starts at the measured extraction attempt. `metadataMs` and `startupMs` remain null; decode and backward/forward seeks remain `NOT_TESTED`. `PASS` means stream selection and the initial bounded media read completed.
+For a cold sample, `extractMs` includes YouTube.js session creation, `getBasicInfo`, and direct-audio selection. A warm sample reuses one instance and resets counters after warm-up. `metadataMs` and `startupMs` remain null; decode and backward/forward seek remain `NOT_TESTED`. `PASS` means format selection and the initial bounded media read completed.
 
+## NewPipeExtractor JVM adapter
+
+The standalone adapter in [`newpipe-jvm`](newpipe-jvm/) pins NewPipeExtractor `v0.27.1` and emits the same sanitized sample contract. It uses the public `Downloader` boundary for request counts and timings, selects URL-backed progressive HTTP audio, and probes at most the first 64 KiB. It does not decode or test seeks. The dependency is GPL-3.0-or-later and stays outside eXcor's library graph; review licensing before distributing the linked adapter. Build it with `./gradlew -p samples/black-box-comparison/newpipe-jvm assemble installDist`. The build resolves the pinned dependency but makes no YouTube requests.
 ## Current limits
 
-The eXcor JVM and YouTube.js Node adapters cover extraction and an initial-range probe only. The InnerTubeX adapter is tracked in PR #120 and NewPipeExtractor in PR #122; exact-head CI is pending for both. Matched comparative measurements remain outstanding. GPL-3.0 adapters for InnerTubeX and NewPipeExtractor must remain separate processes and outside the eXcor library dependency graph. Obtain licensing review before distributing any linked adapter binaries. Owner-run live playback remains separate from this report tool.
+The eXcor JVM, YouTube.js Node and NewPipeExtractor JVM adapters cover extraction and an initial-range probe only. NewPipeExtractor v0.27.1 passed all six exact-head CI jobs in run `43102342730`; the hardened YouTube.js revision and InnerTubeX adapter remain in PRs #121 and #120 awaiting exact-head CI. Matched comparative measurements remain outstanding. GPL-3.0 adapters for InnerTubeX and NewPipeExtractor stay separate from eXcor's dependency graph; obtain licensing review before distributing linked adapter binaries. Owner-run live playback remains separate from this report tool.
