@@ -35,3 +35,52 @@ Before enabling any network call, obtain permission to test a video that YouTube
 Then validate integer widths and cross-response continuation semantics, implement independent framing fixtures, test bounded media emission and cancellation, and only finally add a separate opt-in transport path with full decode + seek verification. Document unsupported service responses rather than circumventing them.
 
 **G6 remains BLOCKED; SABR/UMP competitiveness remains 0/20.** See issue #79, `docs/release-gates.json`, and `docs/PLAYBACK_EVIDENCE_MATRIX.md` (proposed in #83).
+
+
+## Decision record — 2026-11-11
+
+**Decision: NO-GO for a SABR/UMP network adapter in the current release track. G6 stays BLOCKED at 0/20.** Continue to support and improve the independently verified direct/HLS paths, while stating SABR as unsupported. This defers G6 until its contract and evidence gates are met; it does not claim that an independent implementation is impossible.
+
+### Evidence reviewed
+
+- Google's public [YouTube APIs catalog](https://developers.google.com/youtube/apis) lists the IFrame Player API as the public integration for embedded playback, and the Live Streaming API for managing broadcasts and streams.
+- The [IFrame Player API reference](https://developers.google.com/youtube/iframe_api_reference) documents player controls, state/current-time queries, and seeking within the embedded player. It does not specify a caller's raw media requests, SABR bootstrap, representation identifiers, UMP response semantics, or segment assembly.
+- Google's [Live Streaming API implementation guide](https://developers.google.com/youtube/data/live/guides/implementation/broadcasts-and-streams) documents broadcast creation, stream configuration, binding, and state transitions. It describes publisher-side stream ingestion, not a viewer-side SABR/UMP service contract.
+- The public-domain [UMP framing document](https://github.com/gsuberland/UMP_Format/blob/main/UMP_Format.md) is used only for the limited type/length/payload framing described above. Its framing facts do not define the service request contract; the existing discrepancies and lack of independent interoperability fixtures remain.
+
+This is a bounded review of the sources above as checked on 2026-11-11. It is not a claim that no other private or public material exists. No InnerTubeX, YouTube.js, NewPipeExtractor, or other extractor implementation source was inspected or used.
+
+### Contract readiness
+
+| Area | Evidence in eXcor today | Decision |
+|---|---|---|
+| Frame bounds | Offline decoder has a configurable per-part cap (8 MiB default, 64 MB maximum) and rejects malformed/truncated declarations; production payload maxima are unknown. | Keep prototype-only; do not raise limits without measurements. |
+| Bootstrap/request shape | No independently specified viewer request contract or authorized fixture. | Unknown; no network request. |
+| Representation selection | No independent rule for catalog, selection, or format transitions. | Unknown; do not infer from frame types. |
+| Ordering, gaps, completion | Offline framing does not establish media ordering, missing-part recovery, end-of-stream, or cross-response assembly semantics. | Unknown; no media assembler. |
+| Seek | The public embed player's seek controls do not define SABR segment/time mapping. | No transport seek support. |
+| Cancellation/retry/redirect | Generic client safeguards do not establish SABR service behavior or credentials/session rules. | No transport-specific retry or redirect policy. |
+| Memory/backpressure | Frame caps bound a local prototype, but no authorized service-size distribution or end-to-end streaming measurements exist. | Keep bounded streaming as a design requirement; do not buffer presumed whole responses. |
+| iOS | Shared framing source may compile for KMP targets, but there is no iOS SABR playback or seek run. | No iOS parity claim. |
+
+“Unknown” means the reviewed evidence does not support a claim; it is not a guess about undocumented server behavior.
+
+### Options considered
+
+| Option | Outcome | Reason |
+|---|---|---|
+| A. Keep direct/HLS as the supported transport scope | **Proceed as the interim scope** | It preserves the paths with existing qualified evidence and makes the SABR gap clear. It does not count as G6 completion. |
+| B. Add an internal experimental SABR adapter | **No-go now** | Implementing bootstrap, selection, ordering, seeking, and completion would require guessing without an independent service contract and authorized interoperability fixtures. |
+| C. Add a host-supplied transport interface | **Defer** | A generic host adapter could consume host-provided media, but it would not implement or verify SABR and would add public API and maintenance burden without a known consumer. Revisit if a real integration need appears. |
+
+### Reopen criteria for option B
+
+Start an implementation proof only after all of these are available:
+
+1. An independently usable contract covers request bootstrap, representation selection, response/continuation boundaries, ordering, completion/errors, time-to-segment seek mapping, cancellation, and redirect/session behavior. It must come from public documentation or a clean-room description based on permitted, owner-authorized observations; no extractor implementation source.
+2. Synthetic vectors are derived from that contract and cover each documented message path, malformed/truncated inputs, cross-response continuation, missing segments, seek boundaries, end-of-stream, cancellation, and bounds. Keep credentials, signed URLs, raw captures, and media bodies out of the repository.
+3. The adapter design states hard limits for frame size, queued bytes, and in-flight work, plus fail-closed redirect and diagnostic rules. Never increase a cap solely to make a guessed fixture pass.
+4. All supported-target CI passes, including common/JVM/Android/iOS builds and deterministic transport tests.
+5. An owner-run, authorized playback matrix records at least one eligible audio and one eligible video case, each with full decode and a mid-stream seek. Record access denials separately; never bypass consent, bot checks, or DRM.
+
+Until then, retain the current 0/20 G6 score and blocked release status. A framing parser, documentation review, or successful build alone does not satisfy these gates.
