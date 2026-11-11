@@ -8,6 +8,35 @@ import kotlin.test.assertNull
 
 class PlayerModelsTest {
     @Test
+    fun watchPageAndCacheEntryStringsOmitUntrustedValues() {
+        val secret = "synthetic-player-secret"
+        val url = "https://rr1.googlevideo.com/videoplayback?pot=$secret&sig=synthetic-signature"
+        val page = WatchPage(
+            apiKey = "synthetic-api-key",
+            playerResponse = PlayerResponse(
+                playabilityStatus = "LOGIN_REQUIRED",
+                playabilityReason = "Authorization: Bearer $secret $url",
+                formats = listOf(
+                    PlayerFormat(url, "audio/webm", 128_000, null, 2, 48_000, signatureCipher = "url=$url&s=$secret"),
+                ),
+                playerScriptUrl = "https://www.youtube.com/s/player/test.js?key=synthetic-script-key",
+                loudnessDb = null,
+            ),
+        )
+        val cacheEntry = PlayerCacheEntry(12345, "synthetic-prepared-player")
+        val rendered = page.toString() + cacheEntry.toString()
+
+        listOf(
+            secret,
+            "synthetic-signature",
+            "rr1.googlevideo.com",
+            "synthetic-api-key",
+            "synthetic-script-key",
+            "synthetic-prepared-player",
+        ).forEach { assertFalse(it in rendered, "A diagnostic data class exposed an untrusted value") }
+    }
+
+    @Test
     fun playerResponseStringOmitsURLsAndCredentialText() {
         val url = "https://rr1.googlevideo.com/videoplayback?pot=secret-stream&sig=secret-signature"
         val response = PlayerResponse(
