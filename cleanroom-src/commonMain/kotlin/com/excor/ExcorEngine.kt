@@ -945,14 +945,21 @@ internal class ExcorEngine(
         val url: String,
         val entry: PlayerCacheEntry,
         val source: String?,
-    )
+    ) {
+        override fun toString(): String =
+            "LoadedPlayer(url=present, entry=$entry, source=${if (source == null) "missing" else "present"})"
+    }
 
     private data class CipherLink(
         val url: String,
         val encryptedSignature: String?,
         val signedSignature: String?,
         val signatureParameter: String,
-    )
+    ) {
+        override fun toString(): String =
+            "CipherLink(url=present, encryptedSignature=${if (encryptedSignature == null) "missing" else "present"}, " +
+                "signedSignature=${if (signedSignature == null) "missing" else "present"})"
+    }
 
     private fun parseCipher(value: String?): CipherLink? {
         if (value == null || value.length > MAX_CIPHER_LENGTH) return null
