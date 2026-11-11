@@ -4,7 +4,19 @@ import com.excor.excorDefaultHost
 import kotlinx.coroutines.runBlocking
 
 /** Exercises the README quick start against live YouTube and prints what it found; exits non-zero on a failed step. */
-fun main(): Unit = runBlocking {
+fun main(args: Array<String>) {
+    when (args.firstOrNull()) {
+        "--playback" -> runBlocking { runPlaybackDiagnostics(args.drop(1)) }
+        "--help" -> println("Usage: [--playback VIDEO_ID [--seconds N] [--full-decode]]")
+        null -> runQuickstart()
+        else -> {
+            println("Unknown arguments. Use --help for usage.")
+            throw IllegalArgumentException("unsupported arguments")
+        }
+    }
+}
+
+private fun runQuickstart() = runBlocking {
     val excor = Excor(excorDefaultHost(region = "US", language = "en"))
     val failures = mutableListOf<String>()
     fun check(step: String, ok: Boolean, detail: String) {
