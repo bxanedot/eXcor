@@ -132,10 +132,17 @@ data class ExcorMusicPlaylist(
     val artwork: List<ExcorArtwork> = emptyList(),
     val tracks: ExcorMusicPage<ExcorMusicTrack>? = null,
     val missing: Map<ExcorMusicField, ExcorFieldStatus> = emptyMap(),
-)
+) {
+    override fun toString(): String =
+        "ExcorMusicPlaylist(provider=$provider, trackPageItems=${tracks?.items?.size ?: "missing"}, " +
+            "trackPageHasNext=${tracks?.next != null}, artwork=${artwork.size})"
+}
 
 /** One page; [next] is an opaque token for the following page, null on the last. [total] is the provider's count. */
-data class ExcorMusicPage<T>(val items: List<T>, val next: String? = null, val total: Int? = null)
+data class ExcorMusicPage<T>(val items: List<T>, val next: String? = null, val total: Int? = null) {
+    override fun toString(): String =
+        "ExcorMusicPage(items=${items.size}, next=${if (next == null) "missing" else "present"}, total=$total)"
+}
 
 data class ExcorMusicSearchResult(
     val tracks: ExcorMusicPage<ExcorMusicTrack>? = null,
