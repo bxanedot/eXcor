@@ -32,6 +32,8 @@ jobs:
       - run: ./gradlew $GRADLE_ARGS -p samples/jvm-quickstart build
       - name: Build and test the standalone eXcor comparison adapter
         run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/excor-jvm build
+      - name: Build the standalone NewPipe comparison adapter
+        run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/newpipe-jvm assemble installDist
       - name: Build and test the separate InnerTubeX comparison adapter
         run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/innertubex-jvm build installDist
       # Known vulnerabilities (OSV) in what ships: the published variants' runtime dependencies fail the build. Build
