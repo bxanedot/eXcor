@@ -485,14 +485,18 @@ Each item names the reading chosen; nothing was looked up in the old code.
 58. **SABR from yt-dlp's development work (owner: "yt-dlp dev work").** yt-dlp's SABR downloader is
     in its pull request 13515 (not merged, updated 2026-10-27): `downloader/sabr/`, protobuf
     messages under `extractor/youtube/_proto/`, and `_streaming/sabr/`; the 2026.10.26 release has
-    none of it. Before porting, its origin has to be clear, because LuanRT/googlevideo, a SABR
-    library, is on this project's forbidden list. The code and commit messages credit no other
-    project, but the pull request's description and discussion, where such a credit would usually
-    be, cannot be read from the build machine (only git is open to it, not GitHub's pages or API).
-    Nothing was ported. Needed from the owner: a look at that pull request's description for any
-    mention of googlevideo or YouTube.js as a source, and a decision. SABR also cannot be tried from
-    the build machine (YouTube bot-checks its player requests), and WEB's SABR formats need a PO
-    token, which Excor only takes from the host.
+    none of it. The yt-dlp Unlicense does not by itself resolve the code's origin. The public
+    [pull request description](https://github.com/yt-dlp/yt-dlp/pull/13515) was reviewed on
+    2026-11-11; its "Useful resources" list links `coletdjnz/yt-dlp-ytse`,
+    `LuanRT/yt-sabr-shaka-demo`, `LuanRT/googlevideo`, `davidzeng0/innertube`,
+    `nosoop/moonarchive`, and Archive.org's `innertube`. It does not map any reference to code
+    files or identify code origin. The code and commit messages credit no other project. No code
+    was ported; decision: do not use this PR's implementation without reliable per-file provenance.
+    Continue only from an independently usable specification and permitted fixtures. The currently
+    consulted public-domain UMP document leaves many SABR part types unknown, so it is not a complete
+    request, playback or seek contract. SABR also cannot be tried from the build machine (YouTube
+    bot-checks its player requests), and WEB's SABR formats need a PO token, which Excor only takes
+    from the host.
 59. **Bandcamp (owner: SoundCloud, then Bandcamp).** Bandcamp answers the cloud build machine with a
     "Client Challenge" page for every track and album page (2026-10-28). That is a bot check: yt-dlp
     retries it with browser impersonation, which this project does not do, so nothing was worked
