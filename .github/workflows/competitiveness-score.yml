@@ -1,0 +1,74 @@
+name: eXcor competitiveness score (0-100)
+
+# Evidence score + GitHub CI health. No YouTube account or stream requests.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: excor-competitiveness-score
+  cancel-in-progress: false
+
+jobs:
+  assess:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Read trusted main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Validate scoring criteria
+        run: python3 -m unittest discover -s scripts/tests -p 'test_competitiveness_score.py' -v
+
+      - name: Calculate evidence score and latest main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/excor_readiness.py --root . \
+            --out-dir "$RUNNER_TEMP/excor-score" \
+            --repo "$GITHUB_REPOSITORY" \
+            --sha "$(git rev-parse HEAD)" --fetch-ci
+          cat "$RUNNER_TEMP/excor-score/README.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attach machine-readable score to run
+        uses: actions/upload-artifact@v7
+        with:
+          name: excor-competitiveness-score
+          path: ${{ runner.temp }}/excor-score/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Check out status branch
+        uses: actions/checkout@v7
+        with:
+          ref: automation/excor-competitiveness
+          path: score-branch
+          persist-credentials: true
+
+      - name: Publish readable report and JSON badge
+        shell: bash
+        run: |
+          mkdir -p score-branch/score
+          cp "$RUNNER_TEMP/excor-score/score.json" score-branch/score/score.json
+          cp "$RUNNER_TEMP/excor-score/badge.json" score-branch/score/badge.json
+          cp "$RUNNER_TEMP/excor-score/README.md" score-branch/score/README.md
+          cd score-branch
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add score/score.json score/badge.json score/README.md
+          if git diff --cached --quiet; then
+            echo 'No score or CI change.'
+          else
+            git commit -m 'Update evidence-based readiness score [skip ci]'
+            git push origin HEAD:automation/excor-competitiveness
+          fi
