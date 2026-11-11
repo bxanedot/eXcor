@@ -4,9 +4,9 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 
 ## Current state — 2026-11-11
 
-- `main` is `0abf37d343772f4c2ac4162e2a04552afcb8ae77` after PR #91 merged. PR-head run `42954594244` passed all six supported-target jobs; current main CI run `42957741272` is in progress.
-- PR #87 remains draft at `4f8456f53555ec7c87f9747794a4012fe8d1052a`, based on current main `0abf37d343772f4c2ac4162e2a04552afcb8ae77`. Its exact-head run `42957973155` is in progress (macOS queued). Keep it unmerged until all six checks pass on this exact head, then review and merge under the owner's standing authorization.
-- G6 remains blocked: eXcor has offline-only UMP framing, HTTP-response assembly and synthetic regression tests (PR #91), but no SABR request/stream transport, network playback, full decode or seek evidence. The public-domain UMP description covers framing/continuations, not the complete SABR service contract.
+- `main` is `b9553e94c720bc2a0ac488f1df7aa861e624c2e0` after PR #94 merged. Its exact-head run `42958552005` passed all six supported-target jobs. Main CI run `42963567109` is still pending (non-macOS jobs running; macOS queued).
+- PR #87 remains draft at `60622027a17bd25a742a26a2481e35dbd1bdce7f`, based on current main `b9553e94c720bc2a0ac488f1df7aa861e624c2e0`. Its exact-head run `42963712070` is pending (macOS queued; other jobs queued or running). Keep it unmerged until all six checks pass on this exact head, then review and merge under the owner's standing authorization.
+- PR #93 refreshes the competitor evidence and UMP checkpoint on current main; check its exact-head CI after this update. G6 remains blocked: eXcor has offline-only UMP framing, HTTP-response assembly and synthetic regression tests (PR #91), but no SABR request/stream transport, network playback, full decode or seek evidence. The public-domain UMP description covers framing/continuations, not the complete SABR service contract.
 - The owner playback matrix in issue #78 still has no results. Read `EXCOR_PROGRESS.md` and `docs/release-gates.json` before changing any readiness claims. Score remains 53/100; release remains NO-GO.
 
 ## Historical handoff (written 2026-11-03)

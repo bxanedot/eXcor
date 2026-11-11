@@ -113,7 +113,7 @@
       "command": "see the 'Dependency vulnerability scan' step in .github/workflows/ci.yml",
       "blockers": [
         "Android lint tooling has report-only findings (guava, commons-lang3, httpclient, bouncycastle); these are supplied by the Android Gradle plugin and are not shipped.",
-        "The remaining exception and data-class diagnostic audit is in draft PR #87 and is not counted until it merges with supported-target CI."
+        "The remaining exception and data-class diagnostic audit is in draft PR #87 (current head 60622027a17bd25a742a26a2481e35dbd1bdce7f); it is not counted until the exact-head supported-target CI passes and the change merges."
       ]
     }
   ]
