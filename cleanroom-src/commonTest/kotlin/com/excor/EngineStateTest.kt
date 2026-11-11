@@ -45,6 +45,39 @@ class EngineStateTest {
     }
 
     @Test
+    fun profileExclusionCacheEvictsTheOldestAfterSixteenProfiles() = runTestEngine {
+        engine.exclude(VIDEO_ID, "VISIONOS")
+        repeat(16) { engine.exclude(VIDEO_ID, "synthetic-profile-$it") }
+
+        assertNotNull(engine.extract(VIDEO_ID, 128, SKIP, false, false))
+        assertEquals(1, requests.player)
+    }
+
+    @Test
+    fun videoExclusionCacheEvictsOldestVideoAt256EntryCap() = runTestEngine {
+        fun syntheticVideoId(index: Int) = "x" + index.toString().padStart(10, '0')
+
+        engine.exclude(VIDEO_ID, "VISIONOS")
+        repeat(256) { engine.exclude(syntheticVideoId(it), "VISIONOS") }
+
+        assertNotNull(engine.extract(VIDEO_ID, 128, SKIP, false, false))
+        assertEquals(1, requests.player)
+    }
+
+    @Test
+    fun recentlyExcludedVideoKeepsItsLruPositionWithinThe256EntryCap() = runTestEngine {
+        fun syntheticVideoId(index: Int) = "x" + index.toString().padStart(10, '0')
+
+        engine.exclude(VIDEO_ID, "VISIONOS")
+        repeat(255) { engine.exclude(syntheticVideoId(it), "VISIONOS") }
+        engine.exclude(VIDEO_ID, "VISIONOS")
+        engine.exclude(syntheticVideoId(255), "VISIONOS")
+
+        assertNull(engine.extract(VIDEO_ID, 128, SKIP, false, false))
+        assertEquals(0, requests.player)
+    }
+
+    @Test
     fun theSixtyFifthStreamClearsTheRememberedSet() = runTestEngine {
         var firstUrl: String? = null
         var lastUrl: String? = null
