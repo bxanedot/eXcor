@@ -36,7 +36,6 @@ Then validate integer widths and cross-response continuation semantics, implemen
 
 **G6 remains BLOCKED; SABR/UMP competitiveness remains 0/20.** See issue #79, `docs/release-gates.json`, and `docs/PLAYBACK_EVIDENCE_MATRIX.md` (proposed in #83).
 
-
 ## Decision record — 2026-11-11
 
 **Decision: NO-GO for a SABR/UMP network adapter in the current release track. G6 stays BLOCKED at 0/20.** Continue to support and improve the independently verified direct/HLS paths, while stating SABR as unsupported. This defers G6 until its contract and evidence gates are met; it does not claim that an independent implementation is impossible.
@@ -45,7 +44,7 @@ Then validate integer widths and cross-response continuation semantics, implemen
 
 - Google's public [YouTube APIs catalog](https://developers.google.com/youtube/apis) lists the IFrame Player API as the public integration for embedded playback, and the Live Streaming API for managing broadcasts and streams.
 - The [IFrame Player API reference](https://developers.google.com/youtube/iframe_api_reference) documents player controls, state/current-time queries, and seeking within the embedded player. It does not specify a caller's raw media requests, SABR bootstrap, representation identifiers, UMP response semantics, or segment assembly.
-- Google's [Live Streaming API implementation guide](https://developers.google.com/youtube/data/live/guides/implementation/broadcasts-and-streams) documents broadcast creation, stream configuration, binding, and state transitions. It describes publisher-side stream ingestion, not a viewer-side SABR/UMP service contract.
+- Google's [Live Streaming API implementation guide](https://developers.google.com/youtube/data/live/guides/implementation/broadcasts-and-streams) documents broadcast creation, stream configuration, binding, and state transitions. Inference: because the guide covers publisher-side broadcast creation and ingestion settings, it does not define the viewer-side SABR/UMP service contract.
 - The public-domain [UMP framing document](https://github.com/gsuberland/UMP_Format/blob/main/UMP_Format.md) is used only for the limited type/length/payload framing described above. Its framing facts do not define the service request contract; the existing discrepancies and lack of independent interoperability fixtures remain.
 
 This is a bounded review of the sources above as checked on 2026-11-11. It is not a claim that no other private or public material exists. No InnerTubeX, YouTube.js, NewPipeExtractor, or other extractor implementation source was inspected or used.
