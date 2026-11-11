@@ -17,6 +17,32 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class EngineStateTest {
+
+    @Test
+    fun playerRejectionReasonIsSanitizedBeforeItReachesCallers() = runTest {
+        val player = """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"Cookie: synthetic-cookie; https://rr1.googlevideo.com/videoplayback?pot=synthetic-token"}}"""
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                "/youtubei/v1/player" -> respond(player, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        })
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            val failure = assertFailsWith<IllegalStateException> {
+                engine.extract(VIDEO_ID, 128, setOf("TVHTML5", "WEB"), false, false)
+            }
+            val message = failure.message.orEmpty()
+            assertFalse("synthetic-cookie" in message)
+            assertFalse("synthetic-token" in message)
+            assertFalse("https://" in message)
+            assertTrue("[credential removed]" in message)
+            assertTrue("[link removed]" in message)
+        } finally {
+            client.close()
+        }
+    }
     @Test
     fun refusalForgetsUrlAndExpiresAfterTenMinutes() = runTestEngine {
         val first = engine.extract(VIDEO_ID, 128, SKIP, false, false)

@@ -586,7 +586,7 @@ internal class ExcorEngine(
             }
         }
         ensureSessionCurrent(epoch)
-        if (playabilityReason != null) throw IllegalStateException("Excor $playabilityReason for video $videoId")
+        if (playabilityReason != null) throw IllegalStateException("Excor ${safePlaybackReason(playabilityReason)} for video $videoId")
         return null
     }
 
