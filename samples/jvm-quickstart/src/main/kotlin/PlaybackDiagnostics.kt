@@ -338,7 +338,7 @@ internal fun safeRequestHeaders(input: Map<String, String>): Map<String, String>
 internal fun isValidRange(value: String): Boolean {
     if (value.length > 64) return false
     val match = Regex("^bytes=(?:([0-9]{1,20})-([0-9]{0,20})|-([0-9]{1,20}))$").matchEntire(value) ?: return false
-    val suffixLength = match.groupValues[3].takeIf(String::isNotEmpty)?.toLongOrNull()
+    val suffixLength = match.groupValues[3].takeIf { it.isNotEmpty() }?.toLongOrNull()
     if (suffixLength != null) return suffixLength > 0
     val start = match.groupValues[1].toLongOrNull() ?: return false
     val end = match.groupValues[2].takeIf(String::isNotEmpty)?.toLongOrNull()
