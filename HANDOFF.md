@@ -2,20 +2,21 @@
 
 Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
-## Current state — 2026-11-11 (verified 2026-11-11 11:58:07 UTC)
+## Current state — 2026-11-11 (verified 2026-11-11 12:58:04 UTC)
 
-- Latest code checkpoint: PR #105 merged as `860983bf736316d584401f46c474f5d7a8581254`. Exact-head CI passed all six supported-target jobs for PR #105 (run `43014757593`). Post-merge main CI run `43016170529` had started before this checkpoint.
-- Readiness remains **53/100; release NO-GO**. The score refresh for main `860983b` is in progress. G6 remains blocked at 0/20; PR #105 does not earn readiness points.
-- Issue #77 is closed after the deterministic acceptance checklist passed across PRs #80–82, #87 and #102. G8 remains partial because owner-run live fault injection is unverified.
+- Latest code checkpoint: PR #106 merged as `61de79b04ff27d77d9ecba967007688bb06e092e`. Exact head `54585df2e3bf688181c0e2a8b3da3b5f2713499c` passed all six supported-target CI jobs in run [43022206848](https://github.com/bxanedot/eXcor/actions/runs/43022206848). Its regression proves newline and credential-shaped exclusion inputs do not enter diagnostic logs.
+- Readiness remains **53/100; release NO-GO**. The score refresh for merge commit `61de79b` records post-merge main CI run `43024549047` as queued at this checkpoint. G6 remains blocked at 0/20; PR #106 earns no score points.
+- Issue #77 is closed after the deterministic acceptance checklist passed. G8 remains partial because owner-run live fault injection is unverified.
 - **G4/G5:** partial. Issue #78 remains open and has no owner-run authorized playback/cipher results.
 - **G6:** blocked, SABR/UMP playback 0/20. No network negotiation, playable media, full decode or seek evidence exists.
-- **G12:** partial. PR #103 keeps session cookies and visitor IDs off media requests; PR #104 excludes authorized catalog responses from the URL cache; PR #105 redacts visitor IDs from playback diagnostics. Signed-in playback and the broader release-security audit remain unverified.
+- **G12:** partial. PRs #103–#106 harden media credential isolation, authenticated-response caching, playback-reason redaction and exclusion diagnostics. Signed-in playback and the broader release-security audit remain unverified.
 - **G10/G11:** partial. Remote publishing is unauthorized; reproducible black-box comparison remains incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 
 ## Next action
 
 Continue the broader security review and track issue #78's owner-authorized playback matrix. Keep G4/G5/G6 unchanged until independently repeatable, owner-authorized playback evidence exists. Preserve the Apache-2.0 clean-room boundary.
+
 ## Historical handoff (written 2026-11-03)
 
 **State:** `main` is at the merge of #67. Everything from the cloud sessions is merged (#64–#67); no PR of theirs is open except, possibly, the one that adds this section. If it's still open, merge it once CI is green. Both cloud work branches (`claude/clever-curie-tyaxqs`, `ccr-f49a6d1e-6h9xd0`) are done; start a new branch.
