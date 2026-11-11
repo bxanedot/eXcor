@@ -12,22 +12,20 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
 
-## Current verified checkpoint — 2026-11-11 09:09 UTC
+## Current verified checkpoint — 2026-11-11 10:18 UTC
 
-**Main:** `3530d2c9245f8b1b4fb72ead4757bca84d9fd477`. PR #99 refreshed the handoff and UMP decision record; PR #100 bounded playback-profile exclusion memory. Both exact-head CI runs passed all six supported-target jobs.
+**Main at checkpoint:** source PR #102 merged as `cfafb3aa5a439465030e784f24b0400b600578a5`; the release-gate evidence update is at `9c7e8df9a76f0cbbf65d31c8d10b42dc1ede5750`. PR #102 exact-head run [42999742743](https://github.com/bxanedot/eXcor/actions/runs/42999742743) passed all six supported-target jobs.
 
-PR #96 (`42980593554`), PR #97 (`42981433312`), PR #99 (`42988009435`) and PR #100 (`42989626778`) passed all six jobs at their exact heads. Main CI for `a23278b` also passed all six jobs in run `42985652336`. Main CI and the score refresh after merge `3530d2c` are pending verification.
+**Readiness remains 53/100; release NO-GO.** The score report for `9c7e8df` keeps G6 blocked at 0/20. This change adds regression coverage for bounded refusal-profile memory; it does not add live playback or SABR evidence. A new main CI and score refresh will follow this documentation checkpoint.
 
-**Last confirmed readiness: 53/100. Release: NO-GO.** Score report `42985652202` names main `a23278b`, keeps G6 blocked at 0/20, and records CI as `in_progress`. This is the last confirmed report, not a refreshed score for `3530d2c`.
+- **Issue #77:** closed after the deterministic retry, transport, session, diagnostic-redaction and bounded exclusion-cache acceptance checks passed. PRs #80–82, #87 and #102 hold the synthetic coverage.
+- **G4/G5:** partial. Issue #78 remains open with no owner-run authorized playback/cipher matrix results.
+- **G6:** blocked, SABR/UMP playback 0/20. No network transport, playable SABR media, full decode or seek evidence.
+- **G8/G12:** partial. Synthetic bounded refusal-cache and retry/session/security coverage is recorded; owner-run live fault injection and broader release-security evidence remain.
+- **G10/G11:** partial. Remote publishing remains unauthorized; reproducible black-box comparison is incomplete.
+- No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used.
 
-- **G4/G5:** partial. Owner-run player/cipher, repeatable multi-video playback, decode and seek evidence remains incomplete. Issue #78 has no owner results.
-- **G6:** blocked, SABR/UMP playback 0/20. Issue #79 is closed with a NO-GO decision for implementation in this release track. Its source review, evidence gaps and reopening criteria are in `docs/UMP_FRAMING_RESEARCH.md`.
-- **G8/G12:** partial. The exclusion registry now globally prunes expired entries and is bounded to 256 videos, 16 profiles per video, and 128 characters per key. Owner-run live fault verification and broader release-security evidence remain.
-- **G10/G11:** partial. Remote publishing is unauthorized; a reproducible black-box comparison has not been completed.
-- No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
-
-**Next:** verify the CI and score refresh for main `3530d2c`. Keep issue #78's playback matrix on the owner's authorized device/network. Reopen SABR implementation work only when the independently usable contract, synthetic vectors, hard bounds and owner-authorized audio/video decode-and-seek evidence in `docs/UMP_FRAMING_RESEARCH.md` exist. Do not upgrade gates based on framing, documentation, or CI alone.
-
+**Next:** continue from issue #78 and the current release gates. Do not promote G4/G5/G6 based on synthetic tests, docs or CI alone. Preserve the clean-room boundary and use only the owner's authorized device/network for live playback evidence.
 ## Release gates
 
 | Gate | Status | Note |
@@ -39,7 +37,7 @@ PR #96 (`42980593554`), PR #97 (`42981433312`), PR #99 (`42988009435`) and PR #1
 | G5 Streaming | Partial | Audio and video extraction, full ffmpeg decode and seek verified for a video YouTube serves here (video at 480p and 1080p, muxed with its audio); most videos are bot-checked |
 | G6 SABR/UMP | Blocked | Offline framing, response assembly and regression tests exist; SABR network/playback transport is absent. Responses here carry direct URLs that play |
 | G7 YouTube Music | Passing | Songs and albums verified live on the owner's network (2026-11-03); cloud containers don't get them |
-| G8 Reliability | Partial | Typed failures after bounded retries, WARN diagnostics; no live fault injection |
+| G8 Reliability | Partial | Typed failures, bounded retry/session behavior and exclusion-cache cap/recency regression tests; live fault injection remains unverified |
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
 | G10 Release packaging | Partial | Local publish works; no remote release is authorized |
 | G11 Competitive analysis | Partial | InnerTubeX from its README; YouTube.js and NewPipeExtractor document only platforms, services and installation |

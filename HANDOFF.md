@@ -2,17 +2,19 @@
 
 Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
-## Current state — 2026-11-11 (verified 2026-11-11 09:09 UTC)
+## Current state — 2026-11-11 (verified 2026-11-11 10:18 UTC)
 
-- Main is `3530d2c9245f8b1b4fb72ead4757bca84d9fd477`. PR #96, #97, #99 and #100 are merged. PR #99 refreshed the checkpoint and UMP decision wording; PR #100 bounded playback-profile exclusion memory.
-- Exact-head CI passed all six supported-target jobs for PR #96 (run `42980593554`), PR #97 (`42981433312`), PR #99 (`42988009435`) and PR #100 (`42989626778`). Main CI for `a23278b` passed all six jobs in run `42985652336`. Main CI and the score refresh for `3530d2c` are pending verification.
-- The last confirmed score is **53/100; release NO-GO**. Report `42985652202` names main `a23278b`, G6 blocked at 0/20, and CI `in_progress`. Do not treat it as the refreshed score for `3530d2c`.
-- **G4/G5:** partial. Owner-run player/cipher, repeatable multi-video playback, decode and seek evidence remains incomplete. Issue #78 still has the prepared protocol but no owner results.
-- **G6:** blocked, SABR/UMP playback 0/20. Issue #79 is closed with a NO-GO decision for a network adapter in this release track. The decision record and reopening criteria are in `docs/UMP_FRAMING_RESEARCH.md`; no transport negotiation, playable media, decode or seek evidence exists.
-- **G8/G12:** partial. The exclusion registry now prunes expired entries globally and is bounded to 256 videos, 16 profiles per video, and 128 characters per key. Owner-run live fault verification and broader release-security evidence remain.
-- **G10/G11:** partial. Remote publishing is unauthorized; a reproducible black-box comparison has not been completed.
+- Main at checkpoint: source PR #102 merged as `cfafb3aa5a439465030e784f24b0400b600578a5`; G8 evidence update at `9c7e8df9a76f0cbbf65d31c8d10b42dc1ede5750`. PR #102 exact-head run [42999742743](https://github.com/bxanedot/eXcor/actions/runs/42999742743) passed all six supported-target jobs.
+- The last score report for main `9c7e8df` is **53/100; release NO-GO**, with G6 blocked at 0/20. This change does not qualify for score credit; a new main CI and score refresh will follow this documentation checkpoint.
+- Issue #77 is closed after the deterministic acceptance checklist passed across PRs #80–82, #87 and #102. G8 remains partial because owner-run live fault injection is unverified. G12 remains partial pending a broader release-security audit.
+- **G4/G5:** partial. Issue #78 remains open and has no owner-run authorized playback/cipher results.
+- **G6:** blocked, SABR/UMP playback 0/20. No network negotiation, playable media, full decode or seek evidence exists.
+- **G10/G11:** partial. Remote publishing is unauthorized; reproducible black-box comparison remains incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 
+## Next action
+
+Continue from issue #78 and the release gates. Keep G4/G5/G6 unchanged until independently repeatable, owner-authorized playback evidence exists. Preserve the Apache-2.0 clean-room boundary.
 ## Historical handoff (written 2026-11-03)
 
 **State:** `main` is at the merge of #67. Everything from the cloud sessions is merged (#64–#67); no PR of theirs is open except, possibly, the one that adds this section. If it's still open, merge it once CI is green. Both cloud work branches (`claude/clever-curie-tyaxqs`, `ccr-f49a6d1e-6h9xd0`) are done; start a new branch.
