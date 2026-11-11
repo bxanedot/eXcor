@@ -67,7 +67,9 @@ def calculate(evidence: dict, gate_file: dict, root: Path) -> dict:
             if not refs:
                 raise EvidenceError(f"Verified criterion needs proof: {ident}")
             for ref in refs:
-                if ref.startswith("/") or ".." in Path(ref).parts or not (root / ref).is_file():
+                if (not ref or Path(ref).is_absolute() or ".." in Path(ref).parts
+                        or not (root / ref).resolve().is_relative_to(root.resolve())
+                        or not (root / ref).is_file()):
                     raise EvidenceError(f"Missing or unsafe proof for {ident}: {ref}")
         groups[group]["allocated"] += points
         earned = points if state == "verified" else 0
