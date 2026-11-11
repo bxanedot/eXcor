@@ -23,7 +23,11 @@ data class ExcorYouTubeSearchPage(
     val shorts: List<ExcorYouTubePlaylistVideo> = emptyList(),
     /** YouTube's filter dialog for this query, as YouTube offers it after the filters already applied. */
     val filters: List<ExcorYouTubeSearchFilter> = emptyList(),
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeSearchPage(videos=${videos.size}, channels=${channels.size}, playlists=${playlists.size}, " +
+                "shorts=${shorts.size}, filters=${filters.size}, continuation=${continuation != null})"
+}
 
 /**
  * One option from YouTube's search filter dialog, such as group "Type", label "Channels". Pass [params] to
@@ -49,6 +53,9 @@ data class ExcorYouTubeVideoResult(
 ) {
     /** The result as a music track, read the same way as [ExcorVideoInfo.asMusicTrack]. */
     fun asMusicTrack(): ExcorMusicTrack = youtubeMusicTrack(videoId, title, channelName, channelId, durationSeconds, thumbnails)
+    override fun toString(): String =
+            "ExcorYouTubeSearchFilter(group=$group, label=$label, params=${params != null}, selected=$selected, disabled=$disabled)"
+
 }
 
 data class ExcorYouTubeChannelResult(

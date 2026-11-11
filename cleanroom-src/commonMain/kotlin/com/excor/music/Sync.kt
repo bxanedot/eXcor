@@ -56,6 +56,16 @@ data class ExcorSyncState(
             ExcorSyncState(text("snapshot"), list("keys"), text("resume"), list("partial"), text("partialSnapshot"))
         }.getOrNull()
     }
+    override fun toString(): String =
+            "ExcorSyncEntry(key=present, track=${track != null}, addedAt=${addedAt != null})"
+
+    override fun toString(): String =
+            "ExcorSyncPage(entries=${entries.size}, next=${next != null}, snapshot=${snapshot != null})"
+
+    override fun toString(): String =
+            "ExcorSyncState(snapshot=${snapshot != null}, keys=${keys.size}, resumeCursor=${resumeCursor != null}, " +
+                "partialKeys=${partialKeys.size}, partialSnapshot=${partialSnapshot != null})"
+
 }
 
 data class ExcorSyncResult(
@@ -71,7 +81,11 @@ data class ExcorSyncResult(
     val pagesFetched: Int,
     /** Why the sync stopped early; the state then holds the resume point. */
     val error: Throwable? = null,
-)
+) {
+    override fun toString(): String =
+            "ExcorSyncResult(unchanged=$unchanged, added=${added.size}, removed=${removed.size}, moved=${moved.size}, " +
+                "duplicates=${duplicates.size}, complete=$complete, pagesFetched=$pagesFetched, error=${error != null})"
+}
 
 data class ExcorRetryPolicy(val maxAttempts: Int = 3, val initialDelayMs: Long = 500, val maxDelayMs: Long = 8_000)
 

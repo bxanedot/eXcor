@@ -38,7 +38,11 @@ data class ExcorYouTubeMusicItem(
     val subtitle: String? = null,
     val musicVideoType: String? = null,
     val thumbnails: List<ExcorArtwork> = emptyList(),
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicItem(type=$type, videoId=${videoId != null}, browseId=${browseId != null}, " +
+                "playlistId=${playlistId != null}, artists=${artists.size})"
+}
 
 /**
  * A YouTube Music search page. [filters] are YouTube Music's own filter chips for this query, with the params to pass
@@ -48,7 +52,10 @@ data class ExcorYouTubeMusicSearchPage(
     val items: List<ExcorYouTubeMusicItem>,
     val filters: List<ExcorYouTubeSearchFilter>,
     val continuation: String?,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicSearchPage(items=${items.size}, filters=${filters.size}, continuation=${continuation != null})"
+}
 
 /** A titled shelf of an artist page, such as Videos or Playlists; [moreBrowseId] opens its full list. */
 data class ExcorYouTubeMusicShelf(val title: String, val items: List<ExcorYouTubeMusicItem>, val moreBrowseId: String?)
@@ -65,7 +72,14 @@ data class ExcorYouTubeMusicArtist(
     val shufflePlaylistId: String?,
     val shelves: List<ExcorYouTubeMusicShelf>,
     val thumbnails: List<ExcorArtwork>,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicShelf(items=${items.size}, more=${moreBrowseId != null})"
+    override fun toString(): String =
+            "ExcorYouTubeMusicArtist(shelves=${shelves.size}, radioAvailable=${radioPlaylistId != null}, " +
+                "shuffleAvailable=${shufflePlaylistId != null}, thumbnails=${thumbnails.size})"
+
+}
 
 /** A YouTube Music playlist page; [continuation] gives the next tracks when the playlist has more. */
 data class ExcorYouTubeMusicPlaylist(
@@ -76,7 +90,10 @@ data class ExcorYouTubeMusicPlaylist(
     val secondSubtitle: String?,
     val tracks: List<ExcorYouTubeMusicItem>,
     val continuation: String?,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicPlaylist(tracks=${tracks.size}, continuation=${continuation != null})"
+}
 
 /** A window of a YouTube Music radio or watch queue; it does not end, so [continuation] gives the next window. */
 data class ExcorYouTubeMusicQueue(val playlistId: String?, val tracks: List<ExcorYouTubeMusicItem>, val continuation: String?)
@@ -327,7 +344,10 @@ private fun itemOf(
     duration: Long?,
     subtitle: String?,
     thumbnails: List<ExcorArtwork>,
-): ExcorYouTubeMusicItem {
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicQueue(tracks=${tracks.size}, continuation=${continuation != null})"
+}: ExcorYouTubeMusicItem {
     val pageType = browse?.path("browseEndpointContextSupportedConfigs", "browseEndpointContextMusicConfig", "pageType")?.let(::stringOf)
     val type = when {
         videoId != null && browse == null -> when (musicVideoType) {

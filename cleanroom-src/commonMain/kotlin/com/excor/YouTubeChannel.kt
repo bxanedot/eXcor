@@ -33,7 +33,11 @@ data class ExcorYouTubeChannel(
     val playlists: List<ExcorYouTubePlaylistResult> = emptyList(),
     /** The channel's posts, filled when the Posts tab was asked for. */
     val posts: List<ExcorYouTubePost> = emptyList(),
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeChannel(channelId=present, tabs=${tabs.size}, videos=${videos.size}, " +
+                "playlists=${playlists.size}, posts=${posts.size}, continuation=${continuation != null})"
+}
 
 /** A channel post. [likesText] is YouTube's rounded display text; [images] holds the largest size of each image. */
 data class ExcorYouTubePost(
