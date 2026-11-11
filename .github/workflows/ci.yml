@@ -30,6 +30,8 @@ jobs:
       # build does), then build a standalone consumer that follows the README's installation steps.
       - run: ./gradlew $GRADLE_ARGS publishToMavenLocal
       - run: ./gradlew $GRADLE_ARGS -p samples/jvm-quickstart build
+      - name: Build and test the standalone eXcor comparison adapter
+        run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/excor-jvm build
       # Known vulnerabilities (OSV) in what ships: the published variants' runtime dependencies fail the build. Build
       # tooling (Android lint) and test-only dependencies are reported without failing. The lockfile exists only for
       # this step; normal builds don't lock.

@@ -97,6 +97,8 @@ The 2026-11-11 public API feasibility review in `docs/BLACK_BOX_COMPARISON_RESEA
 
 The dependency-free report validator in `samples/black-box-comparison/` now enforces the sanitized sample contract, preserves blocked/unsupported/failure outcomes, and calculates p50/p95 only within equivalent adapter, lane, phase and environment groups. CI covers its synthetic input validation. This does not run or compare any extractor: separate public-API adapters and owner-run measurements are still required; G11 remains partial.
 
-**Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
+The standalone `samples/black-box-comparison/excor-jvm/` adapter now exercises the published eXcor JVM API in a separate process. It measures metadata, extraction and a capped initial range read, with request counts and sanitized JSON output; its CI build and synthetic tests make no YouTube requests. It deliberately leaves full decode, seek and process startup unmeasured, and does not include any competitor dependency. InnerTubeX, YouTube.js and NewPipe public-API adapters plus matched owner-run samples remain outstanding; G11 remains partial.
+
+**Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78 and build the remaining public-API comparator adapters as separate processes. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
 References: HANDOFF.md, EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.
