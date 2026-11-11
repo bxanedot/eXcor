@@ -70,10 +70,10 @@ internal class ExcorEngine(
     fun headersFor(url: String): Map<String, String>? = state.value.remembered[url]?.headers
 
     fun exclude(videoId: String, profileId: String) {
-        val expiresAt = host.nowMs() + EXCLUSION_MS
+        if (videoId.length !in 1..MAX_EXCLUSION_KEY_LENGTH || profileId.length !in 1..MAX_EXCLUSION_KEY_LENGTH) return
+        val now = host.nowMs()
         state.update { old ->
-            val profiles = old.exclusions[videoId].orEmpty() + (profileId to expiresAt)
-            old.copy(exclusions = old.exclusions + (videoId to profiles))
+            old.copy(exclusions = recordExclusion(old.exclusions, videoId, profileId, now))
         }
         log(ExcorLogLevel.WARN, "excluded profile $profileId for video $videoId for ten minutes", videoId)
     }
@@ -83,11 +83,9 @@ internal class ExcorEngine(
         while (found == null) {
             val old = state.value
             val current = old.remembered[url] ?: return null
-            val profiles = old.exclusions[current.videoId].orEmpty() +
-                (current.profileId to (host.nowMs() + EXCLUSION_MS))
             val next = old.copy(
                 remembered = old.remembered - url,
-                exclusions = old.exclusions + (current.videoId to profiles),
+                exclusions = recordExclusion(old.exclusions, current.videoId, current.profileId, host.nowMs()),
                 playerData = emptyMap(),
             )
             if (state.compareAndSet(old, next)) found = current
@@ -852,11 +850,54 @@ internal class ExcorEngine(
         val now = host.nowMs()
         var active = emptySet<String>()
         state.update { old ->
-            val profiles = old.exclusions[videoId].orEmpty().filterValues { it > now }
-            active = profiles.keys
-            old.copy(exclusions = if (profiles.isEmpty()) old.exclusions - videoId else old.exclusions + (videoId to profiles))
+            val exclusions = pruneExclusions(old.exclusions, now)
+            active = exclusions[videoId]?.keys.orEmpty()
+            old.copy(exclusions = exclusions)
         }
         return active.mapTo(mutableSetOf()) { it.lowercase() }
+    }
+
+    private fun pruneExclusions(
+        exclusions: Map<String, Map<String, Long>>,
+        now: Long,
+    ): Map<String, Map<String, Long>> {
+        val active = linkedMapOf<String, Map<String, Long>>()
+        for ((videoId, profiles) in exclusions) {
+            val unexpired = linkedMapOf<String, Long>()
+            for ((profileId, expiresAt) in profiles) {
+                if (expiresAt > now) unexpired[profileId] = expiresAt
+            }
+            if (unexpired.isNotEmpty()) active[videoId] = unexpired
+        }
+        return active
+    }
+
+    private fun recordExclusion(
+        exclusions: Map<String, Map<String, Long>>,
+        videoId: String,
+        profileId: String,
+        now: Long,
+    ): Map<String, Map<String, Long>> {
+        val active = pruneExclusions(exclusions, now).toMutableMap()
+        if (videoId.length !in 1..MAX_EXCLUSION_KEY_LENGTH || profileId.length !in 1..MAX_EXCLUSION_KEY_LENGTH) {
+            return active
+        }
+
+        val profiles = linkedMapOf<String, Long>()
+        active.remove(videoId)?.forEach { (id, expiresAt) -> profiles[id] = expiresAt }
+        profiles.remove(profileId)
+        profiles[profileId] = now + EXCLUSION_MS
+        while (profiles.size > MAX_EXCLUDED_PROFILES_PER_VIDEO) {
+            profiles.remove(profiles.keys.first())
+        }
+
+        val bounded = linkedMapOf<String, Map<String, Long>>()
+        active.forEach { (id, entries) -> bounded[id] = entries }
+        bounded[videoId] = profiles
+        while (bounded.size > MAX_EXCLUDED_VIDEOS) {
+            bounded.remove(bounded.keys.first())
+        }
+        return bounded
     }
 
     /** A stream created under a previous session must never repopulate the current session's cache. */
@@ -1010,6 +1051,9 @@ internal class ExcorEngine(
         val RETRYABLE_STATUSES = setOf(429, 500, 502, 503, 504)
         const val MAX_CIPHER_LENGTH = 16_384
         const val EXCLUSION_MS = 10 * 60 * 1000L
+        const val MAX_EXCLUDED_VIDEOS = 256
+        const val MAX_EXCLUDED_PROFILES_PER_VIDEO = 16
+        const val MAX_EXCLUSION_KEY_LENGTH = 128
         const val MAX_REMEMBERED_URLS = 64
         const val MAX_MEMORY_PLAYER_DATA = 3
     }
