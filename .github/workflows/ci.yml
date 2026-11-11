@@ -2,6 +2,9 @@ name: CI
 
 on:
   push:
+    # Hourly scoreboard JSON commits are not source changes; do not rebuild every platform.
+    branches-ignore:
+      - automation/excor-competitiveness
   pull_request:
 
 env:
@@ -12,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: Check evidence score contract
+        run: python3 -m unittest discover -s scripts/tests -p test_competitiveness_score.py -v
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
