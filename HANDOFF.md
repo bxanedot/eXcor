@@ -4,9 +4,9 @@ Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next s
 
 ## Current state — 2026-11-11
 
-- `main` is `cdc9ad86ca51bdf6ab8d85540c1e3437d1e32bab` after PR #90. Its exact CI run `42944572854` passed all six supported-target jobs.
-- PR #87 remains draft at `8a99c270146b9152fc11942bde62ee044461bbc8`, based on current main `b1f8aff942038270070245930ff77af689f0e76e`. Its exact-head run `42954529496` is queued; the earlier run is stale. Keep it unmerged until all six checks pass on this exact head, then review and merge under the owner's standing authorization.
-- G6 remains blocked: eXcor has offline-only UMP framing and HTTP-response assembly, but no SABR request/stream transport, network playback, full decode or seek evidence. The public-domain UMP description covers framing/continuations, not the complete SABR service contract.
+- `main` is `0abf37d343772f4c2ac4162e2a04552afcb8ae77` after PR #91 merged. PR-head run `42954594244` passed all six supported-target jobs; current main CI run `42957741272` is in progress.
+- PR #87 remains draft at `4f8456f53555ec7c87f9747794a4012fe8d1052a`, based on current main `0abf37d343772f4c2ac4162e2a04552afcb8ae77`. Its exact-head run `42957973155` is in progress (macOS queued). Keep it unmerged until all six checks pass on this exact head, then review and merge under the owner's standing authorization.
+- G6 remains blocked: eXcor has offline-only UMP framing, HTTP-response assembly and synthetic regression tests (PR #91), but no SABR request/stream transport, network playback, full decode or seek evidence. The public-domain UMP description covers framing/continuations, not the complete SABR service contract.
 - The owner playback matrix in issue #78 still has no results. Read `EXCOR_PROGRESS.md` and `docs/release-gates.json` before changing any readiness claims. Score remains 53/100; release remains NO-GO.
 
 ## Historical handoff (written 2026-11-03)
@@ -138,7 +138,7 @@ Each push makes two runs (push and PR). One fully green run on the head commit i
 | G1 preserved, G2 build, G3 InnerTube, G7 YouTube Music, G9 usability | Passing | G7: songs and albums were withheld from the cloud network, so they were never observed live |
 | G4 player compatibility | Partial | The VISIONOS path is verified. The player-script path (signature and n) is untested live, because the watch page was captcha'd |
 | G5 streaming | Partial | Audio, video (480p and 1080p) and the format list are verified for `dQw4w9WgXcQ`; most other videos were bot-checked from the cloud |
-| G6 SABR/UMP | Blocked | Not implemented. There is no independent spec, and the direct URLs play |
+| G6 SABR/UMP | Blocked | Offline framing and response assembly exist; there is no complete independent SABR service contract or network/playback transport, and the direct URLs play |
 | G8 reliability | Partial | Typed failures, bounded retries, WARN diagnostics; no live fault injection |
 | G10 release packaging | Partial | Local publish works; no remote release is authorized |
 | G11 competitive analysis | Partial | `docs/COMPETITOR_MATRIX.md` |
@@ -170,7 +170,7 @@ Each push makes two runs (push and PR). One fully green run on the head commit i
    - whether the downloads work on the owner's phone: their network bot-checks playback, so only a video YouTube serves there can be downloaded;
    - the bot check itself: a signed-in session or a host-supplied PO token (`TokenProvider`) are the legitimate routes. Ask the owner before building either; never bypass the check.
    - the Windows EXE by hand: CI packages and self-tests it, and the flow was exercised under Xvfb on Linux.
-3. **SABR/UMP (G6)** stays blocked unless a normal network serves responses with no direct URLs, or an independent spec appears. Don't derive it from GPL code.
+3. **SABR/UMP (G6)** stays blocked until an independently verifiable SABR service contract or authorized responses without direct URLs are available. Don't derive it from GPL code.
 4. **G10:** a remote release only on the owner's say-so.
 
 Done by the second cloud session: CI actions on Node 24 (checkout v7, setup-java v6, upload-artifact v7; #64), the `docs/FEATURE_MATRIX.md` header, notes in `QUESTIONS.md` on the removed apps (`CODEX_HANDOFF.md` already carried one), and a `musicSearch` fix: a top result card that plays a video was typed `UNKNOWN` with no video ID.

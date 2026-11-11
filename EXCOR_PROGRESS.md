@@ -21,7 +21,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G3 InnerTube operations | Passing | Live-verified |
 | G4 Player compatibility | Partial | VISIONOS path verified live; on the owner's network the live player script now loads and solves n and sig, but YouTube serves no video to TVHTML5 there |
 | G5 Streaming | Partial | Audio and video extraction, full ffmpeg decode and seek verified for a video YouTube serves here (video at 480p and 1080p, muxed with its audio); most videos are bot-checked |
-| G6 SABR/UMP | Blocked | Not implemented; responses here carry direct URLs that play |
+| G6 SABR/UMP | Blocked | Offline framing, response assembly and regression tests exist; SABR network/playback transport is absent. Responses here carry direct URLs that play |
 | G7 YouTube Music | Passing | Songs and albums verified live on the owner's network (2026-11-03); cloud containers don't get them |
 | G8 Reliability | Partial | Typed failures after bounded retries, WARN diagnostics; no live fault injection |
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
@@ -29,7 +29,7 @@ Finish the YouTube and YouTube Music surface that this environment can verify, k
 | G11 Competitive analysis | Partial | InnerTubeX from its README; YouTube.js and NewPipeExtractor document only platforms, services and installation |
 | G12 Security | Partial | CI OSV scan gates on shipped dependencies (clean); tooling and test findings are report-only |
 
-**Not a release candidate:** G6 (SABR/UMP) is not implemented. G4 and G5 are verified only for videos YouTube serves to this environment; most are bot-checked.
+**Not a release candidate:** SABR network negotiation and playback (G6) are not implemented. Offline framing and bounded assembly do not establish SABR parity. G4 and G5 are verified only for videos YouTube serves to this environment; most are bot-checked.
 
 ## Completed in this pass
 
@@ -122,7 +122,8 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 ## 2026-11-11 — merged UMP boundedness guard and current audit state
 
 - PR #90 merged as `cdc9ad86ca51bdf6ab8d85540c1e3437d1e32bab`; all six supported-target CI jobs passed in run `42944572854`. It rejects non-empty UMP parts that make zero payload-byte progress in a complete response and adds synthetic initial/continuation coverage. This is a boundedness rule, not evidence of SABR request handling or playback. G6 remains blocked; SABR/UMP playback is 0/20.
-- PR #87 remains a draft at head `8a99c270146b9152fc11942bde62ee044461bbc8`, based on current main `b1f8aff942038270070245930ff77af689f0e76e`. Its exact-head run `42954529496` is queued at this checkpoint; the older run is stale and is not counted. The security/diagnostic changes receive no score credit before merge.
+- PR #91 merged as `0abf37d343772f4c2ac4162e2a04552afcb8ae77` after all six supported-target CI jobs passed in run `42954594244`. It adds synthetic regression tests for continuation boundaries and multibyte UMP lengths only; there is no SABR transport or playback. G6 remains blocked; SABR/UMP playback is 0/20.
+- PR #87 remains a draft at head `4f8456f53555ec7c87f9747794a4012fe8d1052a`, based on main `0abf37d343772f4c2ac4162e2a04552afcb8ae77`. Exact-head run `42957973155` is in progress (macOS queued) at this checkpoint. The security/diagnostic changes receive no score credit before merge.
 - Issue #78 still has no owner-run playback result. No credentials, signed URLs, raw captures or bot-check bypasses were used.
 
 **Evidence-weighted readiness remains 53/100. Release remains NO-GO.**
