@@ -59,6 +59,7 @@ internal class ExcorEngine(
         state.update {
             it.copy(
                 sessionEpoch = it.sessionEpoch + 1,
+                exclusionSequence = 0,
                 remembered = emptyMap(),
                 exclusions = emptyMap(),
                 playerData = emptyMap(),
@@ -73,7 +74,11 @@ internal class ExcorEngine(
         if (videoId.length !in 1..MAX_EXCLUSION_KEY_LENGTH || profileId.length !in 1..MAX_EXCLUSION_KEY_LENGTH) return
         val now = host.nowMs()
         state.update { old ->
-            old.copy(exclusions = recordExclusion(old.exclusions, videoId, profileId, now))
+            val sequence = old.exclusionSequence + 1
+            old.copy(
+                exclusionSequence = sequence,
+                exclusions = recordExclusion(old.exclusions, videoId, profileId, now, sequence),
+            )
         }
         log(ExcorLogLevel.WARN, "excluded profile $profileId for video $videoId for ten minutes", videoId)
     }
@@ -83,9 +88,12 @@ internal class ExcorEngine(
         while (found == null) {
             val old = state.value
             val current = old.remembered[url] ?: return null
+            val now = host.nowMs()
+            val sequence = old.exclusionSequence + 1
             val next = old.copy(
+                exclusionSequence = sequence,
                 remembered = old.remembered - url,
-                exclusions = recordExclusion(old.exclusions, current.videoId, current.profileId, host.nowMs()),
+                exclusions = recordExclusion(old.exclusions, current.videoId, current.profileId, now, sequence),
                 playerData = emptyMap(),
             )
             if (state.compareAndSet(old, next)) found = current
@@ -851,56 +859,53 @@ internal class ExcorEngine(
         var active = emptySet<String>()
         state.update { old ->
             val exclusions = pruneExclusions(old.exclusions, now)
-            active = exclusions[videoId]?.keys.orEmpty()
+            active = exclusions[videoId]?.profiles?.keys.orEmpty()
             old.copy(exclusions = exclusions)
         }
         return active.mapTo(mutableSetOf()) { it.lowercase() }
     }
 
     private fun pruneExclusions(
-        exclusions: Map<String, Map<String, Long>>,
+        exclusions: Map<String, VideoExclusion>,
         now: Long,
-    ): Map<String, Map<String, Long>> {
-        val active = linkedMapOf<String, Map<String, Long>>()
-        for ((videoId, profiles) in exclusions) {
-            val unexpired = linkedMapOf<String, Long>()
-            for ((profileId, expiresAt) in profiles) {
-                if (expiresAt > now) unexpired[profileId] = expiresAt
+    ): Map<String, VideoExclusion> {
+        val active = linkedMapOf<String, VideoExclusion>()
+        for ((videoId, entry) in exclusions) {
+            val profiles = linkedMapOf<String, ProfileExclusion>()
+            for ((profileId, profile) in entry.profiles) {
+                if (profile.expiresAtMs > now) profiles[profileId] = profile
             }
-            if (unexpired.isNotEmpty()) active[videoId] = unexpired
+            if (profiles.isNotEmpty()) active[videoId] = entry.copy(profiles = profiles)
         }
         return active
     }
 
     private fun recordExclusion(
-        exclusions: Map<String, Map<String, Long>>,
+        exclusions: Map<String, VideoExclusion>,
         videoId: String,
         profileId: String,
         now: Long,
-    ): Map<String, Map<String, Long>> {
-        val active = linkedMapOf<String, Map<String, Long>>()
-        pruneExclusions(exclusions, now).forEach { (existingVideoId, profiles) ->
-            active[existingVideoId] = profiles
-        }
+        sequence: Long,
+    ): Map<String, VideoExclusion> {
+        val active = pruneExclusions(exclusions, now).toMutableMap()
         if (videoId.length !in 1..MAX_EXCLUSION_KEY_LENGTH || profileId.length !in 1..MAX_EXCLUSION_KEY_LENGTH) {
             return active
         }
 
-        val profiles = linkedMapOf<String, Long>()
-        active.remove(videoId)?.forEach { (id, expiresAt) -> profiles[id] = expiresAt }
-        profiles.remove(profileId)
-        profiles[profileId] = now + EXCLUSION_MS
+        val profiles = linkedMapOf<String, ProfileExclusion>()
+        active.remove(videoId)?.profiles?.forEach { (id, profile) -> profiles[id] = profile }
+        profiles[profileId] = ProfileExclusion(now + EXCLUSION_MS, sequence)
         while (profiles.size > MAX_EXCLUDED_PROFILES_PER_VIDEO) {
-            profiles.remove(profiles.keys.first())
+            val oldestProfile = profiles.minByOrNull { it.value.lastExcludedSequence }?.key ?: break
+            profiles.remove(oldestProfile)
         }
 
-        val bounded = linkedMapOf<String, Map<String, Long>>()
-        active.forEach { (id, entries) -> bounded[id] = entries }
-        bounded[videoId] = profiles
-        while (bounded.size > MAX_EXCLUDED_VIDEOS) {
-            bounded.remove(bounded.keys.first())
+        active[videoId] = VideoExclusion(profiles, sequence)
+        while (active.size > MAX_EXCLUDED_VIDEOS) {
+            val oldestVideo = active.minByOrNull { it.value.lastExcludedSequence }?.key ?: break
+            active.remove(oldestVideo)
         }
-        return bounded
+        return active
     }
 
     /** A stream created under a previous session must never repopulate the current session's cache. */
@@ -980,9 +985,20 @@ internal class ExcorEngine(
 
     private data class EngineState(
         val sessionEpoch: Long = 0,
+        val exclusionSequence: Long = 0,
         val remembered: Map<String, ExcorStream> = emptyMap(),
-        val exclusions: Map<String, Map<String, Long>> = emptyMap(),
+        val exclusions: Map<String, VideoExclusion> = emptyMap(),
         val playerData: Map<String, PlayerCacheEntry> = emptyMap(),
+    )
+
+    private data class ProfileExclusion(
+        val expiresAtMs: Long,
+        val lastExcludedSequence: Long,
+    )
+
+    private data class VideoExclusion(
+        val profiles: Map<String, ProfileExclusion>,
+        val lastExcludedSequence: Long,
     )
 
     private data class LoadedPlayer(
