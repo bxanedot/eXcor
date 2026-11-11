@@ -122,11 +122,11 @@ class PlayerModelsTest {
     fun redactsUrlsAndCredentialsInUntrustedPlayabilityText() {
         val response = assertNotNull(
             decodePlayerResponse(
-                """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"Visit https://rr1.googlevideo.com/videoplayback?sig=secret-url Cookie: SID=secret-cookie; visitorData=secret-visitor Authorization: Bearer secret-auth token=secret-token"}}""",
+                """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"Visit https://rr1.googlevideo.com/videoplayback?sig=secret-url Cookie: SID=secret-cookie; visitorData=secret-visitor; X-Goog-Visitor-Id: secret-visitor-id Authorization: Bearer secret-auth token=secret-token"}}""",
             ),
         )
         val safe = assertNotNull(response.playabilityReason)
-        listOf("secret-url", "secret-cookie", "secret-visitor", "secret-auth", "secret-token").forEach {
+        listOf("secret-url", "secret-cookie", "secret-visitor", "secret-visitor-id", "secret-auth", "secret-token").forEach {
             assertFalse(it in safe, "A playability reason exposed an untrusted value")
         }
         assertEquals("LOGIN_REQUIRED", response.playabilityStatus)

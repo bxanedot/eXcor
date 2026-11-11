@@ -2,7 +2,7 @@ package com.excor
 
 private val playbackReasonUrl = Regex("""(?i)(?:https?://|www\.)[^\s"'<>]+""")
 private val playbackReasonCredentials = Regex(
-    """(?i)\b(?:authorization|cookie|sapisid|po[_-]?token|visitor[_-]?data|signature|sig|token|api[_-]?key)\s*[:=]\s*(?:bearer\s+)?[^\s,;]+""",
+    """(?i)\b(?:authorization|cookie|sapisid|po[_-]?token|visitor[_-]?(?:data|id)|signature|sig|token|api[_-]?key)\s*[:=]\s*(?:bearer\s+)?[^\s,;]+""",
 )
 private val playbackReasonBearer = Regex("""(?i)\bbearer\s+[^\s,;]+""")
 
