@@ -46,8 +46,8 @@ class EngineStateTest {
 
     @Test
     fun exclusionDiagnosticsDoNotLogUntrustedArguments() = runTestEngine {
-        val videoId = "abcdefghijk\\nAuthorization: Bearer secret"
-        val profileId = "profile\\nCookie: secret"
+        val videoId = "abcdefghijk\nAuthorization: Bearer secret"
+        val profileId = "profile\nCookie: secret"
         engine.exclude(videoId, profileId)
 
         assertEquals(1, host.logs.size)
