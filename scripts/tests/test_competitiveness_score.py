@@ -7,7 +7,9 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from excor_readiness import calculate, EvidenceError, markdown
+from excor_readiness import calculate, EvidenceError, markdown, github_ci
+from unittest.mock import patch
+from io import BytesIO
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -17,6 +19,19 @@ class ReadinessScoreTest(unittest.TestCase):
     def setUpClass(cls):
         cls.rubric = json.loads((ROOT / "docs/competitiveness-evidence.json").read_text())
         cls.gates = json.loads((ROOT / "docs/release-gates.json").read_text())
+
+    def test_ci_rejects_matching_sha_from_non_main_branch(self):
+        sha = "a" * 40
+        payload = json.dumps({"workflow_runs": [
+            {"head_sha": sha, "event": "push", "head_branch": "other",
+             "status": "completed", "conclusion": "success", "run_number": 99},
+            {"head_sha": sha, "event": "push", "head_branch": "main",
+             "status": "completed", "conclusion": "failure", "run_number": 98},
+        ]}).encode()
+        response = BytesIO(payload)
+        with patch("excor_readiness.urlopen", return_value=response):
+            result = github_ci("example/repo", sha)
+        self.assertEqual("failure", result["conclusion"])
 
     def test_baseline_and_allocation(self):
         r = calculate(self.rubric, self.gates, ROOT)
