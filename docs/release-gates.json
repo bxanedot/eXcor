@@ -99,10 +99,10 @@
       "id": "G11",
       "name": "Competitive analysis",
       "status": "partial",
-      "evidence": "docs/COMPETITOR_MATRIX.md and docs/BLACK_BOX_COMPARISON_RESEARCH.md record public-documentation feasibility and version pins for eXcor, InnerTubeX, YouTube.js, and NewPipeExtractor without inspecting competitor implementation source. PR #117 adds an offline validator and JSONL/Markdown report aggregation; PR #118 adds a standalone eXcor JVM adapter using the published artifact, measuring metadata, extraction, and a bounded initial media read. No competitor adapters or matched comparative results are claimed.",
+      "evidence": "docs/COMPETITOR_MATRIX.md and docs/BLACK_BOX_COMPARISON_RESEARCH.md record public-documentation feasibility and version pins for eXcor, InnerTubeX, YouTube.js, and NewPipeExtractor without using or copying competitor implementation code. PR #117 adds an offline validator and JSONL/Markdown report aggregation; PR #118 adds a standalone eXcor JVM adapter using the published artifact; this branch adds a separate YouTube.js Node adapter using the pinned MIT package. InnerTubeX adapter work is in PR #120. The adapters measure extraction and a bounded initial media read only; no matched comparative results are claimed.",
       "command": null,
       "blockers": [
-        "InnerTubeX, YouTube.js, and NewPipeExtractor adapters and pinned-artifact verification remain outstanding; no matched owner-run comparative samples exist, including full decode and backward/forward seek measurements"
+        "Exact-head CI review for the YouTube.js adapter and InnerTubeX adapter PR #120 remain outstanding; NewPipeExtractor adapter work and matched owner-run samples also remain outstanding, including full decode and backward/forward seek measurements"
       ]
     },
     {
