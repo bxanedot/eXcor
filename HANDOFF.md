@@ -2,7 +2,14 @@
 
 Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
 
-## Start here (local session, written 2026-11-03 at the end of the second cloud session)
+## Current state — 2026-11-11
+
+- `main` is `cdc9ad86ca51bdf6ab8d85540c1e3437d1e32bab` after PR #90. Its exact CI run `42944572854` passed all six supported-target jobs.
+- PR #87 remains draft at `20dce490ad183b11f95084ccca1f9ffbe4db36e5`, based on that main commit. Run `42951256663` has five successful jobs; macOS is queued. Keep it unmerged until all six checks pass on the exact head, then review and merge under the owner's standing authorization.
+- G6 remains blocked: eXcor has offline-only UMP framing and HTTP-response assembly, but no SABR request/stream transport, network playback, full decode or seek evidence. The public-domain UMP description covers framing/continuations, not the complete SABR service contract.
+- The owner playback matrix in issue #78 still has no results. Read `EXCOR_PROGRESS.md` and `docs/release-gates.json` before changing any readiness claims. Score remains 53/100; release remains NO-GO.
+
+## Historical handoff (written 2026-11-03)
 
 **State:** `main` is at the merge of #67. Everything from the cloud sessions is merged (#64–#67); no PR of theirs is open except, possibly, the one that adds this section. If it's still open, merge it once CI is green. Both cloud work branches (`claude/clever-curie-tyaxqs`, `ccr-f49a6d1e-6h9xd0`) are done; start a new branch.
 
