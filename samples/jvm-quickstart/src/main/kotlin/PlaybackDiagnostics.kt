@@ -35,11 +35,9 @@ internal suspend fun runPlaybackDiagnostics(args: List<String>) {
         println("Metadata request failed; details suppressed.")
         return
     }
-    val status = info?.playabilityStatus
+    val status = classifyPlayabilityStatus(info?.playabilityStatus)
     if (status != null && status != "OK") {
-        val known = setOf("LOGIN_REQUIRED", "AGE_CHECK_REQUIRED", "CONTENT_CHECK_REQUIRED",
-            "UNPLAYABLE", "LIVE_STREAM_OFFLINE", "VIDEO_NOT_FOUND", "ERROR", "REQUIRES_AUTH")
-        println("YouTube did not offer playback (status=${if (status in known) status else "OTHER"}).")
+        println("YouTube did not offer playback (status=$status).")
         return
     }
     val stream = try {
@@ -337,11 +335,28 @@ internal fun safeRequestHeaders(input: Map<String, String>): Map<String, String>
     }
 }
 
-private fun isValidRange(value: String) =
-    value.length <= 64 && value.matches(Regex("^bytes=(?:[0-9]{1,20}-[0-9]{0,20}|-[0-9]{1,20})$"))
+internal fun isValidRange(value: String): Boolean {
+    if (value.length > 64) return false
+    val match = Regex("^bytes=(?:([0-9]{1,20})-([0-9]{0,20})|-([0-9]{1,20}))$").matchEntire(value) ?: return false
+    val suffixLength = match.groupValues[3].takeIf(String::isNotEmpty)?.toLongOrNull()
+    if (suffixLength != null) return suffixLength > 0
+    val start = match.groupValues[1].toLongOrNull() ?: return false
+    val end = match.groupValues[2].takeIf(String::isNotEmpty)?.toLongOrNull()
+    return end == null || start <= end
+}
 
-private fun parseRangeStart(value: String): Long? =
+internal fun parseRangeStart(value: String): Long? =
     if (isValidRange(value)) value.removePrefix("bytes=").substringBefore('-').toLongOrNull() else null
+
+internal fun classifyPlayabilityStatus(status: String?): String? {
+    if (status == null) return null
+    if (status == "OK") return status
+    val known = setOf(
+        "LOGIN_REQUIRED", "AGE_CHECK_REQUIRED", "CONTENT_CHECK_REQUIRED", "UNPLAYABLE",
+        "LIVE_STREAM_OFFLINE", "VIDEO_NOT_FOUND", "ERROR", "REQUIRES_AUTH",
+    )
+    return if (status in known) status else "OTHER"
+}
 
 private fun safeResponseHeaders(c: URLConnection, x: HttpExchange) {
     c.getHeaderField("Content-Type")?.substringBefore(';')?.trim()
