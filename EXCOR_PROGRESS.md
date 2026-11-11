@@ -12,21 +12,21 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
 
-## Current verified checkpoint — 2026-11-11 08:29 UTC
+## Current verified checkpoint — 2026-11-11 09:09 UTC
 
-**Main:** `a23278b8700ca2164d6c0c2ef9f71af28ac99674`. PR #96 and PR #97 are merged. PR #96 added a score refresh after main CI completes; PR #97 records the clean-room SABR/UMP no-go decision.
+**Main:** `3530d2c9245f8b1b4fb72ead4757bca84d9fd477`. PR #99 refreshed the handoff and UMP decision record; PR #100 bounded playback-profile exclusion memory. Both exact-head CI runs passed all six supported-target jobs.
 
-PR #96 exact-head CI run `42980593554` and PR #97 exact-head CI run `42981433312` passed all six supported-target jobs. Main CI after PR #96 passed all six jobs at `1ae193a61dbd673b2df20fb4a5e5c12a69a2cc77` (run `42982907219`). The main CI run for `a23278b` is in progress (run `42985652336`): Linux, Windows, preview, Android API 26 and Android API 36 passed; macOS is running.
+PR #96 (`42980593554`), PR #97 (`42981433312`), PR #99 (`42988009435`) and PR #100 (`42989626778`) passed all six jobs at their exact heads. Main CI for `a23278b` also passed all six jobs in run `42985652336`. Main CI and the score refresh after merge `3530d2c` are pending verification.
 
-**Evidence-weighted readiness: 53/100. Release: NO-GO.** The score report is not a playback-success percentage. The current report names main `a23278b`, keeps G6 blocked at 0/20, and records CI as `in_progress`. The post-CI workflow-run refresh is pending.
+**Last confirmed readiness: 53/100. Release: NO-GO.** Score report `42985652202` names main `a23278b`, keeps G6 blocked at 0/20, and records CI as `in_progress`. This is the last confirmed report, not a refreshed score for `3530d2c`.
 
 - **G4/G5:** partial. Owner-run player/cipher, repeatable multi-video playback, decode and seek evidence remains incomplete. Issue #78 has no owner results.
 - **G6:** blocked, SABR/UMP playback 0/20. Issue #79 is closed with a NO-GO decision for implementation in this release track. Its source review, evidence gaps and reopening criteria are in `docs/UMP_FRAMING_RESEARCH.md`.
-- **G8/G12:** partial. Synthetic reliability and redaction coverage is merged; owner-run live fault verification and broader release-security evidence remain.
+- **G8/G12:** partial. The exclusion registry now globally prunes expired entries and is bounded to 256 videos, 16 profiles per video, and 128 characters per key. Owner-run live fault verification and broader release-security evidence remain.
 - **G10/G11:** partial. Remote publishing is unauthorized; a reproducible black-box comparison has not been completed.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
 
-**Next:** continue issue #78's owner-operated playback matrix only on the owner's authorized device/network. Reopen SABR implementation work only when the independently usable contract, synthetic vectors, hard bounds and owner-authorized audio/video decode-and-seek evidence in `docs/UMP_FRAMING_RESEARCH.md` exist. Do not upgrade gates based on framing, documentation, or CI alone.
+**Next:** verify the CI and score refresh for main `3530d2c`. Keep issue #78's playback matrix on the owner's authorized device/network. Reopen SABR implementation work only when the independently usable contract, synthetic vectors, hard bounds and owner-authorized audio/video decode-and-seek evidence in `docs/UMP_FRAMING_RESEARCH.md` exist. Do not upgrade gates based on framing, documentation, or CI alone.
 
 ## Release gates
 
