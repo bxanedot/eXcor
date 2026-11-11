@@ -45,6 +45,30 @@ class EngineStateTest {
     }
 
     @Test
+    fun profileExclusionCacheEvictsTheOldestAfterSixteenProfiles() = runTestEngine {
+        engine.exclude(VIDEO_ID, "VISIONOS")
+        repeat(16) { engine.exclude(VIDEO_ID, "synthetic-profile-$it") }
+
+        assertNotNull(engine.extract(VIDEO_ID, 128, SKIP, false, false))
+        assertEquals(1, requests.player)
+    }
+
+    @Test
+    fun videoExclusionCacheKeepsRecentlyUsedVideosWithin256Entries() = runTestEngine {
+        fun syntheticVideoId(index: Int) = "x" + index.toString().padStart(10, '0')
+        val oldestVideoId = syntheticVideoId(0)
+
+        engine.exclude(VIDEO_ID, "VISIONOS")
+        repeat(255) { engine.exclude(syntheticVideoId(it), "VISIONOS") }
+        engine.exclude(VIDEO_ID, "VISIONOS")
+        engine.exclude(syntheticVideoId(255), "VISIONOS")
+
+        assertNotNull(engine.extract(oldestVideoId, 128, SKIP, false, false))
+        assertNull(engine.extract(VIDEO_ID, 128, SKIP, false, false))
+        assertEquals(1, requests.player)
+    }
+
+    @Test
     fun theSixtyFifthStreamClearsTheRememberedSet() = runTestEngine {
         var firstUrl: String? = null
         var lastUrl: String? = null
