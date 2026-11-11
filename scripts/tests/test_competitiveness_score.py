@@ -3,6 +3,7 @@ import copy
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -39,6 +40,25 @@ class ReadinessScoreTest(unittest.TestCase):
         rubric["criteria"][0]["evidence_paths"] = []
         with self.assertRaises(EvidenceError):
             calculate(rubric, self.gates, ROOT)
+
+    def test_verified_proof_symlink_cannot_escape_repository(self):
+        # A tracked-looking path must not point outside the checked-out tree.
+        with tempfile.TemporaryDirectory() as directory:
+            sandbox = Path(directory)
+            root = sandbox / "repo"
+            root.mkdir()
+            external = sandbox / "outside.txt"
+            external.write_text("not repository evidence")
+            try:
+                (root / "proof.txt").symlink_to(external)
+            except (OSError, NotImplementedError):
+                self.skipTest("Symlinks are unavailable on this platform")
+            rubric = copy.deepcopy(self.rubric)
+            for criterion in rubric["criteria"]:
+                if criterion["state"] == "verified":
+                    criterion["evidence_paths"] = ["proof.txt"]
+            with self.assertRaises(EvidenceError):
+                calculate(rubric, self.gates, root)
 
     def test_duplicate_criterion_rejected(self):
         rubric = copy.deepcopy(self.rubric)
