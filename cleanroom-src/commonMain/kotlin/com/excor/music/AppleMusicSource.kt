@@ -518,8 +518,19 @@ data class ExcorAppleMusicVideo(
     val hasHdr: Boolean?,
     val url: String?,
     val artwork: List<ExcorArtwork>,
-)
+) {
+    override fun toString(): String =
+        "ExcorAppleMusicVideo(title=present, artist=${if (artistName == null) "missing" else "present"}, " +
+            "isrc=${if (isrc == null) "missing" else "present"}, duration=${durationMs != null}, genres=${genres.size}, " +
+            "explicit=${explicit != null}, has4K=${has4K != null}, hasHdr=${hasHdr != null}, " +
+            "url=${url != null}, artwork=${artwork.size})"
+}
 
-data class ExcorAppleStation(val id: String, val name: String, val live: Boolean?, val url: String?, val artwork: List<ExcorArtwork>)
+data class ExcorAppleStation(val id: String, val name: String, val live: Boolean?, val url: String?, val artwork: List<ExcorArtwork>) {
+    override fun toString(): String =
+        "ExcorAppleStation(name=present, live=${live != null}, url=${url != null}, artwork=${artwork.size})"
+}
 
-data class ExcorAppleRecommendation(val title: String, val items: List<ExcorMusicRef>)
+data class ExcorAppleRecommendation(val title: String, val items: List<ExcorMusicRef>) {
+    override fun toString(): String = "ExcorAppleRecommendation(title=present, items=${items.size})"
+}

@@ -13,7 +13,12 @@ internal data class PlayerResponse(
     val formats: List<PlayerFormat>,
     val playerScriptUrl: String?,
     val loudnessDb: Double?,
-)
+) {
+    override fun toString(): String =
+        "PlayerResponse(status=${playabilityStatus?.let(::safePlaybackReason)}, " +
+            "reason=${playabilityReason?.let(::safePlaybackReason)}, formats=${formats.size}, " +
+            "playerScriptUrl=${if (playerScriptUrl == null) "missing" else "present"}, loudnessDb=$loudnessDb)"
+}
 
 private val playerJson = Json { isLenient = false }
 

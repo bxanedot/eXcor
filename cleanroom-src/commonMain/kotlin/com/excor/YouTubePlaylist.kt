@@ -27,7 +27,10 @@ data class ExcorYouTubePlaylist(
     val lastUpdatedText: String?,
     val videos: List<ExcorYouTubePlaylistVideo>,
     val continuation: String?,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubePlaylist(videos=${videos.size}, continuation=${continuation != null})"
+}
 
 data class ExcorYouTubePlaylistVideo(
     val videoId: String,
@@ -41,7 +44,10 @@ data class ExcorYouTubePlaylistVideo(
     val thumbnails: List<ExcorArtwork>,
     /** Streaming now: YouTube's live badge, read by its style so the badge's localized text does not matter. */
     val isLive: Boolean = false,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubePlaylistVideo(videoId=present, title=present, channel=present, duration=$durationSeconds, live=$isLive)"
+}
 
 internal fun buildBrowseRequest(browseId: String?, continuation: String?, session: ExcorSession, params: String? = null): PlayerRequest =
     innertubeRequest("browse", session) {

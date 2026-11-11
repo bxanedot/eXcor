@@ -15,7 +15,10 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 
 /** Videos YouTube suggests next to a video, from the watch page's InnerTube `next` response. */
-data class ExcorYouTubeRelated(val videos: List<ExcorYouTubePlaylistVideo>, val continuation: String?)
+data class ExcorYouTubeRelated(val videos: List<ExcorYouTubePlaylistVideo>, val continuation: String?) {
+    override fun toString(): String =
+            "ExcorYouTubeRelated(videos=${videos.size}, continuation=${continuation != null})"
+}
 
 /**
  * A window of a watch playlist, such as a mix ("RD" + video ID), which browse refuses ("unviewable"). Mixes are
@@ -28,16 +31,25 @@ data class ExcorYouTubeMix(
     val videos: List<ExcorYouTubePlaylistVideo>,
     val nextVideoId: String?,
     val nextIndex: Int?,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMix(videos=${videos.size}, hasNext=${nextVideoId != null}, nextIndex=${nextIndex != null})"
+}
 
 /** A chapter of a video; it runs until the next chapter's [startMs] or the end of the video. */
-data class ExcorYouTubeChapter(val title: String, val startMs: Long)
+data class ExcorYouTubeChapter(val title: String, val startMs: Long) {
+    override fun toString(): String =
+        "ExcorYouTubeChapter(title=${title.isNotEmpty()}, startMs=$startMs)"
+}
 
 /**
  * A song YouTube credits in a video's description ("Music" section). [credits] are YouTube's labelled credit lines as
  * shown, in the session's language, such as "Writers" to the writers' names.
  */
 data class ExcorYouTubeSong(val title: String, val artist: String?, val album: String?, val credits: Map<String, String>) {
+    override fun toString(): String =
+        "ExcorYouTubeSong(title=${title.isNotEmpty()}, artist=${artist != null}, album=${album != null}, credits=${credits.size})"
+
     /**
      * The song as a music track for [com.excor.music.ExcorMusic.matchAcrossProviders], keyed by the video it was
      * credited in. YouTube's credit is cleaner than a title split, but carries no ISRC, so matching still scores it as
@@ -68,7 +80,11 @@ data class ExcorYouTubeComment(
     val replyCount: Int?,
     /** Pass to `Excor.comments(videoId, it)` for this comment's replies; null when it has none. */
     val repliesContinuation: String? = null,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeComment(authorVerified=$authorVerified, creator=$authorIsCreator, artist=$authorIsArtist, " +
+                "replyCount=$replyCount, repliesContinuation=${repliesContinuation != null})"
+}
 
 data class ExcorYouTubeCommentsPage(
     val comments: List<ExcorYouTubeComment>,
@@ -77,7 +93,11 @@ data class ExcorYouTubeCommentsPage(
     val continuation: String?,
     /** On the first page: pass to `Excor.comments(videoId, it)` for the same comments newest first. */
     val newestContinuation: String? = null,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeCommentsPage(comments=${comments.size}, totalPresent=${totalText != null}, " +
+                "continuation=${continuation != null}, newestContinuation=${newestContinuation != null})"
+}
 
 internal fun buildNextRequest(videoId: String?, continuation: String?, session: ExcorSession): PlayerRequest = innertubeRequest("next", session) {
     if (continuation != null) put("continuation", continuation) else put("videoId", videoId!!)

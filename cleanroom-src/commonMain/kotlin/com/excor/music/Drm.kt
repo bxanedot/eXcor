@@ -170,7 +170,10 @@ data class ExcorPlaybackOption(
     val status: ExcorPlaybackStatus,
     val adapter: ExcorProtectedPlaybackAdapter? = null,
     val protection: ExcorProtectionInfo? = null,
-)
+) {
+    override fun toString(): String =
+        "ExcorPlaybackOption(status=$status, adapter=${adapter != null}, protection=${protection != null})"
+}
 
 /**
  * Decides the playback status from what is known; [available] false means the provider says the track cannot be

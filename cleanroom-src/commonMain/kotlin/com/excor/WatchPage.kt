@@ -3,7 +3,10 @@ package com.excor
 internal data class WatchPage(
     val apiKey: String?,
     val playerResponse: PlayerResponse,
-)
+) {
+    override fun toString(): String =
+        "WatchPage(apiKey=${if (apiKey == null) "missing" else "present"}, playerResponse=$playerResponse)"
+}
 
 internal fun parseWatchPage(source: String): WatchPage? {
     if (source.length > 5_000_000) return null

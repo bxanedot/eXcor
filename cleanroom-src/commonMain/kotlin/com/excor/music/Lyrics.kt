@@ -2,9 +2,14 @@ package com.excor.music
 
 enum class ExcorLyricsSync { NONE, LINE, WORD }
 
-data class ExcorLyricsWord(val startMs: Long, val text: String)
+data class ExcorLyricsWord(val startMs: Long, val text: String) {
+    override fun toString(): String = "ExcorLyricsWord(startMs=$startMs, text=present)"
+}
 
-data class ExcorLyricsLine(val startMs: Long?, val text: String, val words: List<ExcorLyricsWord> = emptyList())
+data class ExcorLyricsLine(val startMs: Long?, val text: String, val words: List<ExcorLyricsWord> = emptyList()) {
+    override fun toString(): String =
+        "ExcorLyricsLine(startMs=${startMs != null}, text=${if (text.isEmpty()) "empty" else "present"}, words=${words.size})"
+}
 
 /**
  * Lyrics from a licensed source the host chose. [source] names it for attribution; [instrumental] is true only when
@@ -16,7 +21,11 @@ data class ExcorLyrics(
     val language: String? = null,
     val instrumental: Boolean = false,
     val source: String,
-)
+) {
+    override fun toString(): String =
+        "ExcorLyrics(lines=${lines.size}, sync=$sync, language=${if (language == null) "missing" else "present"}, " +
+            "instrumental=$instrumental, source=present)"
+}
 
 /** A host-supplied lyrics source, such as a licensed lyrics API. Null when it has none for the track. */
 fun interface ExcorLyricsProvider {

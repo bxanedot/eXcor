@@ -8,6 +8,23 @@ import kotlin.test.assertFailsWith
 
 class PlayerJsTest {
     @Test
+    fun playerOutputStringOmitsScriptAndSignatureValues() {
+        val output = PlayerJsOutput(
+            preparedPlayer = "synthetic-prepared-player",
+            signatures = mapOf("synthetic-challenge" to "synthetic-signature"),
+            throttling = mapOf("synthetic-n" to "synthetic-transformed-n"),
+        ).toString()
+
+        listOf(
+            "synthetic-prepared-player",
+            "synthetic-challenge",
+            "synthetic-signature",
+            "synthetic-n",
+            "synthetic-transformed-n",
+        ).forEach { kotlin.test.assertFalse(it in output, "PlayerJsOutput exposed a challenge value") }
+    }
+
+    @Test
     fun executesSignatureAndThrottleChallenges() = runTest {
         val output = solvePlayerJs(
             playerScript = null,

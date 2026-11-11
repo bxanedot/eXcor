@@ -18,7 +18,10 @@ import kotlinx.serialization.json.put
 enum class ExcorYouTubeMusicItemType { SONG, VIDEO, EPISODE, ARTIST, ALBUM, PLAYLIST, PROFILE, PODCAST, UNKNOWN }
 
 /** An artist or channel credited on an item; [channelId] is null when YouTube Music gives the name without a link. */
-data class ExcorYouTubeMusicArtistRef(val name: String, val channelId: String?)
+data class ExcorYouTubeMusicArtistRef(val name: String, val channelId: String?) {
+    override fun toString(): String =
+        "ExcorYouTubeMusicArtistRef(name=${name.isNotEmpty()}, channelId=${channelId != null})"
+}
 
 /**
  * One YouTube Music item: a playable song, video or episode (with [videoId]) or a browsable artist, album, playlist,
@@ -38,7 +41,11 @@ data class ExcorYouTubeMusicItem(
     val subtitle: String? = null,
     val musicVideoType: String? = null,
     val thumbnails: List<ExcorArtwork> = emptyList(),
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicItem(type=$type, videoId=${videoId != null}, browseId=${browseId != null}, " +
+                "playlistId=${playlistId != null}, artists=${artists.size})"
+}
 
 /**
  * A YouTube Music search page. [filters] are YouTube Music's own filter chips for this query, with the params to pass
@@ -48,10 +55,16 @@ data class ExcorYouTubeMusicSearchPage(
     val items: List<ExcorYouTubeMusicItem>,
     val filters: List<ExcorYouTubeSearchFilter>,
     val continuation: String?,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicSearchPage(items=${items.size}, filters=${filters.size}, continuation=${continuation != null})"
+}
 
 /** A titled shelf of an artist page, such as Videos or Playlists; [moreBrowseId] opens its full list. */
-data class ExcorYouTubeMusicShelf(val title: String, val items: List<ExcorYouTubeMusicItem>, val moreBrowseId: String?)
+data class ExcorYouTubeMusicShelf(val title: String, val items: List<ExcorYouTubeMusicItem>, val moreBrowseId: String?) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicShelf(items=${items.size}, more=${moreBrowseId != null})"
+}
 
 /** A YouTube Music artist page. [radioPlaylistId] and [shufflePlaylistId] feed [Excor.musicRadio]-style queues. */
 data class ExcorYouTubeMusicArtist(
@@ -65,7 +78,11 @@ data class ExcorYouTubeMusicArtist(
     val shufflePlaylistId: String?,
     val shelves: List<ExcorYouTubeMusicShelf>,
     val thumbnails: List<ExcorArtwork>,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicArtist(shelves=${shelves.size}, radioAvailable=${radioPlaylistId != null}, " +
+                "shuffleAvailable=${shufflePlaylistId != null}, thumbnails=${thumbnails.size})"
+}
 
 /** A YouTube Music playlist page; [continuation] gives the next tracks when the playlist has more. */
 data class ExcorYouTubeMusicPlaylist(
@@ -76,10 +93,16 @@ data class ExcorYouTubeMusicPlaylist(
     val secondSubtitle: String?,
     val tracks: List<ExcorYouTubeMusicItem>,
     val continuation: String?,
-)
+) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicPlaylist(tracks=${tracks.size}, continuation=${continuation != null})"
+}
 
 /** A window of a YouTube Music radio or watch queue; it does not end, so [continuation] gives the next window. */
-data class ExcorYouTubeMusicQueue(val playlistId: String?, val tracks: List<ExcorYouTubeMusicItem>, val continuation: String?)
+data class ExcorYouTubeMusicQueue(val playlistId: String?, val tracks: List<ExcorYouTubeMusicItem>, val continuation: String?) {
+    override fun toString(): String =
+            "ExcorYouTubeMusicQueue(tracks=${tracks.size}, continuation=${continuation != null})"
+}
 
 private const val MUSIC_HOST = "music.youtube.com"
 

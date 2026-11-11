@@ -19,7 +19,7 @@ internal data class PlayerFormat(
     /** True for segmented ("OTF") formats, which can't be fetched as one file with byte ranges. */
     val segmented: Boolean = false,
 ) {
-    override fun toString(): String = "PlayerFormat(mimeType=$mimeType, bitrate=$bitrate, itag=$itag)"
+    override fun toString(): String = "PlayerFormat(mimeType=${mimeType.isNotEmpty()}, bitrate=$bitrate, itag=$itag)"
 
     val kbps: Int get() = (bitrate ?: averageBitrate ?: 0).coerceAtLeast(0) / 1000
     val candidateKbps: Int get() = (averageBitrate ?: bitrate ?: 0).coerceAtLeast(0) / 1000

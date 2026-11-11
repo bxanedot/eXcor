@@ -218,14 +218,19 @@ class EngineStateTest {
     @Test
     fun aConnectionThatKeepsFailingIsANetworkFailure() = runTest {
         var calls = 0
-        val client = HttpClient(MockEngine { calls++; throw IllegalStateException("connection reset") })
+        val privateTransportData = "https://rr1.googlevideo.com/videoplayback?pot=synthetic-stream-secret"
+        val client = HttpClient(MockEngine {
+            calls++
+            throw IllegalStateException("connection reset for $privateTransportData")
+        })
         try {
             val engine = ExcorEngine(FakeHost(), null, client)
             val failure = assertFailsWith<ExcorRequestException> { engine.search("q", "token") }
             assertEquals(ExcorRequestFailure.NETWORK, failure.failure)
             assertEquals(3, calls)
-            // The message carries the failure kind only.
+            assertNull(failure.cause, "low-level transport messages may contain sensitive request data")
             assertEquals("YouTube request failed: NETWORK", failure.message)
+            assertFalse("synthetic-stream-secret" in failure.toString())
         } finally {
             client.close()
         }

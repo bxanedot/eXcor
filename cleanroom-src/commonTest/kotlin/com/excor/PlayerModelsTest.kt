@@ -5,8 +5,88 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class PlayerModelsTest {
+    @Test
+    fun playerFormatDiagnosticOmitsUntrustedMimeText() {
+        val marker = "synthetic-private-mime-value"
+        val format = PlayerFormat(
+            url = "https://rr1.googlevideo.com/videoplayback?signature=synthetic-private-signature",
+            mimeType = marker,
+            bitrate = 128_000,
+            averageBitrate = null,
+            channels = 2,
+            sampleRate = 48_000,
+        )
+
+        val rendered = format.toString()
+        assertFalse(marker in rendered, "Untrusted MIME text escaped through PlayerFormat.toString")
+        assertFalse("googlevideo.com" in rendered)
+        assertTrue("mimeType=true" in rendered)
+    }
+
+    @Test
+    fun watchPageAndCacheEntryStringsOmitUntrustedValues() {
+        val secret = "synthetic-player-secret"
+        val url = "https://rr1.googlevideo.com/videoplayback?pot=$secret&sig=synthetic-signature"
+        val page = WatchPage(
+            apiKey = "synthetic-api-key",
+            playerResponse = PlayerResponse(
+                playabilityStatus = "LOGIN_REQUIRED",
+                playabilityReason = "Authorization: Bearer $secret $url",
+                formats = listOf(
+                    PlayerFormat(url, "audio/webm", 128_000, null, 2, 48_000, signatureCipher = "url=$url&s=$secret"),
+                ),
+                playerScriptUrl = "https://www.youtube.com/s/player/test.js?key=synthetic-script-key",
+                loudnessDb = null,
+            ),
+        )
+        val cacheEntry = PlayerCacheEntry(12345, "synthetic-prepared-player")
+        val rendered = page.toString() + cacheEntry.toString()
+
+        listOf(
+            secret,
+            "synthetic-signature",
+            "rr1.googlevideo.com",
+            "synthetic-api-key",
+            "synthetic-script-key",
+            "synthetic-prepared-player",
+        ).forEach { assertFalse(it in rendered, "A diagnostic data class exposed an untrusted value") }
+    }
+
+    @Test
+    fun playerResponseStringOmitsURLsAndCredentialText() {
+        val url = "https://rr1.googlevideo.com/videoplayback?pot=secret-stream&sig=secret-signature"
+        val response = PlayerResponse(
+            playabilityStatus = "LOGIN_REQUIRED",
+            playabilityReason = "Authorization: Bearer secret-auth $url",
+            formats = listOf(
+                PlayerFormat(
+                    url = url,
+                    mimeType = "audio/webm",
+                    bitrate = 128_000,
+                    averageBitrate = null,
+                    channels = 2,
+                    sampleRate = 48_000,
+                    signatureCipher = "url=$url&s=secret-cipher",
+                ),
+            ),
+            playerScriptUrl = "https://www.youtube.com/s/player/test.js?key=secret-script",
+            loudnessDb = null,
+        )
+
+        val output = response.toString()
+        listOf(
+            "rr1.googlevideo.com",
+            "secret-stream",
+            "secret-signature",
+            "secret-auth",
+            "secret-cipher",
+            "secret-script",
+        ).forEach { assertFalse(it in output, "PlayerResponse exposed a sensitive value") }
+    }
+
     @Test
     fun malformedResponseReturnsNoFormats() {
         assertNull(decodePlayerResponse("{"))

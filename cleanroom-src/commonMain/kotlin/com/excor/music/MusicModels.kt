@@ -7,7 +7,9 @@ import com.excor.catalog.ExcorCatalogProvider
 enum class ExcorMusicKind { TRACK, ALBUM, ARTIST, PLAYLIST, MUSIC_VIDEO, EPISODE, SHOW, STATION, CHART, GENRE }
 
 /** A provider's own identity for an item; [id] is in the provider's format. */
-data class ExcorMusicRef(val provider: ExcorCatalogProvider, val kind: ExcorMusicKind, val id: String)
+data class ExcorMusicRef(val provider: ExcorCatalogProvider, val kind: ExcorMusicKind, val id: String) {
+    override fun toString(): String = "ExcorMusicRef(provider=$provider, kind=$kind, id=present)"
+}
 
 /**
  * Why a metadata field has no value. Every field a model leaves null or empty is listed in its `missing` map:
@@ -37,7 +39,10 @@ data class ExcorMusicArtist(
     val name: String,
     val role: ExcorArtistRole = ExcorArtistRole.PRIMARY,
     val url: String? = null,
-)
+) {
+    override fun toString(): String =
+            "ExcorMusicArtist(provider=$provider, role=$role, id=${id != null}, url=${url != null})"
+}
 
 data class ExcorMusicTrack(
     val provider: ExcorCatalogProvider,
@@ -78,6 +83,9 @@ data class ExcorMusicTrack(
 ) {
     val ref: ExcorMusicRef get() = ExcorMusicRef(provider, ExcorMusicKind.TRACK, id)
     val featuredArtists: List<ExcorMusicArtist> get() = artists.filter { it.role == ExcorArtistRole.FEATURED }
+    override fun toString(): String =
+            "ExcorMusicTrack(provider=$provider, artists=${artists.size}, duration=${durationMs != null}, " +
+                "url=${url != null}, availability=$availability)"
 }
 
 data class ExcorMusicAlbum(
@@ -100,7 +108,11 @@ data class ExcorMusicAlbum(
     /** The first page of tracks when the response carried them; see [ExcorMusic.albumTracks] for the rest. */
     val tracks: ExcorMusicPage<ExcorMusicTrack>? = null,
     val missing: Map<ExcorMusicField, ExcorFieldStatus> = emptyMap(),
-)
+) {
+    override fun toString(): String =
+            "ExcorMusicAlbum(provider=$provider, type=$type, artists=${artists.size}, tracks=${tracks?.items?.size ?: "missing"}, " +
+                "hasNext=${tracks?.next != null}, artwork=${artwork.size})"
+}
 
 data class ExcorMusicArtistProfile(
     val provider: ExcorCatalogProvider,
@@ -113,7 +125,11 @@ data class ExcorMusicArtistProfile(
     val albumCount: Int? = null,
     val artwork: List<ExcorArtwork> = emptyList(),
     val missing: Map<ExcorMusicField, ExcorFieldStatus> = emptyMap(),
-)
+) {
+    override fun toString(): String =
+            "ExcorMusicArtistProfile(provider=$provider, genres=${genres.size}, albumCount=${albumCount ?: "unknown"}, " +
+                "artwork=${artwork.size})"
+}
 
 data class ExcorMusicPlaylist(
     val provider: ExcorCatalogProvider,
@@ -132,17 +148,28 @@ data class ExcorMusicPlaylist(
     val artwork: List<ExcorArtwork> = emptyList(),
     val tracks: ExcorMusicPage<ExcorMusicTrack>? = null,
     val missing: Map<ExcorMusicField, ExcorFieldStatus> = emptyMap(),
-)
+) {
+    override fun toString(): String =
+        "ExcorMusicPlaylist(provider=$provider, trackPageItems=${tracks?.items?.size ?: "missing"}, " +
+            "trackPageHasNext=${tracks?.next != null}, artwork=${artwork.size})"
+}
 
 /** One page; [next] is an opaque token for the following page, null on the last. [total] is the provider's count. */
-data class ExcorMusicPage<T>(val items: List<T>, val next: String? = null, val total: Int? = null)
+data class ExcorMusicPage<T>(val items: List<T>, val next: String? = null, val total: Int? = null) {
+    override fun toString(): String =
+        "ExcorMusicPage(items=${items.size}, next=${if (next == null) "missing" else "present"}, total=$total)"
+}
 
 data class ExcorMusicSearchResult(
     val tracks: ExcorMusicPage<ExcorMusicTrack>? = null,
     val albums: ExcorMusicPage<ExcorMusicAlbum>? = null,
     val artists: ExcorMusicPage<ExcorMusicArtistProfile>? = null,
     val playlists: ExcorMusicPage<ExcorMusicPlaylist>? = null,
-)
+) {
+    override fun toString(): String =
+            "ExcorMusicSearchResult(tracks=${tracks?.items?.size ?: "missing"}, albums=${albums?.items?.size ?: "missing"}, " +
+                "artists=${artists?.items?.size ?: "missing"}, playlists=${playlists?.items?.size ?: "missing"})"
+}
 
 enum class ExcorMusicCapability {
     SEARCH, TRACK, ALBUM, ARTIST, PLAYLIST, ALBUM_TRACKS, ARTIST_ALBUMS, PLAYLIST_TRACKS, ISRC_LOOKUP, UPC_LOOKUP,
@@ -231,7 +258,10 @@ data class ExcorPodcastEpisode(
     val url: String?,
     val artwork: List<ExcorArtwork>,
     val provider: ExcorCatalogProvider = ExcorCatalogProvider.SPOTIFY,
-)
+) {
+    override fun toString(): String =
+            "ExcorPodcastEpisode(provider=$provider, duration=${durationMs != null}, playable=$playable, artwork=${artwork.size}, url=${url != null})"
+}
 
 data class ExcorPodcastShow(
     val id: String,
@@ -246,4 +276,7 @@ data class ExcorPodcastShow(
     val artwork: List<ExcorArtwork>,
     val episodes: ExcorMusicPage<ExcorPodcastEpisode>,
     val provider: ExcorCatalogProvider = ExcorCatalogProvider.SPOTIFY,
-)
+) {
+    override fun toString(): String =
+            "ExcorPodcastShow(provider=$provider, episodes=${episodes.items.size}, hasNext=${episodes.next != null}, artwork=${artwork.size})"
+}

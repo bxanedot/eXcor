@@ -72,7 +72,8 @@ class ExcorSpotifyAuth internal constructor(private val http: MusicHttp, private
 
 /** One authorization attempt; keep it until the redirect returns. [toString] hides the verifier. */
 data class ExcorAuthorizationRequest(val url: String, val state: String, val redirectUri: String, internal val pkce: ExcorPkce) {
-    override fun toString(): String = "ExcorAuthorizationRequest(state=present, redirectUri=$redirectUri)"
+    override fun toString(): String =
+        "ExcorAuthorizationRequest(state=present, redirectUri=${if (redirectUri.isEmpty()) "missing" else "present"})"
 }
 
 /**
