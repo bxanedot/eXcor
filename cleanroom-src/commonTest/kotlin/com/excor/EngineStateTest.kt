@@ -20,7 +20,8 @@ class EngineStateTest {
 
     @Test
     fun playerRejectionReasonIsSanitizedBeforeItReachesCallers() = runTest {
-        val player = """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"Cookie: synthetic-cookie; https://rr1.googlevideo.com/videoplayback?pot=synthetic-token"}}"""
+        val reason = "Cookie: synthetic-cookie; https://rr1.googlevideo.com/videoplayback?pot=synthetic-token"
+        val player = """{"playabilityStatus":{"status":"LOGIN_REQUIRED","reason":"$reason"}}"""
         val client = HttpClient(MockEngine { request ->
             when (request.url.encodedPath) {
                 "/watch" -> respond("", HttpStatusCode.TooManyRequests)
@@ -43,6 +44,7 @@ class EngineStateTest {
             client.close()
         }
     }
+
     @Test
     fun refusalForgetsUrlAndExpiresAfterTenMinutes() = runTestEngine {
         val first = engine.extract(VIDEO_ID, 128, SKIP, false, false)
