@@ -16,9 +16,15 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
 /** One entry of a playlist or library; [key] identifies the item within its provider. */
-data class ExcorSyncEntry(val key: String, val track: ExcorMusicTrack? = null, val addedAt: String? = null)
+data class ExcorSyncEntry(val key: String, val track: ExcorMusicTrack? = null, val addedAt: String? = null) {
+    override fun toString(): String =
+            "ExcorSyncEntry(key=present, track=${track != null}, addedAt=${addedAt != null})"
+}
 
-data class ExcorSyncPage(val entries: List<ExcorSyncEntry>, val next: String?, val snapshot: String? = null)
+data class ExcorSyncPage(val entries: List<ExcorSyncEntry>, val next: String?, val snapshot: String? = null) {
+    override fun toString(): String =
+            "ExcorSyncPage(entries=${entries.size}, next=${next != null}, snapshot=${snapshot != null})"
+}
 
 /** Pages of a collection in the provider's order; [cursor] null asks for the first page. */
 fun interface ExcorSyncSource {
@@ -57,15 +63,8 @@ data class ExcorSyncState(
         }.getOrNull()
     }
     override fun toString(): String =
-            "ExcorSyncEntry(key=present, track=${track != null}, addedAt=${addedAt != null})"
-
-    override fun toString(): String =
-            "ExcorSyncPage(entries=${entries.size}, next=${next != null}, snapshot=${snapshot != null})"
-
-    override fun toString(): String =
             "ExcorSyncState(snapshot=${snapshot != null}, keys=${keys.size}, resumeCursor=${resumeCursor != null}, " +
                 "partialKeys=${partialKeys.size}, partialSnapshot=${partialSnapshot != null})"
-
 }
 
 data class ExcorSyncResult(

@@ -35,7 +35,10 @@ data class ExcorYouTubeSearchPage(
  * current filters. YouTube builds each [params] to include the filters already applied, so options combine by
  * picking them from successive pages. [group] and [label] are YouTube's display text in the session's language.
  */
-data class ExcorYouTubeSearchFilter(val group: String, val label: String, val params: String?, val selected: Boolean, val disabled: Boolean)
+data class ExcorYouTubeSearchFilter(val group: String, val label: String, val params: String?, val selected: Boolean, val disabled: Boolean) {
+    override fun toString(): String =
+            "ExcorYouTubeSearchFilter(group=$group, label=$label, params=${params != null}, selected=$selected, disabled=$disabled)"
+}
 
 /** [viewCount] and [durationSeconds] are null when YouTube shows none (live streams, premieres). */
 data class ExcorYouTubeVideoResult(
@@ -53,9 +56,6 @@ data class ExcorYouTubeVideoResult(
 ) {
     /** The result as a music track, read the same way as [ExcorVideoInfo.asMusicTrack]. */
     fun asMusicTrack(): ExcorMusicTrack = youtubeMusicTrack(videoId, title, channelName, channelId, durationSeconds, thumbnails)
-    override fun toString(): String =
-            "ExcorYouTubeSearchFilter(group=$group, label=$label, params=${params != null}, selected=$selected, disabled=$disabled)"
-
 }
 
 data class ExcorYouTubeChannelResult(

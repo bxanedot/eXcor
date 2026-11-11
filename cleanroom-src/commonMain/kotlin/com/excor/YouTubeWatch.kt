@@ -15,7 +15,10 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 
 /** Videos YouTube suggests next to a video, from the watch page's InnerTube `next` response. */
-data class ExcorYouTubeRelated(val videos: List<ExcorYouTubePlaylistVideo>, val continuation: String?)
+data class ExcorYouTubeRelated(val videos: List<ExcorYouTubePlaylistVideo>, val continuation: String?) {
+    override fun toString(): String =
+            "ExcorYouTubeRelated(videos=${videos.size}, continuation=${continuation != null})"
+}
 
 /**
  * A window of a watch playlist, such as a mix ("RD" + video ID), which browse refuses ("unviewable"). Mixes are
@@ -30,10 +33,7 @@ data class ExcorYouTubeMix(
     val nextIndex: Int?,
 ) {
     override fun toString(): String =
-            "ExcorYouTubeRelated(videos=${videos.size}, continuation=${continuation != null})"
-    override fun toString(): String =
             "ExcorYouTubeMix(videos=${videos.size}, hasNext=${nextVideoId != null}, nextIndex=${nextIndex != null})"
-
 }
 
 /** A chapter of a video; it runs until the next chapter's [startMs] or the end of the video. */
