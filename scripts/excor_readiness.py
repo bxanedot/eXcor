@@ -109,7 +109,7 @@ def github_ci(repository: str, sha: str, token: str = "") -> dict:
             runs = json.load(reply).get("workflow_runs", [])
     except (HTTPError, URLError, TimeoutError, ValueError):
         return info
-    runs = [r for r in runs if r.get("head_sha") == sha and r.get("event") == "push"]
+    runs = [r for r in runs if r.get("head_sha") == sha and r.get("event") == "push" and r.get("head_branch") == "main"]
     if runs:
         run = max(runs, key=lambda r: r.get("run_number", 0))
         info.update(status=run.get("status", "unknown"), conclusion=run.get("conclusion"),
