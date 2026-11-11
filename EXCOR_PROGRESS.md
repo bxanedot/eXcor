@@ -12,20 +12,21 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
 
-## Current verified checkpoint — 2026-11-11 10:18 UTC
+## Current verified checkpoint — 2026-11-11 10:58 UTC
 
-**Main at checkpoint:** source PR #102 merged as `cfafb3aa5a439465030e784f24b0400b600578a5`; the release-gate evidence update is at `9c7e8df9a76f0cbbf65d31c8d10b42dc1ede5750`. PR #102 exact-head run [42999742743](https://github.com/bxanedot/eXcor/actions/runs/42999742743) passed all six supported-target jobs.
+**Main at checkpoint:** PR #102 merged as `cfafb3aa5a439465030e784f24b0400b600578a5`; PR #103 merged as `ef5065b618f6dbb61b5eaf6bdee95ea99ac134a2`. Exact-head CI passed all six supported-target jobs for PR #102 in run [42999742743](https://github.com/bxanedot/eXcor/actions/runs/42999742743) and PR #103 in run [43005770186](https://github.com/bxanedot/eXcor/actions/runs/43005770186).
 
-**Readiness remains 53/100; release NO-GO.** The score report for `9c7e8df` keeps G6 blocked at 0/20. This change adds regression coverage for bounded refusal-profile memory; it does not add live playback or SABR evidence. A new main CI and score refresh will follow this documentation checkpoint.
+**Readiness remains 53/100; release NO-GO.** The current score report names main `ef5065b`, keeps G6 blocked at 0/20, and records main CI as in progress in run `43007930552`. PR #103 is a security hardening change and does not qualify for score credit. This documentation checkpoint will trigger another CI and score refresh.
 
 - **Issue #77:** closed after the deterministic retry, transport, session, diagnostic-redaction and bounded exclusion-cache acceptance checks passed. PRs #80–82, #87 and #102 hold the synthetic coverage.
 - **G4/G5:** partial. Issue #78 remains open with no owner-run authorized playback/cipher matrix results.
 - **G6:** blocked, SABR/UMP playback 0/20. No network transport, playable SABR media, full decode or seek evidence.
-- **G8/G12:** partial. Synthetic bounded refusal-cache and retry/session/security coverage is recorded; owner-run live fault injection and broader release-security evidence remain.
+- **G8:** partial. Synthetic retry/session/cache coverage is recorded; owner-run live fault injection remains unverified.
+- **G12:** partial. PR #103 keeps session cookies and visitor IDs off media requests; signed-in playback and the broader release-security audit remain unverified.
 - **G10/G11:** partial. Remote publishing remains unauthorized; reproducible black-box comparison is incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used.
 
-**Next:** continue from issue #78 and the current release gates. Do not promote G4/G5/G6 based on synthetic tests, docs or CI alone. Preserve the clean-room boundary and use only the owner's authorized device/network for live playback evidence.
+**Next:** continue the security review and issue #78's owner-authorized playback matrix. Keep G4/G5/G6 unchanged without repeatable live evidence. Preserve the clean-room boundary.
 ## Release gates
 
 | Gate | Status | Note |
@@ -41,7 +42,7 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 | G9 Developer usability | Passing | `samples/jvm-quickstart` runs live from the local publish |
 | G10 Release packaging | Partial | Local publish works; no remote release is authorized |
 | G11 Competitive analysis | Partial | InnerTubeX from its README; YouTube.js and NewPipeExtractor document only platforms, services and installation |
-| G12 Security | Partial | CI OSV scan gates on shipped dependencies (clean); tooling and test findings are report-only |
+| G12 Security | Partial | CI OSV scan gates on shipped dependencies; PR #103 removes session cookies and visitor IDs from media requests; broader release-security evidence and signed-in playback remain unverified |
 
 **Not a release candidate:** SABR network negotiation and playback (G6) are not implemented. Offline framing and bounded assembly do not establish SABR parity. G4 and G5 are verified only for videos YouTube serves to this environment; most are bot-checked.
 
