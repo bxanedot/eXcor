@@ -93,6 +93,8 @@ The Android preview now has a **Try HLS (experimental)** action that feeds `extr
 
 The SABR/UMP feasibility decision is recorded in `docs/UMP_FRAMING_RESEARCH.md` and closed issue #79: keep direct plus experimental HLS as the interim transport scope; do not implement an SABR network adapter without the independently usable contract, synthetic vectors, and authorized decode/seek evidence listed there. G6 remains blocked; this decision does not complete the broader competitor goal.
 
+The 2026-11-11 public API feasibility review in `docs/BLACK_BOX_COMPARISON_RESEARCH.md` confirms documented extraction and request-instrumentation surfaces for all four comparison targets. InnerTubeX and NewPipeExtractor are GPL-3.0, so do not add their libraries to eXcor's dependency graph; any separately launched benchmark adapters need licensing review before distribution. The note defines direct-audio and native-transport lanes plus a sanitized result contract. This is research/design only: no competitor adapters or comparative measurements exist, and G11 remains partial.
+
 **Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
 References: HANDOFF.md, EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.
