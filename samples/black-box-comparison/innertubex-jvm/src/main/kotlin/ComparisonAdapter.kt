@@ -14,6 +14,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.plugin
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.request.get
