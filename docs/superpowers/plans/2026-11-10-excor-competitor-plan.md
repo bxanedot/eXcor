@@ -54,6 +54,7 @@ Acceptance: G6 either supported with tested playable streams or honestly documen
 
 ### P4 — Reproducible black-box competition
 
+- [ ] Build eXcor's own opt-in JVM playback/diagnostics runner for the supported direct-stream scope: paced playback, real backward/forward transport seeks, range and full-decode checks, bounded timeout/cancellation, and sanitized per-run outcomes. Keep HLS/DASH and SABR/UMP gaps explicit rather than inferring parity from direct streams.
 - [ ] Make a comparator that uses only published public APIs of eXcor, InnerTubeX, YouTube.js and NewPipeExtractor.
 - [ ] Run each under the same machine/network, eligible video set and timeout budget. Record cold/warm p50 and p95 startup, requests, heap/allocation where measurable, success/failure classifications, seek behavior and sample count.
 - [ ] Classify access denial, unsupported transport and parsing faults separately; do not claim competitors failed when the network denies requests.
