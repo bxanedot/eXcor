@@ -74,6 +74,8 @@ class PlayerModelsTest {
             ),
             playerScriptUrl = "https://www.youtube.com/s/player/test.js?key=secret-script",
             loudnessDb = null,
+            hlsManifestUrl = "https://manifest.googlevideo.com/api/manifest/hls_variant/secret/file/index.m3u8?pot=secret-stream",
+            isLive = true,
         )
 
         val output = response.toString()
@@ -84,6 +86,7 @@ class PlayerModelsTest {
             "secret-auth",
             "secret-cipher",
             "secret-script",
+            "manifest.googlevideo.com",
         ).forEach { assertFalse(it in output, "PlayerResponse exposed a sensitive value") }
     }
 
@@ -106,6 +109,18 @@ class PlayerModelsTest {
         assertEquals(96, response.formats.last().kbps)
         assertEquals(2, response.formats.last().channels)
         assertEquals(48_000, response.formats.last().sampleRate)
+    }
+
+    @Test
+    fun readsHlsManifestAndLiveFlag() {
+        val url = "https://manifest.googlevideo.com/api/manifest/hls_variant/test/file/index.m3u8?signature=synthetic"
+        val response = assertNotNull(decodePlayerResponse(
+            """{"playabilityStatus":{"status":"OK"},"videoDetails":{"isLiveContent":true},"streamingData":{"hlsManifestUrl":"$url"}}""",
+        ))
+
+        assertEquals(url, response.hlsManifestUrl)
+        assertEquals(true, response.isLive)
+        assertFalse(url in response.toString())
     }
 
     @Test

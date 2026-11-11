@@ -86,6 +86,8 @@ The first implementation slice in this branch adds bounded redaction of YouTube-
 
 The JVM quickstart now contains the opt-in direct-audio playback runner. Its code/build status does not upgrade G4/G5: the owner still needs to verify playback, key-driven seeking and full decode on an authorized network, and report only sanitized outcomes.
 
+The clean-room KMP API now has an experimental HLS master-manifest handoff: it solves supported path challenges, applies only host-provided PO tokens, bounds and validates the manifest response, and follows only validated GoogleVideo manifest redirects. Synthetic tests cover URL policy, token handling, session-header isolation and hostile redirects. It does not proxy child playlists or segments and has no live HLS playback evidence; G5 stays partial and G6 stays blocked.
+
 **Next focused evidence:** complete the owner's authorized playback/cipher matrix in issue #78. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
 References: HANDOFF.md, EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.

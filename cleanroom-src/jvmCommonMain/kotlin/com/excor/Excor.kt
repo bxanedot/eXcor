@@ -109,6 +109,10 @@ class Excor(host: ExcorHost) {
         skipClients: Set<String> = emptySet(),
         requireM4a: Boolean = false,
     ): ExcorStream? = engine.extract(videoId, maxKbps, skipClients, requireM4a, watchFallback = false)
+    /** A validated HLS master playlist for a host media player; the host fetches child playlists and segments. */
+    @Throws(Throwable::class)
+    suspend fun extractHls(videoId: String, skipClients: Set<String> = emptySet()): ExcorHlsStream? =
+        engine.extractHls(videoId, skipClients)
     /**
      * A video track of at most [maxHeight] pixels in one of [codecs], with the audio to play alongside it. The best
      * picture wins, then frame rate, then the most widely decodable codec. Both tracks are probed as playable before

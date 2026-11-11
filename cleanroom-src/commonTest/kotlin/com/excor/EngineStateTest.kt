@@ -350,6 +350,69 @@ class EngineStateTest {
     }
 
     @Test
+    fun hlsExtractionValidatesAndRemembersTheManifestWithoutForwardingSessionSecrets() = runTest {
+        val manifestUrl = "https://manifest.googlevideo.com/api/manifest/hls_variant/test/file/index.m3u8?signature=synthetic"
+        val player = """{"playabilityStatus":{"status":"OK"},"videoDetails":{"isLiveContent":true},"streamingData":{"hlsManifestUrl":"$manifestUrl"}}"""
+        var manifestRequests = 0
+        var manifestHeaders = emptySet<String>()
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                "/youtubei/v1/player" -> respond(player, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                "/api/manifest/hls_variant/test/file/index.m3u8" -> {
+                    manifestRequests++
+                    manifestHeaders = request.headers.names().mapTo(mutableSetOf()) { it.lowercase() }
+                    respond("#EXTM3U\n#EXT-X-ENDLIST\n", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/vnd.apple.mpegurl"))
+                }
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        }) { followRedirects = false }
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            val stream = assertNotNull(engine.extractHls(VIDEO_ID, emptySet()))
+
+            assertEquals(manifestUrl, stream.url)
+            assertEquals(true, stream.isLive)
+            assertEquals(1, manifestRequests)
+            assertFalse("cookie" in manifestHeaders)
+            assertFalse("authorization" in manifestHeaders)
+            assertFalse("x-goog-visitor-id" in manifestHeaders)
+            assertEquals(stream.headers, engine.headersFor(stream.url))
+            assertFalse("manifest.googlevideo.com" in stream.toString())
+            assertEquals(VIDEO_ID, engine.onRefused(stream.url))
+            assertNull(engine.headersFor(stream.url))
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun hlsManifestProbeNeverFollowsAHostileRedirect() = runTest {
+        val manifestUrl = "https://manifest.googlevideo.com/api/manifest/hls_variant/test/file/index.m3u8?signature=synthetic"
+        val player = """{"playabilityStatus":{"status":"OK"},"streamingData":{"hlsManifestUrl":"$manifestUrl"}}"""
+        val requestedHosts = mutableListOf<String>()
+        val client = HttpClient(MockEngine { request ->
+            requestedHosts += request.url.host
+            when (request.url.encodedPath) {
+                "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                "/youtubei/v1/player" -> respond(player, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                "/api/manifest/hls_variant/test/file/index.m3u8" -> respond(
+                    "", HttpStatusCode.Found,
+                    headersOf(HttpHeaders.Location, "https://evil.example/api/manifest/hls_variant/test/file/index.m3u8"),
+                )
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        }) { followRedirects = false }
+        try {
+            assertNull(ExcorEngine(FakeHost(), null, client).extractHls(VIDEO_ID, emptySet()))
+            assertTrue(requestedHosts.all { it == "www.youtube.com" || it.endsWith(".googlevideo.com") })
+            assertFalse("evil.example" in requestedHosts)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
     fun videoExtractionPairsTheBestPlayableVideoWithAudioInTheSameContainer() = runTest {
         val failingItags = mutableSetOf<String>()
         val probedItags = mutableListOf<String>()

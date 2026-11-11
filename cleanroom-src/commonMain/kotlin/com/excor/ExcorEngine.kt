@@ -358,6 +358,44 @@ internal class ExcorEngine(
         }
     }
 
+    /**
+     * Selects a YouTube HLS manifest for a host media player. The manifest and every redirect are validated and
+     * the bounded response must start with #EXTM3U. The host player fetches child playlists and media segments.
+     */
+    suspend fun extractHls(videoId: String, skipClients: Set<String>): ExcorHlsStream? {
+        require(VIDEO_ID.matches(videoId)) { "Excor video ID is invalid" }
+        val epoch = state.value.sessionEpoch
+        val session = host.session()
+        ensureSessionCurrent(epoch)
+        return firstFromClients(videoId, skipClients, session, epoch) { client ->
+            val rawUrl = client.response.hlsManifestUrl ?: return@firstFromClients null
+            val preparedUrl = playableHlsManifestUrl(rawUrl, client.playerUrl, client.streamingToken, session)
+                ?: return@firstFromClients null
+            val url = probeHlsManifest(preparedUrl, client.headers) ?: return@firstFromClients null
+            val stream = ExcorHlsStream(
+                videoId = videoId,
+                url = url,
+                isLive = client.response.isLive,
+                clientName = client.identity.name,
+                profileId = client.identity.profileId,
+                headers = client.headers,
+            )
+            val remembered = ExcorStream(
+                videoId = videoId,
+                url = url,
+                kbps = 0,
+                mimeType = "application/vnd.apple.mpegurl",
+                loudnessDb = client.response.loudnessDb,
+                clientName = client.identity.name,
+                profileId = client.identity.profileId,
+                headers = client.headers,
+            )
+            if (!remember(remembered, client.sessionEpoch)) throw CancellationException("Excor session changed")
+            log(ExcorLogLevel.INFO, "selected HLS manifest from ${client.identity.name}", videoId)
+            stream
+        }
+    }
+
     suspend fun extractVideo(
         videoId: String,
         maxHeight: Int,
@@ -477,6 +515,8 @@ internal class ExcorEngine(
         val response: PlayerResponse,
         val formats: List<PlayerFormat>,
         val headers: Map<String, String>,
+        val playerUrl: String?,
+        val streamingToken: String?,
         val sessionEpoch: Long,
     )
 
@@ -580,7 +620,17 @@ internal class ExcorEngine(
             val formats = playableFormats(response, responsePlayerUrl, token?.streamingDataToken, session)
             val headers = mediaHeaders(identity.userAgent, session)
             ensureSessionCurrent(epoch)
-            pick(ClientResponse(identity, response, formats, headers, epoch))?.let { candidate ->
+            pick(
+                ClientResponse(
+                    identity,
+                    response,
+                    formats,
+                    headers,
+                    responsePlayerUrl,
+                    token?.streamingDataToken,
+                    epoch,
+                ),
+            )?.let { candidate ->
                 ensureSessionCurrent(epoch)
                 return candidate
             }
@@ -826,6 +876,69 @@ internal class ExcorEngine(
         return false
     }
 
+    private suspend fun playableHlsManifestUrl(
+        rawUrl: String,
+        playerUrl: String?,
+        streamingToken: String?,
+        session: ExcorSession,
+    ): String? {
+        if (!isAllowedHlsManifestUrl(rawUrl)) return null
+        val challenges = hlsManifestNChallenges(rawUrl)
+        val player = if (challenges.isEmpty()) null else {
+            val url = playerUrl ?: return null
+            loadPlayerData(url, session) ?: return null
+        }
+        val solved = if (challenges.isEmpty()) null else {
+            solvePlayerJs(
+                playerScript = player?.source,
+                preparedPlayer = player?.entry?.preparedPlayer,
+                signatures = emptyList(),
+                throttling = challenges,
+            ) ?: return null
+        }
+        if (player != null && solved?.preparedPlayer != null && solved.preparedPlayer != player.entry.preparedPlayer) {
+            savePlayerData(player.url, player.entry.copy(preparedPlayer = solved.preparedPlayer))
+        }
+        return rewriteHlsManifestUrl(rawUrl, solved?.throttling.orEmpty(), streamingToken)
+    }
+
+    /** Reads and validates a bounded HLS manifest, following only validated GoogleVideo manifest redirects. */
+    private suspend fun probeHlsManifest(url: String, headers: Map<String, String>): String? {
+        var target = url
+        repeat(MAX_MEDIA_REDIRECTS + 1) {
+            if (!isAllowedHlsManifestUrl(target)) return null
+            val response = try {
+                http.get(target) {
+                    headers.forEach { (name, value) -> header(name, value) }
+                    header(HttpHeaders.Accept, "application/vnd.apple.mpegurl, application/x-mpegURL, */*;q=0.8")
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                log(ExcorLogLevel.DEBUG, "HLS manifest probe failed: ${failure::class.simpleName}")
+                return null
+            }
+            val status = response.status.value
+            if (status == 200) {
+                val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+                if (contentLength != null && contentLength !in 0..MAX_HLS_MANIFEST_BYTES.toLong()) {
+                    response.bodyAsChannel().cancel()
+                    return null
+                }
+                val manifest = readBoundedResponseText(response, MAX_HLS_MANIFEST_BYTES) ?: return null
+                val firstLine = manifest.removePrefix("\uFEFF").lineSequence().firstOrNull { it.isNotBlank() }?.trim()
+                return target.takeIf { firstLine == "#EXTM3U" }
+            }
+            response.bodyAsChannel().cancel()
+            if (status !in MEDIA_REDIRECT_STATUSES) return null
+            val location = response.headers[HttpHeaders.Location] ?: return null
+            // Preserve an absolute signed Location byte-for-byte; only relative references need URL resolution.
+            target = if (location.startsWith("https://", ignoreCase = true)) location
+            else runCatching { URLBuilder(target).takeFrom(location).buildString() }.getOrNull() ?: return null
+        }
+        return null
+    }
+
     private suspend fun warmUp() {
         try {
             val session = host.session()
@@ -1057,6 +1170,8 @@ internal class ExcorEngine(
         const val PLAYER_RESPONSE_LIMIT = 2_000_000
         const val INNERTUBE_ATTEMPTS = 3
         const val MAX_MEDIA_REDIRECTS = 3
+        const val MAX_HLS_MANIFEST_BYTES = 1_048_576
+        val MEDIA_REDIRECT_STATUSES = setOf(301, 302, 303, 307, 308)
         val RETRYABLE_STATUSES = setOf(429, 500, 502, 503, 504)
         const val MAX_CIPHER_LENGTH = 16_384
         const val EXCLUSION_MS = 10 * 60 * 1000L

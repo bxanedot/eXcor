@@ -13,11 +13,14 @@ internal data class PlayerResponse(
     val formats: List<PlayerFormat>,
     val playerScriptUrl: String?,
     val loudnessDb: Double?,
+    val hlsManifestUrl: String? = null,
+    val isLive: Boolean = false,
 ) {
     override fun toString(): String =
         "PlayerResponse(status=${playabilityStatus?.let(::safePlaybackReason)}, " +
             "reason=${playabilityReason?.let(::safePlaybackReason)}, formats=${formats.size}, " +
-            "playerScriptUrl=${if (playerScriptUrl == null) "missing" else "present"}, loudnessDb=$loudnessDb)"
+            "playerScriptUrl=${if (playerScriptUrl == null) "missing" else "present"}, " +
+            "hlsManifestUrl=${if (hlsManifestUrl == null) "missing" else "present"}, isLive=$isLive, loudnessDb=$loudnessDb)"
 }
 
 private val playerJson = Json { isLenient = false }
@@ -44,6 +47,8 @@ internal fun decodePlayerResponse(source: String): PlayerResponse? {
         formats = formats,
         playerScriptUrl = root.objectValue("assets")?.stringValue("js"),
         loudnessDb = loudness,
+        hlsManifestUrl = streaming?.stringValue("hlsManifestUrl")?.takeIf { it.length <= 16_384 },
+        isLive = root.objectValue("videoDetails")?.stringValue("isLiveContent") == "true",
     )
 }
 

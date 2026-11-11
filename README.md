@@ -4,13 +4,13 @@
 
 **Live competitiveness tracker:** [0–100 score and missing capabilities](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) · [methodology](docs/COMPETITIVENESS_CHECKER.md). The score is evidence-weighted readiness, **not** a live-video playback success rate.
 
-**eXcor** is an Apache-2.0 Kotlin Multiplatform library for resolving directly fetchable YouTube audio streams from video IDs. This clean-room implementation is a draft SDK, not a production-ready release.
+**eXcor** is an Apache-2.0 Kotlin Multiplatform library for resolving YouTube audio streams and, experimentally, HLS manifests from video IDs. This clean-room implementation is a draft SDK, not a production-ready release.
 
 The current library exposes package `com.excor`, Gradle coordinates `com.excor:eXcor:0.2.0`, and an iOS XCFramework named `eXcor`. The implementation is built from `cleanroom-src/`; it does not use the older implementation source retained in this repository.
 
 ## Current scope
 
-The KMP library provides audio format selection, player-response and player-script handling, URL validation, host-supplied session and PO-token interfaces, remembered stream headers, refusal tracking, and player-data caching. It returns a direct audio stream only when the URL passes the HTTPS YouTube/GoogleVideo `/videoplayback` allowlist. It does not mint PO tokens.
+The KMP library provides audio and video format selection, player-response and player-script handling, URL validation, host-supplied session and PO-token interfaces, remembered stream headers, refusal tracking, and player-data caching. Direct media URLs must pass the HTTPS YouTube/GoogleVideo `/videoplayback` allowlist. Experimental HLS extraction validates a GoogleVideo master-playlist URL, its bounded response and redirects, then returns it to a host media player; that player fetches child playlists and segments. HLS live playback has not been verified. eXcor does not mint PO tokens.
 
 `Excor.music` puts Spotify, Apple Music and Deezer metadata behind one API, along with cross-provider matching, incremental playlist and library sync, audio-variant and DRM reporting, and authorized-playback decisions. Deezer and Apple's keyless endpoints are verified live; Spotify and the Apple Music API are tested offline only. See [music providers](docs/MUSIC_PROVIDERS.md) and [limitations](docs/MUSIC_LIMITATIONS.md). YouTube Music search, artists, playlists and radio are available through `Excor` (see below); `Excor.music` itself does not cover YouTube Music. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical implementation in `src/` remains in the repository pending a separate provenance audit; nothing compiles it any more. The earlier music-player apps were removed on 2026-11-03 (owner's decision) in favor of the preview apps below, which use this library. See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
@@ -119,6 +119,20 @@ if (streams != null) {
 The best picture under `maxHeight` wins, then the higher frame rate, then the most widely decodable codec (H.264, VP9, AV1). The audio comes from the same response, in the matching container where one exists (M4A with MP4 video, Opus/WebM with WebM video), so the two can be played together or muxed without re-encoding. Both tracks pass the playback probe before they are returned. If the response has no playable separate audio, a progressive format is used instead. Segmented ("OTF") formats are not selected.
 
 `excor.formats(videoId)` lists every whole-file audio and video format one client offers (itag, codec, size, frame rate, bitrate, length, byte ranges), for download choices. All of them are fetched with `list.headers`. One representative format is probed, since a response's URLs are signed together. If a listed URL is refused, call `exclude(videoId, list.profileId)` and ask again. A `TokenProvider` is an integration boundary: applications may supply tokens they are authorized to obtain, while eXcor never creates them.
+
+### HLS manifest handoff (experimental)
+
+`extractHls` returns an HLS manifest URL only when YouTube offers one and the bounded manifest probe succeeds:
+
+```kotlin
+val hls = excor.extractHls(videoId)
+if (hls != null) {
+    // Give hls.url and hls.headers to a host media player with HLS support.
+    // Keep the signed URL and any host-provided PO token private.
+}
+```
+
+The result includes `isLive`, client/profile identifiers and the media headers. The host player handles child playlists and media segments. eXcor validates the initial URL and manifest redirect chain; it does not proxy or validate each child request. HLS has synthetic offline coverage only so far; no live playback result is claimed. DASH and SABR/UMP playback are not implemented.
 
 ## Preview apps
 

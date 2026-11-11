@@ -17,6 +17,23 @@ data class ExcorStream(
         "ExcorStream(videoId=present, kbps=$kbps, mimeType=${mimeType.isNotEmpty()}, client=present, headers=${headers.size})"
 }
 
+/**
+ * A validated HLS manifest for a host media player. The player fetches the playlist and its child media using
+ * [headers]. eXcor verifies the initial HTTPS GoogleVideo URL, bounded playlist response and each manifest redirect;
+ * it does not proxy or rewrite child playlist/segment requests.
+ */
+data class ExcorHlsStream(
+    val videoId: String,
+    val url: String,
+    val isLive: Boolean,
+    val clientName: String,
+    val profileId: String,
+    val headers: Map<String, String>,
+) {
+    override fun toString(): String =
+        "ExcorHlsStream(videoId=present, isLive=$isLive, client=present, profile=present, headers=${headers.size})"
+}
+
 enum class ExcorAudioFormat { M4A, WEBM_OPUS, OTHER }
 
 /** A video codec, from the format's MIME type. Ordered from the most to the least widely decodable. */
