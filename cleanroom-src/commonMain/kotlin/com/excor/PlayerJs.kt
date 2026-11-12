@@ -107,8 +107,9 @@ internal fun signatureTimestamp(playerScript: String): Int? =
 internal suspend fun runEjs(input: String): String {
     require(input.length <= 6_000_000) { "Player challenge input is too large" }
     val inputLiteral = JsonPrimitive(input).toString()
-    val program = "$EJS_LIB\nObject.assign(globalThis, lib.lib);\n" +
-        "globalThis.require = name => { if (name === 'meriyah' || name === 'astring') return lib.lib[name]; throw new Error('Unsupported EJS dependency'); };\n" +
+    val program = "$EJS_LIB\nconst ejsModules = lib.lib ?? lib;\n" +
+        "Object.assign(globalThis, ejsModules);\n" +
+        "globalThis.require = name => { if (name === 'meriyah' || name === 'astring') return ejsModules[name]; throw new Error('Unsupported EJS dependency'); };\n" +
         "$URL_SHIM\n$EJS_CORE\nJSON.stringify(jsc.default(JSON.parse($inputLiteral)))"
     return withContext(Dispatchers.Default) {
         val runtime = QuickJs.create(Dispatchers.Default)
