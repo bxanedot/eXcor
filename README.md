@@ -63,7 +63,7 @@ Every call is `suspend`:
 - It throws `ExcorRequestException` when the request itself kept failing after up to three attempts. `failure` says whether YouTube was rate limiting (`RATE_LIMITED`), had server errors (`SERVER_ERROR`) or couldn't be reached (`NETWORK`).
 - Invalid arguments throw `IllegalArgumentException`.
 
- [Feature matrix](docs/FEATURE_MATRIX.md) lists what is verified live and what is blocked.
+[Feature matrix](docs/FEATURE_MATRIX.md) lists what is verified live and what is blocked; [error handling](docs/ERROR_HANDLING.md) explains failure results.
 
 ## Playback diagnostics (JVM sample)
 
@@ -169,7 +169,7 @@ Offline clean-room tests use synthetic fixtures under `fixtures/cleanroom/`. The
 - [Clean-room policy](docs/CLEAN_ROOM.md) and [source provenance](PROVENANCE.md)
 - [Architecture](docs/ARCHITECTURE.md) and [feature matrix](docs/FEATURE_MATRIX.md)
 - [Repository audit](docs/REPOSITORY_AUDIT.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md)
-- [Dependency licenses](docs/DEPENDENCY_LICENSES.md), [third-party notices](docs/THIRD_PARTY_NOTICES.md), and [open questions](QUESTIONS.md)
+- [Dependency licenses](docs/DEPENDENCY_LICENSES.md), [third-party notices](docs/THIRD_PARTY_NOTICES.md), [security policy](SECURITY.md), and [open questions](QUESTIONS.md)
 
 The approved names are eXcor for Kotlin and eXcorKit for the separate Swift package; [BRIEF.md](BRIEF.md) uses those names throughout its active API contract. Historical app and implementation files now carry the eXcor naming, but their older API shapes remain unintegrated with the clean-room library.
 
