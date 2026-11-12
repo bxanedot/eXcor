@@ -35,7 +35,7 @@ The GitHub workflow runs on every change to main, on manual dispatch, and hourly
 1. Runs offline rubric integrity tests.
 2. Calculates the weighted score from criterion states and G1–G12 release gates.
 3. Looks up the exact main commit's CI workflow state using GitHub's API; displays pending, passed, failed or unknown separately **without automatically adding points**.
-4. Writes readable Markdown, complete JSON and a dynamic-badge JSON to the dedicated automation/excor-competitiveness branch, and uploads the results as a GitHub Actions artifact.
+4. Writes readable Markdown, complete JSON and dynamic-badge JSON to the dedicated `automation/excor-competitiveness` branch, bootstrapping it as an isolated score-only branch if it has been removed, and uploads the results as a GitHub Actions artifact.
 
 Score-only commits do not launch expensive multiplatform CI. If the report does not materially change, the checker skips its commit. The output does not include cookies, credentials, session headers, signed stream URLs, network captures or account details.
 

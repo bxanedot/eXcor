@@ -51,7 +51,7 @@ class SpotifyProviderTest {
             assertEquals("1", requestLimit)
             assertEquals("0", requestOffset)
             assertEquals("Bearer host-owned-test-token", authorization)
-            assertEquals("4iV5W9uYEdYUVa79Axb7Rh", item.id)
+            assertEquals("4444444444444444444444", item.id)
             assertEquals("North Loop", item.title)
             assertEquals(ExcorCatalogProvider.SPOTIFY, item.provider)
             assertEquals("2222222222222222222222", item.artists.single().id)
@@ -135,9 +135,9 @@ class SpotifyProviderTest {
 
         try {
             val item = ExcorMusicCatalog(client, ExcorCatalogTokenProvider { "host-token" })
-                .lookup("https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh?si=share-id")
+                .lookup("https://open.spotify.com/track/4444444444444444444444?si=share-id")
             assertEquals("api.spotify.com", requestHost)
-            assertEquals("/v1/tracks/4iV5W9uYEdYUVa79Axb7Rh", requestPath)
+            assertEquals("/v1/tracks/4444444444444444444444", requestPath)
             assertEquals("North Loop", item?.title)
             assertEquals("Night Signals", item?.albumTitle)
         } finally {
@@ -214,7 +214,7 @@ class SpotifyProviderTest {
             assertEquals(9, album.trackCount)
             assertEquals("June Harbor", album.artists.single().name)
             assertEquals(ExcorCatalogKind.ARTIST, artist.kind)
-            assertEquals(listOf("4iV5W9uYEdYUVa79Axb7Rh"), tracks.items.map { it.id })
+            assertEquals(listOf("4444444444444444444444"), tracks.items.map { it.id })
             assertEquals("3333333333333333333333", tracks.items.single().albumId)
             assertEquals(listOf("3333333333333333333333"), albums.items.map { it.id })
         } finally {

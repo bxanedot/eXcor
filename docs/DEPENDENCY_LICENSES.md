@@ -10,14 +10,16 @@ This table covers dependencies declared by the clean-room Kotlin build and the C
 | Ktor client core, OkHttp, Darwin, Mock | 3.6.0 | Apache-2.0 | HTTP transport and tests |
 | kotlinx.coroutines core and test | 1.11.0 | Apache-2.0 | Structured concurrency and tests |
 | kotlinx.serialization JSON | 1.12.0 | Apache-2.0 | Player response and cache data |
-| QuickJS-KT | 1.0.15 | Apache-2.0 wrapper; bundled runtime notices apply | Player challenge execution |
-| yt-dlp/ejs solver bundles | commit `d48c6303a5a6455a42ef9e0b445149cadea51279` | Unlicense | JavaScript challenge solver |
+| QuickJS-KT wrapper | 1.0.15 | Apache-2.0 | JavaScript runtime API |
+| QuickJS native runtime (pinned by QuickJS-KT) | commit `04be246001599f5995fa2f2d8c91a0f198d3f34c` | MIT | Native runtime built by JVM/Android dependencies and linked into the static Kotlin/Native framework |
+| c-vector (pinned by QuickJS-KT) | commit `774773d4cb1e66dd736e90e7f482d4f22af464c6` | MIT | Native QuickJS build component |
+| yt-dlp/ejs solver bundles | PyPI wheel `yt-dlp-ejs==0.8.0`, SHA-256 `79300e5fca7f937a1eeede11f0456862c1b41107ce1d726871e0207424f4bdb4` | Unlicense | JavaScript challenge solver |
 | meriyah bundled by ejs | 6.1.4 | ISC | JavaScript parser bundled in solver |
 | astring bundled by ejs | 1.9.0 | MIT | JavaScript code generator bundled in solver |
 | TestNG | 7.5.1 | Apache-2.0 | JVM tests |
 | GitHub Actions: [checkout](https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1), [setup-java](https://github.com/actions/setup-java/commit/b843ebf9b913146b38da2eaa7aeddf76074ae1ad), [setup-node](https://github.com/actions/setup-node/commit/249970729cb0ef3589644e2896645e5dc5ba9c38), [upload-artifact](https://github.com/actions/upload-artifact/commit/cf430e030ddbb5b0abf93d22962f4752f3646cd9) | v7 / v6 / v6 / v7 | MIT | CI actions pinned to official release commits; Dependabot checks action updates monthly |
 
-Ktor, Kotlin and test dependencies bring transitive artifacts; use Gradle dependency reports for the exact resolved graph on each target. See [`NOTICE`](../NOTICE) for bundled third-party text and [PROVENANCE.md](../PROVENANCE.md) for source records. The separate Swift package has no third-party package dependencies and is documented in its follow-up change.
+Ktor, Kotlin and test dependencies bring transitive artifacts; use Gradle dependency reports for the exact resolved graph on each target. See [`NOTICE`](../NOTICE) for bundled third-party text and [PROVENANCE.md](../PROVENANCE.md) for source records. The separate Swift package has no QuickJS-KT dependency and uses Apple JavaScriptCore.
 
 ## CI vulnerability scan snapshot — 2026-11-12
 

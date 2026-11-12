@@ -1,10 +1,25 @@
 # eXcor
 
-[![eXcor readiness score](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbxanedot%2FeXcor%2Fautomation%2Fexcor-competitiveness%2Fscore%2Fbadge.json)](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md)
+[![eXcor evidence readiness](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbxanedot%2FeXcor%2Fautomation%2Fexcor-competitiveness%2Fscore%2Fbadge.json)](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md)
 
-**Live competitiveness tracker:** [0–100 score and missing capabilities](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) · [methodology](docs/COMPETITIVENESS_CHECKER.md). The score is evidence-weighted readiness, **not** a live-video playback success rate.
+**Live readiness report:** [current score, missing evidence, release gates and CI state](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) · [scoring method](docs/COMPETITIVENESS_CHECKER.md) · [automated report runs](https://github.com/bxanedot/eXcor/actions/workflows/competitiveness-score.yml). The score is evidence-weighted engineering readiness. It is not a playback success rate or a measured head-to-head score against InnerTubeX.
 
 **eXcor** is an Apache-2.0 Kotlin Multiplatform library for resolving YouTube audio streams and, experimentally, HLS manifests from video IDs. This clean-room implementation is a draft SDK, not a production-ready release.
+
+## eXcor compared with InnerTubeX
+
+**Evidence snapshot: 2026-11-12.** The latest published InnerTubeX release found in GitHub is [v0.11.6](https://github.com/MetrolistGroup/innertubex/releases/tag/v0.11.6) (2026-11-07). Its [README](https://github.com/MetrolistGroup/innertubex) documents Kotlin Multiplatform targets, standard InnerTube operations and an extraction stack with direct, HLS and SABR/UMP transports. The README's JitPack example still pins v0.11.5; this comparison does not assume that v0.11.6 resolves through JitPack. eXcor's evidence is linked to its [feature matrix](docs/FEATURE_MATRIX.md), [competitor matrix](docs/COMPETITOR_MATRIX.md) and [release gates](docs/release-gates.json).
+
+| Area | eXcor | InnerTubeX | What the evidence says |
+|---|---|---|---|
+| Metadata and music catalogs | YouTube and YouTube Music metadata, search, channels, playlists, comments, chapters and radio; Spotify, Apple Music and Deezer metadata and matching. The listed YouTube flows have dated live checks. | README documents search, browse, account, playlist and player operations, plus channel discovery and music uploads. | eXcor has broader documented catalog coverage; this does not establish that InnerTubeX lacks features absent from its README. |
+| Direct audio and video | One eligible video has full audio/video decode, mux and range-read evidence. Other videos and networks are inconsistent. | README documents direct extraction and bounded media probing. | Both document direct extraction; the available evidence does not support a representative reliability comparison. |
+| HLS, DASH and SABR/UMP | HLS is an experimental manifest handoff with no live playback result. DASH-manifest and SABR/UMP playback are not implemented. | README documents HLS and seekable SABR/UMP audio and video, including video representation selection. | **Largest parity gap:** eXcor has no SABR/UMP transport and has not verified live HLS playback. InnerTubeX's capabilities here are upstream documentation claims, not an independent benchmark. |
+| Player cipher | Signature and `n` solving are implemented; successful ciphered media decode and seek remain unverified. | README describes Kotlin cipher handling via QuackJS. The latest v0.11.6 release fixes iOS cipher work on large-stack threads. | eXcor does not yet have verified ciphered-playback parity. |
+| Reliability and security | URL allowlisting, bounded responses, session-generation invalidation and diagnostic redaction are implemented; live reliability and the full release-security audit remain partial. | README documents bounded bodies and protocol state, strict media URL validation and isolated sessions; the [changelog](https://github.com/MetrolistGroup/innertubex/blob/main/CHANGELOG.md) records additional timeout and redirect hardening. | The designs overlap, but there is no common independent stress-test result. |
+| Installation and license | Apache-2.0; `com.excor:eXcor:0.2.0` currently installs from `mavenLocal`; no remote release is published. | GPL-3.0; the README provides a JitPack dependency example. | InnerTubeX has a documented remote installation path; eXcor still needs an authorized public release. |
+
+**Current assessment:** eXcor already offers useful metadata breadth and has direct-playback evidence, but it is not yet a playback-parity alternative to InnerTubeX. SABR/UMP, live HLS, ciphered-stream playback and a public release remain open gates. The live readiness report tracks eXcor's evidence against the [100-point rubric](docs/competitiveness-evidence.json); its score is not a percentage of InnerTubeX features or an apples-to-apples performance result.
 
 The current library exposes package `com.excor`, Gradle coordinates `com.excor:eXcor:0.2.0`, and an iOS XCFramework named `eXcor`. The implementation is built from `cleanroom-src/`; it does not use the older implementation source retained in this repository.
 
