@@ -17,6 +17,22 @@ repositories {
     mavenCentral()
 }
 
+// Pin OSV-fixed versions only in build-tool classpaths; published runtime configurations are unchanged.
+allprojects {
+    configurations.configureEach {
+        if (name == "androidLintTool" || name == "swiftExportClasspathResolvable") {
+            resolutionStrategy.force(
+                "com.google.guava:guava:33.7.2-jre",
+                "io.opentelemetry:opentelemetry-api:1.67.0",
+                "org.apache.commons:commons-lang3:3.18.0",
+                "org.apache.httpcomponents:httpclient:4.5.14",
+                "org.bouncycastle:bcpkix-jdk18on:1.85",
+                "org.bouncycastle:bcprov-jdk18on:1.85",
+            )
+        }
+    }
+}
+
 // The challenge solver scripts must reach every target, and Kotlin/Native has no resource
 // loading, so they are compiled in as string constants.
 val generateEjs = tasks.register("generateEjs") {
