@@ -39,14 +39,16 @@ enum PlayerJSTransformer {
         let urlShim = try resource("ExcorURLShim")
         let program = """
         \(library)
-        Object.assign(globalThis, lib.lib);
+        const ejsModules = lib.lib ?? lib;
+        Object.assign(globalThis, ejsModules);
         globalThis.require = function(name) {
-          if (name === 'meriyah' || name === 'astring') return lib.lib[name];
+          if (name === 'meriyah' || name === 'astring') return ejsModules[name];
           throw new Error('Unsupported EJS dependency');
         };
         \(urlShim)
         \(core)
-        JSON.stringify(jsc.default(JSON.parse(\(inputLiteral))))
+        const runEjsCore = jsc.default ?? jsc;
+        JSON.stringify(runEjsCore(JSON.parse(\(inputLiteral))))
         """
         let output = try await evaluator.evaluate(program)
         guard let outputData = output.data(using: .utf8), outputData.count <= 8 * 1024 * 1024,
