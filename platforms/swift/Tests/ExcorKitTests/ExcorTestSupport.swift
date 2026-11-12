@@ -4,7 +4,7 @@ import Foundation
 enum CleanroomFixture {
     static func read(_ name: String) throws -> String {
         let source = URL(fileURLWithPath: #filePath)
-        let root = source.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let root = source.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let url = root.appendingPathComponent("fixtures/cleanroom/\(name)")
         return try String(contentsOf: url, encoding: .utf8)
     }
