@@ -117,7 +117,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/shipped"
           grep -E '=(.*,)?(jvmRuntimeClasspath|androidRuntimeClasspath|ios(Arm64|SimulatorArm64|X64)CompileKlibraries)(,|$)' gradle.lockfile > "$RUNNER_TEMP/shipped/gradle.lockfile"
           echo "All library, preview and Node adapter dependencies, gating:"
-          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile preview/android/gradle.lockfile --lockfile preview/desktop/gradle.lockfile --lockfile samples/black-box-comparison/youtubejs-node/package-lock.json
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile platforms/preview/android/gradle.lockfile --lockfile platforms/preview/desktop/gradle.lockfile --lockfile samples/black-box-comparison/youtubejs-node/package-lock.json
           echo "Shipped runtime and compile dependencies, gating:"
           "$RUNNER_TEMP/osv-scanner" scan source --lockfile "$RUNNER_TEMP/shipped/gradle.lockfile"
 
