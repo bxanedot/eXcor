@@ -209,7 +209,7 @@ jobs:
             21
       - name: Kotlin tests, iOS targets, frameworks and XCFramework
         run: >
-          ./gradlew $GRADLE_ARGS :jvmTest :iosSimulatorArm64Test
+          ./gradlew $GRADLE_ARGS :checkKotlinAbi :jvmTest :iosSimulatorArm64Test
           :linkReleaseFrameworkIosArm64 :linkReleaseFrameworkIosSimulatorArm64 :linkReleaseFrameworkIosX64
           :assembleEXcorReleaseXCFramework
       - name: Swift check of the published Kotlin API

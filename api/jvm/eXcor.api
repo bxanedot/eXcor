@@ -1,0 +1,2748 @@
+public final class com/excor/Excor {
+	public fun <init> (Lcom/excor/ExcorHost;)V
+	public final fun audioCandidates (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun channel (Ljava/lang/String;Ljava/lang/String;Lcom/excor/ExcorYouTubeChannelTab;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun channel$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Lcom/excor/ExcorYouTubeChannelTab;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun channelAbout (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun chapters (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun comments (Ljava/lang/String;Ljava/lang/String;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun comments$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun exclude (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun extract (Ljava/lang/String;ILjava/util/Set;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun extract$default (Lcom/excor/Excor;Ljava/lang/String;ILjava/util/Set;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun extractHls (Ljava/lang/String;Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun extractHls$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/util/Set;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun extractVideo (Ljava/lang/String;ILjava/util/Set;ILjava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun extractVideo$default (Lcom/excor/Excor;Ljava/lang/String;ILjava/util/Set;ILjava/util/Set;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun findOnYouTube (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun findOnYouTube$default (Lcom/excor/Excor;Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchOptions;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun formats (Ljava/lang/String;Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun formats$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/util/Set;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getMusic ()Lcom/excor/music/ExcorMusic;
+	public final fun getMusicCatalog ()Lcom/excor/catalog/ExcorMusicCatalog;
+	public final fun headersFor (Ljava/lang/String;)Ljava/util/Map;
+	public final fun init ()V
+	public final fun initializeFallback ()V
+	public final fun mix (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun mix$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun musicArtist (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun musicPlaylist (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun musicPlaylist$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun musicRadio (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun musicRadio$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun musicSearch (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun musicSearch$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun musicSuggestions (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun onRefused (Ljava/lang/String;)Ljava/lang/String;
+	public final fun onSessionChanged ()V
+	public final fun playlist (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun playlist$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun related (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun related$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun search (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun search$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun songs (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun suggestions (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun videoInfo (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/ExcorAudioCandidate {
+	public fun <init> (Ljava/lang/String;ILjava/lang/String;Lcom/excor/ExcorAudioFormat;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/excor/ExcorAudioFormat;
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;Lcom/excor/ExcorAudioFormat;)Lcom/excor/ExcorAudioCandidate;
+	public static synthetic fun copy$default (Lcom/excor/ExcorAudioCandidate;Ljava/lang/String;ILjava/lang/String;Lcom/excor/ExcorAudioFormat;ILjava/lang/Object;)Lcom/excor/ExcorAudioCandidate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFormat ()Lcom/excor/ExcorAudioFormat;
+	public final fun getKbps ()I
+	public final fun getMimeType ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorAudioFormat : java/lang/Enum {
+	public static final field M4A Lcom/excor/ExcorAudioFormat;
+	public static final field OTHER Lcom/excor/ExcorAudioFormat;
+	public static final field WEBM_OPUS Lcom/excor/ExcorAudioFormat;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/ExcorAudioFormat;
+	public static fun values ()[Lcom/excor/ExcorAudioFormat;
+}
+
+public abstract interface class com/excor/ExcorConfigStore {
+	public abstract fun getEnabled ()Z
+	public abstract fun getLong (Ljava/lang/String;)Ljava/lang/Long;
+	public abstract fun getString (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun putLong (Ljava/lang/String;J)V
+	public abstract fun putString (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class com/excor/ExcorFormatList {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Lcom/excor/ExcorFormatList;
+	public static synthetic fun copy$default (Lcom/excor/ExcorFormatList;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorFormatList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientName ()Ljava/lang/String;
+	public final fun getFormats ()Ljava/util/List;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getProfileId ()Ljava/lang/String;
+	public final fun getVideoId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorHlsStream {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lcom/excor/ExcorHlsStream;
+	public static synthetic fun copy$default (Lcom/excor/ExcorHlsStream;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/ExcorHlsStream;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientName ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getProfileId ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getVideoId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isLive ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/excor/ExcorHost : com/excor/ExcorHostServices {
+	public abstract fun getFilesDir ()Ljava/io/File;
+	public abstract fun getHttpClient ()Lokhttp3/OkHttpClient;
+	public abstract fun getTokenProvider ()Lcom/excor/internal/primary/extraction/TokenProvider;
+}
+
+public final class com/excor/ExcorHost$DefaultImpls {
+	public static fun getCatalogTokenProvider (Lcom/excor/ExcorHost;)Lcom/excor/catalog/ExcorCatalogTokenProvider;
+	public static fun getMusicConfig (Lcom/excor/ExcorHost;)Lcom/excor/music/ExcorMusicConfig;
+}
+
+public final class com/excor/ExcorHostKt {
+	public static final fun excorDefaultHost (Lokhttp3/OkHttpClient;Ljava/lang/String;Ljava/lang/String;Ljava/io/File;Lcom/excor/internal/primary/extraction/TokenProvider;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lcom/excor/ExcorHost;
+	public static synthetic fun excorDefaultHost$default (Lokhttp3/OkHttpClient;Ljava/lang/String;Ljava/lang/String;Ljava/io/File;Lcom/excor/internal/primary/extraction/TokenProvider;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/excor/ExcorHost;
+}
+
+public abstract interface class com/excor/ExcorHostServices {
+	public fun getCatalogTokenProvider ()Lcom/excor/catalog/ExcorCatalogTokenProvider;
+	public abstract fun getConfigStore ()Lcom/excor/ExcorConfigStore;
+	public fun getMusicConfig ()Lcom/excor/music/ExcorMusicConfig;
+	public abstract fun log (Lcom/excor/ExcorLogLevel;Ljava/lang/String;Ljava/lang/String;)V
+	public static synthetic fun log$default (Lcom/excor/ExcorHostServices;Lcom/excor/ExcorLogLevel;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+	public abstract fun nowMs ()J
+	public abstract fun session (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/ExcorHostServices$DefaultImpls {
+	public static fun getCatalogTokenProvider (Lcom/excor/ExcorHostServices;)Lcom/excor/catalog/ExcorCatalogTokenProvider;
+	public static fun getMusicConfig (Lcom/excor/ExcorHostServices;)Lcom/excor/music/ExcorMusicConfig;
+	public static synthetic fun log$default (Lcom/excor/ExcorHostServices;Lcom/excor/ExcorLogLevel;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+}
+
+public final class com/excor/ExcorLogLevel : java/lang/Enum {
+	public static final field DEBUG Lcom/excor/ExcorLogLevel;
+	public static final field ERROR Lcom/excor/ExcorLogLevel;
+	public static final field INFO Lcom/excor/ExcorLogLevel;
+	public static final field WARN Lcom/excor/ExcorLogLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/ExcorLogLevel;
+	public static fun values ()[Lcom/excor/ExcorLogLevel;
+}
+
+public final class com/excor/ExcorMediaFormat {
+	public fun <init> (Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Long;ZZLjava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lcom/excor/ExcorVideoCodec;Ljava/lang/Integer;Ljava/lang/Integer;Lkotlin/ranges/LongRange;Lkotlin/ranges/LongRange;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun component10 ()Ljava/lang/Integer;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Lcom/excor/ExcorVideoCodec;
+	public final fun component13 ()Ljava/lang/Integer;
+	public final fun component14 ()Ljava/lang/Integer;
+	public final fun component15 ()Lkotlin/ranges/LongRange;
+	public final fun component16 ()Lkotlin/ranges/LongRange;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()I
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ljava/lang/Integer;
+	public final fun component9 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Long;ZZLjava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lcom/excor/ExcorVideoCodec;Ljava/lang/Integer;Ljava/lang/Integer;Lkotlin/ranges/LongRange;Lkotlin/ranges/LongRange;)Lcom/excor/ExcorMediaFormat;
+	public static synthetic fun copy$default (Lcom/excor/ExcorMediaFormat;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Long;ZZLjava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lcom/excor/ExcorVideoCodec;Ljava/lang/Integer;Ljava/lang/Integer;Lkotlin/ranges/LongRange;Lkotlin/ranges/LongRange;ILjava/lang/Object;)Lcom/excor/ExcorMediaFormat;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAudioChannels ()Ljava/lang/Integer;
+	public final fun getContentLength ()Ljava/lang/Long;
+	public final fun getFps ()Ljava/lang/Integer;
+	public final fun getHasAudio ()Z
+	public final fun getHasVideo ()Z
+	public final fun getHeight ()Ljava/lang/Integer;
+	public final fun getIndexRange ()Lkotlin/ranges/LongRange;
+	public final fun getInitRange ()Lkotlin/ranges/LongRange;
+	public final fun getItag ()Ljava/lang/Integer;
+	public final fun getKbps ()I
+	public final fun getMimeType ()Ljava/lang/String;
+	public final fun getQualityLabel ()Ljava/lang/String;
+	public final fun getSampleRate ()Ljava/lang/Integer;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getVideoCodec ()Lcom/excor/ExcorVideoCodec;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorRequestException : java/lang/Exception {
+	public fun <init> (Lcom/excor/ExcorRequestFailure;Ljava/lang/Integer;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Lcom/excor/ExcorRequestFailure;Ljava/lang/Integer;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFailure ()Lcom/excor/ExcorRequestFailure;
+	public final fun getStatusCode ()Ljava/lang/Integer;
+}
+
+public final class com/excor/ExcorRequestFailure : java/lang/Enum {
+	public static final field NETWORK Lcom/excor/ExcorRequestFailure;
+	public static final field RATE_LIMITED Lcom/excor/ExcorRequestFailure;
+	public static final field SERVER_ERROR Lcom/excor/ExcorRequestFailure;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/ExcorRequestFailure;
+	public static fun values ()[Lcom/excor/ExcorRequestFailure;
+}
+
+public final class com/excor/ExcorSession {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/excor/ExcorSession;
+	public static synthetic fun copy$default (Lcom/excor/ExcorSession;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorSession;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCookie ()Ljava/lang/String;
+	public final fun getLanguage ()Ljava/lang/String;
+	public final fun getRegion ()Ljava/lang/String;
+	public final fun getVisitorData ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorStream {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Double;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lcom/excor/ExcorStream;
+	public static synthetic fun copy$default (Lcom/excor/ExcorStream;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/ExcorStream;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientName ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getKbps ()I
+	public final fun getLoudnessDb ()Ljava/lang/Double;
+	public final fun getMimeType ()Ljava/lang/String;
+	public final fun getProfileId ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getVideoId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorVideoCodec : java/lang/Enum {
+	public static final field AV1 Lcom/excor/ExcorVideoCodec;
+	public static final field H264 Lcom/excor/ExcorVideoCodec;
+	public static final field OTHER Lcom/excor/ExcorVideoCodec;
+	public static final field VP9 Lcom/excor/ExcorVideoCodec;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/ExcorVideoCodec;
+	public static fun values ()[Lcom/excor/ExcorVideoCodec;
+}
+
+public final class com/excor/ExcorVideoInfo {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZZLjava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Set;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZZLjava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Set;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun asMusicTrack ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Ljava/util/List;
+	public final fun component15 ()Z
+	public final fun component16 ()Z
+	public final fun component17 ()Ljava/lang/Boolean;
+	public final fun component18 ()Ljava/lang/Boolean;
+	public final fun component19 ()Ljava/lang/Boolean;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component20 ()Ljava/lang/Boolean;
+	public final fun component21 ()Ljava/util/Set;
+	public final fun component22 ()Ljava/lang/String;
+	public final fun component23 ()Ljava/lang/String;
+	public final fun component24 ()Ljava/lang/String;
+	public final fun component25 ()Z
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/Long;
+	public final fun component8 ()Ljava/lang/Long;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZZLjava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Set;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/excor/ExcorVideoInfo;
+	public static synthetic fun copy$default (Lcom/excor/ExcorVideoInfo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZZLjava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Set;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/excor/ExcorVideoInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthor ()Ljava/lang/String;
+	public final fun getAvailableCountries ()Ljava/util/Set;
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getChannelHandle ()Ljava/lang/String;
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDurationSeconds ()Ljava/lang/Long;
+	public final fun getFromWatchPage ()Z
+	public final fun getKeywords ()Ljava/util/List;
+	public final fun getLikeCount ()Ljava/lang/Long;
+	public final fun getPlayabilityReason ()Ljava/lang/String;
+	public final fun getPlayabilityStatus ()Ljava/lang/String;
+	public final fun getPlayable ()Z
+	public final fun getPublishDate ()Ljava/lang/String;
+	public final fun getPublishedText ()Ljava/lang/String;
+	public final fun getThumbnails ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUploadDate ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getVideoId ()Ljava/lang/String;
+	public final fun getViewCount ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public final fun isFamilySafe ()Ljava/lang/Boolean;
+	public final fun isLive ()Z
+	public final fun isLiveContent ()Z
+	public final fun isPrivate ()Ljava/lang/Boolean;
+	public final fun isShortsEligible ()Ljava/lang/Boolean;
+	public final fun isUnlisted ()Ljava/lang/Boolean;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorVideoStreams {
+	public fun <init> (Ljava/lang/String;Lcom/excor/ExcorVideoTrack;Lcom/excor/ExcorStream;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/excor/ExcorVideoTrack;
+	public final fun component3 ()Lcom/excor/ExcorStream;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Lcom/excor/ExcorVideoTrack;Lcom/excor/ExcorStream;Ljava/lang/String;Ljava/lang/String;)Lcom/excor/ExcorVideoStreams;
+	public static synthetic fun copy$default (Lcom/excor/ExcorVideoStreams;Ljava/lang/String;Lcom/excor/ExcorVideoTrack;Lcom/excor/ExcorStream;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorVideoStreams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAudio ()Lcom/excor/ExcorStream;
+	public final fun getClientName ()Ljava/lang/String;
+	public final fun getProfileId ()Ljava/lang/String;
+	public final fun getVideo ()Lcom/excor/ExcorVideoTrack;
+	public final fun getVideoId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorVideoTrack {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/excor/ExcorVideoCodec;Ljava/lang/Integer;ILjava/lang/Integer;Ljava/lang/String;ILjava/lang/Long;Lkotlin/ranges/LongRange;Lkotlin/ranges/LongRange;ZLjava/util/Map;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Lkotlin/ranges/LongRange;
+	public final fun component11 ()Lkotlin/ranges/LongRange;
+	public final fun component12 ()Z
+	public final fun component13 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/excor/ExcorVideoCodec;
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()I
+	public final fun component6 ()Ljava/lang/Integer;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()I
+	public final fun component9 ()Ljava/lang/Long;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/excor/ExcorVideoCodec;Ljava/lang/Integer;ILjava/lang/Integer;Ljava/lang/String;ILjava/lang/Long;Lkotlin/ranges/LongRange;Lkotlin/ranges/LongRange;ZLjava/util/Map;)Lcom/excor/ExcorVideoTrack;
+	public static synthetic fun copy$default (Lcom/excor/ExcorVideoTrack;Ljava/lang/String;Ljava/lang/String;Lcom/excor/ExcorVideoCodec;Ljava/lang/Integer;ILjava/lang/Integer;Ljava/lang/String;ILjava/lang/Long;Lkotlin/ranges/LongRange;Lkotlin/ranges/LongRange;ZLjava/util/Map;ILjava/lang/Object;)Lcom/excor/ExcorVideoTrack;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCodec ()Lcom/excor/ExcorVideoCodec;
+	public final fun getContainsAudio ()Z
+	public final fun getContentLength ()Ljava/lang/Long;
+	public final fun getFps ()Ljava/lang/Integer;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getHeight ()I
+	public final fun getIndexRange ()Lkotlin/ranges/LongRange;
+	public final fun getInitRange ()Lkotlin/ranges/LongRange;
+	public final fun getKbps ()I
+	public final fun getMimeType ()Ljava/lang/String;
+	public final fun getQualityLabel ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeChannel {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Set;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Set;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Ljava/util/List;
+	public final fun component12 ()Ljava/util/List;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Ljava/util/List;
+	public final fun component15 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/lang/Boolean;
+	public final fun component9 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Set;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/excor/ExcorYouTubeChannel;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeChannel;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Set;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeChannel;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvailableCountries ()Ljava/util/Set;
+	public final fun getAvatars ()Ljava/util/List;
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getKeywords ()Ljava/util/List;
+	public final fun getPlaylists ()Ljava/util/List;
+	public final fun getPosts ()Ljava/util/List;
+	public final fun getSubscribersText ()Ljava/lang/String;
+	public final fun getTabs ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getVideoCountText ()Ljava/lang/String;
+	public final fun getVideos ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun isFamilySafe ()Ljava/lang/Boolean;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeChannelAbout {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/excor/ExcorYouTubeChannelAbout;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeChannelAbout;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeChannelAbout;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getCountry ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getJoinedText ()Ljava/lang/String;
+	public final fun getLinks ()Ljava/util/List;
+	public final fun getSubscribersText ()Ljava/lang/String;
+	public final fun getVideoCountText ()Ljava/lang/String;
+	public final fun getViewCount ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeChannelLink {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/excor/ExcorYouTubeChannelLink;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeChannelLink;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeChannelLink;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeChannelResult {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/excor/ExcorYouTubeChannelResult;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeChannelResult;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeChannelResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getSubscribersText ()Ljava/lang/String;
+	public final fun getThumbnails ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeChannelTab : java/lang/Enum {
+	public static final field LIVE Lcom/excor/ExcorYouTubeChannelTab;
+	public static final field PLAYLISTS Lcom/excor/ExcorYouTubeChannelTab;
+	public static final field POSTS Lcom/excor/ExcorYouTubeChannelTab;
+	public static final field SHORTS Lcom/excor/ExcorYouTubeChannelTab;
+	public static final field VIDEOS Lcom/excor/ExcorYouTubeChannelTab;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/ExcorYouTubeChannelTab;
+	public static fun values ()[Lcom/excor/ExcorYouTubeChannelTab;
+}
+
+public final class com/excor/ExcorYouTubeChapter {
+	public fun <init> (Ljava/lang/String;J)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun copy (Ljava/lang/String;J)Lcom/excor/ExcorYouTubeChapter;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeChapter;Ljava/lang/String;JILjava/lang/Object;)Lcom/excor/ExcorYouTubeChapter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStartMs ()J
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeComment {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/Integer;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;)Lcom/excor/ExcorYouTubeComment;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeComment;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeComment;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthorChannelId ()Ljava/lang/String;
+	public final fun getAuthorIsArtist ()Z
+	public final fun getAuthorIsCreator ()Z
+	public final fun getAuthorName ()Ljava/lang/String;
+	public final fun getAuthorVerified ()Z
+	public final fun getCommentId ()Ljava/lang/String;
+	public final fun getLikesText ()Ljava/lang/String;
+	public final fun getPublishedText ()Ljava/lang/String;
+	public final fun getRepliesContinuation ()Ljava/lang/String;
+	public final fun getReplyCount ()Ljava/lang/Integer;
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeCommentsPage {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/excor/ExcorYouTubeCommentsPage;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeCommentsPage;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeCommentsPage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComments ()Ljava/util/List;
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getNewestContinuation ()Ljava/lang/String;
+	public final fun getTotalText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMix {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)Lcom/excor/ExcorYouTubeMix;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMix;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMix;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNextIndex ()Ljava/lang/Integer;
+	public final fun getNextVideoId ()Ljava/lang/String;
+	public final fun getPlaylistId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getVideos ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMusicArtist {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/excor/ExcorYouTubeMusicArtist;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMusicArtist;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMusicArtist;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getMonthlyAudienceText ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getRadioPlaylistId ()Ljava/lang/String;
+	public final fun getShelves ()Ljava/util/List;
+	public final fun getShufflePlaylistId ()Ljava/lang/String;
+	public final fun getSubscribersText ()Ljava/lang/String;
+	public final fun getThumbnails ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMusicArtistRef {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/excor/ExcorYouTubeMusicArtistRef;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMusicArtistRef;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMusicArtistRef;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMusicItem {
+	public fun <init> (Lcom/excor/ExcorYouTubeMusicItemType;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Lcom/excor/ExcorYouTubeMusicItemType;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/ExcorYouTubeMusicItemType;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/Long;
+	public final fun copy (Lcom/excor/ExcorYouTubeMusicItemType;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/excor/ExcorYouTubeMusicItem;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMusicItem;Lcom/excor/ExcorYouTubeMusicItemType;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMusicItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlbum ()Ljava/lang/String;
+	public final fun getAlbumBrowseId ()Ljava/lang/String;
+	public final fun getArtists ()Ljava/util/List;
+	public final fun getBrowseId ()Ljava/lang/String;
+	public final fun getDurationSeconds ()Ljava/lang/Long;
+	public final fun getMusicVideoType ()Ljava/lang/String;
+	public final fun getPlaylistId ()Ljava/lang/String;
+	public final fun getSubtitle ()Ljava/lang/String;
+	public final fun getThumbnails ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getType ()Lcom/excor/ExcorYouTubeMusicItemType;
+	public final fun getVideoId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMusicItemType : java/lang/Enum {
+	public static final field ALBUM Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field ARTIST Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field EPISODE Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field PLAYLIST Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field PODCAST Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field PROFILE Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field SONG Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field UNKNOWN Lcom/excor/ExcorYouTubeMusicItemType;
+	public static final field VIDEO Lcom/excor/ExcorYouTubeMusicItemType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/ExcorYouTubeMusicItemType;
+	public static fun values ()[Lcom/excor/ExcorYouTubeMusicItemType;
+}
+
+public final class com/excor/ExcorYouTubeMusicPlaylist {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/excor/ExcorYouTubeMusicPlaylist;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMusicPlaylist;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMusicPlaylist;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getPlaylistId ()Ljava/lang/String;
+	public final fun getSecondSubtitle ()Ljava/lang/String;
+	public final fun getSubtitle ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTracks ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMusicQueue {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/excor/ExcorYouTubeMusicQueue;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMusicQueue;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMusicQueue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getPlaylistId ()Ljava/lang/String;
+	public final fun getTracks ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMusicSearchPage {
+	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/lang/String;)Lcom/excor/ExcorYouTubeMusicSearchPage;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMusicSearchPage;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMusicSearchPage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getFilters ()Ljava/util/List;
+	public final fun getItems ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeMusicShelf {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/excor/ExcorYouTubeMusicShelf;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeMusicShelf;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeMusicShelf;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getMoreBrowseId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubePlaylist {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Integer;
+	public final fun component7 ()Ljava/lang/Long;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/excor/ExcorYouTubePlaylist;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubePlaylist;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubePlaylist;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getLastUpdatedText ()Ljava/lang/String;
+	public final fun getOwnerChannelId ()Ljava/lang/String;
+	public final fun getOwnerName ()Ljava/lang/String;
+	public final fun getPlaylistId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getVideoCount ()Ljava/lang/Integer;
+	public final fun getVideos ()Ljava/util/List;
+	public final fun getViewCount ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubePlaylistResult {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Z)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Z)Lcom/excor/ExcorYouTubePlaylistResult;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubePlaylistResult;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/excor/ExcorYouTubePlaylistResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPlaylistId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isMix ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubePlaylistVideo {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Z)Lcom/excor/ExcorYouTubePlaylistVideo;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubePlaylistVideo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZILjava/lang/Object;)Lcom/excor/ExcorYouTubePlaylistVideo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getChannelName ()Ljava/lang/String;
+	public final fun getDurationSeconds ()Ljava/lang/Long;
+	public final fun getPublishedText ()Ljava/lang/String;
+	public final fun getThumbnails ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getVideoId ()Ljava/lang/String;
+	public final fun getViewsText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isLive ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubePost {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/excor/ExcorYouTubePost;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubePost;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubePost;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getImages ()Ljava/util/List;
+	public final fun getLikesText ()Ljava/lang/String;
+	public final fun getPostId ()Ljava/lang/String;
+	public final fun getPublishedText ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeRelated {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;)Lcom/excor/ExcorYouTubeRelated;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeRelated;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeRelated;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getVideos ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeSearchFilter {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZ)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZ)Lcom/excor/ExcorYouTubeSearchFilter;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeSearchFilter;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZILjava/lang/Object;)Lcom/excor/ExcorYouTubeSearchFilter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDisabled ()Z
+	public final fun getGroup ()Ljava/lang/String;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getParams ()Ljava/lang/String;
+	public final fun getSelected ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeSearchPage {
+	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Long;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Long;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Long;Ljava/util/List;Ljava/util/List;)Lcom/excor/ExcorYouTubeSearchPage;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeSearchPage;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Long;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeSearchPage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannels ()Ljava/util/List;
+	public final fun getContinuation ()Ljava/lang/String;
+	public final fun getEstimatedResults ()Ljava/lang/Long;
+	public final fun getFilters ()Ljava/util/List;
+	public final fun getPlaylists ()Ljava/util/List;
+	public final fun getShorts ()Ljava/util/List;
+	public final fun getVideos ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeSong {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public final fun asMusicTrack (Ljava/lang/String;Ljava/lang/Long;)Lcom/excor/music/ExcorMusicTrack;
+	public static synthetic fun asMusicTrack$default (Lcom/excor/ExcorYouTubeSong;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicTrack;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lcom/excor/ExcorYouTubeSong;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeSong;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeSong;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlbum ()Ljava/lang/String;
+	public final fun getArtist ()Ljava/lang/String;
+	public final fun getCredits ()Ljava/util/Map;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/ExcorYouTubeVideoResult {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;ZZLjava/util/List;)V
+	public final fun asMusicTrack ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Z
+	public final fun component9 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;ZZLjava/util/List;)Lcom/excor/ExcorYouTubeVideoResult;
+	public static synthetic fun copy$default (Lcom/excor/ExcorYouTubeVideoResult;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;ZZLjava/util/List;ILjava/lang/Object;)Lcom/excor/ExcorYouTubeVideoResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannelId ()Ljava/lang/String;
+	public final fun getChannelName ()Ljava/lang/String;
+	public final fun getDurationSeconds ()Ljava/lang/Long;
+	public final fun getOfficialArtistChannel ()Z
+	public final fun getPublishedText ()Ljava/lang/String;
+	public final fun getThumbnails ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getVideoId ()Ljava/lang/String;
+	public final fun getViewCount ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public final fun isLive ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/LinksKt {
+	public static final fun excorVideoIdOf (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/excor/catalog/ExcorArtwork {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/excor/catalog/ExcorArtwork;
+	public static synthetic fun copy$default (Lcom/excor/catalog/ExcorArtwork;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/excor/catalog/ExcorArtwork;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()Ljava/lang/Integer;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/catalog/ExcorCatalogArtist {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/excor/catalog/ExcorCatalogArtist;
+	public static synthetic fun copy$default (Lcom/excor/catalog/ExcorCatalogArtist;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/catalog/ExcorCatalogArtist;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/catalog/ExcorCatalogCapability {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogOperation;Lcom/excor/catalog/ExcorCatalogCapabilityStatus;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Lcom/excor/catalog/ExcorCatalogOperation;
+	public final fun component3 ()Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogOperation;Lcom/excor/catalog/ExcorCatalogCapabilityStatus;)Lcom/excor/catalog/ExcorCatalogCapability;
+	public static synthetic fun copy$default (Lcom/excor/catalog/ExcorCatalogCapability;Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogOperation;Lcom/excor/catalog/ExcorCatalogCapabilityStatus;ILjava/lang/Object;)Lcom/excor/catalog/ExcorCatalogCapability;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOperation ()Lcom/excor/catalog/ExcorCatalogOperation;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getStatus ()Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/catalog/ExcorCatalogCapabilityStatus : java/lang/Enum {
+	public static final field AUTHENTICATION_REQUIRED Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public static final field RESTRICTED Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public static final field SUPPORTED Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public static final field TEMPORARILY_UNAVAILABLE Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public static final field UNSUPPORTED Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public static fun values ()[Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+}
+
+public final class com/excor/catalog/ExcorCatalogError : java/lang/Enum {
+	public static final field ACCESS_DENIED Lcom/excor/catalog/ExcorCatalogError;
+	public static final field AUTHENTICATION_REQUIRED Lcom/excor/catalog/ExcorCatalogError;
+	public static final field CREDENTIAL_PROVIDER_FAILED Lcom/excor/catalog/ExcorCatalogError;
+	public static final field INVALID_CREDENTIAL Lcom/excor/catalog/ExcorCatalogError;
+	public static final field INVALID_PAGE_TOKEN Lcom/excor/catalog/ExcorCatalogError;
+	public static final field INVALID_QUERY Lcom/excor/catalog/ExcorCatalogError;
+	public static final field INVALID_REQUEST Lcom/excor/catalog/ExcorCatalogError;
+	public static final field INVALID_URL Lcom/excor/catalog/ExcorCatalogError;
+	public static final field MALFORMED_RESPONSE Lcom/excor/catalog/ExcorCatalogError;
+	public static final field NETWORK_FAILURE Lcom/excor/catalog/ExcorCatalogError;
+	public static final field NOT_FOUND Lcom/excor/catalog/ExcorCatalogError;
+	public static final field PROVIDER_UNAVAILABLE Lcom/excor/catalog/ExcorCatalogError;
+	public static final field RATE_LIMITED Lcom/excor/catalog/ExcorCatalogError;
+	public static final field RESPONSE_TOO_LARGE Lcom/excor/catalog/ExcorCatalogError;
+	public static final field RESTRICTED Lcom/excor/catalog/ExcorCatalogError;
+	public static final field UNSUPPORTED Lcom/excor/catalog/ExcorCatalogError;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/catalog/ExcorCatalogError;
+	public static fun values ()[Lcom/excor/catalog/ExcorCatalogError;
+}
+
+public final class com/excor/catalog/ExcorCatalogException : java/lang/Exception {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogError;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogError;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getError ()Lcom/excor/catalog/ExcorCatalogError;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getStatusCode ()Ljava/lang/Integer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/catalog/ExcorCatalogItem {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogKind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogKind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/Integer;
+	public final fun component12 ()Ljava/lang/Integer;
+	public final fun component13 ()Ljava/lang/Integer;
+	public final fun component14 ()Ljava/lang/Boolean;
+	public final fun component15 ()Ljava/util/List;
+	public final fun component16 ()Ljava/util/List;
+	public final fun component2 ()Lcom/excor/catalog/ExcorCatalogKind;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/Long;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogKind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;Ljava/util/List;)Lcom/excor/catalog/ExcorCatalogItem;
+	public static synthetic fun copy$default (Lcom/excor/catalog/ExcorCatalogItem;Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/catalog/ExcorCatalogKind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/catalog/ExcorCatalogItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlbumId ()Ljava/lang/String;
+	public final fun getAlbumTitle ()Ljava/lang/String;
+	public final fun getArtists ()Ljava/util/List;
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getDiscNumber ()Ljava/lang/Integer;
+	public final fun getDurationMs ()Ljava/lang/Long;
+	public final fun getGenres ()Ljava/util/List;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getKind ()Lcom/excor/catalog/ExcorCatalogKind;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getReleaseDate ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTrackCount ()Ljava/lang/Integer;
+	public final fun getTrackNumber ()Ljava/lang/Integer;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isExplicit ()Ljava/lang/Boolean;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/catalog/ExcorCatalogKind : java/lang/Enum {
+	public static final field ALBUM Lcom/excor/catalog/ExcorCatalogKind;
+	public static final field ARTIST Lcom/excor/catalog/ExcorCatalogKind;
+	public static final field TRACK Lcom/excor/catalog/ExcorCatalogKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/catalog/ExcorCatalogKind;
+	public static fun values ()[Lcom/excor/catalog/ExcorCatalogKind;
+}
+
+public final class com/excor/catalog/ExcorCatalogOperation : java/lang/Enum {
+	public static final field ALBUM_TRACKS Lcom/excor/catalog/ExcorCatalogOperation;
+	public static final field ARTIST_ALBUMS Lcom/excor/catalog/ExcorCatalogOperation;
+	public static final field LOOKUP Lcom/excor/catalog/ExcorCatalogOperation;
+	public static final field SEARCH Lcom/excor/catalog/ExcorCatalogOperation;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/catalog/ExcorCatalogOperation;
+	public static fun values ()[Lcom/excor/catalog/ExcorCatalogOperation;
+}
+
+public final class com/excor/catalog/ExcorCatalogPage {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Z)Lcom/excor/catalog/ExcorCatalogPage;
+	public static synthetic fun copy$default (Lcom/excor/catalog/ExcorCatalogPage;Ljava/util/List;Ljava/lang/String;ZILjava/lang/Object;)Lcom/excor/catalog/ExcorCatalogPage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getNextPageToken ()Ljava/lang/String;
+	public final fun getTruncated ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/catalog/ExcorCatalogProvider : java/lang/Enum {
+	public static final field APPLE_MUSIC Lcom/excor/catalog/ExcorCatalogProvider;
+	public static final field DEEZER Lcom/excor/catalog/ExcorCatalogProvider;
+	public static final field SPOTIFY Lcom/excor/catalog/ExcorCatalogProvider;
+	public static final field YOUTUBE_MUSIC Lcom/excor/catalog/ExcorCatalogProvider;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/catalog/ExcorCatalogProvider;
+	public static fun values ()[Lcom/excor/catalog/ExcorCatalogProvider;
+}
+
+public abstract interface class com/excor/catalog/ExcorCatalogTokenProvider {
+	public abstract fun accessToken (Lcom/excor/catalog/ExcorCatalogProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/catalog/ExcorMusicCatalog {
+	public final fun albumTracks (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun albumTracks$default (Lcom/excor/catalog/ExcorMusicCatalog;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun artistAlbums (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun artistAlbums$default (Lcom/excor/catalog/ExcorMusicCatalog;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun capabilities (Lcom/excor/catalog/ExcorCatalogProvider;)Ljava/util/List;
+	public final fun lookup (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun search (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Lcom/excor/catalog/ExcorCatalogKind;ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun search$default (Lcom/excor/catalog/ExcorMusicCatalog;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Lcom/excor/catalog/ExcorCatalogKind;ILjava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/excor/internal/primary/extraction/PoTokenResult {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/excor/internal/primary/extraction/PoTokenResult;
+	public static synthetic fun copy$default (Lcom/excor/internal/primary/extraction/PoTokenResult;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/internal/primary/extraction/PoTokenResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPlayerRequestToken ()Ljava/lang/String;
+	public final fun getStreamingDataToken ()Ljava/lang/String;
+	public final fun getVisitorData ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/excor/internal/primary/extraction/TokenProvider {
+	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getCapabilities ()Lcom/excor/internal/primary/extraction/TokenProviderCapabilities;
+	public abstract fun getPoToken (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun getPoToken$default (Lcom/excor/internal/primary/extraction/TokenProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public fun invalidateAttestation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun prewarm (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun prewarm$default (Lcom/excor/internal/primary/extraction/TokenProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/excor/internal/primary/extraction/TokenProvider$DefaultImpls {
+	public static fun close (Lcom/excor/internal/primary/extraction/TokenProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun getCapabilities (Lcom/excor/internal/primary/extraction/TokenProvider;)Lcom/excor/internal/primary/extraction/TokenProviderCapabilities;
+	public static synthetic fun getPoToken$default (Lcom/excor/internal/primary/extraction/TokenProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun invalidateAttestation (Lcom/excor/internal/primary/extraction/TokenProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun prewarm (Lcom/excor/internal/primary/extraction/TokenProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun prewarm$default (Lcom/excor/internal/primary/extraction/TokenProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/excor/internal/primary/extraction/TokenProviderCapabilities {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Set;Z)V
+	public synthetic fun <init> (Ljava/util/Set;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()Z
+	public final fun copy (Ljava/util/Set;Z)Lcom/excor/internal/primary/extraction/TokenProviderCapabilities;
+	public static synthetic fun copy$default (Lcom/excor/internal/primary/extraction/TokenProviderCapabilities;Ljava/util/Set;ZILjava/lang/Object;)Lcom/excor/internal/primary/extraction/TokenProviderCapabilities;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProviders ()Ljava/util/Set;
+	public final fun getUsesWebView ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/internal/primary/extraction/strategy/PoTokenProviderKind : java/lang/Enum {
+	public static final field ANDROID_DROIDGUARD Lcom/excor/internal/primary/extraction/strategy/PoTokenProviderKind;
+	public static final field EXTERNAL Lcom/excor/internal/primary/extraction/strategy/PoTokenProviderKind;
+	public static final field IOS_ATTESTATION Lcom/excor/internal/primary/extraction/strategy/PoTokenProviderKind;
+	public static final field WEBPAGE_ATTESTATION Lcom/excor/internal/primary/extraction/strategy/PoTokenProviderKind;
+	public static final field WEB_BOTGUARD Lcom/excor/internal/primary/extraction/strategy/PoTokenProviderKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/internal/primary/extraction/strategy/PoTokenProviderKind;
+	public static fun values ()[Lcom/excor/internal/primary/extraction/strategy/PoTokenProviderKind;
+}
+
+public final class com/excor/music/AudioFormatsKt {
+	public static final fun excorAudioCodecOf (Ljava/lang/String;)Lcom/excor/music/ExcorAudioCodec;
+	public static final fun excorAudioFormatOf (Ljava/lang/String;Ljava/lang/Integer;)Lcom/excor/music/ExcorAudioFormat;
+	public static synthetic fun excorAudioFormatOf$default (Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/excor/music/ExcorAudioFormat;
+	public static final fun excorHlsChannelsOf (Ljava/lang/String;)Lkotlin/Pair;
+	public static final fun excorSelectAudio (Ljava/util/List;Lcom/excor/music/ExcorAudioPreferences;)Lcom/excor/music/ExcorAudioSelection;
+	public static synthetic fun excorSelectAudio$default (Ljava/util/List;Lcom/excor/music/ExcorAudioPreferences;ILjava/lang/Object;)Lcom/excor/music/ExcorAudioSelection;
+}
+
+public final class com/excor/music/DrmKt {
+	public static final fun excorDashProtectionOf (Ljava/lang/String;)Lcom/excor/music/ExcorProtectionInfo;
+	public static final fun excorHlsProtectionOf (Ljava/lang/String;)Lcom/excor/music/ExcorProtectionInfo;
+	public static final fun excorPlaybackOptionFor (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorProtectionInfo;Ljava/util/List;Lcom/excor/music/ExcorPlatformCapabilities;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun excorPlaybackOptionFor$default (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorProtectionInfo;Ljava/util/List;Lcom/excor/music/ExcorPlatformCapabilities;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorAlbumType : java/lang/Enum {
+	public static final field ALBUM Lcom/excor/music/ExcorAlbumType;
+	public static final field COMPILATION Lcom/excor/music/ExcorAlbumType;
+	public static final field EP Lcom/excor/music/ExcorAlbumType;
+	public static final field SINGLE Lcom/excor/music/ExcorAlbumType;
+	public static final field UNKNOWN Lcom/excor/music/ExcorAlbumType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorAlbumType;
+	public static fun values ()[Lcom/excor/music/ExcorAlbumType;
+}
+
+public final class com/excor/music/ExcorAppleMusicCatalog {
+	public final fun albumByUpc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun chartSongs (Ljava/lang/String;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun chartSongs$default (Lcom/excor/music/ExcorAppleMusicCatalog;Ljava/lang/String;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun musicVideo (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun recentlyPlayed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun recommendations (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun station (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorAppleMusicVideo {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/Boolean;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Long;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/lang/Boolean;
+	public final fun component9 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;)Lcom/excor/music/ExcorAppleMusicVideo;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAppleMusicVideo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorAppleMusicVideo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtistName ()Ljava/lang/String;
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getDurationMs ()Ljava/lang/Long;
+	public final fun getExplicit ()Ljava/lang/Boolean;
+	public final fun getGenres ()Ljava/util/List;
+	public final fun getHas4K ()Ljava/lang/Boolean;
+	public final fun getHasHdr ()Ljava/lang/Boolean;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getIsrc ()Ljava/lang/String;
+	public final fun getReleaseDate ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAppleRecommendation {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/excor/music/ExcorAppleRecommendation;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAppleRecommendation;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorAppleRecommendation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAppleStation {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Boolean;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;)Lcom/excor/music/ExcorAppleStation;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAppleStation;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorAppleStation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLive ()Ljava/lang/Boolean;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorArtistRole : java/lang/Enum {
+	public static final field COMPOSER Lcom/excor/music/ExcorArtistRole;
+	public static final field FEATURED Lcom/excor/music/ExcorArtistRole;
+	public static final field OTHER Lcom/excor/music/ExcorArtistRole;
+	public static final field PERFORMER Lcom/excor/music/ExcorArtistRole;
+	public static final field PRIMARY Lcom/excor/music/ExcorArtistRole;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorArtistRole;
+	public static fun values ()[Lcom/excor/music/ExcorArtistRole;
+}
+
+public final class com/excor/music/ExcorAudioCapabilities {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/Set;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lcom/excor/music/ExcorProtectionInfo;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Lcom/excor/music/ExcorProtectionInfo;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/Set;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lcom/excor/music/ExcorProtectionInfo;)Lcom/excor/music/ExcorAudioCapabilities;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAudioCapabilities;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/Set;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lcom/excor/music/ExcorProtectionInfo;ILjava/lang/Object;)Lcom/excor/music/ExcorAudioCapabilities;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFormats ()Ljava/util/List;
+	public final fun getHiResLossless ()Ljava/lang/Boolean;
+	public final fun getLossless ()Ljava/lang/Boolean;
+	public final fun getPreviewAvailable ()Ljava/lang/Boolean;
+	public final fun getProtection ()Lcom/excor/music/ExcorProtectionInfo;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getSpatial ()Ljava/lang/Boolean;
+	public final fun getTraits ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAudioCodec : java/lang/Enum {
+	public static final field AAC Lcom/excor/music/ExcorAudioCodec;
+	public static final field AAC_LC Lcom/excor/music/ExcorAudioCodec;
+	public static final field AC3 Lcom/excor/music/ExcorAudioCodec;
+	public static final field AC4 Lcom/excor/music/ExcorAudioCodec;
+	public static final field ALAC Lcom/excor/music/ExcorAudioCodec;
+	public static final field EAC3 Lcom/excor/music/ExcorAudioCodec;
+	public static final field FLAC Lcom/excor/music/ExcorAudioCodec;
+	public static final field HE_AAC Lcom/excor/music/ExcorAudioCodec;
+	public static final field HE_AAC_V2 Lcom/excor/music/ExcorAudioCodec;
+	public static final field MP3 Lcom/excor/music/ExcorAudioCodec;
+	public static final field OPUS Lcom/excor/music/ExcorAudioCodec;
+	public static final field OTHER Lcom/excor/music/ExcorAudioCodec;
+	public static final field PCM Lcom/excor/music/ExcorAudioCodec;
+	public static final field VORBIS Lcom/excor/music/ExcorAudioCodec;
+	public static final field XHE_AAC Lcom/excor/music/ExcorAudioCodec;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getLossless ()Z
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorAudioCodec;
+	public static fun values ()[Lcom/excor/music/ExcorAudioCodec;
+}
+
+public final class com/excor/music/ExcorAudioContainer : java/lang/Enum {
+	public static final field FLAC Lcom/excor/music/ExcorAudioContainer;
+	public static final field MP3 Lcom/excor/music/ExcorAudioContainer;
+	public static final field MP4 Lcom/excor/music/ExcorAudioContainer;
+	public static final field MPEG_TS Lcom/excor/music/ExcorAudioContainer;
+	public static final field OGG Lcom/excor/music/ExcorAudioContainer;
+	public static final field OTHER Lcom/excor/music/ExcorAudioContainer;
+	public static final field WAV Lcom/excor/music/ExcorAudioContainer;
+	public static final field WEBM Lcom/excor/music/ExcorAudioContainer;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorAudioContainer;
+	public static fun values ()[Lcom/excor/music/ExcorAudioContainer;
+}
+
+public final class com/excor/music/ExcorAudioFormat {
+	public fun <init> (Lcom/excor/music/ExcorAudioCodec;Lcom/excor/music/ExcorAudioContainer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ZLjava/lang/String;)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorAudioCodec;Lcom/excor/music/ExcorAudioContainer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/music/ExcorAudioCodec;
+	public final fun component2 ()Lcom/excor/music/ExcorAudioContainer;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/Integer;
+	public final fun component7 ()Z
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy (Lcom/excor/music/ExcorAudioCodec;Lcom/excor/music/ExcorAudioContainer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ZLjava/lang/String;)Lcom/excor/music/ExcorAudioFormat;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAudioFormat;Lcom/excor/music/ExcorAudioCodec;Lcom/excor/music/ExcorAudioContainer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ZLjava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorAudioFormat;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBitDepth ()Ljava/lang/Integer;
+	public final fun getBitrateKbps ()Ljava/lang/Integer;
+	public final fun getChannels ()Ljava/lang/Integer;
+	public final fun getCodec ()Lcom/excor/music/ExcorAudioCodec;
+	public final fun getCodecString ()Ljava/lang/String;
+	public final fun getContainer ()Lcom/excor/music/ExcorAudioContainer;
+	public final fun getLossless ()Z
+	public final fun getSampleRateHz ()Ljava/lang/Integer;
+	public final fun getSpatial ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAudioOption {
+	public fun <init> (Ljava/lang/String;Lcom/excor/music/ExcorAudioFormat;ZZ)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/excor/music/ExcorAudioFormat;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/excor/music/ExcorAudioFormat;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Lcom/excor/music/ExcorAudioFormat;ZZ)Lcom/excor/music/ExcorAudioOption;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAudioOption;Ljava/lang/String;Lcom/excor/music/ExcorAudioFormat;ZZILjava/lang/Object;)Lcom/excor/music/ExcorAudioOption;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntitled ()Z
+	public final fun getFormat ()Lcom/excor/music/ExcorAudioFormat;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getProtected ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAudioPreferences {
+	public fun <init> ()V
+	public fun <init> (ZZZLjava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/Set;Z)V
+	public synthetic fun <init> (ZZZLjava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/Set;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/Integer;
+	public final fun component7 ()Ljava/util/Set;
+	public final fun component8 ()Z
+	public final fun copy (ZZZLjava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/Set;Z)Lcom/excor/music/ExcorAudioPreferences;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAudioPreferences;ZZZLjava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/Set;ZILjava/lang/Object;)Lcom/excor/music/ExcorAudioPreferences;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowProtected ()Z
+	public final fun getAllowSpatial ()Z
+	public final fun getMaxBitDepth ()Ljava/lang/Integer;
+	public final fun getMaxBitrateKbps ()Ljava/lang/Integer;
+	public final fun getMaxSampleRateHz ()Ljava/lang/Integer;
+	public final fun getPreferLossless ()Z
+	public final fun getPreferSpatial ()Z
+	public final fun getSupportedCodecs ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAudioRejection : java/lang/Enum {
+	public static final field CODEC_UNSUPPORTED Lcom/excor/music/ExcorAudioRejection;
+	public static final field NOT_ENTITLED Lcom/excor/music/ExcorAudioRejection;
+	public static final field OVER_BITRATE Lcom/excor/music/ExcorAudioRejection;
+	public static final field OVER_BIT_DEPTH Lcom/excor/music/ExcorAudioRejection;
+	public static final field OVER_SAMPLE_RATE Lcom/excor/music/ExcorAudioRejection;
+	public static final field PROTECTED Lcom/excor/music/ExcorAudioRejection;
+	public static final field SPATIAL_NOT_ALLOWED Lcom/excor/music/ExcorAudioRejection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorAudioRejection;
+	public static fun values ()[Lcom/excor/music/ExcorAudioRejection;
+}
+
+public final class com/excor/music/ExcorAudioSelection {
+	public fun <init> (Lcom/excor/music/ExcorAudioOption;Ljava/util/Map;)V
+	public final fun component1 ()Lcom/excor/music/ExcorAudioOption;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Lcom/excor/music/ExcorAudioOption;Ljava/util/Map;)Lcom/excor/music/ExcorAudioSelection;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAudioSelection;Lcom/excor/music/ExcorAudioOption;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorAudioSelection;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChosen ()Lcom/excor/music/ExcorAudioOption;
+	public final fun getRejected ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAudioTrait : java/lang/Enum {
+	public static final field DOLBY_ATMOS Lcom/excor/music/ExcorAudioTrait;
+	public static final field DOLBY_AUDIO Lcom/excor/music/ExcorAudioTrait;
+	public static final field HI_RES_LOSSLESS Lcom/excor/music/ExcorAudioTrait;
+	public static final field LOSSLESS Lcom/excor/music/ExcorAudioTrait;
+	public static final field LOSSY_STEREO Lcom/excor/music/ExcorAudioTrait;
+	public static final field SPATIAL Lcom/excor/music/ExcorAudioTrait;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorAudioTrait;
+	public static fun values ()[Lcom/excor/music/ExcorAudioTrait;
+}
+
+public final class com/excor/music/ExcorAuthorizationRequest {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorPkce;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorPkce;)Lcom/excor/music/ExcorAuthorizationRequest;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorAuthorizationRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorPkce;ILjava/lang/Object;)Lcom/excor/music/ExcorAuthorizationRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRedirectUri ()Ljava/lang/String;
+	public final fun getState ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorAvailability : java/lang/Enum {
+	public static final field AVAILABLE Lcom/excor/music/ExcorAvailability;
+	public static final field REGION_RESTRICTED Lcom/excor/music/ExcorAvailability;
+	public static final field UNAVAILABLE Lcom/excor/music/ExcorAvailability;
+	public static final field UNKNOWN Lcom/excor/music/ExcorAvailability;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorAvailability;
+	public static fun values ()[Lcom/excor/music/ExcorAvailability;
+}
+
+public final class com/excor/music/ExcorConvertedTrack {
+	public fun <init> (Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogException;)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lcom/excor/catalog/ExcorCatalogException;
+	public final fun copy (Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogException;)Lcom/excor/music/ExcorConvertedTrack;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorConvertedTrack;Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogException;ILjava/lang/Object;)Lcom/excor/music/ExcorConvertedTrack;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBest ()Lcom/excor/music/ExcorTrackMatch;
+	public final fun getError ()Lcom/excor/catalog/ExcorCatalogException;
+	public final fun getMatches ()Ljava/util/List;
+	public final fun getSource ()Lcom/excor/music/ExcorMusicTrack;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorCrossProviderMatches {
+	public fun <init> (Ljava/util/Map;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Map;Ljava/util/Map;)Lcom/excor/music/ExcorCrossProviderMatches;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorCrossProviderMatches;Ljava/util/Map;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorCrossProviderMatches;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrors ()Ljava/util/Map;
+	public final fun getMatches ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorDeezerCatalog {
+	public final fun albumByUpc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun artistTopTracks (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun artistTopTracks$default (Lcom/excor/music/ExcorDeezerCatalog;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun chartTracks (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun chartTracks$default (Lcom/excor/music/ExcorDeezerCatalog;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun editorialCharts (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun editorialCharts$default (Lcom/excor/music/ExcorDeezerCatalog;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun editorials (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun episode (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun genres (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun podcast (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun podcast$default (Lcom/excor/music/ExcorDeezerCatalog;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun radioTracks (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun radios (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun relatedArtists (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun searchPodcasts (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun searchPodcasts$default (Lcom/excor/music/ExcorDeezerCatalog;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorDeezerCharts {
+	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/excor/music/ExcorDeezerCharts;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorDeezerCharts;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorDeezerCharts;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlbums ()Ljava/util/List;
+	public final fun getArtists ()Ljava/util/List;
+	public final fun getPlaylists ()Ljava/util/List;
+	public final fun getPodcasts ()Ljava/util/List;
+	public final fun getTracks ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorDeezerGenre {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/excor/music/ExcorDeezerGenre;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorDeezerGenre;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorDeezerGenre;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorDeezerRadio {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/excor/music/ExcorDeezerRadio;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorDeezerRadio;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorDeezerRadio;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorDrmSystem : java/lang/Enum {
+	public static final field CLEARKEY Lcom/excor/music/ExcorDrmSystem;
+	public static final field FAIRPLAY Lcom/excor/music/ExcorDrmSystem;
+	public static final field PLAYREADY Lcom/excor/music/ExcorDrmSystem;
+	public static final field PROVIDER_MANAGED Lcom/excor/music/ExcorDrmSystem;
+	public static final field UNKNOWN Lcom/excor/music/ExcorDrmSystem;
+	public static final field WIDEVINE Lcom/excor/music/ExcorDrmSystem;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getSystemId ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorDrmSystem;
+	public static fun values ()[Lcom/excor/music/ExcorDrmSystem;
+}
+
+public final class com/excor/music/ExcorEncryptionScheme : java/lang/Enum {
+	public static final field CBC1 Lcom/excor/music/ExcorEncryptionScheme;
+	public static final field CBCS Lcom/excor/music/ExcorEncryptionScheme;
+	public static final field CENC Lcom/excor/music/ExcorEncryptionScheme;
+	public static final field CENS Lcom/excor/music/ExcorEncryptionScheme;
+	public static final field HLS_AES_128 Lcom/excor/music/ExcorEncryptionScheme;
+	public static final field HLS_SAMPLE_AES Lcom/excor/music/ExcorEncryptionScheme;
+	public static final field HLS_SAMPLE_AES_CTR Lcom/excor/music/ExcorEncryptionScheme;
+	public static final field UNKNOWN Lcom/excor/music/ExcorEncryptionScheme;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorEncryptionScheme;
+	public static fun values ()[Lcom/excor/music/ExcorEncryptionScheme;
+}
+
+public final class com/excor/music/ExcorEnrichedTrack {
+	public fun <init> (Lcom/excor/music/ExcorMusicTrack;Ljava/util/Map;)V
+	public final fun component1 ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Lcom/excor/music/ExcorMusicTrack;Ljava/util/Map;)Lcom/excor/music/ExcorEnrichedTrack;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorEnrichedTrack;Lcom/excor/music/ExcorMusicTrack;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorEnrichedTrack;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSources ()Ljava/util/Map;
+	public final fun getTrack ()Lcom/excor/music/ExcorMusicTrack;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorFieldSource {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;D)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()D
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;D)Lcom/excor/music/ExcorFieldSource;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorFieldSource;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;DILjava/lang/Object;)Lcom/excor/music/ExcorFieldSource;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConfidence ()D
+	public final fun getId ()Ljava/lang/String;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorFieldStatus : java/lang/Enum {
+	public static final field RESTRICTED Lcom/excor/music/ExcorFieldStatus;
+	public static final field UNAVAILABLE Lcom/excor/music/ExcorFieldStatus;
+	public static final field UNKNOWN Lcom/excor/music/ExcorFieldStatus;
+	public static final field UNSUPPORTED Lcom/excor/music/ExcorFieldStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorFieldStatus;
+	public static fun values ()[Lcom/excor/music/ExcorFieldStatus;
+}
+
+public final class com/excor/music/ExcorLyrics {
+	public fun <init> (Ljava/util/List;Lcom/excor/music/ExcorLyricsSync;Ljava/lang/String;ZLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/excor/music/ExcorLyricsSync;Ljava/lang/String;ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/excor/music/ExcorLyricsSync;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Lcom/excor/music/ExcorLyricsSync;Ljava/lang/String;ZLjava/lang/String;)Lcom/excor/music/ExcorLyrics;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorLyrics;Ljava/util/List;Lcom/excor/music/ExcorLyricsSync;Ljava/lang/String;ZLjava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorLyrics;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInstrumental ()Z
+	public final fun getLanguage ()Ljava/lang/String;
+	public final fun getLines ()Ljava/util/List;
+	public final fun getSource ()Ljava/lang/String;
+	public final fun getSync ()Lcom/excor/music/ExcorLyricsSync;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorLyricsLine {
+	public fun <init> (Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Long;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;)Lcom/excor/music/ExcorLyricsLine;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorLyricsLine;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorLyricsLine;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStartMs ()Ljava/lang/Long;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getWords ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/excor/music/ExcorLyricsProvider {
+	public abstract fun lyrics (Lcom/excor/music/ExcorMusicTrack;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorLyricsSync : java/lang/Enum {
+	public static final field LINE Lcom/excor/music/ExcorLyricsSync;
+	public static final field NONE Lcom/excor/music/ExcorLyricsSync;
+	public static final field WORD Lcom/excor/music/ExcorLyricsSync;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorLyricsSync;
+	public static fun values ()[Lcom/excor/music/ExcorLyricsSync;
+}
+
+public final class com/excor/music/ExcorLyricsWord {
+	public fun <init> (JLjava/lang/String;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (JLjava/lang/String;)Lcom/excor/music/ExcorLyricsWord;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorLyricsWord;JLjava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorLyricsWord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStartMs ()J
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMatchEvidence : java/lang/Enum {
+	public static final field ALBUM_TITLE_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static final field ALBUM_UPC_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static final field ARTIST_DIFFERENT Lcom/excor/music/ExcorMatchEvidence;
+	public static final field ARTIST_OVERLAP Lcom/excor/music/ExcorMatchEvidence;
+	public static final field DURATION_CLOSE Lcom/excor/music/ExcorMatchEvidence;
+	public static final field DURATION_DIFFERENT Lcom/excor/music/ExcorMatchEvidence;
+	public static final field DURATION_NEAR Lcom/excor/music/ExcorMatchEvidence;
+	public static final field EXPLICIT_DIFFERENT Lcom/excor/music/ExcorMatchEvidence;
+	public static final field EXPLICIT_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static final field ISRC_DIFFERENT Lcom/excor/music/ExcorMatchEvidence;
+	public static final field ISRC_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static final field RELEASE_YEAR_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static final field TITLE_DIFFERENT Lcom/excor/music/ExcorMatchEvidence;
+	public static final field TITLE_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static final field TITLE_SIMILAR Lcom/excor/music/ExcorMatchEvidence;
+	public static final field TRACK_POSITION_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static final field VERSION_DIFFERENT Lcom/excor/music/ExcorMatchEvidence;
+	public static final field VERSION_EQUAL Lcom/excor/music/ExcorMatchEvidence;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorMatchEvidence;
+	public static fun values ()[Lcom/excor/music/ExcorMatchEvidence;
+}
+
+public final class com/excor/music/ExcorMatchOptions {
+	public fun <init> ()V
+	public fun <init> (ZZJDD)V
+	public synthetic fun <init> (ZZJDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()J
+	public final fun component4 ()D
+	public final fun component5 ()D
+	public final fun copy (ZZJDD)Lcom/excor/music/ExcorMatchOptions;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMatchOptions;ZZJDDILjava/lang/Object;)Lcom/excor/music/ExcorMatchOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowCleanExplicitSubstitution ()Z
+	public final fun getAllowVersionSubstitution ()Z
+	public final fun getLikelyThreshold ()D
+	public final fun getMaxDurationDifferenceMs ()J
+	public final fun getPossibleThreshold ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMatchVerdict : java/lang/Enum {
+	public static final field DIFFERENT Lcom/excor/music/ExcorMatchVerdict;
+	public static final field LIKELY Lcom/excor/music/ExcorMatchVerdict;
+	public static final field POSSIBLE Lcom/excor/music/ExcorMatchVerdict;
+	public static final field SAME_RECORDING Lcom/excor/music/ExcorMatchVerdict;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorMatchVerdict;
+	public static fun values ()[Lcom/excor/music/ExcorMatchVerdict;
+}
+
+public final class com/excor/music/ExcorMultiSearchResult {
+	public fun <init> (Ljava/util/Map;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Map;Ljava/util/Map;)Lcom/excor/music/ExcorMultiSearchResult;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMultiSearchResult;Ljava/util/Map;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorMultiSearchResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrors ()Ljava/util/Map;
+	public final fun getResults ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusic {
+	public static final field Companion Lcom/excor/music/ExcorMusic$Companion;
+	public final fun album (Lcom/excor/music/ExcorMusicRef;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun album (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun albumTracks (Lcom/excor/music/ExcorMusicRef;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun albumTracks$default (Lcom/excor/music/ExcorMusic;Lcom/excor/music/ExcorMusicRef;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun artist (Lcom/excor/music/ExcorMusicRef;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun artist (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun artistAlbums (Lcom/excor/music/ExcorMusicRef;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun artistAlbums$default (Lcom/excor/music/ExcorMusic;Lcom/excor/music/ExcorMusicRef;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun audioCapabilities (Lcom/excor/music/ExcorMusicTrack;)Lcom/excor/music/ExcorAudioCapabilities;
+	public final fun capabilities (Lcom/excor/catalog/ExcorCatalogProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun convertPlaylist (Lcom/excor/music/ExcorMusicRef;Lcom/excor/catalog/ExcorCatalogProvider;ILcom/excor/music/ExcorMatchOptions;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun convertPlaylist$default (Lcom/excor/music/ExcorMusic;Lcom/excor/music/ExcorMusicRef;Lcom/excor/catalog/ExcorCatalogProvider;ILcom/excor/music/ExcorMatchOptions;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun drmInfo (Lcom/excor/music/ExcorMusicTrack;)Lcom/excor/music/ExcorProtectionInfo;
+	public final fun enrich (Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;D)Lcom/excor/music/ExcorEnrichedTrack;
+	public static synthetic fun enrich$default (Lcom/excor/music/ExcorMusic;Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;DILjava/lang/Object;)Lcom/excor/music/ExcorEnrichedTrack;
+	public final fun getAppleMusicCatalog ()Lcom/excor/music/ExcorAppleMusicCatalog;
+	public final fun getDeezerCatalog ()Lcom/excor/music/ExcorDeezerCatalog;
+	public final fun getRequestCount ()I
+	public final fun getSpotifyCatalog ()Lcom/excor/music/ExcorSpotifyCatalog;
+	public final fun libraryPlaylists (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun libraryPlaylists$default (Lcom/excor/music/ExcorMusic;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun libraryTracks (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun libraryTracks$default (Lcom/excor/music/ExcorMusic;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun lyrics (Lcom/excor/music/ExcorMusicTrack;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun matchAcrossProviders (Lcom/excor/music/ExcorMusicTrack;Ljava/util/Set;Lcom/excor/music/ExcorMatchOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun matchAcrossProviders$default (Lcom/excor/music/ExcorMusic;Lcom/excor/music/ExcorMusicTrack;Ljava/util/Set;Lcom/excor/music/ExcorMatchOptions;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun metadata (Lcom/excor/music/ExcorMusicTrack;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun parse (Ljava/lang/String;)Lcom/excor/music/ExcorMusicRef;
+	public final fun play (Lcom/excor/music/ExcorMusicTrack;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun playbackOptions (Lcom/excor/music/ExcorMusicTrack;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun playlist (Lcom/excor/music/ExcorMusicRef;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun playlist (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun playlistTracks (Lcom/excor/music/ExcorMusicRef;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun playlistTracks$default (Lcom/excor/music/ExcorMusic;Lcom/excor/music/ExcorMusicRef;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun search (Ljava/lang/String;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/Set;ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun search (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun search$default (Lcom/excor/music/ExcorMusic;Ljava/lang/String;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/Set;ILjava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun search$default (Lcom/excor/music/ExcorMusic;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun spotifyAuth (Ljava/lang/String;)Lcom/excor/music/ExcorSpotifyAuth;
+	public final fun syncLibrary (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorSyncState;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun syncLibrary$default (Lcom/excor/music/ExcorMusic;Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorSyncState;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun syncPlaylist (Lcom/excor/music/ExcorMusicRef;Lcom/excor/music/ExcorSyncState;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun syncPlaylist$default (Lcom/excor/music/ExcorMusic;Lcom/excor/music/ExcorMusicRef;Lcom/excor/music/ExcorSyncState;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun track (Lcom/excor/music/ExcorMusicRef;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun track (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun tracksByIsrc (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorMusic$Companion {
+	public final fun getMUSIC_PROVIDERS ()Ljava/util/Set;
+}
+
+public final class com/excor/music/ExcorMusicAlbum {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorAlbumType;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorAlbumType;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/util/List;
+	public final fun component12 ()Ljava/lang/Boolean;
+	public final fun component13 ()Ljava/lang/Integer;
+	public final fun component14 ()Ljava/lang/Long;
+	public final fun component15 ()Ljava/util/List;
+	public final fun component16 ()Ljava/util/Set;
+	public final fun component17 ()Lcom/excor/music/ExcorMusicPage;
+	public final fun component18 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lcom/excor/music/ExcorAlbumType;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorAlbumType;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;)Lcom/excor/music/ExcorMusicAlbum;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicAlbum;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorAlbumType;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicAlbum;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtists ()Ljava/util/List;
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getAudioTraits ()Ljava/util/Set;
+	public final fun getCopyright ()Ljava/lang/String;
+	public final fun getExplicit ()Ljava/lang/Boolean;
+	public final fun getGenres ()Ljava/util/List;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getMissing ()Ljava/util/Map;
+	public final fun getPopularity ()Ljava/lang/Long;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getReleaseDate ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTrackCount ()Ljava/lang/Integer;
+	public final fun getTracks ()Lcom/excor/music/ExcorMusicPage;
+	public final fun getType ()Lcom/excor/music/ExcorAlbumType;
+	public final fun getUpc ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicArtist {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorArtistRole;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorArtistRole;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/excor/music/ExcorArtistRole;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorArtistRole;Ljava/lang/String;)Lcom/excor/music/ExcorMusicArtist;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicArtist;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorArtistRole;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicArtist;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getRole ()Lcom/excor/music/ExcorArtistRole;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicArtistProfile {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Ljava/util/List;Ljava/util/Map;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component10 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/Long;
+	public final fun component8 ()Ljava/lang/Integer;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Ljava/util/List;Ljava/util/Map;)Lcom/excor/music/ExcorMusicArtistProfile;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicArtistProfile;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Ljava/util/List;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicArtistProfile;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlbumCount ()Ljava/lang/Integer;
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getFollowers ()Ljava/lang/Long;
+	public final fun getGenres ()Ljava/util/List;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getMissing ()Ljava/util/Map;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPopularity ()Ljava/lang/Long;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicCapability : java/lang/Enum {
+	public static final field ALBUM Lcom/excor/music/ExcorMusicCapability;
+	public static final field ALBUM_TRACKS Lcom/excor/music/ExcorMusicCapability;
+	public static final field ARTIST Lcom/excor/music/ExcorMusicCapability;
+	public static final field ARTIST_ALBUMS Lcom/excor/music/ExcorMusicCapability;
+	public static final field ARTIST_TOP_TRACKS Lcom/excor/music/ExcorMusicCapability;
+	public static final field AUDIO_TRAITS Lcom/excor/music/ExcorMusicCapability;
+	public static final field CHARTS Lcom/excor/music/ExcorMusicCapability;
+	public static final field GENRES Lcom/excor/music/ExcorMusicCapability;
+	public static final field ISRC_LOOKUP Lcom/excor/music/ExcorMusicCapability;
+	public static final field LIBRARY Lcom/excor/music/ExcorMusicCapability;
+	public static final field LYRICS_AVAILABILITY Lcom/excor/music/ExcorMusicCapability;
+	public static final field MARKETS Lcom/excor/music/ExcorMusicCapability;
+	public static final field PLAYBACK_STATE Lcom/excor/music/ExcorMusicCapability;
+	public static final field PLAYLIST Lcom/excor/music/ExcorMusicCapability;
+	public static final field PLAYLIST_TRACKS Lcom/excor/music/ExcorMusicCapability;
+	public static final field PREVIEW_AVAILABILITY Lcom/excor/music/ExcorMusicCapability;
+	public static final field PROTECTED_PLAYBACK Lcom/excor/music/ExcorMusicCapability;
+	public static final field RADIOS Lcom/excor/music/ExcorMusicCapability;
+	public static final field RELATED_ARTISTS Lcom/excor/music/ExcorMusicCapability;
+	public static final field SEARCH Lcom/excor/music/ExcorMusicCapability;
+	public static final field TRACK Lcom/excor/music/ExcorMusicCapability;
+	public static final field UPC_LOOKUP Lcom/excor/music/ExcorMusicCapability;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorMusicCapability;
+	public static fun values ()[Lcom/excor/music/ExcorMusicCapability;
+}
+
+public final class com/excor/music/ExcorMusicCapabilityStatus {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorMusicCapability;Lcom/excor/catalog/ExcorCatalogCapabilityStatus;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Lcom/excor/music/ExcorMusicCapability;
+	public final fun component3 ()Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorMusicCapability;Lcom/excor/catalog/ExcorCatalogCapabilityStatus;)Lcom/excor/music/ExcorMusicCapabilityStatus;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicCapabilityStatus;Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorMusicCapability;Lcom/excor/catalog/ExcorCatalogCapabilityStatus;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicCapabilityStatus;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCapability ()Lcom/excor/music/ExcorMusicCapability;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getStatus ()Lcom/excor/catalog/ExcorCatalogCapabilityStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicConfig {
+	public fun <init> ()V
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogTokenProvider;Lcom/excor/music/ExcorMusicUserTokenProvider;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/excor/music/ExcorPlatformCapabilities;Lcom/excor/music/ExcorLyricsProvider;Lcom/excor/music/ExcorMatchOptions;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogTokenProvider;Lcom/excor/music/ExcorMusicUserTokenProvider;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/excor/music/ExcorPlatformCapabilities;Lcom/excor/music/ExcorLyricsProvider;Lcom/excor/music/ExcorMatchOptions;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogTokenProvider;
+	public final fun component2 ()Lcom/excor/music/ExcorMusicUserTokenProvider;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Lcom/excor/music/ExcorPlatformCapabilities;
+	public final fun component8 ()Lcom/excor/music/ExcorLyricsProvider;
+	public final fun component9 ()Lcom/excor/music/ExcorMatchOptions;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogTokenProvider;Lcom/excor/music/ExcorMusicUserTokenProvider;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/excor/music/ExcorPlatformCapabilities;Lcom/excor/music/ExcorLyricsProvider;Lcom/excor/music/ExcorMatchOptions;)Lcom/excor/music/ExcorMusicConfig;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicConfig;Lcom/excor/catalog/ExcorCatalogTokenProvider;Lcom/excor/music/ExcorMusicUserTokenProvider;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lcom/excor/music/ExcorPlatformCapabilities;Lcom/excor/music/ExcorLyricsProvider;Lcom/excor/music/ExcorMatchOptions;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdapters ()Ljava/util/List;
+	public final fun getAppleMusicUserToken ()Lcom/excor/music/ExcorMusicUserTokenProvider;
+	public final fun getAppleStorefront ()Ljava/lang/String;
+	public final fun getLyrics ()Lcom/excor/music/ExcorLyricsProvider;
+	public final fun getMatchOptions ()Lcom/excor/music/ExcorMatchOptions;
+	public final fun getPlatform ()Lcom/excor/music/ExcorPlatformCapabilities;
+	public final fun getSpotifyExtendedQuota ()Z
+	public final fun getSpotifyMarket ()Ljava/lang/String;
+	public final fun getTokens ()Lcom/excor/catalog/ExcorCatalogTokenProvider;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicField : java/lang/Enum {
+	public static final field ALBUM Lcom/excor/music/ExcorMusicField;
+	public static final field ALBUM_ARTISTS Lcom/excor/music/ExcorMusicField;
+	public static final field ARTISTS Lcom/excor/music/ExcorMusicField;
+	public static final field ARTWORK Lcom/excor/music/ExcorMusicField;
+	public static final field AUDIO_TRAITS Lcom/excor/music/ExcorMusicField;
+	public static final field COMPOSERS Lcom/excor/music/ExcorMusicField;
+	public static final field COPYRIGHT Lcom/excor/music/ExcorMusicField;
+	public static final field DESCRIPTION Lcom/excor/music/ExcorMusicField;
+	public static final field DISC_NUMBER Lcom/excor/music/ExcorMusicField;
+	public static final field DURATION Lcom/excor/music/ExcorMusicField;
+	public static final field EXPLICIT Lcom/excor/music/ExcorMusicField;
+	public static final field FEATURED_ARTISTS Lcom/excor/music/ExcorMusicField;
+	public static final field FOLLOWERS Lcom/excor/music/ExcorMusicField;
+	public static final field GENRES Lcom/excor/music/ExcorMusicField;
+	public static final field ISRC Lcom/excor/music/ExcorMusicField;
+	public static final field LABEL Lcom/excor/music/ExcorMusicField;
+	public static final field LANGUAGE Lcom/excor/music/ExcorMusicField;
+	public static final field LYRICS Lcom/excor/music/ExcorMusicField;
+	public static final field MARKETS Lcom/excor/music/ExcorMusicField;
+	public static final field ORIGINAL_RELEASE_DATE Lcom/excor/music/ExcorMusicField;
+	public static final field ORIGINAL_TITLE Lcom/excor/music/ExcorMusicField;
+	public static final field OWNER Lcom/excor/music/ExcorMusicField;
+	public static final field POPULARITY Lcom/excor/music/ExcorMusicField;
+	public static final field PREVIEW Lcom/excor/music/ExcorMusicField;
+	public static final field RELEASE_DATE Lcom/excor/music/ExcorMusicField;
+	public static final field SNAPSHOT Lcom/excor/music/ExcorMusicField;
+	public static final field TRACK_COUNT Lcom/excor/music/ExcorMusicField;
+	public static final field TRACK_NUMBER Lcom/excor/music/ExcorMusicField;
+	public static final field UPC Lcom/excor/music/ExcorMusicField;
+	public static final field URL Lcom/excor/music/ExcorMusicField;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorMusicField;
+	public static fun values ()[Lcom/excor/music/ExcorMusicField;
+}
+
+public final class com/excor/music/ExcorMusicKind : java/lang/Enum {
+	public static final field ALBUM Lcom/excor/music/ExcorMusicKind;
+	public static final field ARTIST Lcom/excor/music/ExcorMusicKind;
+	public static final field CHART Lcom/excor/music/ExcorMusicKind;
+	public static final field EPISODE Lcom/excor/music/ExcorMusicKind;
+	public static final field GENRE Lcom/excor/music/ExcorMusicKind;
+	public static final field MUSIC_VIDEO Lcom/excor/music/ExcorMusicKind;
+	public static final field PLAYLIST Lcom/excor/music/ExcorMusicKind;
+	public static final field SHOW Lcom/excor/music/ExcorMusicKind;
+	public static final field STATION Lcom/excor/music/ExcorMusicKind;
+	public static final field TRACK Lcom/excor/music/ExcorMusicKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorMusicKind;
+	public static fun values ()[Lcom/excor/music/ExcorMusicKind;
+}
+
+public final class com/excor/music/ExcorMusicPage {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)Lcom/excor/music/ExcorMusicPage;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicPage;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicPage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getNext ()Ljava/lang/String;
+	public final fun getTotal ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicPlaylist {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/Integer;
+	public final fun component12 ()Ljava/lang/Long;
+	public final fun component13 ()Ljava/util/List;
+	public final fun component14 ()Lcom/excor/music/ExcorMusicPage;
+	public final fun component15 ()Ljava/util/Map;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/Boolean;
+	public final fun component9 ()Ljava/lang/Boolean;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;)Lcom/excor/music/ExcorMusicPlaylist;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicPlaylist;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicPlaylist;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getCollaborative ()Ljava/lang/Boolean;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getFollowers ()Ljava/lang/Long;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getMissing ()Ljava/util/Map;
+	public final fun getOwnerId ()Ljava/lang/String;
+	public final fun getOwnerName ()Ljava/lang/String;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getPublic ()Ljava/lang/Boolean;
+	public final fun getSnapshot ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTrackCount ()Ljava/lang/Integer;
+	public final fun getTracks ()Lcom/excor/music/ExcorMusicPage;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicRef {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorMusicKind;Ljava/lang/String;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Lcom/excor/music/ExcorMusicKind;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorMusicKind;Ljava/lang/String;)Lcom/excor/music/ExcorMusicRef;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicRef;Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorMusicKind;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicRef;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getKind ()Lcom/excor/music/ExcorMusicKind;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicSearchResult {
+	public fun <init> ()V
+	public fun <init> (Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/music/ExcorMusicPage;
+	public final fun component2 ()Lcom/excor/music/ExcorMusicPage;
+	public final fun component3 ()Lcom/excor/music/ExcorMusicPage;
+	public final fun component4 ()Lcom/excor/music/ExcorMusicPage;
+	public final fun copy (Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;)Lcom/excor/music/ExcorMusicSearchResult;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicSearchResult;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;Lcom/excor/music/ExcorMusicPage;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicSearchResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlbums ()Lcom/excor/music/ExcorMusicPage;
+	public final fun getArtists ()Lcom/excor/music/ExcorMusicPage;
+	public final fun getPlaylists ()Lcom/excor/music/ExcorMusicPage;
+	public final fun getTracks ()Lcom/excor/music/ExcorMusicPage;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorMusicTrack {
+	public fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorAvailability;Ljava/util/Set;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Lcom/excor/music/ExcorProtectionInfo;Ljava/util/Map;)V
+	public synthetic fun <init> (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorAvailability;Ljava/util/Set;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Lcom/excor/music/ExcorProtectionInfo;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Ljava/lang/Integer;
+	public final fun component14 ()Ljava/lang/Integer;
+	public final fun component15 ()Ljava/lang/Long;
+	public final fun component16 ()Ljava/lang/String;
+	public final fun component17 ()Ljava/util/List;
+	public final fun component18 ()Ljava/lang/String;
+	public final fun component19 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component20 ()Ljava/util/List;
+	public final fun component21 ()Ljava/lang/String;
+	public final fun component22 ()Ljava/lang/Boolean;
+	public final fun component23 ()Ljava/lang/Long;
+	public final fun component24 ()Ljava/util/List;
+	public final fun component25 ()Ljava/util/Set;
+	public final fun component26 ()Lcom/excor/music/ExcorAvailability;
+	public final fun component27 ()Ljava/util/Set;
+	public final fun component28 ()Ljava/util/List;
+	public final fun component29 ()Ljava/lang/Boolean;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component30 ()Ljava/lang/Boolean;
+	public final fun component31 ()Lcom/excor/music/ExcorProtectionInfo;
+	public final fun component32 ()Ljava/util/Map;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorAvailability;Ljava/util/Set;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Lcom/excor/music/ExcorProtectionInfo;Ljava/util/Map;)Lcom/excor/music/ExcorMusicTrack;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Long;Ljava/util/List;Ljava/util/Set;Lcom/excor/music/ExcorAvailability;Ljava/util/Set;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Lcom/excor/music/ExcorProtectionInfo;Ljava/util/Map;ILjava/lang/Object;)Lcom/excor/music/ExcorMusicTrack;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlbumArtists ()Ljava/util/List;
+	public final fun getAlbumId ()Ljava/lang/String;
+	public final fun getAlbumTitle ()Ljava/lang/String;
+	public final fun getArtists ()Ljava/util/List;
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getAudioFormats ()Ljava/util/List;
+	public final fun getAudioTraits ()Ljava/util/Set;
+	public final fun getAvailability ()Lcom/excor/music/ExcorAvailability;
+	public final fun getComposers ()Ljava/util/List;
+	public final fun getCopyright ()Ljava/lang/String;
+	public final fun getDiscNumber ()Ljava/lang/Integer;
+	public final fun getDisplayTitle ()Ljava/lang/String;
+	public final fun getDurationMs ()Ljava/lang/Long;
+	public final fun getExplicit ()Ljava/lang/Boolean;
+	public final fun getFeaturedArtists ()Ljava/util/List;
+	public final fun getGenres ()Ljava/util/List;
+	public final fun getHasLyrics ()Ljava/lang/Boolean;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getIsrc ()Ljava/lang/String;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getLanguage ()Ljava/lang/String;
+	public final fun getMarkets ()Ljava/util/Set;
+	public final fun getMissing ()Ljava/util/Map;
+	public final fun getPopularity ()Ljava/lang/Long;
+	public final fun getPreviewAvailable ()Ljava/lang/Boolean;
+	public final fun getProtection ()Lcom/excor/music/ExcorProtectionInfo;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getRef ()Lcom/excor/music/ExcorMusicRef;
+	public final fun getReleaseDate ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTrackNumber ()Ljava/lang/Integer;
+	public final fun getUpc ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/excor/music/ExcorMusicUserTokenProvider {
+	public abstract fun musicUserToken (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorOAuthToken {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Set;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Set;)Lcom/excor/music/ExcorOAuthToken;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorOAuthToken;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Set;ILjava/lang/Object;)Lcom/excor/music/ExcorOAuthToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccessToken ()Ljava/lang/String;
+	public final fun getExpiresAtMs ()Ljava/lang/Long;
+	public final fun getRefreshToken ()Ljava/lang/String;
+	public final fun getScopes ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorParsedTitle {
+	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/List;)Lcom/excor/music/ExcorParsedTitle;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorParsedTitle;Ljava/lang/String;Ljava/util/Set;Ljava/util/List;ILjava/lang/Object;)Lcom/excor/music/ExcorParsedTitle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBase ()Ljava/lang/String;
+	public final fun getFeatured ()Ljava/util/List;
+	public final fun getMarkers ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorPkce {
+	public static final field Companion Lcom/excor/music/ExcorPkce$Companion;
+	public final fun getChallenge ()Ljava/lang/String;
+	public final fun getVerifier ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorPkce$Companion {
+	public final fun create ()Lcom/excor/music/ExcorPkce;
+}
+
+public final class com/excor/music/ExcorPlatformCapabilities {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Set;Z)V
+	public synthetic fun <init> (Ljava/util/Set;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()Z
+	public final fun copy (Ljava/util/Set;Z)Lcom/excor/music/ExcorPlatformCapabilities;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorPlatformCapabilities;Ljava/util/Set;ZILjava/lang/Object;)Lcom/excor/music/ExcorPlatformCapabilities;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDrmSystems ()Ljava/util/Set;
+	public final fun getSecureDecoder ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorPlaybackException : java/lang/Exception {
+	public fun <init> (Lcom/excor/music/ExcorPlaybackStatus;)V
+	public final fun getStatus ()Lcom/excor/music/ExcorPlaybackStatus;
+}
+
+public final class com/excor/music/ExcorPlaybackOption {
+	public fun <init> (Lcom/excor/music/ExcorPlaybackStatus;Lcom/excor/music/ExcorProtectedPlaybackAdapter;Lcom/excor/music/ExcorProtectionInfo;)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorPlaybackStatus;Lcom/excor/music/ExcorProtectedPlaybackAdapter;Lcom/excor/music/ExcorProtectionInfo;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/music/ExcorPlaybackStatus;
+	public final fun component2 ()Lcom/excor/music/ExcorProtectedPlaybackAdapter;
+	public final fun component3 ()Lcom/excor/music/ExcorProtectionInfo;
+	public final fun copy (Lcom/excor/music/ExcorPlaybackStatus;Lcom/excor/music/ExcorProtectedPlaybackAdapter;Lcom/excor/music/ExcorProtectionInfo;)Lcom/excor/music/ExcorPlaybackOption;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorPlaybackOption;Lcom/excor/music/ExcorPlaybackStatus;Lcom/excor/music/ExcorProtectedPlaybackAdapter;Lcom/excor/music/ExcorProtectionInfo;ILjava/lang/Object;)Lcom/excor/music/ExcorPlaybackOption;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdapter ()Lcom/excor/music/ExcorProtectedPlaybackAdapter;
+	public final fun getProtection ()Lcom/excor/music/ExcorProtectionInfo;
+	public final fun getStatus ()Lcom/excor/music/ExcorPlaybackStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorPlaybackStatus : java/lang/Enum {
+	public static final field DRM_UNSUPPORTED Lcom/excor/music/ExcorPlaybackStatus;
+	public static final field PROTECTED_AUTHORIZED_ADAPTER Lcom/excor/music/ExcorPlaybackStatus;
+	public static final field PROTECTED_REQUIRES_CLIENT Lcom/excor/music/ExcorPlaybackStatus;
+	public static final field REGION_RESTRICTED Lcom/excor/music/ExcorPlaybackStatus;
+	public static final field SUBSCRIPTION_REQUIRED Lcom/excor/music/ExcorPlaybackStatus;
+	public static final field UNAVAILABLE Lcom/excor/music/ExcorPlaybackStatus;
+	public static final field UNPROTECTED_PLAYABLE Lcom/excor/music/ExcorPlaybackStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorPlaybackStatus;
+	public static fun values ()[Lcom/excor/music/ExcorPlaybackStatus;
+}
+
+public final class com/excor/music/ExcorPlaylistConversion {
+	public fun <init> (Lcom/excor/music/ExcorMusicPlaylist;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/List;Z)V
+	public final fun component1 ()Lcom/excor/music/ExcorMusicPlaylist;
+	public final fun component2 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Z
+	public final fun copy (Lcom/excor/music/ExcorMusicPlaylist;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/List;Z)Lcom/excor/music/ExcorPlaylistConversion;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorPlaylistConversion;Lcom/excor/music/ExcorMusicPlaylist;Lcom/excor/catalog/ExcorCatalogProvider;Ljava/util/List;ZILjava/lang/Object;)Lcom/excor/music/ExcorPlaylistConversion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPlaylist ()Lcom/excor/music/ExcorMusicPlaylist;
+	public final fun getTarget ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getTracks ()Ljava/util/List;
+	public final fun getTruncated ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorPodcastEpisode {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogProvider;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogProvider;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/Boolean;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/util/List;
+	public final fun component13 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/Boolean;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogProvider;)Lcom/excor/music/ExcorPodcastEpisode;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorPodcastEpisode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/util/List;Lcom/excor/catalog/ExcorCatalogProvider;ILjava/lang/Object;)Lcom/excor/music/ExcorPodcastEpisode;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDurationMs ()Ljava/lang/Long;
+	public final fun getExplicit ()Ljava/lang/Boolean;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLanguages ()Ljava/util/List;
+	public final fun getPlayable ()Ljava/lang/Boolean;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getReleaseDate ()Ljava/lang/String;
+	public final fun getShowId ()Ljava/lang/String;
+	public final fun getShowTitle ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorPodcastShow {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Lcom/excor/catalog/ExcorCatalogProvider;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Lcom/excor/catalog/ExcorCatalogProvider;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Lcom/excor/music/ExcorMusicPage;
+	public final fun component11 ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/lang/Integer;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Lcom/excor/catalog/ExcorCatalogProvider;)Lcom/excor/music/ExcorPodcastShow;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorPodcastShow;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;Lcom/excor/music/ExcorMusicPage;Lcom/excor/catalog/ExcorCatalogProvider;ILjava/lang/Object;)Lcom/excor/music/ExcorPodcastShow;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtwork ()Ljava/util/List;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getEpisodes ()Lcom/excor/music/ExcorMusicPage;
+	public final fun getExplicit ()Ljava/lang/Boolean;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLanguages ()Ljava/util/List;
+	public final fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public final fun getPublisher ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTotalEpisodes ()Ljava/lang/Integer;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/excor/music/ExcorProtectedPlaybackAdapter {
+	public abstract fun getProvider ()Lcom/excor/catalog/ExcorCatalogProvider;
+	public abstract fun isEntitled (Lcom/excor/music/ExcorMusicTrack;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun isReady (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun play (Lcom/excor/music/ExcorMusicTrack;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorProtectionInfo {
+	public static final field Companion Lcom/excor/music/ExcorProtectionInfo$Companion;
+	public fun <init> (ZLjava/util/Set;Ljava/util/Set;ZLcom/excor/music/ExcorProtectionSource;)V
+	public synthetic fun <init> (ZLjava/util/Set;Ljava/util/Set;ZLcom/excor/music/ExcorProtectionSource;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Z
+	public final fun component5 ()Lcom/excor/music/ExcorProtectionSource;
+	public final fun copy (ZLjava/util/Set;Ljava/util/Set;ZLcom/excor/music/ExcorProtectionSource;)Lcom/excor/music/ExcorProtectionInfo;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorProtectionInfo;ZLjava/util/Set;Ljava/util/Set;ZLcom/excor/music/ExcorProtectionSource;ILjava/lang/Object;)Lcom/excor/music/ExcorProtectionInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKeyUriPresent ()Z
+	public final fun getProtected ()Z
+	public final fun getSchemes ()Ljava/util/Set;
+	public final fun getSource ()Lcom/excor/music/ExcorProtectionSource;
+	public final fun getSystems ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorProtectionInfo$Companion {
+	public final fun getUNPROTECTED_MANIFEST ()Lcom/excor/music/ExcorProtectionInfo;
+}
+
+public final class com/excor/music/ExcorProtectionSource : java/lang/Enum {
+	public static final field MANIFEST Lcom/excor/music/ExcorProtectionSource;
+	public static final field PROVIDER_STATEMENT Lcom/excor/music/ExcorProtectionSource;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorProtectionSource;
+	public static fun values ()[Lcom/excor/music/ExcorProtectionSource;
+}
+
+public final class com/excor/music/ExcorRetryPolicy {
+	public fun <init> ()V
+	public fun <init> (IJJ)V
+	public synthetic fun <init> (IJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun copy (IJJ)Lcom/excor/music/ExcorRetryPolicy;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorRetryPolicy;IJJILjava/lang/Object;)Lcom/excor/music/ExcorRetryPolicy;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInitialDelayMs ()J
+	public final fun getMaxAttempts ()I
+	public final fun getMaxDelayMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorSpotifyAuth {
+	public final fun authorizationUrl (Ljava/lang/String;Ljava/util/Set;)Lcom/excor/music/ExcorAuthorizationRequest;
+	public final fun exchange (Lcom/excor/music/ExcorAuthorizationRequest;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getRefresher ()Lcom/excor/music/ExcorTokenRefresher;
+}
+
+public final class com/excor/music/ExcorSpotifyCatalog {
+	public final fun addToPlaylist (Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun addToPlaylist$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun albumByUpc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun createPlaylist (Ljava/lang/String;Ljava/lang/String;ZZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun createPlaylist$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Ljava/lang/String;ZZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun devices (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun episode (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun libraryContains (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun next (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun next$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun pause (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun pause$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun play (Ljava/util/List;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun play$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/util/List;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun playbackState (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun previous (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun previous$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun queue (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun queue$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun removeFromLibrary (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun removeFromPlaylist (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun removeFromPlaylist$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun reorderPlaylist (Ljava/lang/String;IIILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun reorderPlaylist$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;IIILjava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun saveToLibrary (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun seek (JLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun seek$default (Lcom/excor/music/ExcorSpotifyCatalog;JLjava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun setVolume (ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun setVolume$default (Lcom/excor/music/ExcorSpotifyCatalog;ILjava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun show (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun show$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun updatePlaylist (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun updatePlaylist$default (Lcom/excor/music/ExcorSpotifyCatalog;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun uploadPlaylistCover (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorSpotifyDevice {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZ)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZ)Lcom/excor/music/ExcorSpotifyDevice;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorSpotifyDevice;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZILjava/lang/Object;)Lcom/excor/music/ExcorSpotifyDevice;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActive ()Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getRestricted ()Z
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorSpotifyPlaybackState {
+	public fun <init> (ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorMusicTrack;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun copy (ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorMusicTrack;)Lcom/excor/music/ExcorSpotifyPlaybackState;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorSpotifyPlaybackState;ZLjava/lang/Long;Ljava/lang/String;Ljava/lang/String;Lcom/excor/music/ExcorMusicTrack;ILjava/lang/Object;)Lcom/excor/music/ExcorSpotifyPlaybackState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDeviceName ()Ljava/lang/String;
+	public final fun getDeviceType ()Ljava/lang/String;
+	public final fun getProgressMs ()Ljava/lang/Long;
+	public final fun getTrack ()Lcom/excor/music/ExcorMusicTrack;
+	public fun hashCode ()I
+	public final fun isPlaying ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorSubstitution : java/lang/Enum {
+	public static final field CLEAN_FOR_EXPLICIT Lcom/excor/music/ExcorSubstitution;
+	public static final field DIFFERENT_VERSION Lcom/excor/music/ExcorSubstitution;
+	public static final field EXPLICIT_FOR_CLEAN Lcom/excor/music/ExcorSubstitution;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorSubstitution;
+	public static fun values ()[Lcom/excor/music/ExcorSubstitution;
+}
+
+public final class com/excor/music/ExcorSyncEngine {
+	public fun <init> ()V
+	public fun <init> (Lcom/excor/music/ExcorRetryPolicy;)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorRetryPolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun sync (Lcom/excor/music/ExcorSyncSource;Lcom/excor/music/ExcorSyncState;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun sync$default (Lcom/excor/music/ExcorSyncEngine;Lcom/excor/music/ExcorSyncSource;Lcom/excor/music/ExcorSyncState;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorSyncEntry {
+	public fun <init> (Ljava/lang/String;Lcom/excor/music/ExcorMusicTrack;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/excor/music/ExcorMusicTrack;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Lcom/excor/music/ExcorMusicTrack;Ljava/lang/String;)Lcom/excor/music/ExcorSyncEntry;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorSyncEntry;Ljava/lang/String;Lcom/excor/music/ExcorMusicTrack;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorSyncEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAddedAt ()Ljava/lang/String;
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getTrack ()Lcom/excor/music/ExcorMusicTrack;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorSyncPage {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)Lcom/excor/music/ExcorSyncPage;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorSyncPage;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorSyncPage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntries ()Ljava/util/List;
+	public final fun getNext ()Ljava/lang/String;
+	public final fun getSnapshot ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorSyncResult {
+	public fun <init> (Lcom/excor/music/ExcorSyncState;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZILjava/lang/Throwable;)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorSyncState;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZILjava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/music/ExcorSyncState;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Z
+	public final fun component8 ()I
+	public final fun component9 ()Ljava/lang/Throwable;
+	public final fun copy (Lcom/excor/music/ExcorSyncState;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZILjava/lang/Throwable;)Lcom/excor/music/ExcorSyncResult;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorSyncResult;Lcom/excor/music/ExcorSyncState;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZILjava/lang/Throwable;ILjava/lang/Object;)Lcom/excor/music/ExcorSyncResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdded ()Ljava/util/List;
+	public final fun getComplete ()Z
+	public final fun getDuplicates ()Ljava/util/List;
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getMoved ()Ljava/util/List;
+	public final fun getPagesFetched ()I
+	public final fun getRemoved ()Ljava/util/List;
+	public final fun getState ()Lcom/excor/music/ExcorSyncState;
+	public final fun getUnchanged ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/excor/music/ExcorSyncSource {
+	public abstract fun page (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorSyncState {
+	public static final field Companion Lcom/excor/music/ExcorSyncState$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/excor/music/ExcorSyncState;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorSyncState;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorSyncState;
+	public final fun encode ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKeys ()Ljava/util/List;
+	public final fun getPartialKeys ()Ljava/util/List;
+	public final fun getPartialSnapshot ()Ljava/lang/String;
+	public final fun getResumeCursor ()Ljava/lang/String;
+	public final fun getSnapshot ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorSyncState$Companion {
+	public final fun decode (Ljava/lang/String;)Lcom/excor/music/ExcorSyncState;
+}
+
+public final class com/excor/music/ExcorTokenManager {
+	public fun <init> (Lcom/excor/music/ExcorTokenStore;Lcom/excor/music/ExcorTokenRefresher;Lkotlin/jvm/functions/Function0;J)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorTokenStore;Lcom/excor/music/ExcorTokenRefresher;Lkotlin/jvm/functions/Function0;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun accessToken (Lcom/excor/catalog/ExcorCatalogProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun connect (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorOAuthToken;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun disconnect (Lcom/excor/catalog/ExcorCatalogProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun isConnected (Lcom/excor/catalog/ExcorCatalogProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/excor/music/ExcorTokenRefresher {
+	public abstract fun refresh (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorOAuthToken;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/excor/music/ExcorTokenStore {
+	public abstract fun delete (Lcom/excor/catalog/ExcorCatalogProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun read (Lcom/excor/catalog/ExcorCatalogProvider;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun write (Lcom/excor/catalog/ExcorCatalogProvider;Lcom/excor/music/ExcorOAuthToken;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/excor/music/ExcorTrackMatch {
+	public fun <init> (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchVerdict;DLjava/util/List;Ljava/util/Set;)V
+	public synthetic fun <init> (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchVerdict;DLjava/util/List;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun component2 ()Lcom/excor/music/ExcorMatchVerdict;
+	public final fun component3 ()D
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/Set;
+	public final fun copy (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchVerdict;DLjava/util/List;Ljava/util/Set;)Lcom/excor/music/ExcorTrackMatch;
+	public static synthetic fun copy$default (Lcom/excor/music/ExcorTrackMatch;Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchVerdict;DLjava/util/List;Ljava/util/Set;ILjava/lang/Object;)Lcom/excor/music/ExcorTrackMatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCandidate ()Lcom/excor/music/ExcorMusicTrack;
+	public final fun getConfidence ()D
+	public final fun getEvidence ()Ljava/util/List;
+	public final fun getSubstitutions ()Ljava/util/Set;
+	public final fun getVerdict ()Lcom/excor/music/ExcorMatchVerdict;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/excor/music/ExcorVersionMarker : java/lang/Enum {
+	public static final field ACAPELLA Lcom/excor/music/ExcorVersionMarker;
+	public static final field ACOUSTIC Lcom/excor/music/ExcorVersionMarker;
+	public static final field COVER Lcom/excor/music/ExcorVersionMarker;
+	public static final field DEMO Lcom/excor/music/ExcorVersionMarker;
+	public static final field EDIT Lcom/excor/music/ExcorVersionMarker;
+	public static final field EXTENDED Lcom/excor/music/ExcorVersionMarker;
+	public static final field INSTRUMENTAL Lcom/excor/music/ExcorVersionMarker;
+	public static final field KARAOKE Lcom/excor/music/ExcorVersionMarker;
+	public static final field LIVE Lcom/excor/music/ExcorVersionMarker;
+	public static final field MONO Lcom/excor/music/ExcorVersionMarker;
+	public static final field ORCHESTRAL Lcom/excor/music/ExcorVersionMarker;
+	public static final field REMASTER Lcom/excor/music/ExcorVersionMarker;
+	public static final field REMIX Lcom/excor/music/ExcorVersionMarker;
+	public static final field RE_RECORDED Lcom/excor/music/ExcorVersionMarker;
+	public static final field SLOWED Lcom/excor/music/ExcorVersionMarker;
+	public static final field SPED_UP Lcom/excor/music/ExcorVersionMarker;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/excor/music/ExcorVersionMarker;
+	public static fun values ()[Lcom/excor/music/ExcorVersionMarker;
+}
+
+public final class com/excor/music/LyricsKt {
+	public static final fun excorParseLrc (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/excor/music/ExcorLyrics;
+	public static synthetic fun excorParseLrc$default (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorLyrics;
+	public static final fun excorParseTtml (Ljava/lang/String;Ljava/lang/String;)Lcom/excor/music/ExcorLyrics;
+}
+
+public final class com/excor/music/MatchingKt {
+	public static final fun excorMatchTrack (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchOptions;)Lcom/excor/music/ExcorTrackMatch;
+	public static synthetic fun excorMatchTrack$default (Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMusicTrack;Lcom/excor/music/ExcorMatchOptions;ILjava/lang/Object;)Lcom/excor/music/ExcorTrackMatch;
+	public static final fun excorNormalize (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun excorParseTitle (Ljava/lang/String;Ljava/lang/String;)Lcom/excor/music/ExcorParsedTitle;
+	public static synthetic fun excorParseTitle$default (Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/excor/music/ExcorParsedTitle;
+	public static final fun excorRankMatches (Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;Lcom/excor/music/ExcorMatchOptions;)Ljava/util/List;
+	public static synthetic fun excorRankMatches$default (Lcom/excor/music/ExcorMusicTrack;Ljava/util/List;Lcom/excor/music/ExcorMatchOptions;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class com/excor/music/OAuthKt {
+	public static final fun excorDeezerAuthorizationUrl (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)Ljava/lang/String;
+	public static synthetic fun excorDeezerAuthorizationUrl$default (Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;ILjava/lang/Object;)Ljava/lang/String;
+}
+
+public final class com/excor/music/SpotifySourceKt {
+	public static final fun spotifyIdOfGid (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun spotifyRefOf (Ljava/lang/String;)Lcom/excor/music/ExcorMusicRef;
+}
+
