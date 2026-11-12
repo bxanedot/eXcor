@@ -29,6 +29,9 @@ tasks.withType<Test>().configureEach {
 kotlin {
     jvmToolchain(27)
     compilerOptions { jvmTarget.set(JvmTarget.JVM_26) }
+    sourceSets.main {
+        kotlin.srcDir("../common/src/main/kotlin")
+    }
 }
 
 java {

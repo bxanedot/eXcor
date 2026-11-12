@@ -248,6 +248,7 @@ private data class RangeResponse(
     val location: String?,
     val contentRange: String?,
     val bytesRead: Int,
+    val contentLength: Long?,
 )
 
 private data class InitialRangeResult(
@@ -255,41 +256,6 @@ private data class InitialRangeResult(
     val finalUrl: String?,
     val totalBytes: Long?,
 )
-
-private const val RANGE_PROBE_BYTES = 4_096
-private const val MIN_RANGE_PROBE_TOTAL_BYTES = RANGE_PROBE_BYTES * 4L
-
-internal fun offsetRangeResponseResultForTest(
-    code: Int,
-    contentRange: String?,
-    bytesRead: Int,
-    startByte: Long,
-    totalBytes: Long,
-): String = offsetRangeResponseResult(code, contentRange, bytesRead, startByte, totalBytes)
-
-private fun offsetRangeResponseResult(
-    code: Int,
-    contentRange: String?,
-    bytesRead: Int,
-    startByte: Long,
-    totalBytes: Long,
-): String {
-    if (code == 401 || code == 403) return "ACCESS_DENIED"
-    if (code == 200) return "IGNORED"
-    if (code != 206) return "ERROR"
-    if (totalBytes < MIN_RANGE_PROBE_TOTAL_BYTES || startByte < 0 || startByte > totalBytes - RANGE_PROBE_BYTES) {
-        return "UNAVAILABLE"
-    }
-    val range = contentRange?.let {
-        Regex("^bytes ([0-9]+)-([0-9]+)/([0-9]+|\\*)$").matchEntire(it)
-    } ?: return "ERROR"
-    val returnedStart = range.groupValues[1].toLongOrNull() ?: return "ERROR"
-    val returnedEnd = range.groupValues[2].toLongOrNull() ?: return "ERROR"
-    val returnedTotal = range.groupValues[3]
-    val totalMatches = returnedTotal == "*" || returnedTotal.toLongOrNull() == totalBytes
-    return if (returnedStart == startByte && returnedEnd == startByte + RANGE_PROBE_BYTES - 1 &&
-        bytesRead == RANGE_PROBE_BYTES && totalMatches) "PASS" else "ERROR"
-}
 
 private suspend fun executeRangeRequest(
     client: OkHttpClient,
@@ -315,11 +281,11 @@ private suspend fun executeRangeRequest(
             try {
                 val result = response.use { res ->
                     if (res.code !in setOf(200, 206)) {
-                        RangeResponse(res.code, res.header("Location"), res.header("Content-Range"), 0)
+                        RangeResponse(res.code, res.header("Location"), res.header("Content-Range"), 0, res.header("Content-Length")?.toLongOrNull())
                     } else {
                         val body = res.body
                         if (body == null) {
-                            RangeResponse(res.code, res.header("Location"), res.header("Content-Range"), 0)
+                            RangeResponse(res.code, res.header("Location"), res.header("Content-Range"), 0, res.header("Content-Length")?.toLongOrNull())
                         } else {
                             val buffer = ByteArray(8192)
                             var total = 0
@@ -337,7 +303,7 @@ private suspend fun executeRangeRequest(
                                 metrics.bytes.addAndGet(total.toLong())
                                 if (firstAt > 0) metrics.firstByteAtNs.compareAndSet(0, firstAt)
                             }
-                            RangeResponse(res.code, res.header("Location"), res.header("Content-Range"), total)
+                            RangeResponse(res.code, res.header("Location"), res.header("Content-Range"), total, res.header("Content-Length")?.toLongOrNull())
                         }
                     }
                 }
@@ -374,14 +340,13 @@ private suspend fun probeInitialRange(
         }
         if (response.code == 401 || response.code == 403) return InitialRangeResult(SampleOutcome("BLOCKED", "ACCESS_DENIED"), current, null)
         if (response.code !in setOf(200, 206) || response.bytesRead == 0) return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), current, null)
-        var totalBytes: Long? = null
         if (response.code == 206) {
             val range = response.contentRange?.let {
                 Regex("^bytes 0-([0-9]+)/([0-9]+|\\*)$").matchEntire(it)
             } ?: return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), current, null)
             val end = range.groupValues[1].toLongOrNull() ?: return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), current, null)
             val totalField = range.groupValues[2]
-            totalBytes = if (totalField == "*") {
+            val totalBytes = if (totalField == "*") {
                 null
             } else {
                 totalField.toLongOrNull() ?: return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), current, null)
@@ -390,6 +355,7 @@ private suspend fun probeInitialRange(
                 return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), current, null)
             }
         }
+        val totalBytes = HttpRangeProbe.totalBytes(response.code, response.contentRange, response.contentLength)
         return InitialRangeResult(null, current, totalBytes)
     }
     return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), null, null)
@@ -403,13 +369,13 @@ private suspend fun probeOffsetRange(
     startByte: Long,
     totalBytes: Long,
 ): String {
-    if (totalBytes < MIN_RANGE_PROBE_TOTAL_BYTES || startByte < 0 || startByte > totalBytes - RANGE_PROBE_BYTES) {
+    if (!HttpRangeProbe.isAvailable(startByte, totalBytes)) {
         return "UNAVAILABLE"
     }
     var current = initialUrl
     repeat(4) { hop ->
         val response = try {
-            executeRangeRequest(client, current, headers, metrics, startByte, RANGE_PROBE_BYTES)
+            executeRangeRequest(client, current, headers, metrics, startByte, HttpRangeProbe.PROBE_BYTES)
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
@@ -421,7 +387,7 @@ private suspend fun probeOffsetRange(
             if (!allowedMediaUrl(current)) return "ERROR"
             return@repeat
         }
-        return offsetRangeResponseResult(response.code, response.contentRange, response.bytesRead, startByte, totalBytes)
+        return HttpRangeProbe.classifyResponse(response.code, response.contentRange, response.bytesRead, startByte, totalBytes)
     }
     return "ERROR"
 }
@@ -559,17 +525,17 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
                     rangeProbeMethod = "HTTP_BYTE_RANGE"
                     val totalBytes = initialRange.totalBytes
                     val finalUrl = initialRange.finalUrl
-                    if (totalBytes == null || finalUrl == null || totalBytes < MIN_RANGE_PROBE_TOTAL_BYTES) {
+                    if (totalBytes == null || finalUrl == null || totalBytes < HttpRangeProbe.MIN_TOTAL_BYTES) {
                         rangeForwardProbe = "UNAVAILABLE"
                         rangeBackwardProbe = "UNAVAILABLE"
                     } else {
                         rangeForwardProbe = probeOffsetRange(
                             mediaClient, finalUrl, mediaHeaders(stream.headers), metrics,
-                            startByte = totalBytes - totalBytes / 4, totalBytes = totalBytes,
+                            startByte = HttpRangeProbe.forwardStart(totalBytes), totalBytes = totalBytes,
                         )
                         rangeBackwardProbe = probeOffsetRange(
                             mediaClient, finalUrl, mediaHeaders(stream.headers), metrics,
-                            startByte = totalBytes / 4, totalBytes = totalBytes,
+                            startByte = HttpRangeProbe.backwardStart(totalBytes), totalBytes = totalBytes,
                         )
                     }
                 }

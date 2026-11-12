@@ -47,7 +47,7 @@ python samples/black-box-comparison/run_matched.py `
   --output results/owner-home-ranges-2026-11-12.jsonl
 ```
 
-Each measured attempt reads the initial range, then requests 4 KiB near 75% of the reported media length and 4 KiB near 25%. The report records whether those HTTP byte offsets were honored. `rangeForwardProbe` and `rangeBackwardProbe` describe the request order only; `forwardSeek` and `backwardSeek` remain `NOT_TESTED` because these probes do not exercise a decoder or player. Samples without a numeric content length report `UNAVAILABLE`. This opt-in mode requires exactly the eXcor and InnerTubeX adapters so an unsupported adapter cannot silently emit incomplete probe data.
+Each measured attempt reads the initial range, then requests 4 KiB near 75% of the reported media length and 4 KiB near 25%. The report records whether those HTTP byte offsets were honored. `rangeForwardProbe` and `rangeBackwardProbe` describe the request order only; `forwardSeek` and `backwardSeek` remain `NOT_TESTED` because these probes do not exercise a decoder or player. Samples without a numeric content length or with media shorter than 16 KiB report `UNAVAILABLE`. This opt-in mode requires exactly the eXcor and InnerTubeX adapters so an unsupported adapter cannot silently emit incomplete probe data.
 
 ## eXcor JVM adapter
 
