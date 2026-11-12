@@ -209,9 +209,15 @@ jobs:
             21
       - name: Kotlin tests, iOS targets, frameworks and XCFramework
         run: >
-          ./gradlew $GRADLE_ARGS :jvmTest :iosSimulatorArm64Test
+          ./gradlew $GRADLE_ARGS updateKotlinAbi :jvmTest :iosSimulatorArm64Test
           :linkReleaseFrameworkIosArm64 :linkReleaseFrameworkIosSimulatorArm64 :linkReleaseFrameworkIosX64
           :assembleEXcorReleaseXCFramework
+      - name: Upload bootstrap ABI baseline
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: kotlin-abi-bootstrap
+          path: api/
+          if-no-files-found: error
       - name: Swift check of the published Kotlin API
         run: >
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator

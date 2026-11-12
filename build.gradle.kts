@@ -66,6 +66,9 @@ val generateEjs = tasks.register("generateEjs") {
 }
 
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation()
+
     jvmToolchain(27)
     jvm {
         compilerOptions { jvmTarget = JvmTarget.JVM_26 }

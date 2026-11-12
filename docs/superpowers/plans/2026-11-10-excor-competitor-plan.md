@@ -70,7 +70,8 @@ The feasibility decision is complete; SABR implementation is deferred. G6 remain
 
 ### P5 — Solo-maintainer release quality
 
-- [ ] Complete source/fixture provenance and license review, API/ABI compatibility, dependency vulnerability scan and reproducible builds.
+- [ ] Complete source/fixture provenance and license review, dependency vulnerability review and reproducible builds.
+- [ ] Add a committed Kotlin ABI baseline and an exact CI compatibility check. The public-API smoke check remains a separate consumer compile check.
 - [x] Provide a copyable Kotlin sample, Android/JVM quickstart, clear error guide, changelog and supported/unsupported feature matrix. The matrix retains dates for owner-run live evidence and now identifies the current CI snapshot and remaining release gaps.
 - [x] Add a security policy. README links to it; `SECURITY.md` defines private reporting, scope and credential-safe reproduction guidance.
 - [ ] Invite a small amount of independent feedback when ready; do not state any active users or adoption without evidence.
