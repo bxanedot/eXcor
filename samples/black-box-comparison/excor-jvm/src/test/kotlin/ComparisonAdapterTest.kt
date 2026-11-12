@@ -21,7 +21,17 @@ class ComparisonAdapterTest {
         assertEquals(options.videoId, "dQw4w9WgXcQ")
         assertEquals(options.phase, "cold")
         assertEquals(options.timeoutSeconds, 30)
+        assertEquals(options.rangeProbes, false)
         assertTrue(options.os in setOf("windows", "macos", "linux"))
+    }
+
+    @Test
+    fun acceptsOptInRangeProbesWithoutTreatingThemAsPlayerSeeks() {
+        val options = parseOptions(validArgs() + "--range-probes")
+        assertTrue(options.rangeProbes)
+        val json = ComparisonSample(options, "PASS", null).toJson()
+        assertTrue(json.contains("\"rangeProbeMethod\":\"NOT_TESTED\""))
+        assertTrue(json.contains("\"backwardSeek\":\"NOT_TESTED\""))
     }
 
     @Test
@@ -91,5 +101,21 @@ class ComparisonAdapterTest {
         )
         assertEquals(forwarded.keys, setOf("User-Agent"))
         assertFalse(forwarded.values.any { it.contains("private") || it.contains('\r') || it.contains('\n') })
+    }
+
+    @Test
+    fun offsetRangeProbeRequiresTheRequestedBytesAndReportsHttpOnlyResults() {
+        assertEquals(HttpRangeProbe.forwardStart(100_000), 75_000L)
+        assertEquals(HttpRangeProbe.backwardStart(100_000), 25_000L)
+        assertTrue(HttpRangeProbe.isAvailable(75_000, 100_000))
+        assertEquals(HttpRangeProbe.totalBytes(200, null, 100_000), 100_000L)
+        assertEquals(HttpRangeProbe.totalBytes(206, "bytes 0-4095/100000", 4096), 100_000L)
+        assertEquals(HttpRangeProbe.totalBytes(206, "bytes 0-4095/*", 4096), null)
+        assertEquals(HttpRangeProbe.classifyResponse(206, "bytes 75000-79095/100000", 4096, 75000, 100000), "PASS")
+        assertEquals(HttpRangeProbe.classifyResponse(200, null, 4096, 75000, 100000), "IGNORED")
+        assertEquals(HttpRangeProbe.classifyResponse(403, null, 0, 75000, 100000), "ACCESS_DENIED")
+        assertEquals(HttpRangeProbe.classifyResponse(206, "bytes 75000-79095/99999", 4096, 75000, 100000), "ERROR")
+        assertEquals(HttpRangeProbe.classifyResponse(206, "bytes 75000-79095/100000", 4095, 75000, 100000), "ERROR")
+        assertEquals(HttpRangeProbe.classifyResponse(206, "bytes 3000-7095/10000", 4096, 3000, 10000), "UNAVAILABLE")
     }
 }

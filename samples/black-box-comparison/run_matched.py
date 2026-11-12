@@ -194,6 +194,11 @@ def _parse_options(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--main-commit", help="full eXcor main SHA; defaults to local git rev-parse main")
     parser.add_argument("--run-date-utc", help="shared UTC timestamp; defaults to this run's start time")
     parser.add_argument("--adapters", nargs="+", choices=ADAPTERS, help="defaults to all four adapters")
+    parser.add_argument(
+        "--range-probes",
+        action="store_true",
+        help="probe forward/backward HTTP byte ranges for the eXcor and InnerTubeX adapters",
+    )
     parser.add_argument("--output", required=True, type=Path, help="new JSONL file; existing files are never overwritten")
     args = parser.parse_args(argv)
 
@@ -216,6 +221,8 @@ def _parse_options(argv: Sequence[str] | None = None) -> argparse.Namespace:
     args.adapters = args.adapters or list(ADAPTERS)
     if len(set(args.adapters)) != len(args.adapters):
         raise RunnerError("adapters must be unique")
+    if args.range_probes and set(args.adapters) != {"excor", "innertubex"}:
+        raise RunnerError("HTTP byte-range probes require exactly the excor and innertubex adapters")
     if len(args.video_id) * len(args.phases) * len(args.sample_indices) * len(args.adapters) > 10000:
         raise RunnerError("comparison request exceeds the report sample limit")
 
@@ -282,6 +289,8 @@ def run(argv: Sequence[str] | None = None) -> int:
                             "--phase", phase,
                             "--sample-index", str(sample_index),
                         ]
+                        if args.range_probes:
+                            adapter_args.append("--range-probes")
                         result = _invoke(spec, adapter_args, args.timeout_seconds + 10)
                         if result.returncode != 0:
                             raise RunnerError(f"{spec.name} failed with exit code {result.returncode}; no JSONL output was written")
