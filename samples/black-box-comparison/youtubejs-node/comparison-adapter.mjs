@@ -463,7 +463,7 @@ function makeSample(options, state, result) {
       sessionCategory: "signed_out",
       timeoutSeconds: options.timeoutSeconds,
       locale: options.locale,
-      decoderVersion: "v8-no-player-js-" + process.versions.v8,
+      decoderVersion: null,
     },
     adapter: "youtubejs",
     adapterVersion: ADAPTER_VERSION,
