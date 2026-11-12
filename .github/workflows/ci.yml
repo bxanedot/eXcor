@@ -117,7 +117,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/shipped"
           grep -E '=(.*,)?(jvmRuntimeClasspath|androidRuntimeClasspath|ios(Arm64|SimulatorArm64|X64)CompileKlibraries)(,|$)' gradle.lockfile > "$RUNNER_TEMP/shipped/gradle.lockfile"
           echo "All library, preview and Node adapter dependencies, gating:"
-          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile preview/android/gradle.lockfile --lockfile preview/desktop/gradle.lockfile --lockfile samples/black-box-comparison/youtubejs-node/package-lock.json
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile platforms/preview/android/gradle.lockfile --lockfile platforms/preview/desktop/gradle.lockfile --lockfile samples/black-box-comparison/youtubejs-node/package-lock.json
           echo "Shipped runtime and compile dependencies, gating:"
           "$RUNNER_TEMP/osv-scanner" scan source --lockfile "$RUNNER_TEMP/shipped/gradle.lockfile"
 
@@ -141,7 +141,7 @@ jobs:
         shell: pwsh
         run: |
           $report = Join-Path $env:RUNNER_TEMP "self-test.txt"
-          Start-Process -Wait -FilePath "preview/desktop/build/app/eXcor Preview/eXcor Preview.exe" -ArgumentList "--self-test", "`"$report`""
+          Start-Process -Wait -FilePath "platforms/preview/desktop/build/app/eXcor Preview/eXcor Preview.exe" -ArgumentList "--self-test", "`"$report`""
           Get-Content $report
           if (-not (Select-String -Path $report -Pattern "eXcor Preview OK" -Quiet)) { exit 1 }
       - name: Windows installer (when WiX is available)
@@ -156,8 +156,8 @@ jobs:
         with:
           name: excor-preview-windows
           path: |
-            preview/desktop/build/app/
-            preview/desktop/build/installer/*.exe
+            platforms/preview/desktop/build/app/
+            platforms/preview/desktop/build/installer/*.exe
           if-no-files-found: error
 
   # The preview apps, for trying the library by hand: the Android APK (uploaded as an artifact), and the desktop app,
@@ -175,7 +175,7 @@ jobs:
       - run: ./gradlew $GRADLE_ARGS :preview-android:assembleDebug :preview-android:lintDebug :preview-desktop:packageApp
       - name: Desktop preview passes its self-test and starts
         run: |
-          app="preview/desktop/build/app/eXcor Preview/bin/eXcor Preview"
+          app="platforms/preview/desktop/build/app/eXcor Preview/bin/eXcor Preview"
           "$app" --self-test "$RUNNER_TEMP/self-test.txt"
           grep -q "eXcor Preview OK" "$RUNNER_TEMP/self-test.txt"
           set +e
@@ -185,7 +185,7 @@ jobs:
           cat "$RUNNER_TEMP/desktop.log"
           # 124: still running when the timeout stopped it, so it started and did not crash.
           [ "$result" -eq 124 ] && ! grep -q Exception "$RUNNER_TEMP/desktop.log"
-      - run: cp preview/android/build/outputs/apk/debug/preview-android-debug.apk excor-preview.apk
+      - run: cp platforms/preview/android/build/outputs/apk/debug/preview-android-debug.apk excor-preview.apk
       # A debug build signed with this run's throwaway key, for trying the library on a phone.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
@@ -230,7 +230,7 @@ jobs:
       - name: Preview app starts and opens a shared link on the API ${{ matrix.api }} emulator
         run: |
           adb=$ANDROID_HOME/platform-tools/adb
-          $adb install -r preview/android/build/outputs/apk/debug/preview-android-debug.apk
+          $adb install -r platforms/preview/android/build/outputs/apk/debug/preview-android-debug.apk
           $adb shell am start -W -n com.excor.preview/.MainActivity
           # A shared link reaches the running screen and loads the video's details.
           $adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT https://youtu.be/dQw4w9WgXcQ -n com.excor.preview/.MainActivity
@@ -244,7 +244,7 @@ jobs:
       - name: Picture and sound join on the API ${{ matrix.api }} emulator
         run: |
           adb=$ANDROID_HOME/platform-tools/adb
-          $adb install -r preview/android/build/outputs/apk/androidTest/debug/preview-android-debug-androidTest.apk
+          $adb install -r platforms/preview/android/build/outputs/apk/androidTest/debug/preview-android-debug-androidTest.apk
           $adb shell am instrument -w com.excor.preview.test/com.excor.preview.JoinCheck | tee join-check.txt
           grep -q "result=ok" join-check.txt
 
@@ -270,7 +270,7 @@ jobs:
           api/swift-check/ExcorApiCheck.swift
       - name: Swift package tests
         shell: bash
-        working-directory: swift
+        working-directory: platforms/swift
         run: |
           set +e
           swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
@@ -288,4 +288,4 @@ jobs:
           exit "$result"
       - name: Swift package iOS Simulator build
         run: xcodebuild -scheme eXcorKit -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
-        working-directory: swift
+        working-directory: platforms/swift

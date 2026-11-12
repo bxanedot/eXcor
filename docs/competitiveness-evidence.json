@@ -57,7 +57,7 @@
       "label": "Full direct-audio decode and range seek",
       "evidence_paths": [
         "docs/release-gates.json",
-        "cleanroom-src/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
+        "cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
       ]
     },
     {
@@ -69,7 +69,7 @@
       "label": "Direct video/audio mux, decode and seek",
       "evidence_paths": [
         "docs/release-gates.json",
-        "cleanroom-src/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
+        "cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
       ]
     },
     {
@@ -189,7 +189,7 @@
       "label": "Untrusted diagnostics redaction (#76)",
       "evidence_paths": [
         "docs/release-gates.json",
-        "EXCOR_PROGRESS.md"
+        "docs/maintainers/EXCOR_PROGRESS.md"
       ]
     },
     {
@@ -201,7 +201,7 @@
       "label": "Bounded HTTP response streaming (#82)",
       "evidence_paths": [
         "docs/release-gates.json",
-        "EXCOR_PROGRESS.md"
+        "docs/maintainers/EXCOR_PROGRESS.md"
       ]
     },
     {
@@ -213,7 +213,7 @@
       "label": "Generation-safe session invalidation (#81)",
       "evidence_paths": [
         "docs/release-gates.json",
-        "EXCOR_PROGRESS.md"
+        "docs/maintainers/EXCOR_PROGRESS.md"
       ]
     },
     {
@@ -225,7 +225,7 @@
       "label": "Deterministic fault-injection tests (#80)",
       "evidence_paths": [
         "docs/release-gates.json",
-        "EXCOR_PROGRESS.md"
+        "docs/maintainers/EXCOR_PROGRESS.md"
       ]
     },
     {

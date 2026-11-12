@@ -2,6 +2,8 @@
 
 Audit base: `main` at `e12ba98e6fd57c7d53ea8557197e7365d04da664` (2026-10-29). Branch `feature/catalog-metadata` adds an experimental metadata catalog prototype. This is a product and build inventory, not a legal opinion or release approval.
 
+> **Layout note (2026-11-12):** This audit is a snapshot from 2026-10-29. Its path names reflect that date; current locations are documented in [the architecture guide](ARCHITECTURE.md).
+
 ## Build boundary and layout
 
 - The root Gradle project builds the draft KMP artifact `com.excor:eXcor:0.2.0` from `cleanroom-src/` only. It configures JVM, Android, and iOS targets.

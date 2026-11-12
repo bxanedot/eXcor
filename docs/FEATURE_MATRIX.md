@@ -1,6 +1,6 @@
 # eXcor feature matrix
 
-This matrix describes the active clean-room Kotlin sources under `cleanroom-src/` and the separate Swift package under `swift/`. Preserved implementation folders are excluded. CI (`.github/workflows/ci.yml`) runs the offline tests and builds on Linux, Windows and macOS for every push and pull request; live checks against YouTube and the music providers are opt-in (`EXCOR_LIVE=1`) and are recorded with their date and the network they ran from. `Supported and verified` means the behavior has a public API, relevant tests, and passing CI for the stated target; it does not by itself mean production-ready.
+This matrix describes the active clean-room Kotlin sources under `cleanroom/` and the separate Swift package under `platforms/swift/`. Preserved implementation folders are excluded. CI (`.github/workflows/ci.yml`) runs the offline tests and builds on Linux, Windows and macOS for every push and pull request; live checks against YouTube and the music providers are opt-in (`EXCOR_LIVE=1`) and are recorded with their date and the network they ran from. `Supported and verified` means the behavior has a public API, relevant tests, and passing CI for the stated target; it does not by itself mean production-ready.
 
 | Capability | Kotlin KMP status | eXcorKit status | Evidence or gap |
 |---|---|---|---|

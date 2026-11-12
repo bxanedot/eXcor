@@ -13,7 +13,7 @@
 
 ## Prerequisites
 
-JDK / Android SDK as described in `HANDOFF.md`. For full decode and seek checks, install `ffmpeg` and `ffprobe` and confirm they are on PATH.
+JDK / Android SDK as described in `maintainers/HANDOFF.md`. For full decode and seek checks, install `ffmpeg` and `ffprobe` and confirm they are on PATH.
 
 On Linux/macOS, run from repository root:
 
@@ -87,4 +87,4 @@ Post only this sanitized template to issue #78; private raw diagnostics must sta
 - **G6 SABR/UMP remains BLOCKED** until independently verified implementation and seek/decoding tests exist; this matrix cannot close it.
 - **G10 remote publishing remains owner-authorized only**, regardless of these results.
 
-See `docs/release-gates.json`, `docs/COMPETITOR_MATRIX.md`, `docs/ERROR_HANDLING.md`, `HANDOFF.md`, and issue #78.
+See `docs/release-gates.json`, `docs/COMPETITOR_MATRIX.md`, `docs/ERROR_HANDLING.md`, `maintainers/HANDOFF.md`, and issue #78.

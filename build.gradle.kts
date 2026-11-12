@@ -36,7 +36,7 @@ allprojects {
 // The challenge solver scripts must reach every target, and Kotlin/Native has no resource
 // loading, so they are compiled in as string constants.
 val generateEjs = tasks.register("generateEjs") {
-    val input = layout.projectDirectory.dir("cleanroom-src/ejs")
+    val input = layout.projectDirectory.dir("cleanroom/ejs")
     val output = layout.buildDirectory.dir("generated/ejs")
     inputs.dir(input)
     outputs.dir(output)
@@ -109,7 +109,7 @@ kotlin {
     sourceSets {
         // Keep this library build isolated from the existing application implementation.
         configureEach {
-            kotlin.setSrcDirs(listOf("cleanroom-src/$name"))
+            kotlin.setSrcDirs(listOf("cleanroom/$name"))
         }
         commonMain {
             kotlin.srcDir(generateEjs)

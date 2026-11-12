@@ -12,9 +12,13 @@
 - InnerTubeX's public README documents direct/HLS/SABR transport, UMP seeking, cipher handling, isolated sessions, token-provider interfaces and diagnostics. Its 2026-11-07 changelog shows ongoing iOS and streaming work. eXcor does not currently demonstrate parity in all of those areas.
 - YouTube.js serves JavaScript/Deno/browser developers; NewPipeExtractor targets Java and several content services. Platform breadth alone does not prove extractor performance.
 
-**Nonnegotiable boundaries:** Only implement in the clean-room source tree, not quarantined historical src/ or root ejs/. Never copy GPL/LGPL/AGPL extractor source, including InnerTubeX or NewPipeExtractor. Use competitor README and observable public interfaces only for requirements. Do not evade bot checks, consent or DRM. Do not store or log credentials, signed URLs, private captures or token values. Remote release and publishing require owner authorization.
+**Nonnegotiable boundaries:** Only implement in the clean-room source tree, not quarantined `legacy/src/` or `legacy/ejs/`. Never copy GPL/LGPL/AGPL extractor source, including InnerTubeX or NewPipeExtractor. Use competitor README and observable public interfaces only for requirements. Do not evade bot checks, consent or DRM. Do not store or log credentials, signed URLs, private captures or token values. Remote release and publishing require owner authorization.
 
 ## Priority and sequence
+
+### P5 layout cleanup
+
+- [x] Keep the active library source in the clearly named `cleanroom/` tree; keep the uncompiled historical source and its EJS bundle together under `legacy/`; group preview apps and the Swift package under `platforms/`; move maintainer records under `docs/maintainers/`, reducing tracked root directories from 13 to 11. Preserve Gradle project IDs, public package coordinates, and historical files.
 
 ### P0 — Security, reliability and diagnostic consistency
 
@@ -123,4 +127,4 @@ The eXcor and InnerTubeX JVM comparison adapters now support optional `--full-de
 
 **Next focused evidence:** complete the owner's playback/cipher matrix in issue #78 and run matched comparisons where access is permitted. Keep G4/G5 partial until sanitized outcomes prove repeatable playback, decode and seek. Keep G6 blocked until an independently usable SABR service contract and authorized playable fixtures exist.
 
-References: HANDOFF.md, EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.
+References: docs/maintainers/HANDOFF.md, docs/maintainers/EXCOR_PROGRESS.md, docs/release-gates.json, docs/FEATURE_MATRIX.md, docs/COMPETITOR_MATRIX.md, docs/ERROR_HANDLING.md, docs/CLEAN_ROOM.md, PROVENANCE.md.

@@ -4,7 +4,7 @@ This plan follows the user's master engineering plan and the current clean-room 
 
 ## Phase 0 — repository audit and baseline
 
-The active root build uses `cleanroom-src/`, plus a separate native Swift package under `swift/`. Current `main` CI is green. The provenance and functional audit explicitly excludes historical implementation files because the user previously prohibited opening them; whole-repository provenance therefore remains unresolved. See [`REPOSITORY_AUDIT.md`](REPOSITORY_AUDIT.md).
+The active root build uses `cleanroom/`, plus a separate native Swift package under `platforms/swift/`. Current `main` CI is green. The provenance and functional audit explicitly excludes historical implementation files because the user previously prohibited opening them; whole-repository provenance therefore remains unresolved. See [`REPOSITORY_AUDIT.md`](REPOSITORY_AUDIT.md).
 
 ## Phase 1 — stable library core
 
