@@ -64,7 +64,7 @@ internal suspend fun runPlaybackDiagnostics(args: List<String>) {
     } ?: "unknown"
     println("stream_ready videoId=${options.videoId} client=$client mime=$mime bitrateKbps=${stream.kbps.coerceAtLeast(0)} lookupMs=${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)}")
     println("Signed-out direct audio. The media URL and request headers stay in this process.")
-    println("Use Right Arrow to seek forward, Left Arrow to seek backward, and q to stop.")
+    println("Focus the ffplay waveform window. Use Right Arrow to seek forward, Left Arrow to seek backward, and q to stop.")
 
     val proxy = try { LoopbackMediaProxy(stream) } catch (_: Exception) {
         println("Could not start the loopback-only media proxy.")
@@ -107,7 +107,7 @@ private fun parseOptions(args: List<String>): PlaybackOptions? {
 
 private fun runPlayer(url: String, seconds: Int): String {
     val process = try {
-        ProcessBuilder("ffplay", "-nodisp", "-loglevel", "quiet", "-autoexit", url)
+        ProcessBuilder(ffplayArguments(url))
             .redirectInput(ProcessBuilder.Redirect.INHERIT)
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .redirectError(ProcessBuilder.Redirect.DISCARD)
@@ -130,6 +130,9 @@ private fun runPlayer(url: String, seconds: Int): String {
         "interrupted"
     }
 }
+
+internal fun ffplayArguments(url: String): List<String> =
+    listOf("ffplay", "-showmode", "1", "-loglevel", "quiet", "-autoexit", url)
 
 private fun runFullDecode(proxy: LoopbackMediaProxy, videoId: String, expected: Long?) {
     val duration = runProbe(proxy.localUrl)

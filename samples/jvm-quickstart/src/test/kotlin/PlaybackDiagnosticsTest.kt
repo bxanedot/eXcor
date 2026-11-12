@@ -6,6 +6,17 @@ import org.testng.annotations.Test
 
 class PlaybackDiagnosticsTest {
     @Test
+    fun ffplayUsesAnInteractiveWaveformWindowForSeekKeys() {
+        val url = "http://127.0.0.1:49152/media/test"
+        val command = ffplayArguments(url)
+
+        assertEquals(command.first(), "ffplay")
+        assertEquals(command.drop(1).take(2), listOf("-showmode", "1"))
+        assertFalse(command.contains("-nodisp"))
+        assertEquals(command.last(), url)
+    }
+
+    @Test
     fun mediaUrlAllowlistRejectsHostAndPathConfusion() {
         assertTrue(isAllowedMediaUrl("https://r1---sn-ab5l6.googlevideo.com/videoplayback?range=1"))
         assertTrue(isAllowedMediaUrl("https://m.youtube.com/videoplayback?token=private"))
