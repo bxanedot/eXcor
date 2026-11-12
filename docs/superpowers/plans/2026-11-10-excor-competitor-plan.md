@@ -24,6 +24,7 @@
 - [x] Audit remaining logs, exceptions and data-class string representations; PR #87 adds synthetic regression coverage for sensitive diagnostics.
 - [x] Extend deterministic offline fault injection for retry exhaustion, Retry-After, cancellation during backoff, oversized payloads, media redirects and stale authenticated sessions; covered by merged PRs #80–#82.
 - [x] Bound host-supplied `ExcorSession` cookie, visitor-data, region and language values before header use; PR #124 passed all six supported-target jobs at exact head `3fa71184c0b01cb6bc7d12259b973ea1c6f268d8` in run `43115947382`.
+- [x] Pin external GitHub Actions to verified official release commit SHAs, grant ordinary CI only `contents: read`, guard the write-enabled score workflow's `workflow_run` path to repository `main` pushes, and schedule monthly Dependabot checks for action updates.
 
 Acceptance: green CI with no public-API regression; synthetic secrets never appear in diagnostics; proven faults receive explicit typed outcomes. G8/G12 remain partial pending owner-run live fault verification and broader release-security evidence.
 
