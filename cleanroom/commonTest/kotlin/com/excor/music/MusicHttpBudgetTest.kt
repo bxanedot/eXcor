@@ -14,18 +14,30 @@ import kotlin.test.assertTrue
 
 class MusicHttpBudgetTest {
     @Test
-    fun keylessItunesWaitsForItsPerMinuteLimitAndTheMusicApiDoesNot() = runTest {
+    fun keylessItunesBudgetIgnoresWallClockJumpsAndTheMusicApiDoesNot() = runTest {
+        var wallClockOffset = 0L
         val client = HttpClient(MockEngine { respond("{}", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json")) })
-        val http = MusicHttp(client, { testScheduler.currentTime })
+        val http = MusicHttp(
+            client,
+            { testScheduler.currentTime + wallClockOffset },
+            requestTimeMs = { testScheduler.currentTime },
+        )
         repeat(21) { http.getJson(ExcorCatalogProvider.APPLE_MUSIC, "https://api.music.apple.com/v1/catalog/us/songs/$it", bearer = "t") }
         assertTrue(testScheduler.currentTime < 60_000, "the Apple Music API keeps its own, faster budget")
 
         val start = testScheduler.currentTime
         repeat(20) { http.getJson(ExcorCatalogProvider.APPLE_MUSIC, "https://itunes.apple.com/lookup?id=$it") }
         assertEquals(start, testScheduler.currentTime, "the first 20 iTunes calls in a minute go out at once")
+        wallClockOffset = 60_000
         http.getJson(ExcorCatalogProvider.APPLE_MUSIC, "https://itunes.apple.com/lookup?id=20")
-        assertTrue(testScheduler.currentTime - start >= 60_000, "the 21st waits for the minute window")
-        assertEquals(42, http.requests)
+        assertEquals(60_000, testScheduler.currentTime - start, "a wall-clock jump forward must not release the budget early")
+
+        repeat(19) { http.getJson(ExcorCatalogProvider.APPLE_MUSIC, "https://itunes.apple.com/lookup?id=${it + 21}") }
+        wallClockOffset = -60_000
+        val nextWindow = testScheduler.currentTime
+        http.getJson(ExcorCatalogProvider.APPLE_MUSIC, "https://itunes.apple.com/lookup?id=40")
+        assertEquals(60_000, testScheduler.currentTime - nextWindow, "a wall-clock rollback must not extend the budget window")
+        assertEquals(62, http.requests)
         client.close()
     }
 
