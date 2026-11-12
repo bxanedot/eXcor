@@ -34,3 +34,18 @@ The all-configuration OSV scan in [CI run 43123548640](https://github.com/bxaned
 | [GHSA-qp49-qgx5-5m26](https://osv.dev/vulnerability/GHSA-qp49-qgx5-5m26) | `org.bouncycastle:bcprov-jdk18on` 1.80.2 | `androidLintTool` |
 
 These findings are report-only build-tool dependencies, not entries in the CI shipped-runtime lockfile. Recheck the toolchain configurations before release. This snapshot does not complete the broader release-security audit.
+
+## Toolchain advisory remediation — 2026-11-12
+
+The build now pins OSV-fixed versions only in `androidLintTool` and `swiftExportClasspathResolvable`; published runtime configurations are unchanged. Gradle dependency reports on this source tree confirmed the following selected versions in those configurations:
+
+| Package | Selected version | Advisory records addressed |
+|---|---:|---|
+| `com.google.guava:guava` | 33.7.2-jre | [GHSA-xxph-c9ww-hj94](https://osv.dev/vulnerability/GHSA-xxph-c9ww-hj94) |
+| `io.opentelemetry:opentelemetry-api` | 1.67.0 | [GHSA-ccrj-gw8r-854m](https://osv.dev/vulnerability/GHSA-ccrj-gw8r-854m), [GHSA-rcgg-9c38-7xpx](https://osv.dev/vulnerability/GHSA-rcgg-9c38-7xpx) |
+| `org.apache.commons:commons-lang3` | 3.18.0 | [GHSA-j288-q9x7-2f5v](https://osv.dev/vulnerability/GHSA-j288-q9x7-2f5v) |
+| `org.apache.httpcomponents:httpclient` | 4.5.14 | [GHSA-7r82-7xv7-xcpj](https://osv.dev/vulnerability/GHSA-7r82-7xv7-xcpj) |
+| `org.bouncycastle:bcpkix-jdk18on` | 1.85 | [GHSA-wg6q-6289-32hp](https://osv.dev/vulnerability/GHSA-wg6q-6289-32hp) |
+| `org.bouncycastle:bcprov-jdk18on` | 1.85 | [GHSA-9pwp-9qqc-pr26](https://osv.dev/vulnerability/GHSA-9pwp-9qqc-pr26), [GHSA-qp49-qgx5-5m26](https://osv.dev/vulnerability/GHSA-qp49-qgx5-5m26) |
+
+The all-configuration OSV scan remains report-only for tooling, so review its result before each release. This targeted dependency remediation does not complete the broader release-security audit.
