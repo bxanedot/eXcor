@@ -10,7 +10,7 @@ Status: **merged prototype in main (PRs #84, #86, #90 and #91); offline only**. 
 
 ## Current implementation
 
-`cleanroom-src/commonMain/kotlin/com/excor/internal/sabr/UmpFraming.kt` contains:
+`cleanroom/commonMain/kotlin/com/excor/internal/sabr/UmpFraming.kt` contains:
 
 1. An explicit 1-to-5-byte prefix-sized UMP integer decoder. The five-byte form discards the lower prefix bits and decodes four value bytes in little-endian order; this is **not** a protobuf varint.
 2. A state machine for fragmented **byte reads** (including split integer fields and payloads).

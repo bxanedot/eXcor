@@ -30,7 +30,7 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 - **Opt-in tooling:** a YouTube benchmark (`EXCOR_BENCH=1`) and live tests (`EXCOR_LIVE=1`).
 
 ### Removed
-- **Music-player apps:** `app-core`, the Android, desktop and iOS apps, and `historical-engine`, which compiled the old `src/` engine only for them (owner's decision, 2026-11-03). The `src/` sources themselves stay, uncompiled, pending the provenance audit.
+- **Music-player apps:** `app-core`, the Android, desktop and iOS apps, and `historical-engine`, which compiled the old `legacy/src/` engine only for them (owner's decision, 2026-11-03). The `legacy/src/` sources themselves stay, uncompiled, pending the provenance audit.
 
 ### Changed
 - **Retries:** InnerTube metadata reads retry HTTP 429, 500, 502, 503, 504 and transport errors. Three attempts at most; a Retry-After of up to 5 s is honored, otherwise exponential backoff with jitter. Once retries run out, metadata calls throw `ExcorRequestException` where they used to return null. A null result now means only that YouTube answered without the expected page.
@@ -53,5 +53,5 @@ All notable changes to the eXcor library (`com.excor:eXcor`). No version has bee
 - **YouTube Music top result:** when the search's top result card plays a video or song rather than opening a page, `musicSearch` typed it `UNKNOWN` with no video ID. It is now a `VIDEO`, `SONG` or `EPISODE` with its video ID, music video type, artists and duration. Seen live for "one more time" (2026-11-03).
 
 ### Known limitations
-- **Bot-checked networks:** streams, captions and SABR/UMP can't be verified where YouTube bot-checks every player request. SABR/UMP is not implemented. See `EXCOR_PROGRESS.md` and `docs/release-gates.json`.
+- **Bot-checked networks:** streams, captions and SABR/UMP can't be verified where YouTube bot-checks every player request. SABR/UMP is not implemented. See `docs/maintainers/EXCOR_PROGRESS.md` and `docs/release-gates.json`.
 - **YouTube Music catalog:** songs, albums and discographies are decoded when YouTube Music returns them, but are untested live, because it withholds them from the test environment.

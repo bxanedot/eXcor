@@ -4,14 +4,14 @@ Copyright 2026 bxane
 Licensed under the Apache License, Version 2.0 (see LICENSE).
 
 The clean-room eXcor Kotlin and native eXcorKit Swift packages include the
-JavaScript challenge solver from yt-dlp/ejs 0.8.0 in cleanroom-src/ejs/ and
-swift/Sources/eXcorKit/Resources/. These files are byte-identical to the
+JavaScript challenge solver from yt-dlp/ejs 0.8.0 in cleanroom/ejs/ and
+platforms/swift/Sources/eXcorKit/Resources/. These files are byte-identical to the
 attested PyPI wheel
 yt_dlp_ejs-0.8.0-py3-none-any.whl
 (SHA-256 79300e5fca7f937a1eeede11f0456862c1b41107ce1d726871e0207424f4bdb4),
 published from source commit
 4fb477f4af56880cfd324c48bd4294a2d2294e50.
-The root ejs/ directory is retained for the earlier implementation and is not
+The legacy/ejs/ directory is retained for the earlier implementation and is not
 compiled into these artifacts.
 
 yt-dlp/ejs solver bundles — Unlicense

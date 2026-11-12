@@ -21,13 +21,13 @@
 
 **Current assessment:** eXcor already offers useful metadata breadth and has direct-playback evidence, but it is not yet a playback-parity alternative to InnerTubeX. SABR/UMP, live HLS, ciphered-stream playback and a public release remain open gates. The live readiness report tracks eXcor's evidence against the [100-point rubric](docs/competitiveness-evidence.json); its score is not a percentage of InnerTubeX features or an apples-to-apples performance result.
 
-The current library exposes package `com.excor`, Gradle coordinates `com.excor:eXcor:0.2.0`, and an iOS XCFramework named `eXcor`. The implementation is built from `cleanroom-src/`; it does not use the older implementation source retained in this repository.
+The current library exposes package `com.excor`, Gradle coordinates `com.excor:eXcor:0.2.0`, and an iOS XCFramework named `eXcor`. The active implementation is built from `cleanroom/`; the older, uncompiled source is preserved under `legacy/`.
 
 ## Current scope
 
 The KMP library provides audio and video format selection, player-response and player-script handling, URL validation, host-supplied session and PO-token interfaces, remembered stream headers, refusal tracking, and player-data caching. Direct media URLs must pass the HTTPS YouTube/GoogleVideo `/videoplayback` allowlist. Experimental HLS extraction validates a GoogleVideo master-playlist URL, its bounded response and redirects, then returns it to a host media player; that player fetches child playlists and segments. HLS live playback has not been verified. eXcor does not mint PO tokens.
 
-`Excor.music` puts Spotify, Apple Music and Deezer metadata behind one API, along with cross-provider matching, incremental playlist and library sync, audio-variant and DRM reporting, and authorized-playback decisions. Deezer and Apple's keyless endpoints are verified live; Spotify and the Apple Music API are tested offline only. See [music providers](docs/MUSIC_PROVIDERS.md) and [limitations](docs/MUSIC_LIMITATIONS.md). YouTube Music search, artists, playlists and radio are available through `Excor` (see below); `Excor.music` itself does not cover YouTube Music. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical implementation in `src/` remains in the repository pending a separate provenance audit; nothing compiles it any more. The earlier music-player apps were removed on 2026-11-03 (owner's decision) in favor of the preview apps below, which use this library. See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+`Excor.music` puts Spotify, Apple Music and Deezer metadata behind one API, along with cross-provider matching, incremental playlist and library sync, audio-variant and DRM reporting, and authorized-playback decisions. Deezer and Apple's keyless endpoints are verified live; Spotify and the Apple Music API are tested offline only. See [music providers](docs/MUSIC_PROVIDERS.md) and [limitations](docs/MUSIC_LIMITATIONS.md). YouTube Music search, artists, playlists and radio are available through `Excor` (see below); `Excor.music` itself does not cover YouTube Music. The separate `eXcorKit` Swift package does not yet expose catalog APIs. The historical implementation in `legacy/src/` remains in the repository pending a separate provenance audit; nothing compiles it any more. The earlier music-player apps were removed on 2026-11-03 (owner's decision) in favor of the preview apps below, which use this library. See [the audit](docs/REPOSITORY_AUDIT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
 The experimental API and its authorization, paging, and provider limitations are documented in [Catalog metadata](docs/CATALOG.md).
 
@@ -159,8 +159,8 @@ Two small apps for trying the library by hand, for the platforms the owner uses 
 CI builds both on every push: download `excor-preview-apk` and `excor-preview-windows` from a run's artifacts. To build them locally:
 
 ```bash
-./gradlew :preview-android:assembleDebug   # preview/android/build/outputs/apk/debug/preview-android-debug.apk
-./gradlew :preview-desktop:packageApp      # preview/desktop/build/app/eXcor Preview/ (the .exe on Windows)
+./gradlew :preview-android:assembleDebug   # platforms/preview/android/build/outputs/apk/debug/preview-android-debug.apk
+./gradlew :preview-desktop:packageApp      # platforms/preview/desktop/build/app/eXcor Preview/ (the .exe on Windows)
 ```
 
 ## Build and test
@@ -179,15 +179,22 @@ EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest --rerun
 
 Offline clean-room tests use synthetic fixtures under `fixtures/cleanroom/`. The older captured fixtures at `fixtures/` are not inputs to the clean-room implementation. GitHub Actions and current verification limits are recorded in [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
+## Repository layout
+
+- `cleanroom/` — active clean-room Kotlin Multiplatform library.
+- `legacy/` — preserved historical implementation, excluded from the build.
+- [`platforms/`](platforms/README.md) — preview apps and the native Swift package.
+- `docs/maintainers/` — original brief, open questions, benchmark notes, and dated handoffs.
+
 ## Repository guidance
 
 - [Clean-room policy](docs/CLEAN_ROOM.md) and [source provenance](PROVENANCE.md)
 - [Architecture](docs/ARCHITECTURE.md) and [feature matrix](docs/FEATURE_MATRIX.md)
 - [Repository audit](docs/REPOSITORY_AUDIT.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md)
-- [Dependency licenses](docs/DEPENDENCY_LICENSES.md), [third-party notices](docs/THIRD_PARTY_NOTICES.md), [security policy](SECURITY.md), and [open questions](QUESTIONS.md)
+- [Dependency licenses](docs/DEPENDENCY_LICENSES.md), [third-party notices](docs/THIRD_PARTY_NOTICES.md), [security policy](SECURITY.md), and [open questions](docs/maintainers/QUESTIONS.md)
 
-The approved names are eXcor for Kotlin and eXcorKit for the separate Swift package; [BRIEF.md](BRIEF.md) uses those names throughout its active API contract. Historical app and implementation files now carry the eXcor naming, but their older API shapes remain unintegrated with the clean-room library.
+The approved names are eXcor for Kotlin and eXcorKit for the separate Swift package; [BRIEF.md](docs/maintainers/BRIEF.md) uses those names throughout its active API contract. Historical app and implementation files now carry the eXcor naming, but their older API shapes remain unintegrated with the clean-room library.
 
 ## Native Swift package: eXcorKit
 
-The separate Swift Package Manager product in [`swift/`](swift/) provides the section 8 API for iOS 15 and macOS 12. It uses Foundation and JavaScriptCore, with no third-party package dependencies. On macOS, run `swift test --package-path swift`; GitHub Actions also builds the package for the iOS Simulator.
+The separate Swift Package Manager product in [`platforms/swift/`](platforms/swift/) provides the section 8 API for iOS 15 and macOS 12. It uses Foundation and JavaScriptCore, with no third-party package dependencies. On macOS, run `swift test --package-path platforms/swift`; GitHub Actions also builds the package for the iOS Simulator.

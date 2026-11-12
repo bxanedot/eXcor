@@ -1,5 +1,7 @@
 # eXcor open questions
 
+> **Layout note (2026-11-12):** Paths in dated entries reflect the repository layout at the time. The current source layout is summarized in [the architecture guide](../ARCHITECTURE.md).
+
 > Earlier items record pre-amendment API shapes, fixtures and test results. The owner-approved deliverables use eXcor names as mapped in `BRIEF.md`.
 >
 > **Removed apps (2026-11-03):** items 46–48 and 64 describe the music-player apps (`app-core`, `android-app`, `desktop-app`, `ios-app`) and `historical-engine`, which the owner dropped and which are removed. They are kept as a record. The preview apps that replace them are `preview-android` and `preview-desktop`; see [`HANDOFF.md`](HANDOFF.md).

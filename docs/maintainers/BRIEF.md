@@ -1,5 +1,7 @@
 # eXcor clean-room rewrite — original source brief
 
+> **Layout update (2026-11-12):** The Swift package described below is now in `platforms/swift/`; the public package and module names are unchanged.
+
 > **Owner naming amendment (2026-10-28):** The deliverable names are `eXcor`, Kotlin package `com.excor`, Maven coordinates `com.excor:eXcor`, XCFramework `eXcor`, and native Swift package/module `eXcorKit`. API names in sections 2–8 use this mapping. It does not change the functional requirements or clean-room rules. Section 1 retains the exact identifiers needed to avoid forbidden historical sources.
 
 You are writing **eXcor**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **eXcorKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier implementation exists, but it contains GPL-licensed code. Write the new deliverables from scratch, from this brief and permissively licensed public sources only, so they can be released under **Apache-2.0**.

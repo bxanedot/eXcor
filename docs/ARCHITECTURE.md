@@ -2,7 +2,15 @@
 
 ## Build boundary
 
-The root Gradle project publishes the draft KMP library from `cleanroom-src/`. Its public Kotlin API is in `com.excor`. The preserved `src/` implementation is not compiled at all. The preview apps (`preview-android`, `preview-desktop`) are separate unpublished modules that use the library.
+The root Gradle project publishes the draft KMP library from `cleanroom/`. Its public Kotlin API is in `com.excor`. The preserved `legacy/src/` implementation is not compiled at all. The preview apps (`preview-android`, `preview-desktop`) are separate unpublished modules under `platforms/preview/` that use the library.
+
+## Repository layout
+
+- `cleanroom/` is the active clean-room Kotlin Multiplatform source tree selected by Gradle.
+- `legacy/src/` and `legacy/ejs/` retain the old, uncompiled implementation and its bundled files.
+- `platforms/preview/` contains the Android and desktop preview apps; their Gradle project IDs remain `:preview-android` and `:preview-desktop`.
+- `platforms/swift/` contains the separate native Swift package.
+- `docs/maintainers/` keeps the source brief, open questions, benchmark notes, and dated handoff records out of the repository root.
 
 ## Request path
 
@@ -11,7 +19,7 @@ The root Gradle project publishes the draft KMP library from `cleanroom-src/`. I
 3. The engine tries a small, ordered set of YouTube client identities, respecting explicit skips, token requirements and temporary exclusions.
 4. Player responses are decoded into bounded models. The QuickJS-based player adapter resolves the signature and throttling challenges using the allowed bundled EJS solver.
 5. Audio selection applies the documented codec, bitrate, channel and sample-rate ordering.
-6. `UrlPolicy` accepts only HTTPS port 443 direct `/videoplayback` URLs on the configured YouTube/GoogleVideo hosts. SABR and HLS are not returned.
+6. Direct-media `UrlPolicy` accepts only HTTPS port 443 `/videoplayback` URLs. Experimental HLS manifest handoff uses a separate GoogleVideo allowlist; SABR/UMP playback remains unsupported.
 7. The stream carries request headers required by the host. Remembered URL/header pairs support `headersFor` and `onRefused` without exposing values in logs.
 
 ## Platform responsibilities
