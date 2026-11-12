@@ -89,9 +89,11 @@ The primary benchmark is InnerTubeX; YouTube.js and NewPipeExtractor are seconda
 | Path | What |
 |---|---|
 | `cleanroom-src/` | The library: `commonMain`, `jvmCommonMain` (JVM and Android), `iosMain`, tests, `ejs/` |
-| `preview-android/` | Preview app, debug APK (Compose, Media3). YouTube Music and YouTube search with filters, album, playlist and artist pages, details, play audio and video, downloads to Downloads/eXcor (`TrackJoiner`, `Saver`), formats, log. `src/androidTest`: `JoinCheck`, a plain Instrumentation run by CI |
-| `preview-desktop/` | Preview app, Swing. The same browsing; `packageApp` uses jpackage to build `eXcor Preview.exe` with a bundled runtime, plus an installer when WiX is present. `--self-test <file>` checks the package |
-| `preview-common/` | Kotlin sources compiled into both preview apps: the browsing model (`Browse.kt`) and range downloads (`Download.kt`). No Android or Swing types |
+| `api/` | Published Kotlin ABI baselines and the Swift package API checker in `swift-check/` |
+| `preview/` | Grouped unpublished preview apps; Gradle task names remain `:preview-android` and `:preview-desktop` |
+| `preview/android/` | Preview app, debug APK (Compose, Media3). YouTube Music and YouTube search with filters, album, playlist and artist pages, details, play audio and video, downloads to Downloads/eXcor (`TrackJoiner`, `Saver`), formats, log. `src/androidTest`: `JoinCheck`, a plain Instrumentation run by CI |
+| `preview/desktop/` | Preview app, Swing. The same browsing; `packageApp` uses jpackage to build `eXcor Preview.exe` with a bundled runtime, plus an installer when WiX is present. `--self-test <file>` checks the package |
+| `preview/common/` | Kotlin sources compiled into both preview apps: the browsing model (`Browse.kt`) and range downloads (`Download.kt`). No Android or Swing types |
 | `samples/jvm-quickstart/` | A standalone consumer that installs the library the way the README says |
 | `swift/` | The `eXcorKit` Swift package |
 | `docs/` | `EXCOR_ENGINEERING_AUDIT.md`, `release-gates.json` (G1–G12), `FEATURE_MATRIX.md`, `COMPETITOR_MATRIX.md`, `PERFORMANCE.md`, `ERROR_HANDLING.md`, `CLEAN_ROOM.md`, `PROVENANCE.md` and others |

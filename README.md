@@ -159,8 +159,8 @@ Two small apps for trying the library by hand, for the platforms the owner uses 
 CI builds both on every push: download `excor-preview-apk` and `excor-preview-windows` from a run's artifacts. To build them locally:
 
 ```bash
-./gradlew :preview-android:assembleDebug   # preview-android/build/outputs/apk/debug/preview-android-debug.apk
-./gradlew :preview-desktop:packageApp      # preview-desktop/build/app/eXcor Preview/ (the .exe on Windows)
+./gradlew :preview-android:assembleDebug   # preview/android/build/outputs/apk/debug/preview-android-debug.apk
+./gradlew :preview-desktop:packageApp      # preview/desktop/build/app/eXcor Preview/ (the .exe on Windows)
 ```
 
 ## Build and test

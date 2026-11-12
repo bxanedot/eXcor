@@ -26,7 +26,7 @@ android {
         testInstrumentationRunner = "com.excor.preview.JoinCheck"
     }
     // The browsing and download code shared with the desktop preview.
-    sourceSets.getByName("main").kotlin.srcDir("../preview-common/kotlin")
+    sourceSets.getByName("main").kotlin.srcDir("../common/kotlin")
     buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

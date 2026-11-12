@@ -31,7 +31,7 @@ or DRM circumvention component.
   provider error redaction.
 - `src/jvmCommonMain/kotlin/com/excor/Excor.kt` and
   `src/iosMain/kotlin/com/excor/Excor.kt` expose `excor.musicCatalog`
-  on all targets; `apicheck/ApiCheck.swift` references it.
+  on all targets; `api/swift-check/ApiCheck.swift` references it.
 - `android-app/MainActivity.kt`: Spotify/Deezer link inspection, images
   and metadata inside the existing Android app.
 - `desktop-app/`: initial JVM/Swing catalog browser with image rendering,
