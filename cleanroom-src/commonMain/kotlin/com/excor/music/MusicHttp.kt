@@ -168,7 +168,9 @@ internal class MusicHttp(
 
     private suspend fun cached(url: String): JsonElement? = cacheLock.withLock {
         val (at, value) = cache.remove(url) ?: return@withLock null
-        if (nowMs() - at > cacheTtlMs) return@withLock null
+        // A wall-clock rollback must not keep a cached catalog response alive indefinitely.
+        val age = nowMs() - at
+        if (age < 0 || age > cacheTtlMs) return@withLock null
         cache[url] = at to value // move to the most recent end
         value
     }
