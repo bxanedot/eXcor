@@ -72,7 +72,7 @@ The feasibility decision is complete; SABR implementation is deferred. G6 remain
 
 - [ ] Complete clean-room source/fixture provenance and license review; quarantined historical source and captured-service fixtures remain outside this review.
 - [x] Gate CI on OSV findings across all resolved root Gradle configurations, the Node comparison adapter lockfile and shipped runtime configurations. Exact-head CI is required before merge.
-- [ ] Verify reproducible builds for supported publication artifacts.
+- [x] Verify reproducible Maven publications with independent CI builders and compare every file hash; keep remote publication authorization separate.
 - [x] Add a committed Kotlin ABI baseline and an exact CI compatibility check. The public-API smoke check remains a separate consumer compile check.
 - [x] Provide a copyable Kotlin sample, Android/JVM quickstart, clear error guide, changelog and supported/unsupported feature matrix. The matrix retains dates for owner-run live evidence and now identifies the current CI snapshot and remaining release gaps.
 - [x] Add a security policy. README links to it; `SECURITY.md` defines private reporting, scope and credential-safe reproduction guidance.
