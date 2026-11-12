@@ -20,11 +20,12 @@ import java.time.Instant
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-private const val ADAPTER_VERSION = "0.1.0-excor0.2.0"
+private const val ADAPTER_VERSION = "0.1.1-excor0.2.0"
 private val videoIdPattern = Regex("^[A-Za-z0-9_-]{11}$")
 private val commitPattern = Regex("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 private val safeIdPattern = Regex("^[A-Za-z0-9_-]{1,64}$")
@@ -47,6 +48,8 @@ internal data class AdapterOptions(
     val phase: String,
     val sampleIndex: Int,
     val rangeProbes: Boolean,
+    val fullDecode: Boolean,
+    val decoderVersion: String?,
 )
 
 internal fun parseOptions(args: List<String>): AdapterOptions {
@@ -55,15 +58,23 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         "--video-id", "--comparison-id", "--main-commit", "--run-date-utc",
         "--network-category", "--content-category", "--locale", "--timeout-seconds",
         "--phase", "--sample-index",
+        "--decoder-version",
     )
     val values = linkedMapOf<String, String>()
     var rangeProbes = false
+    var fullDecode = false
     var index = 0
     while (index < args.size) {
         val key = args[index]
         if (key == "--range-probes") {
             if (rangeProbes) throw SafeUsageException("invalid arguments")
             rangeProbes = true
+            index += 1
+            continue
+        }
+        if (key == "--full-decode") {
+            if (fullDecode) throw SafeUsageException("invalid arguments")
+            fullDecode = true
             index += 1
             continue
         }
@@ -89,6 +100,7 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
     }
     val phase = required("--phase")
     val sampleIndex = required("--sample-index").toIntOrNull() ?: 0
+    val decoderVersion = values["--decoder-version"]
 
     if (!videoIdPattern.matches(videoId) || !safeIdPattern.matches(comparisonId) || !commitPattern.matches(mainCommit)) {
         throw SafeUsageException("invalid identifier")
@@ -100,13 +112,14 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         network !in setOf("home", "mobile", "ci", "other") ||
         content !in setOf("stable_public_video", "music_video", "live", "unavailable_case", "other_public") ||
         !localePattern.matches(locale) ||
+        (decoderVersion != null && (!fullDecode || !Regex("^ffmpeg-[A-Za-z0-9._+\\-]{1,64}$").matches(decoderVersion))) ||
         timeout !in 1..30 ||
         phase !in setOf("cold", "warm") ||
         sampleIndex < 1
     ) {
         throw SafeUsageException("invalid option value")
     }
-    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes)
+    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes, fullDecode, decoderVersion)
 }
 
 private object HelpRequested : RuntimeException()
@@ -166,11 +179,13 @@ internal data class ComparisonSample(
     val rangeProbeMethod: String = "NOT_TESTED",
     val rangeForwardProbe: String = "NOT_TESTED",
     val rangeBackwardProbe: String = "NOT_TESTED",
+    val decodeMs: Double? = null,
+    val decode: String = "NOT_TESTED",
 ) {
     fun toJson(): String {
-        val decoder = "null"
+        val decoder = jsonString(options.decoderVersion)
         return """
-            {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":$decoder},"adapter":"excor","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":"direct_audio","phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":${jsonNumber(metadataMs)},"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":null,"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$rangeRequests,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":"NOT_TESTED","codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)},"rangeProbeMethod":${jsonString(rangeProbeMethod)},"rangeForwardProbe":${jsonString(rangeForwardProbe)},"rangeBackwardProbe":${jsonString(rangeBackwardProbe)}}}
+            {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":$decoder},"adapter":"excor","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":"direct_audio","phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":${jsonNumber(metadataMs)},"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":${jsonNumber(decodeMs)},"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$rangeRequests,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":${jsonString(decode)},"codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)},"rangeProbeMethod":${jsonString(rangeProbeMethod)},"rangeForwardProbe":${jsonString(rangeForwardProbe)},"rangeBackwardProbe":${jsonString(rangeBackwardProbe)}}}
         """.trimIndent()
     }
 }
@@ -255,6 +270,12 @@ private data class InitialRangeResult(
     val outcome: SampleOutcome?,
     val finalUrl: String?,
     val totalBytes: Long?,
+)
+
+private data class DecodeAttempt(
+    val outcome: SampleOutcome?,
+    val result: String = "NOT_TESTED",
+    val decodeMs: Double? = null,
 )
 
 private suspend fun executeRangeRequest(
@@ -392,6 +413,133 @@ private suspend fun probeOffsetRange(
     return "ERROR"
 }
 
+private suspend fun decodeFullAudio(
+    client: OkHttpClient,
+    initialUrl: String,
+    headers: Map<String, String>,
+    expectedBytes: Long,
+    metrics: MediaMetrics,
+    deadlineNs: Long,
+): DecodeAttempt {
+    if (expectedBytes !in 1..FfmpegAudioDecoder.MAX_INPUT_BYTES) return DecodeAttempt(null, "UNSUPPORTED")
+    val decoder = FfmpegAudioDecoder.start() ?: return DecodeAttempt(null, "UNSUPPORTED")
+    return suspendCancellableCoroutine { continuation ->
+        val activeCall = AtomicReference<Call?>(null)
+        continuation.invokeOnCancellation {
+            activeCall.get()?.cancel()
+            decoder.cancel()
+        }
+
+        fun complete(result: DecodeAttempt) {
+            if (continuation.isActive) continuation.resume(result)
+        }
+
+        fun send(url: String, hop: Int) {
+            if (!allowedMediaUrl(url)) {
+                decoder.cancel()
+                complete(DecodeAttempt(SampleOutcome("FAIL", "HTTP")))
+                return
+            }
+            val builder = Request.Builder().url(url)
+            headers.forEach { (name, value) -> builder.header(name, value) }
+            builder.header("Accept-Encoding", "identity")
+            val call = client.newCall(builder.build())
+            activeCall.set(call)
+            metrics.requests.incrementAndGet()
+            call.enqueue(object : Callback {
+                override fun onFailure(call: Call, error: IOException) {
+                    decoder.cancel()
+                    complete(DecodeAttempt(SampleOutcome("FAIL", if (hasTimeout(error)) "TIMEOUT" else "HTTP")))
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    var redirectUrl: String? = null
+                    var result: DecodeAttempt? = null
+                    try {
+                        response.use { res ->
+                            if (res.code in redirectStatuses) {
+                                redirectUrl = if (hop < 3 && !res.header("Location").isNullOrBlank()) {
+                                    try {
+                                        URI(url).resolve(res.header("Location")).toString()
+                                            .takeIf(::allowedMediaUrl)
+                                    } catch (_: Exception) {
+                                        null
+                                    }
+                                } else null
+                                if (redirectUrl == null) result = DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                            } else if (res.code == 401 || res.code == 403) {
+                                result = DecodeAttempt(SampleOutcome("BLOCKED", "ACCESS_DENIED"))
+                            } else if (res.code != 200) {
+                                result = DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                            } else {
+                                val contentLength = res.header("Content-Length")?.toLongOrNull()
+                                if (contentLength != null && contentLength != expectedBytes) {
+                                    result = DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                                } else {
+                                    val body = res.body
+                                    var total = 0L
+                                    val buffer = ByteArray(32_768)
+                                    body.byteStream().use { input ->
+                                        while (true) {
+                                            val count = input.read(buffer)
+                                            if (count < 0) break
+                                            if (count == 0) continue
+                                            total += count
+                                            if (total > expectedBytes || total > FfmpegAudioDecoder.MAX_INPUT_BYTES) {
+                                                result = DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                                                break
+                                            }
+                                            metrics.bytes.addAndGet(count.toLong())
+                                            when (decoder.write(buffer, count)) {
+                                                "PASS" -> Unit
+                                                "LIMIT" -> {
+                                                    result = DecodeAttempt(null, "UNSUPPORTED")
+                                                    break
+                                                }
+                                                else -> {
+                                                    result = DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL")
+                                                    break
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (result == null && total != expectedBytes) {
+                                        result = DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                                    }
+                                    if (result == null) {
+                                        val decoded = decoder.finish(remainingBudgetMs(deadlineNs))
+                                        result = when (decoded.status) {
+                                            "PASS" -> DecodeAttempt(SampleOutcome("PASS", null), "PASS", decoded.elapsedMs)
+                                            "TIMEOUT" -> DecodeAttempt(SampleOutcome("FAIL", "TIMEOUT"), "FAIL", decoded.elapsedMs)
+                                            else -> DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL", decoded.elapsedMs)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (error: Exception) {
+                        result = DecodeAttempt(SampleOutcome("FAIL", if (hasTimeout(error)) "TIMEOUT" else "HTTP"))
+                    }
+
+                    when {
+                        redirectUrl != null -> send(redirectUrl!!, hop + 1)
+                        result != null -> {
+                            if (result?.result != "PASS") decoder.cancel()
+                            complete(result!!)
+                        }
+                        else -> {
+                            decoder.cancel()
+                            complete(DecodeAttempt(SampleOutcome("FAIL", "HTTP")))
+                        }
+                    }
+                }
+            })
+        }
+
+        send(initialUrl, 0)
+    }
+}
+
 private fun hasTimeout(error: Throwable): Boolean {
     var cause: Throwable? = error
     repeat(8) {
@@ -486,6 +634,8 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
     var rangeProbeMethod = "NOT_TESTED"
     var rangeForwardProbe = "NOT_TESTED"
     var rangeBackwardProbe = "NOT_TESTED"
+    var decodeMs: Double? = null
+    var decode = "NOT_TESTED"
     try {
         withTimeout(remainingBudgetMs(deadlineNs)) {
             val metadataStarted = System.nanoTime()
@@ -539,6 +689,20 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
                         )
                     }
                 }
+                if (options.fullDecode) {
+                    val totalBytes = initialRange.totalBytes
+                    val finalUrl = initialRange.finalUrl
+                    if (options.decoderVersion == null || totalBytes == null || finalUrl == null) {
+                        decode = "UNSUPPORTED"
+                    } else {
+                        val attempt = decodeFullAudio(
+                            mediaClient, finalUrl, mediaHeaders(stream.headers), totalBytes, metrics, deadlineNs,
+                        )
+                        decode = attempt.result
+                        decodeMs = attempt.decodeMs
+                        if (attempt.outcome != null) outcome = attempt.outcome
+                    }
+                }
             }
         }
     } catch (error: TimeoutCancellationException) {
@@ -569,6 +733,8 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
         rangeProbeMethod = rangeProbeMethod,
         rangeForwardProbe = rangeForwardProbe,
         rangeBackwardProbe = rangeBackwardProbe,
+        decodeMs = decodeMs,
+        decode = decode,
     )
     } finally {
         stopClient(http)
@@ -583,7 +749,7 @@ fun main(args: Array<String>) {
     val options = try {
         parseOptions(args.toList())
     } catch (_: HelpRequested) {
-        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes]")
+        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes] [--full-decode]")
         return
     } catch (error: SafeUsageException) {
         System.err.println("comparison adapter: ${error.message}")

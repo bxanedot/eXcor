@@ -29,6 +29,7 @@ VIDEO_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 SAFE_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 COMMIT = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 LOCALE = re.compile(r"^[a-z]{2,3}(?:-[A-Z]{2})?$")
+FFMPEG_VERSION = re.compile(r"^ffmpeg version ([A-Za-z0-9._+\-]{1,64})(?:\s|$)")
 
 
 class RunnerError(ValueError):
@@ -126,6 +127,34 @@ def preflight(specs: Sequence[AdapterSpec]) -> None:
             raise RunnerError(f"{spec.name} adapter preflight failed; no samples were run")
 
 
+def _ffmpeg_version() -> str | None:
+    executable = shutil.which("ffmpeg")
+    if executable is None:
+        return None
+    try:
+        result = subprocess.run(
+            [executable, "-version"],
+            shell=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    first_line = result.stdout.splitlines()[0] if result.stdout.splitlines() else ""
+    return _normalize_ffmpeg_version(first_line)
+
+
+def _normalize_ffmpeg_version(line: str) -> str | None:
+    match = FFMPEG_VERSION.match(line)
+    return f"ffmpeg-{match.group(1)}" if match else None
+
+
 def _parse_adapter_sample(
     stdout: str,
     *,
@@ -199,6 +228,11 @@ def _parse_options(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="probe forward/backward HTTP byte ranges for the eXcor and InnerTubeX adapters",
     )
+    parser.add_argument(
+        "--full-decode",
+        action="store_true",
+        help="download and decode up to 256 MiB of direct audio for the eXcor and InnerTubeX adapters",
+    )
     parser.add_argument("--output", required=True, type=Path, help="new JSONL file; existing files are never overwritten")
     args = parser.parse_args(argv)
 
@@ -223,6 +257,8 @@ def _parse_options(argv: Sequence[str] | None = None) -> argparse.Namespace:
         raise RunnerError("adapters must be unique")
     if args.range_probes and set(args.adapters) != {"excor", "innertubex"}:
         raise RunnerError("HTTP byte-range probes require exactly the excor and innertubex adapters")
+    if args.full_decode and set(args.adapters) != {"excor", "innertubex"}:
+        raise RunnerError("full audio decode requires exactly the excor and innertubex adapters")
     if len(args.video_id) * len(args.phases) * len(args.sample_indices) * len(args.adapters) > 10000:
         raise RunnerError("comparison request exceeds the report sample limit")
 
@@ -251,6 +287,7 @@ def run(argv: Sequence[str] | None = None) -> int:
         args = _parse_options(argv)
         specs = discover_adapters(args.adapters)
         preflight(specs)
+        decoder_version = _ffmpeg_version() if args.full_decode else None
         comparison: dict[str, object] = {
             "id": args.comparison_id,
             "mainCommit": args.main_commit,
@@ -265,7 +302,7 @@ def run(argv: Sequence[str] | None = None) -> int:
             "sessionCategory": "signed_out",
             "timeoutSeconds": args.timeout_seconds,
             "locale": args.locale,
-            "decoderVersion": None,
+            "decoderVersion": decoder_version,
         }
         if comparison["os"] == "other":
             raise RunnerError("unsupported operating system")
@@ -291,6 +328,10 @@ def run(argv: Sequence[str] | None = None) -> int:
                         ]
                         if args.range_probes:
                             adapter_args.append("--range-probes")
+                        if args.full_decode:
+                            adapter_args.append("--full-decode")
+                            if decoder_version is not None:
+                                adapter_args.extend(["--decoder-version", decoder_version])
                         result = _invoke(spec, adapter_args, args.timeout_seconds + 10)
                         if result.returncode != 0:
                             raise RunnerError(f"{spec.name} failed with exit code {result.returncode}; no JSONL output was written")

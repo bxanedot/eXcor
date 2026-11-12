@@ -36,7 +36,7 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
 
-private const val ADAPTER_VERSION = "0.1.0-innertubex0.11.6"
+private const val ADAPTER_VERSION = "0.1.1-innertubex0.11.6"
 private const val MAX_RANGE_BYTES = 65_536
 private val videoIdPattern = Regex("^[A-Za-z0-9_-]{11}$")
 private val commitPattern = Regex("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
@@ -59,6 +59,8 @@ internal data class AdapterOptions(
     val phase: String,
     val sampleIndex: Int,
     val rangeProbes: Boolean,
+    val fullDecode: Boolean,
+    val decoderVersion: String?,
 )
 
 internal fun parseOptions(args: List<String>): AdapterOptions {
@@ -67,15 +69,23 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         "--video-id", "--comparison-id", "--main-commit", "--run-date-utc",
         "--network-category", "--content-category", "--locale", "--timeout-seconds",
         "--phase", "--sample-index",
+        "--decoder-version",
     )
     val values = linkedMapOf<String, String>()
     var rangeProbes = false
+    var fullDecode = false
     var index = 0
     while (index < args.size) {
         val key = args[index]
         if (key == "--range-probes") {
             if (rangeProbes) throw SafeUsageException("invalid arguments")
             rangeProbes = true
+            index += 1
+            continue
+        }
+        if (key == "--full-decode") {
+            if (fullDecode) throw SafeUsageException("invalid arguments")
+            fullDecode = true
             index += 1
             continue
         }
@@ -101,6 +111,7 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
     }
     val phase = required("--phase")
     val sampleIndex = required("--sample-index").toIntOrNull() ?: 0
+    val decoderVersion = values["--decoder-version"]
 
     if (!videoIdPattern.matches(videoId) || !safeIdPattern.matches(comparisonId) || !commitPattern.matches(mainCommit)) {
         throw SafeUsageException("invalid identifier")
@@ -112,13 +123,14 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         network !in setOf("home", "mobile", "ci", "other") ||
         content !in setOf("stable_public_video", "music_video", "live", "unavailable_case", "other_public") ||
         !localePattern.matches(locale) ||
+        (decoderVersion != null && (!fullDecode || !Regex("^ffmpeg-[A-Za-z0-9._+\\-]{1,64}$").matches(decoderVersion))) ||
         timeout !in 1..30 ||
         phase !in setOf("cold", "warm") ||
         sampleIndex < 1
     ) {
         throw SafeUsageException("invalid option value")
     }
-    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes)
+    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes, fullDecode, decoderVersion)
 }
 
 private object HelpRequested : RuntimeException()
@@ -144,6 +156,7 @@ internal data class ComparisonSample(
     val firstMediaByteMs: Double? = null,
     val requestCount: Long = 0,
     val mediaRequestCount: Long = 0,
+    val rangeRequests: Long = 0,
     val bytesRead: Long = 0,
     val heapDeltaBytes: Long? = null,
     val codec: String? = null,
@@ -151,10 +164,12 @@ internal data class ComparisonSample(
     val rangeProbeMethod: String = "NOT_TESTED",
     val rangeForwardProbe: String = "NOT_TESTED",
     val rangeBackwardProbe: String = "NOT_TESTED",
+    val decodeMs: Double? = null,
+    val decode: String = "NOT_TESTED",
 ) {
     fun toJson(): String =
         """
-        {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":null},"adapter":"innertubex","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":"direct_audio","phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":null,"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":null,"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$mediaRequestCount,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":"NOT_TESTED","codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)},"rangeProbeMethod":${jsonString(rangeProbeMethod)},"rangeForwardProbe":${jsonString(rangeForwardProbe)},"rangeBackwardProbe":${jsonString(rangeBackwardProbe)}}}
+        {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":${jsonString(options.decoderVersion)}},"adapter":"innertubex","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":"direct_audio","phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":null,"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":${jsonNumber(decodeMs)},"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$rangeRequests,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":${jsonString(decode)},"codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)},"rangeProbeMethod":${jsonString(rangeProbeMethod)},"rangeForwardProbe":${jsonString(rangeForwardProbe)},"rangeBackwardProbe":${jsonString(rangeBackwardProbe)}}}
         """.trimIndent()
 }
 
@@ -250,6 +265,12 @@ private data class InitialRangeResult(
     val firstByteAtNs: Long?,
     val finalUrl: String?,
     val totalBytes: Long?,
+)
+
+private data class DecodeAttempt(
+    val outcome: SampleOutcome?,
+    val result: String = "NOT_TESTED",
+    val decodeMs: Double? = null,
 )
 
 internal fun rangeResponseValidForTest(code: Int, contentRange: String?, bytesRead: Int): Boolean =
@@ -387,6 +408,111 @@ private suspend fun probeOffsetRange(
     return "ERROR"
 }
 
+private suspend fun decodeFullAudio(
+    client: HttpClient,
+    initialUrl: String,
+    headers: Map<String, String>,
+    expectedBytes: Long,
+    mediaRequestCount: AtomicLong,
+    nonRangeRequestCount: AtomicLong,
+    bytesRead: AtomicLong,
+    deadlineNs: Long,
+): DecodeAttempt {
+    if (expectedBytes !in 1..FfmpegAudioDecoder.MAX_INPUT_BYTES) return DecodeAttempt(null, "UNSUPPORTED")
+    if (!allowedMediaUrl(initialUrl)) return DecodeAttempt(SampleOutcome("FAIL", "PARSE"))
+    val decoder = FfmpegAudioDecoder.start() ?: return DecodeAttempt(null, "UNSUPPORTED")
+    try {
+        var current = initialUrl
+        for (hop in 0..3) {
+            if (!allowedMediaUrl(current)) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+            mediaRequestCount.incrementAndGet()
+            nonRangeRequestCount.incrementAndGet()
+            val response = client.get(current) {
+                headers.forEach { (name, value) -> header(name, value) }
+                header(HttpHeaders.AcceptEncoding, "identity")
+            }
+            val code = response.status.value
+            if (code in redirectStatuses) {
+                val location = response.headers[HttpHeaders.Location]
+                response.bodyAsChannel().cancel()
+                if (hop == 3 || location.isNullOrBlank()) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                current = try {
+                    URI(current).resolve(location).toString()
+                } catch (_: Exception) {
+                    return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                }
+                if (!allowedMediaUrl(current)) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                continue
+            }
+            if (code == 401 || code == 403) {
+                response.bodyAsChannel().cancel()
+                return DecodeAttempt(SampleOutcome("BLOCKED", "ACCESS_DENIED"))
+            }
+            if (code != 200) {
+                response.bodyAsChannel().cancel()
+                return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+            }
+            val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+            if (contentLength != null && contentLength != expectedBytes) {
+                response.bodyAsChannel().cancel()
+                return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+            }
+
+            val channel = response.bodyAsChannel()
+            val buffer = ByteArray(32_768)
+            var total = 0L
+            var zeroReads = 0
+            try {
+                while (true) {
+                    val count = channel.readAvailable(buffer, 0, buffer.size)
+                    if (count < 0) break
+                    if (count == 0) {
+                        zeroReads += 1
+                        if (zeroReads > 128) break
+                        yield()
+                        continue
+                    }
+                    zeroReads = 0
+                    if (count.toLong() > expectedBytes - total || count.toLong() > FfmpegAudioDecoder.MAX_INPUT_BYTES - total) {
+                        return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                    }
+                    total += count
+                    bytesRead.addAndGet(count.toLong())
+                    when (decoder.write(buffer, count)) {
+                        "PASS" -> Unit
+                        "LIMIT" -> return DecodeAttempt(null, "UNSUPPORTED")
+                        else -> return DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL")
+                    }
+                }
+            } finally {
+                channel.cancel()
+            }
+            if (total != expectedBytes) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+
+            val decoded = decoder.finish(remainingBudgetMs(deadlineNs))
+            return when (decoded.status) {
+                "PASS" -> DecodeAttempt(SampleOutcome("PASS", null), "PASS", decoded.elapsedMs)
+                "TIMEOUT" -> DecodeAttempt(SampleOutcome("FAIL", "TIMEOUT"), "FAIL", decoded.elapsedMs)
+                else -> DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL", decoded.elapsedMs)
+            }
+        }
+        return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+    } catch (error: CancellationException) {
+        decoder.cancel()
+        throw error
+    } catch (error: Exception) {
+        val failure = classifyThrowable(error)
+        val outcome = when (failure) {
+            "ACCESS_DENIED" -> SampleOutcome("BLOCKED", failure)
+            "TIMEOUT", "HTTP" -> SampleOutcome("FAIL", failure)
+            else -> SampleOutcome("FAIL", "HTTP")
+        }
+        return DecodeAttempt(outcome)
+    } finally {
+        decoder.cancel()
+    }
+}
+
 private fun safeMime(mime: String?): String? = mime?.substringBefore(';')?.trim()?.takeIf(safeMimePattern::matches)
 
 private fun safeCodec(codec: String?): String? = codec?.takeIf(safeCodecPattern::matches)
@@ -449,6 +575,7 @@ private fun classifyThrowableOutcome(error: Throwable): SampleOutcome {
 private suspend fun runSample(options: AdapterOptions): ComparisonSample {
     val apiRequestCount = AtomicLong()
     val mediaRequestCount = AtomicLong()
+    val nonRangeRequestCount = AtomicLong()
     val bytesRead = AtomicLong()
     val timeoutMs = options.timeoutSeconds.toLong() * 1_000L
     val deadlineNs = System.nanoTime() + timeoutMs * 1_000_000L
@@ -516,6 +643,8 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
         var rangeProbeMethod = "NOT_TESTED"
         var rangeForwardProbe = "NOT_TESTED"
         var rangeBackwardProbe = "NOT_TESTED"
+        var decodeMs: Double? = null
+        var decode = "NOT_TESTED"
 
         try {
             withTimeout(remainingBudgetMs(deadlineNs)) {
@@ -572,6 +701,27 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
                         )
                     }
                 }
+                if (initialRange.outcome.status == "PASS" && options.fullDecode) {
+                    val totalBytes = initialRange.totalBytes
+                    val finalUrl = initialRange.finalUrl
+                    if (options.decoderVersion == null || totalBytes == null || finalUrl == null) {
+                        decode = "UNSUPPORTED"
+                    } else {
+                        val attempt = decodeFullAudio(
+                            mediaClient,
+                            finalUrl,
+                            mediaHeaders(stream.headers),
+                            totalBytes,
+                            mediaRequestCount,
+                            nonRangeRequestCount,
+                            bytesRead,
+                            deadlineNs,
+                        )
+                        decode = attempt.result
+                        decodeMs = attempt.decodeMs
+                        if (attempt.outcome != null) outcome = attempt.outcome
+                    }
+                }
             }
         } catch (error: TimeoutCancellationException) {
             outcome = SampleOutcome("FAIL", "TIMEOUT")
@@ -591,6 +741,7 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
             firstMediaByteMs = firstMediaByteAtNs?.let { durationMs(sampleStarted, it) },
             requestCount = apiRequestCount.get() + mediaRequestCount.get(),
             mediaRequestCount = mediaRequestCount.get(),
+            rangeRequests = mediaRequestCount.get() - nonRangeRequestCount.get(),
             bytesRead = bytesRead.get(),
             heapDeltaBytes = usedHeapBytes() - heapBefore,
             codec = codec,
@@ -598,6 +749,8 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
             rangeProbeMethod = rangeProbeMethod,
             rangeForwardProbe = rangeForwardProbe,
             rangeBackwardProbe = rangeBackwardProbe,
+            decodeMs = decodeMs,
+            decode = decode,
         )
     } finally {
         try {
@@ -614,7 +767,7 @@ fun main(args: Array<String>) {
     val options = try {
         parseOptions(args.toList())
     } catch (_: HelpRequested) {
-        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes]")
+        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes] [--full-decode]")
         return
     } catch (error: SafeUsageException) {
         System.err.println("comparison adapter: ${error.message}")
