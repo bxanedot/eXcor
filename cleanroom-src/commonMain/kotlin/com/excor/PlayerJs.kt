@@ -110,7 +110,8 @@ internal suspend fun runEjs(input: String): String {
     val program = "$EJS_LIB\nconst ejsModules = lib.lib ?? lib;\n" +
         "Object.assign(globalThis, ejsModules);\n" +
         "globalThis.require = name => { if (name === 'meriyah' || name === 'astring') return ejsModules[name]; throw new Error('Unsupported EJS dependency'); };\n" +
-        "$URL_SHIM\n$EJS_CORE\nJSON.stringify(jsc.default(JSON.parse($inputLiteral)))"
+        "$URL_SHIM\n$EJS_CORE\nconst runEjsCore = jsc.default ?? jsc;\n" +
+        "JSON.stringify(runEjsCore(JSON.parse($inputLiteral)))"
     return withContext(Dispatchers.Default) {
         val runtime = QuickJs.create(Dispatchers.Default)
         try {
