@@ -12,7 +12,7 @@ repositories { mavenCentral(); google() }
 kotlin {
     jvmToolchain(27)
     // The browsing and download code shared with the Android preview.
-    sourceSets.named("main") { kotlin.srcDir("../preview-common/kotlin") }
+    sourceSets.named("main") { kotlin.srcDir("../common/kotlin") }
 }
 
 // Kotlin 2.4 emits JVM 26 at most; the Java task must target the same, or the build stops.

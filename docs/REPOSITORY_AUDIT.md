@@ -7,7 +7,7 @@ Audit base: `main` at `e12ba98e6fd57c7d53ea8557197e7365d04da664` (2026-10-29). B
 - The root Gradle project builds the draft KMP artifact `com.excor:eXcor:0.2.0` from `cleanroom-src/` only. It configures JVM, Android, and iOS targets.
 - The Kotlin API at the audit base exposes YouTube audio extraction, audio candidates, session/token host interfaces, and stream state. Branch `feature/catalog-metadata` adds experimental catalog models and Apple/iTunes and Spotify adapters for search, URL lookup, album tracks, and artist albums. Deezer remains unsupported and YouTube Music remains restricted.
 - `swift/` contains the separate `eXcorKit` Swift package. Its public actor currently provides YouTube extraction and audio-candidate operations; it has no music-catalog provider API.
-- `src/` and other preserved implementation areas are outside the clean-room root source-set mapping, and nothing compiles them. The former app modules (`app-core/`, `android-app/`, `desktop-app/`, `ios-app/`, `historical-engine/`) were removed on 2026-11-03; `preview-android/` and `preview-desktop/` use the root library.
+- `src/` and other preserved implementation areas are outside the clean-room root source-set mapping, and nothing compiles them. The former app modules (`app-core/`, `android-app/`, `desktop-app/`, `ios-app/`, `historical-engine/`) were removed on 2026-11-03; `preview/android/` and `preview/desktop/` use the root library.
 - `fixtures/cleanroom/` supplies synthetic inputs to the clean-room tests. Older fixtures are not inputs to the current root library build.
 
 ## Clean-room boundary
