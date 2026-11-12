@@ -22,11 +22,16 @@ concurrency:
 
 jobs:
   assess:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Read trusted main
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
           persist-credentials: false
@@ -45,7 +50,7 @@ jobs:
           cat "$RUNNER_TEMP/excor-score/README.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Attach machine-readable score to run
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: excor-competitiveness-score
           path: ${{ runner.temp }}/excor-score/
@@ -53,7 +58,7 @@ jobs:
           retention-days: 90
 
       - name: Check out status branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: automation/excor-competitiveness
           path: score-branch

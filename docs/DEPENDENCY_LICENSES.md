@@ -1,6 +1,6 @@
 # Dependency licenses
 
-This table covers dependencies declared by the clean-room Kotlin build at the audited commit. Verify resolved versions and licenses again before release; this is not a substitute for the full dependency graph or legal review.
+This table covers dependencies declared by the clean-room Kotlin build and the CI workflows at the audited revision. Verify resolved versions and licenses again before release; this is not a substitute for the full dependency graph or legal review.
 
 | Dependency | Version | License | Use |
 |---|---:|---|---|
@@ -15,6 +15,7 @@ This table covers dependencies declared by the clean-room Kotlin build at the au
 | meriyah bundled by ejs | 6.1.4 | ISC | JavaScript parser bundled in solver |
 | astring bundled by ejs | 1.9.0 | MIT | JavaScript code generator bundled in solver |
 | TestNG | 7.5.1 | Apache-2.0 | JVM tests |
+| GitHub Actions: [checkout](https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1), [setup-java](https://github.com/actions/setup-java/commit/b843ebf9b913146b38da2eaa7aeddf76074ae1ad), [setup-node](https://github.com/actions/setup-node/commit/249970729cb0ef3589644e2896645e5dc5ba9c38), [upload-artifact](https://github.com/actions/upload-artifact/commit/cf430e030ddbb5b0abf93d22962f4752f3646cd9) | v7 / v6 / v6 / v7 | MIT | CI actions pinned to official release commits; Dependabot checks action updates monthly |
 
 Ktor, Kotlin and test dependencies bring transitive artifacts; use Gradle dependency reports for the exact resolved graph on each target. See [`NOTICE`](../NOTICE) for bundled third-party text and [PROVENANCE.md](../PROVENANCE.md) for source records. The separate Swift package has no third-party package dependencies and is documented in its follow-up change.
 

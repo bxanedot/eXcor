@@ -151,7 +151,7 @@ This addition is independently implemented under the repository's Apache-2.0 lic
 | [SLF4J API](https://www.slf4j.org/) / [JetBrains annotations](https://github.com/JetBrains/java-annotations) | `2.0.19` / `23.0.0` | MIT / Apache-2.0 | Ktor/Kotlin transitive runtime dependencies. |
 | [TestNG](https://github.com/testng-team/testng) / [JCommander](https://github.com/cbeust/jcommander) | `7.0.0` / `1.72` | Apache-2.0 | JVM test runner and its command-line dependency. |
 | [Gradle](https://github.com/gradle/gradle) | `9.8.2` | Apache-2.0 | Wrapper/build runtime. |
-| [actions/checkout](https://github.com/actions/checkout) / [actions/setup-java](https://github.com/actions/setup-java) | `v4` / `v4` | MIT | CI checkout and JDK setup. |
+| [actions/checkout](https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1), [actions/setup-java](https://github.com/actions/setup-java/commit/b843ebf9b913146b38da2eaa7aeddf76074ae1ad), [actions/setup-node](https://github.com/actions/setup-node/commit/249970729cb0ef3589644e2896645e5dc5ba9c38), [actions/upload-artifact](https://github.com/actions/upload-artifact/commit/cf430e030ddbb5b0abf93d22962f4752f3646cd9) | checkout v7, setup-java v6, setup-node v6, upload-artifact v7 | MIT | CI actions pinned to their official release commits; Dependabot checks action updates monthly. |
 
 The format ranking and exact HTTPS `/videoplayback` allowlist follow `BRIEF.md` sections 4.2 and 4.4. Watch-page parsing, stream remembering, exclusions, redaction and disk-cache behavior are original implementations of the brief. Fixtures in `fixtures/cleanroom/` are synthetic test inputs, not captured YouTube responses. A direct capture attempt is documented in `QUESTIONS.md`.
 
