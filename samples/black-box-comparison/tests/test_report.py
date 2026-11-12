@@ -60,6 +60,9 @@ def sample(index, outcome="PASS", extract_ms=100, phase="cold", lane="direct_aud
             "decode": "PASS",
             "codec": "opus",
             "mimeType": "audio/webm",
+            "rangeProbeMethod": "NOT_TESTED",
+            "rangeForwardProbe": "NOT_TESTED",
+            "rangeBackwardProbe": "NOT_TESTED",
         },
     }
 
@@ -118,6 +121,37 @@ class ComparisonReportTest(unittest.TestCase):
     def test_failed_seek_requires_failed_sample(self):
         row = sample(1)
         row["measurements"]["backwardSeek"] = "FAIL"
+        with self.assertRaises(report_module.ValidationError):
+            report_module.validate_sample(row)
+
+    def test_reports_http_byte_ranges_separately_from_playback_seeks(self):
+        row = sample(1)
+        row["measurements"].update({
+            "rangeProbeMethod": "HTTP_BYTE_RANGE",
+            "rangeForwardProbe": "PASS",
+            "rangeBackwardProbe": "IGNORED",
+            "backwardSeek": "NOT_TESTED",
+            "forwardSeek": "NOT_TESTED",
+        })
+        result = report_module.build_report([report_module.validate_sample(row)])
+        summary = result["summaries"][0]
+        self.assertEqual(summary["rangeProbeResults"]["rangeProbeMethod"], {"HTTP_BYTE_RANGE": 1})
+        self.assertEqual(summary["rangeProbeResults"]["rangeForwardProbe"], {"PASS": 1})
+        self.assertEqual(summary["rangeProbeResults"]["rangeBackwardProbe"], {"IGNORED": 1})
+        self.assertEqual(result["samples"][0]["measurements"]["backwardSeek"], "NOT_TESTED")
+
+    def test_legacy_schema_v1_samples_default_new_range_fields(self):
+        row = sample(1)
+        for key in ("rangeProbeMethod", "rangeForwardProbe", "rangeBackwardProbe"):
+            del row["measurements"][key]
+        validated = report_module.validate_sample(row)
+        self.assertEqual(validated["measurements"]["rangeProbeMethod"], "NOT_TESTED")
+        self.assertEqual(validated["measurements"]["rangeForwardProbe"], "NOT_TESTED")
+        self.assertEqual(validated["measurements"]["rangeBackwardProbe"], "NOT_TESTED")
+
+    def test_rejects_range_probe_results_without_declaring_method(self):
+        row = sample(1)
+        row["measurements"]["rangeForwardProbe"] = "PASS"
         with self.assertRaises(report_module.ValidationError):
             report_module.validate_sample(row)
 

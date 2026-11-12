@@ -60,6 +60,7 @@ The feasibility decision is complete; SABR implementation is deferred. G6 remain
 - [x] Add an opt-in JVM direct-audio playback runner with paced loopback streaming, a bounded player session, optional duration probe/full decode, URL and redirect checks, and sanitized request/status/Range-offset reports.
 - [ ] Owner-run the runner on an authorized network and verify real backward/forward key-driven seeks, Range behavior, and full decode for eligible streams. Keep HLS/DASH and SABR/UMP gaps explicit.
 - [x] Add separate public-API adapters for eXcor, InnerTubeX, YouTube.js and NewPipeExtractor; keep GPL-linked comparators in independent processes.
+- [x] Add an opt-in paired eXcor/InnerTubeX JVM mode that validates bounded forward/backward HTTP byte offsets and reports them separately from player-seek fields.
 - [x] Verify the InnerTubeX v0.11.6 adapter with exact-head CI; PR #120 passed all six jobs at exact head `4e4931cf1011fa8ad37acd89319798365593c59d` in run `43109304794`. YouTube.js and NewPipeExtractor exact-head builds passed in runs `43105597786` and `43102342730`.
 - [x] Verify the separate NewPipeExtractor v0.27.1 adapter with exact-head CI; all six jobs passed in run `43102342730`.
 - [x] Verify the hardened YouTube.js adapter at its exact head; all six jobs passed in run `43105597786`.
@@ -105,6 +106,8 @@ The 2026-11-11 public API feasibility review in `docs/BLACK_BOX_COMPARISON_RESEA
 The dependency-free report validator in `samples/black-box-comparison/` now enforces the sanitized sample contract, preserves blocked/unsupported/failure outcomes, and calculates p50/p95 only within equivalent adapter, lane, phase and environment groups. CI covers its synthetic input validation. The validator does not run or compare any extractor; the separate public-API adapters are implemented, but owner-run matched measurements are still required; G11 remains partial.
 
 The owner-operated `samples/black-box-comparison/run_matched.py` runner now preflights selected adapters, applies one comparison context, and writes only validated sanitized samples to a new JSONL file. CI checks its CLI without building the owner-installed adapters or making network requests. It improves repeatability for G11 but does not add full decode/seek measurement or owner evidence; G11 remains partial. V8 was removed from the YouTube.js `decoderVersion` field because it is a JavaScript runtime, not a media decoder.
+
+The comparison runner now has an opt-in `--range-probes` mode for exactly the eXcor and InnerTubeX JVM adapters. After the initial range, each adapter requests 4 KiB at a later byte offset and then 4 KiB at an earlier offset; the report keeps these HTTP byte-range outcomes separate from decoder/player seek fields. This measures server range handling only. It does not perform full decode or prove playback seeking, so G11 remains partial pending owner-run decode, player-seek and matched comparison evidence.
 
 The standalone JVM playback diagnostics now enforce one shared 256 MiB media-body budget across `ffplay`, `ffprobe`, and `ffmpeg`, with synthetic regressions for concurrent proxy reservations and prompt child-process termination after the cap is reached. The budget improves the bounds on owner-run live diagnostics; it does not prove playback or promote G8/G4/G5.
 

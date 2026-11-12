@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -52,6 +53,9 @@ def sample():
             "decode": "NOT_TESTED",
             "codec": "opus",
             "mimeType": "audio/webm",
+            "rangeProbeMethod": "NOT_TESTED",
+            "rangeForwardProbe": "NOT_TESTED",
+            "rangeBackwardProbe": "NOT_TESTED",
         },
     }
 
@@ -97,6 +101,24 @@ class MatchedRunnerSampleTest(unittest.TestCase):
             )
         self.assertNotIn("video.example", str(raised.exception))
         self.assertNotIn("secret", str(raised.exception))
+
+    def test_range_probes_require_the_matched_jvm_pair(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "results.jsonl"
+            base = [
+                "--video-id", "dQw4w9WgXcQ",
+                "--comparison-id", "run-home-01",
+                "--network-category", "home",
+                "--content-category", "music_video",
+                "--main-commit", "a" * 40,
+                "--output", str(output),
+                "--range-probes",
+            ]
+            with self.assertRaises(runner_module.RunnerError):
+                runner_module._parse_options(base)
+            options = runner_module._parse_options(base + ["--adapters", "excor", "innertubex"])
+            self.assertTrue(options.range_probes)
+            self.assertEqual(set(options.adapters), {"excor", "innertubex"})
 
 
 if __name__ == "__main__":

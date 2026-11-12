@@ -295,7 +295,8 @@ public final class NewPipeComparisonAdapter {
                 "\"requestCount\":" + requestCount + ",\"mediaRequestCount\":" + metrics.mediaRequests.get() + "," +
                 "\"bytesRead\":" + metrics.bytesRead.get() + ",\"rangeRequests\":" + metrics.rangeRequests.get() + "," +
                 "\"heapDeltaBytes\":null,\"backwardSeek\":\"NOT_TESTED\",\"forwardSeek\":\"NOT_TESTED\"," +
-                "\"decode\":\"NOT_TESTED\",\"codec\":" + json(result.codec()) + "," +
+                "\"decode\":\"NOT_TESTED\",\"rangeProbeMethod\":\"NOT_TESTED\"," +
+                "\"rangeForwardProbe\":\"NOT_TESTED\",\"rangeBackwardProbe\":\"NOT_TESTED\",\"codec\":" + json(result.codec()) + "," +
                 "\"mimeType\":" + json(result.mimeType()) + "}}";
     }
 

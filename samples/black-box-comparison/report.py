@@ -30,6 +30,7 @@ MEASUREMENT_KEYS = {
     "heapDeltaBytes", "backwardSeek", "forwardSeek", "decode", "codec",
     "mimeType",
 }
+OPTIONAL_MEASUREMENT_KEYS = {"rangeProbeMethod", "rangeForwardProbe", "rangeBackwardProbe"}
 ADAPTERS = {"excor", "innertubex", "youtubejs", "newpipe"}
 RUNTIMES = {"jvm", "node"}
 LANES = {"direct_audio", "direct_video", "hls", "sabr_ump"}
@@ -40,6 +41,8 @@ FAILURE_CLASSES = {
     "TIMEOUT", "OTHER",
 }
 SEEK_RESULTS = {"PASS", "FAIL", "UNSUPPORTED", "NOT_TESTED"}
+RANGE_PROBE_METHODS = {"HTTP_BYTE_RANGE", "NOT_TESTED"}
+RANGE_PROBE_RESULTS = {"PASS", "IGNORED", "ACCESS_DENIED", "ERROR", "UNAVAILABLE", "NOT_TESTED"}
 NETWORK_CATEGORIES = {"home", "mobile", "ci", "other"}
 CONTENT_CATEGORIES = {
     "stable_public_video", "music_video", "live", "unavailable_case", "other_public",
@@ -177,7 +180,18 @@ def validate_sample(raw: Any) -> dict[str, Any]:
     if outcome == "FAIL" and failure_class not in {"HTTP", "PARSE", "DECODE", "TIMEOUT", "OTHER"}:
         raise ValidationError("FAIL requires a technical failureClass")
 
-    measurements = _exact_keys(sample["measurements"], MEASUREMENT_KEYS, "measurements")
+    measurement_value = sample["measurements"]
+    if not isinstance(measurement_value, dict):
+        raise ValidationError("measurements must be an object")
+    measurement_keys = set(measurement_value)
+    missing_measurements = MEASUREMENT_KEYS - measurement_keys
+    unknown_measurements = measurement_keys - MEASUREMENT_KEYS - OPTIONAL_MEASUREMENT_KEYS
+    if missing_measurements or unknown_measurements:
+        raise ValidationError("measurements has missing or unknown fields")
+    measurements = dict(measurement_value)
+    measurements.setdefault("rangeProbeMethod", "NOT_TESTED")
+    measurements.setdefault("rangeForwardProbe", "NOT_TESTED")
+    measurements.setdefault("rangeBackwardProbe", "NOT_TESTED")
     for name in LATENCY_METRICS:
         _nonnegative_number(measurements[name], f"measurements.{name}")
     for name in INT_METRICS:
@@ -189,6 +203,13 @@ def validate_sample(raw: Any) -> dict[str, Any]:
             _nonnegative_integer(measurements[name], f"measurements.{name}")
     for name in ("backwardSeek", "forwardSeek", "decode"):
         _enum(measurements[name], SEEK_RESULTS, f"measurements.{name}")
+    _enum(measurements["rangeProbeMethod"], RANGE_PROBE_METHODS, "measurements.rangeProbeMethod")
+    for name in ("rangeForwardProbe", "rangeBackwardProbe"):
+        _enum(measurements[name], RANGE_PROBE_RESULTS, f"measurements.{name}")
+    if measurements["rangeProbeMethod"] == "NOT_TESTED" and any(
+        measurements[name] != "NOT_TESTED" for name in ("rangeForwardProbe", "rangeBackwardProbe")
+    ):
+        raise ValidationError("range probe results require a declared method")
     codec = measurements["codec"]
     if codec is not None and (not isinstance(codec, str) or CODEC.fullmatch(codec) is None):
         raise ValidationError("measurements.codec is invalid")
@@ -303,6 +324,10 @@ def build_report(samples: list[dict[str, Any]]) -> dict[str, Any]:
             "totalSamples": len(rows),
             "outcomes": {name: outcomes.get(name, 0) for name in sorted(OUTCOMES)},
             "failureClasses": dict(sorted(failures.items())),
+            "rangeProbeResults": {
+                name: dict(sorted(Counter(row["measurements"][name] for row in rows).items()))
+                for name in ("rangeProbeMethod", "rangeForwardProbe", "rangeBackwardProbe")
+            },
             "metrics": metrics,
         })
     return {"schemaVersion": 1, "summaries": summaries, "samples": samples}
@@ -315,18 +340,27 @@ def render_markdown(report: dict[str, Any]) -> str:
         "Timings include only PASS samples. Outcome counts include every attempted sample.",
         "The report emits only validated normalized fields; adapters must exclude secrets from those fields.",
         "",
-        "| Comparison | OS | Network | Content | Adapter | Version | Lane | Phase | Samples | PASS | BLOCKED | UNSUPPORTED | FAIL | NOT_RUN |",
-        "|---|---|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|",
+        "| Comparison | OS | Network | Content | Adapter | Version | Lane | Phase | Samples | PASS | BLOCKED | UNSUPPORTED | FAIL | NOT_RUN | HTTP range F/B |",
+        "|---|---|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---|",
     ]
     for row in report["summaries"]:
         outcomes = row["outcomes"]
+        range_results = row["rangeProbeResults"]
+        forward_counts = range_results["rangeForwardProbe"]
+        backward_counts = range_results["rangeBackwardProbe"]
+        range_summary = (
+            "F " + ", ".join(f"{name}={count}" for name, count in forward_counts.items()) + "; "
+            "B " + ", ".join(f"{name}={count}" for name, count in backward_counts.items())
+        )
         lines.append(
             f"| {row['comparison']['id']} | {row['comparison']['os']} | {row['comparison']['networkCategory']} | "
             f"{row['comparison']['contentCategory']} | {row['adapter']} | {row['adapterVersion']} | {row['lane']} | {row['phase']} | "
             f"{row['totalSamples']} | {outcomes['PASS']} | {outcomes['BLOCKED']} | "
-            f"{outcomes['UNSUPPORTED']} | {outcomes['FAIL']} | {outcomes['NOT_RUN']} |"
+            f"{outcomes['UNSUPPORTED']} | {outcomes['FAIL']} | {outcomes['NOT_RUN']} | {range_summary} |"
         )
     lines.extend([
+        "",
+        "HTTP byte-range probes are reported separately from playback seeks. `rangeProbeResults` in JSON contains the method and per-direction result counts; these probes do not establish decoder or player seek behavior.",
         "",
         "Latency summaries use nearest-rank p50/p95, grouped by comparison ID, commit, date, "
         "OS, network category, content category, signed-out session, timeout, locale, decoder, "

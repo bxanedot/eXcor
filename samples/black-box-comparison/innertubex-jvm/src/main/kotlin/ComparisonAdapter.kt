@@ -58,6 +58,7 @@ internal data class AdapterOptions(
     val timeoutSeconds: Int,
     val phase: String,
     val sampleIndex: Int,
+    val rangeProbes: Boolean,
 )
 
 internal fun parseOptions(args: List<String>): AdapterOptions {
@@ -68,9 +69,16 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         "--phase", "--sample-index",
     )
     val values = linkedMapOf<String, String>()
+    var rangeProbes = false
     var index = 0
     while (index < args.size) {
         val key = args[index]
+        if (key == "--range-probes") {
+            if (rangeProbes) throw SafeUsageException("invalid arguments")
+            rangeProbes = true
+            index += 1
+            continue
+        }
         if (key !in allowed || values.containsKey(key) || index + 1 >= args.size) {
             throw SafeUsageException("invalid arguments")
         }
@@ -110,7 +118,7 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
     ) {
         throw SafeUsageException("invalid option value")
     }
-    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex)
+    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes)
 }
 
 private object HelpRequested : RuntimeException()
@@ -140,10 +148,13 @@ internal data class ComparisonSample(
     val heapDeltaBytes: Long? = null,
     val codec: String? = null,
     val mimeType: String? = null,
+    val rangeProbeMethod: String = "NOT_TESTED",
+    val rangeForwardProbe: String = "NOT_TESTED",
+    val rangeBackwardProbe: String = "NOT_TESTED",
 ) {
     fun toJson(): String =
         """
-        {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":null},"adapter":"innertubex","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":"direct_audio","phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":null,"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":null,"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$mediaRequestCount,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":"NOT_TESTED","codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)}}}
+        {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":null},"adapter":"innertubex","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":"direct_audio","phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":null,"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":null,"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$mediaRequestCount,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":"NOT_TESTED","codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)},"rangeProbeMethod":${jsonString(rangeProbeMethod)},"rangeForwardProbe":${jsonString(rangeForwardProbe)},"rangeBackwardProbe":${jsonString(rangeBackwardProbe)}}}
         """.trimIndent()
 }
 
@@ -233,6 +244,48 @@ private data class RangeResponse(
     val firstByteAtNs: Long?,
 )
 
+private data class InitialRangeResult(
+    val outcome: SampleOutcome,
+    val firstByteAtNs: Long?,
+    val finalUrl: String?,
+    val totalBytes: Long?,
+)
+
+private const val RANGE_PROBE_BYTES = 4_096
+private const val MIN_RANGE_PROBE_TOTAL_BYTES = RANGE_PROBE_BYTES * 4L
+
+internal fun offsetRangeResponseResultForTest(
+    code: Int,
+    contentRange: String?,
+    bytesRead: Int,
+    startByte: Long,
+    totalBytes: Long,
+): String = offsetRangeResponseResult(code, contentRange, bytesRead, startByte, totalBytes)
+
+private fun offsetRangeResponseResult(
+    code: Int,
+    contentRange: String?,
+    bytesRead: Int,
+    startByte: Long,
+    totalBytes: Long,
+): String {
+    if (code == 401 || code == 403) return "ACCESS_DENIED"
+    if (code == 200) return "IGNORED"
+    if (code != 206) return "ERROR"
+    if (totalBytes < MIN_RANGE_PROBE_TOTAL_BYTES || startByte < 0 || startByte > totalBytes - RANGE_PROBE_BYTES) {
+        return "UNAVAILABLE"
+    }
+    val range = contentRange?.let {
+        Regex("^bytes ([0-9]+)-([0-9]+)/([0-9]+|\\*)$", RegexOption.IGNORE_CASE).matchEntire(it)
+    } ?: return "ERROR"
+    val returnedStart = range.groupValues[1].toLongOrNull() ?: return "ERROR"
+    val returnedEnd = range.groupValues[2].toLongOrNull() ?: return "ERROR"
+    val returnedTotal = range.groupValues[3]
+    val totalMatches = returnedTotal == "*" || returnedTotal.toLongOrNull() == totalBytes
+    return if (returnedStart == startByte && returnedEnd == startByte + RANGE_PROBE_BYTES - 1 &&
+        bytesRead == RANGE_PROBE_BYTES && totalMatches) "PASS" else "ERROR"
+}
+
 internal fun rangeResponseValidForTest(code: Int, contentRange: String?, bytesRead: Int): Boolean =
     rangeResponseValid(code, contentRange, bytesRead)
 
@@ -253,10 +306,12 @@ private suspend fun executeRangeRequest(
     headers: Map<String, String>,
     requestCount: AtomicLong,
     bytesCounter: AtomicLong,
+    startByte: Long = 0,
+    maxBytes: Int = MAX_RANGE_BYTES,
 ): RangeResponse {
     requestCount.incrementAndGet()
     val response = client.get(url) {
-        header(HttpHeaders.Range, "bytes=0-${MAX_RANGE_BYTES - 1}")
+        header(HttpHeaders.Range, "bytes=$startByte-${startByte + maxBytes - 1}")
         headers.forEach { (name, value) -> header(name, value) }
     }
     val code = response.status.value
@@ -273,8 +328,8 @@ private suspend fun executeRangeRequest(
     var zeroReads = 0
     var firstByteAtNs: Long? = null
     try {
-        while (total < MAX_RANGE_BYTES) {
-            val count = channel.readAvailable(buffer, 0, minOf(buffer.size, MAX_RANGE_BYTES - total))
+        while (total < maxBytes) {
+            val count = channel.readAvailable(buffer, 0, minOf(buffer.size, maxBytes - total))
             if (count < 0) break
             if (count == 0) {
                 zeroReads += 1
@@ -299,8 +354,8 @@ private suspend fun probeInitialRange(
     headers: Map<String, String>,
     mediaRequestCount: AtomicLong,
     bytesRead: AtomicLong,
-): Pair<SampleOutcome, Long?> {
-    if (!allowedMediaUrl(initialUrl)) return SampleOutcome("FAIL", "PARSE") to null
+): InitialRangeResult {
+    if (!allowedMediaUrl(initialUrl)) return InitialRangeResult(SampleOutcome("FAIL", "PARSE"), null, null, null)
     var current = initialUrl
     repeat(4) { hop ->
         val response = try {
@@ -308,25 +363,64 @@ private suspend fun probeInitialRange(
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
-            return classifyThrowableOutcome(error) to null
+            return InitialRangeResult(classifyThrowableOutcome(error), null, null, null)
         }
         if (response.code in redirectStatuses) {
-            if (hop == 3 || response.location.isNullOrBlank()) return SampleOutcome("FAIL", "HTTP") to null
+            if (hop == 3 || response.location.isNullOrBlank()) return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), response.firstByteAtNs, null, null)
             current = try {
                 URI(current).resolve(response.location).toString()
             } catch (_: Exception) {
-                return SampleOutcome("FAIL", "HTTP") to null
+                return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), response.firstByteAtNs, null, null)
             }
-            if (!allowedMediaUrl(current)) return SampleOutcome("FAIL", "HTTP") to null
+            if (!allowedMediaUrl(current)) return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), response.firstByteAtNs, null, null)
             return@repeat
         }
-        if (response.code == 401 || response.code == 403) return SampleOutcome("BLOCKED", "ACCESS_DENIED") to null
+        if (response.code == 401 || response.code == 403) return InitialRangeResult(SampleOutcome("BLOCKED", "ACCESS_DENIED"), response.firstByteAtNs, current, null)
         if (!rangeResponseValid(response.code, response.contentRange, response.bytesRead)) {
-            return SampleOutcome("FAIL", "HTTP") to response.firstByteAtNs
+            return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), response.firstByteAtNs, current, null)
         }
-        return SampleOutcome("PASS", null) to response.firstByteAtNs
+        val totalBytes = if (response.code == 206) {
+            Regex("^bytes 0-[0-9]+/([0-9]+)$", RegexOption.IGNORE_CASE)
+                .matchEntire(response.contentRange.orEmpty())?.groupValues?.get(1)?.toLongOrNull()
+        } else null
+        return InitialRangeResult(SampleOutcome("PASS", null), response.firstByteAtNs, current, totalBytes)
     }
-    return SampleOutcome("FAIL", "HTTP") to null
+    return InitialRangeResult(SampleOutcome("FAIL", "HTTP"), null, null, null)
+}
+
+private suspend fun probeOffsetRange(
+    client: HttpClient,
+    initialUrl: String,
+    headers: Map<String, String>,
+    requestCount: AtomicLong,
+    bytesRead: AtomicLong,
+    startByte: Long,
+    totalBytes: Long,
+): String {
+    if (totalBytes < MIN_RANGE_PROBE_TOTAL_BYTES || startByte < 0 || startByte > totalBytes - RANGE_PROBE_BYTES) {
+        return "UNAVAILABLE"
+    }
+    var current = initialUrl
+    repeat(4) { hop ->
+        val response = try {
+            executeRangeRequest(
+                client, current, headers, requestCount, bytesRead,
+                startByte = startByte, maxBytes = RANGE_PROBE_BYTES,
+            )
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            return "ERROR"
+        }
+        if (response.code in redirectStatuses) {
+            if (hop == 3 || response.location.isNullOrBlank()) return "ERROR"
+            current = try { URI(current).resolve(response.location).toString() } catch (_: Exception) { return "ERROR" }
+            if (!allowedMediaUrl(current)) return "ERROR"
+            return@repeat
+        }
+        return offsetRangeResponseResult(response.code, response.contentRange, response.bytesRead, startByte, totalBytes)
+    }
+    return "ERROR"
 }
 
 private fun safeMime(mime: String?): String? = mime?.substringBefore(';')?.trim()?.takeIf(safeMimePattern::matches)
@@ -455,6 +549,9 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
         var codec: String? = null
         var mimeType: String? = null
         var firstMediaByteAtNs: Long? = null
+        var rangeProbeMethod = "NOT_TESTED"
+        var rangeForwardProbe = "NOT_TESTED"
+        var rangeBackwardProbe = "NOT_TESTED"
 
         try {
             withTimeout(remainingBudgetMs(deadlineNs)) {
@@ -484,15 +581,33 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
                     return@withTimeout
                 }
 
-                val (rangeOutcome, firstByteAtNs) = probeInitialRange(
+                val initialRange = probeInitialRange(
                     client = mediaClient,
                     initialUrl = stream.audioUrl,
                     headers = mediaHeaders(stream.headers),
                     mediaRequestCount = mediaRequestCount,
                     bytesRead = bytesRead,
                 )
-                outcome = rangeOutcome
-                firstMediaByteAtNs = firstByteAtNs
+                outcome = initialRange.outcome
+                firstMediaByteAtNs = initialRange.firstByteAtNs
+                if (initialRange.outcome.status == "PASS" && options.rangeProbes) {
+                    rangeProbeMethod = "HTTP_BYTE_RANGE"
+                    val totalBytes = initialRange.totalBytes
+                    val finalUrl = initialRange.finalUrl
+                    if (totalBytes == null || finalUrl == null || totalBytes < MIN_RANGE_PROBE_TOTAL_BYTES) {
+                        rangeForwardProbe = "UNAVAILABLE"
+                        rangeBackwardProbe = "UNAVAILABLE"
+                    } else {
+                        rangeForwardProbe = probeOffsetRange(
+                            mediaClient, finalUrl, mediaHeaders(stream.headers), mediaRequestCount, bytesRead,
+                            startByte = totalBytes - totalBytes / 4, totalBytes = totalBytes,
+                        )
+                        rangeBackwardProbe = probeOffsetRange(
+                            mediaClient, finalUrl, mediaHeaders(stream.headers), mediaRequestCount, bytesRead,
+                            startByte = totalBytes / 4, totalBytes = totalBytes,
+                        )
+                    }
+                }
             }
         } catch (error: TimeoutCancellationException) {
             outcome = SampleOutcome("FAIL", "TIMEOUT")
@@ -516,6 +631,9 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
             heapDeltaBytes = usedHeapBytes() - heapBefore,
             codec = codec,
             mimeType = mimeType,
+            rangeProbeMethod = rangeProbeMethod,
+            rangeForwardProbe = rangeForwardProbe,
+            rangeBackwardProbe = rangeBackwardProbe,
         )
     } finally {
         try {
@@ -532,7 +650,7 @@ fun main(args: Array<String>) {
     val options = try {
         parseOptions(args.toList())
     } catch (_: HelpRequested) {
-        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30]")
+        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes]")
         return
     } catch (error: SafeUsageException) {
         System.err.println("comparison adapter: ${error.message}")

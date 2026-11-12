@@ -448,6 +448,9 @@ function makeSample(options, state, result) {
     backwardSeek: "NOT_TESTED",
     forwardSeek: "NOT_TESTED",
     decode: "NOT_TESTED",
+    rangeProbeMethod: "NOT_TESTED",
+    rangeForwardProbe: "NOT_TESTED",
+    rangeBackwardProbe: "NOT_TESTED",
     codec: result.codec ?? null,
     mimeType: result.mimeType ?? null,
   };
