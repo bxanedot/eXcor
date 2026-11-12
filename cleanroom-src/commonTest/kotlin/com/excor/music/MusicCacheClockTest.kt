@@ -43,4 +43,31 @@ class MusicCacheClockTest {
             client.close()
         }
     }
+    @Test
+    fun extremeClockValuesCannotResurrectExpiredCatalogEntry() = runTest {
+        var clock = Long.MIN_VALUE + 10L
+        var calls = 0
+        val client = HttpClient(MockEngine {
+            calls++
+            respond(
+                """{"revision":$calls}""",
+                HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
+        })
+        try {
+            val music = MusicHttp(client, nowMs = { clock }, cacheTtlMs = 60_000)
+            val url = "https://api.deezer.com/track/123"
+            val provider = ExcorCatalogProvider.DEEZER
+            music.getJson(provider, url)
+            clock = Long.MAX_VALUE - 10L
+            music.getJson(provider, url)
+            assertEquals(2, calls, "elapsed time crossing the signed Long range must expire the cache")
+            music.getJson(provider, url)
+            assertEquals(2, calls, "the refreshed entry must remain reusable")
+        } finally {
+            client.close()
+        }
+    }
+
 }
