@@ -30,6 +30,7 @@ import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlin.time.TimeSource
 
 /**
  * The music providers' shared HTTP: bounded bodies, JSON only, one retry after a short Retry-After, a per-provider
@@ -39,11 +40,12 @@ import kotlinx.serialization.json.JsonObject
 internal class MusicHttp(
     private val http: HttpClient,
     private val nowMs: () -> Long,
+    private val requestTimeMs: () -> Long = monotonicNowMs(),
     private val cacheEntries: Int = 256,
     private val cacheTtlMs: Long = 5 * 60_000,
 ) {
-    private val budgets = ExcorCatalogProvider.entries.associateWith { RequestBudget(budgetOf(it), nowMs) }
-    private val itunesBudget = RequestBudget(ITUNES_BUDGET, nowMs)
+    private val budgets = ExcorCatalogProvider.entries.associateWith { RequestBudget(budgetOf(it), requestTimeMs) }
+    private val itunesBudget = RequestBudget(ITUNES_BUDGET, requestTimeMs)
     private val cache = LinkedHashMap<String, Pair<Long, JsonElement>>()
     private val cacheLock = Mutex()
     /** Requests sent so far, for benchmarks. */
@@ -207,6 +209,11 @@ internal class MusicHttp(
         private const val ITUNES_HOST = "itunes.apple.com"
         private val ITUNES_BUDGET = 20 to 60_000L
     }
+}
+
+private fun monotonicNowMs(): () -> Long {
+    val start = TimeSource.Monotonic.markNow()
+    return { start.elapsedNow().inWholeMilliseconds }
 }
 
 /** A sliding-window budget: at most `limit.first` requests per `limit.second` ms, waiting rather than failing. */
