@@ -57,12 +57,25 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Check out status branch
+      - name: Check out main as the score workspace
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: automation/excor-competitiveness
+          ref: main
           path: score-branch
           persist-credentials: true
+
+      - name: Prepare isolated status branch
+        working-directory: score-branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=automation/excor-competitiveness
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch --no-tags origin "refs/heads/$branch:refs/remotes/origin/excor-competitiveness"
+            git checkout --force -B "$branch" refs/remotes/origin/excor-competitiveness
+          else
+            git checkout --orphan "$branch"
+          fi
 
       - name: Publish readable report and JSON badge
         shell: bash

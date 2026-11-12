@@ -58,7 +58,7 @@ val generateEjs = tasks.register("generateEjs") {
         file.parentFile.mkdirs()
         file.writeText(
             "package com.excor.internal\n\n" +
-                "// Generated from yt-dlp/ejs commit d48c6303a5a6455a42ef9e0b445149cadea51279 (Unlicense; bundled dependencies retain their licenses).\n" +
+                "// Copied from the attested yt-dlp-ejs 0.8.0 wheel; see PROVENANCE.md for its archive and file hashes.\n" +
                 "internal val EJS_LIB: String =\n${literal(dir.resolve("lib.min.js").readText())}\n\n" +
                 "internal val EJS_CORE: String =\n${literal(dir.resolve("core.min.js").readText())}\n",
         )
