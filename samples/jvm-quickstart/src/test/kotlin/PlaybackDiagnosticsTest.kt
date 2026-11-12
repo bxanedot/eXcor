@@ -6,6 +6,36 @@ import org.testng.annotations.Test
 
 class PlaybackDiagnosticsTest {
     @Test
+    fun relayByteBudgetReservesAcrossConcurrentRequestsWithoutExceedingItsLimit() {
+        val budget = RelayByteBudget(10)
+        val first = budget.reserve(8)!!
+        val second = budget.reserve(8)!!
+
+        assertEquals(first.bytes, 8)
+        assertEquals(second.bytes, 2)
+        assertNull(budget.reserve(1))
+        budget.complete(first, 8)
+        budget.complete(second, 2)
+
+        assertEquals(budget.consumedBytes(), 10L)
+        assertTrue(budget.isExceeded())
+    }
+
+    @Test
+    fun unusedRelayReservationReturnsCapacityToTheSharedBudget() {
+        val budget = RelayByteBudget(10)
+        val first = budget.reserve(8)!!
+        budget.complete(first, 3)
+
+        val second = budget.reserve(8)!!
+        assertEquals(second.bytes, 7)
+        budget.complete(second, 7)
+
+        assertEquals(budget.consumedBytes(), 10L)
+        assertTrue(budget.isExceeded())
+    }
+
+    @Test
     fun ffplayUsesAnInteractiveWaveformWindowForSeekKeys() {
         val url = "http://127.0.0.1:49152/media/test"
         val command = ffplayArguments(url)

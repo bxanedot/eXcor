@@ -21,6 +21,51 @@ import kotlin.math.max
 import kotlin.math.min
 
 private data class PlaybackOptions(val videoId: String, val seconds: Int, val fullDecode: Boolean)
+private const val MAX_RELAY_BYTES = 256L * 1024 * 1024
+
+internal class RelayByteBudget(private val maximumBytes: Long) {
+    private var consumed = 0L
+    private var reserved = 0L
+    private var exceeded = false
+
+    class Reservation internal constructor(val bytes: Int) {
+        internal var completed = false
+    }
+
+    init { require(maximumBytes > 0) }
+
+    @Synchronized
+    fun reserve(maximumCount: Int): Reservation? {
+        require(maximumCount > 0)
+        if (exceeded) return null
+        val remaining = maximumBytes - consumed - reserved
+        if (remaining <= 0) {
+            exceeded = true
+            return null
+        }
+        val bytes = minOf(maximumCount.toLong(), remaining).toInt()
+        reserved += bytes
+        return Reservation(bytes)
+    }
+
+    @Synchronized
+    fun complete(reservation: Reservation, count: Int) {
+        require(!reservation.completed)
+        require(count in 0..reservation.bytes)
+        reserved -= reservation.bytes
+        consumed += count
+        reservation.completed = true
+        if (consumed >= maximumBytes) exceeded = true
+    }
+
+    @Synchronized
+    fun isExceeded(): Boolean = exceeded
+
+    @Synchronized
+    fun consumedBytes(): Long = consumed
+}
+
+private class RelayByteLimitReached : IOException()
 
 internal suspend fun runPlaybackDiagnostics(args: List<String>) {
     val options = parseOptions(args) ?: return
@@ -72,9 +117,9 @@ internal suspend fun runPlaybackDiagnostics(args: List<String>) {
     }
     try {
         val playerStart = System.nanoTime()
-        val playerResult = runPlayer(proxy.localUrl, options.seconds)
+        val playerResult = runPlayer(proxy.localUrl, options.seconds) { proxy.byteLimitExceeded }
         println("player_result=$playerResult elapsedMs=${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - playerStart)}")
-        printStats("player", proxy.snapshotAndReset())
+        printStats("player", proxy.snapshotAndReset(), proxy.byteLimitExceeded)
         if (options.fullDecode) runFullDecode(proxy, options.videoId, info?.durationSeconds)
     } finally {
         proxy.close()
@@ -105,7 +150,7 @@ private fun parseOptions(args: List<String>): PlaybackOptions? {
     return PlaybackOptions(args[0], seconds, fullDecode)
 }
 
-private fun runPlayer(url: String, seconds: Int): String {
+private fun runPlayer(url: String, seconds: Int, byteLimitExceeded: () -> Boolean): String {
     val process = try {
         ProcessBuilder(ffplayArguments(url))
             .redirectInput(ProcessBuilder.Redirect.INHERIT)
@@ -116,19 +161,37 @@ private fun runPlayer(url: String, seconds: Int): String {
         println("ffplay was not found on PATH or could not be started.")
         return "unavailable"
     }
+    return waitForProcess(process, seconds.toLong(), byteLimitExceeded)
+}
+
+private fun waitForProcess(process: Process, timeoutSeconds: Long, byteLimitExceeded: () -> Boolean): String {
+    val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds)
     return try {
-        if (process.waitFor(seconds.toLong(), TimeUnit.SECONDS)) {
-            if (process.exitValue() == 0) "finished" else "exit_${process.exitValue()}"
-        } else {
-            process.destroy()
-            if (!process.waitFor(3, TimeUnit.SECONDS)) process.destroyForcibly()
-            "time_limit"
+        while (true) {
+            if (byteLimitExceeded()) {
+                stopProcess(process)
+                return "byte_limit"
+            }
+            val remaining = deadline - System.nanoTime()
+            if (remaining <= 0) {
+                stopProcess(process)
+                return "time_limit"
+            }
+            if (process.waitFor(min(TimeUnit.MILLISECONDS.toNanos(250), remaining), TimeUnit.NANOSECONDS)) {
+                return if (process.exitValue() == 0) "finished" else "exit_${process.exitValue()}"
+            }
         }
+        "interrupted"
     } catch (_: InterruptedException) {
         process.destroyForcibly()
         Thread.currentThread().interrupt()
         "interrupted"
     }
+}
+
+private fun stopProcess(process: Process) {
+    process.destroy()
+    if (!process.waitFor(3, TimeUnit.SECONDS)) process.destroyForcibly()
 }
 
 internal fun ffplayArguments(url: String): List<String> =
@@ -137,13 +200,19 @@ internal fun ffplayArguments(url: String): List<String> =
 private fun runFullDecode(proxy: LoopbackMediaProxy, videoId: String, expected: Long?) {
     val duration = runProbe(proxy.localUrl)
     if (duration == null) {
-        println("full_decode=unavailable; ffprobe returned no duration.")
-        printStats("full_decode", proxy.snapshotAndReset())
+        val result = if (proxy.byteLimitExceeded) "byte_limit" else "unavailable"
+        println("full_decode=$result; ffprobe returned no duration.")
+        printStats("full_decode", proxy.snapshotAndReset(), proxy.byteLimitExceeded)
         return
     }
     val comparison = expected?.let { if (abs(duration - it) <= max(2.0, it * 0.02)) "match" else "different" }
         ?: "metadata_unavailable"
     println("probe_duration=${String.format(Locale.ROOT, "%.2f", duration)} metadataDurationSeconds=${expected ?: "unknown"} comparison=$comparison")
+    if (proxy.byteLimitExceeded) {
+        println("full_decode=byte_limit videoId=$videoId")
+        printStats("full_decode", proxy.snapshotAndReset(), true)
+        return
+    }
     val process = try {
         ProcessBuilder("ffmpeg", "-nostdin", "-v", "error", "-i", proxy.localUrl, "-map", "0:a:0", "-f", "null", "-")
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
@@ -151,25 +220,19 @@ private fun runFullDecode(proxy: LoopbackMediaProxy, videoId: String, expected: 
             .start()
     } catch (_: Exception) {
         println("ffmpeg was not found on PATH or could not be started.")
-        printStats("full_decode", proxy.snapshotAndReset())
+        printStats("full_decode", proxy.snapshotAndReset(), proxy.byteLimitExceeded)
         return
     }
     val started = System.nanoTime()
-    val result = try {
-        if (process.waitFor(30, TimeUnit.MINUTES)) {
-            if (process.exitValue() == 0) "ok" else "failed"
-        } else {
-            process.destroy()
-            if (!process.waitFor(3, TimeUnit.SECONDS)) process.destroyForcibly()
-            "timeout"
-        }
-    } catch (_: InterruptedException) {
-        process.destroyForcibly()
-        Thread.currentThread().interrupt()
-        "interrupted"
+    val result = waitForProcess(process, TimeUnit.MINUTES.toSeconds(30)) { proxy.byteLimitExceeded }
+    val boundedResult = when {
+        result == "finished" -> "ok"
+        result.startsWith("exit_") -> "failed"
+        result == "time_limit" -> "timeout"
+        else -> result
     }
-    println("full_decode=$result videoId=$videoId elapsedMs=${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)}")
-    printStats("full_decode", proxy.snapshotAndReset())
+    println("full_decode=$boundedResult videoId=$videoId elapsedMs=${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)}")
+    printStats("full_decode", proxy.snapshotAndReset(), proxy.byteLimitExceeded)
 }
 
 private fun runProbe(url: String): Double? {
@@ -219,8 +282,8 @@ private class Stats {
     }
 }
 
-private fun printStats(label: String, s: ProxyStats) {
-    println("$label requests=${s.requests} upstreamRequests=${s.upstreamRequests} rangeRequests=${s.rangeRequests} rangeStarts=${s.rangeStarts.distinct().take(16).ifEmpty { listOf("none") }} httpStatuses=${s.statuses.ifEmpty { mapOf(0 to 0L) }} bytesRelayed=${s.bytes}")
+private fun printStats(label: String, s: ProxyStats, byteLimitExceeded: Boolean) {
+    println("$label requests=${s.requests} upstreamRequests=${s.upstreamRequests} rangeRequests=${s.rangeRequests} rangeStarts=${s.rangeStarts.distinct().take(16).ifEmpty { listOf("none") }} httpStatuses=${s.statuses.ifEmpty { mapOf(0 to 0L) }} bytesRelayed=${s.bytes} relayByteLimitExceeded=$byteLimitExceeded relayByteLimitBytes=$MAX_RELAY_BYTES")
 }
 
 private class LoopbackMediaProxy(stream: ExcorStream) : AutoCloseable {
@@ -228,6 +291,8 @@ private class LoopbackMediaProxy(stream: ExcorStream) : AutoCloseable {
     private val headers = safeRequestHeaders(stream.headers)
     private val kbps = stream.kbps.coerceIn(64, 20_000)
     private val stats = Stats()
+    private val byteBudget = RelayByteBudget(MAX_RELAY_BYTES)
+    val byteLimitExceeded: Boolean get() = byteBudget.isExceeded()
     private val path = "/media/${UUID.randomUUID().toString().replace("-", "")}"
     private val pool = Executors.newFixedThreadPool(4) { r -> Thread(r, "excor-media-proxy").apply { isDaemon = true } }
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
@@ -251,6 +316,7 @@ private class LoopbackMediaProxy(stream: ExcorStream) : AutoCloseable {
             if (range != null && !isValidRange(range)) {
                 x.responseHeaders.set("Content-Range", "bytes */*"); sendEmpty(x, 416); return
             }
+            if (byteBudget.isExceeded()) { stats.status(413); sendEmpty(x, 413); return }
 
             var target = uri
             for (redirect in 0..3) {
@@ -285,6 +351,8 @@ private class LoopbackMediaProxy(stream: ExcorStream) : AutoCloseable {
                 } finally { c.disconnect() }
             }
             sendEmpty(x, 502)
+        } catch (_: RelayByteLimitReached) {
+            // Response headers have already been sent; close this response and reject later requests locally.
         } catch (_: Exception) {
             try { sendEmpty(x, 502) } catch (_: Exception) {}
         } finally { x.close() }
@@ -296,7 +364,14 @@ private class LoopbackMediaProxy(stream: ExcorStream) : AutoCloseable {
         val rate = kbps * 1000.0 * 1.25 / 8.0
         var sent = 0L
         while (true) {
-            val n = input.read(buffer)
+            val reservation = byteBudget.reserve(buffer.size) ?: throw RelayByteLimitReached()
+            val n = try {
+                input.read(buffer, 0, reservation.bytes)
+            } catch (failure: Exception) {
+                byteBudget.complete(reservation, 0)
+                throw failure
+            }
+            byteBudget.complete(reservation, n.coerceAtLeast(0))
             if (n < 0) break
             if (n == 0) continue
             val due = (sent + n) / rate * 1_000_000_000.0
