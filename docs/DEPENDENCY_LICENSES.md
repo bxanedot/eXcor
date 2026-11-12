@@ -34,7 +34,7 @@ The all-configuration OSV scan in [CI run 43123548640](https://github.com/bxaned
 | [GHSA-9pwp-9qqc-pr26](https://osv.dev/vulnerability/GHSA-9pwp-9qqc-pr26) | `org.bouncycastle:bcprov-jdk18on` 1.80.2 | `androidLintTool` |
 | [GHSA-qp49-qgx5-5m26](https://osv.dev/vulnerability/GHSA-qp49-qgx5-5m26) | `org.bouncycastle:bcprov-jdk18on` 1.80.2 | `androidLintTool` |
 
-These findings are report-only build-tool dependencies, not entries in the CI shipped-runtime lockfile. Recheck the toolchain configurations before release. This snapshot does not complete the broader release-security audit.
+These findings were build-tool dependencies, not entries in the CI shipped-runtime lockfile. They were remediated in the toolchain configurations; both the full dependency graph and shipped-runtime scan now fail CI when OSV reports a finding. This snapshot does not complete the broader release-security audit.
 
 ## Toolchain advisory remediation — 2026-11-12
 
@@ -49,8 +49,8 @@ The build now pins OSV-fixed versions only in `androidLintTool` and `swiftExport
 | `org.bouncycastle:bcpkix-jdk18on` | 1.85 | [GHSA-wg6q-6289-32hp](https://osv.dev/vulnerability/GHSA-wg6q-6289-32hp) |
 | `org.bouncycastle:bcprov-jdk18on` | 1.85 | [GHSA-9pwp-9qqc-pr26](https://osv.dev/vulnerability/GHSA-9pwp-9qqc-pr26), [GHSA-qp49-qgx5-5m26](https://osv.dev/vulnerability/GHSA-qp49-qgx5-5m26) |
 
-The all-configuration OSV scan remains report-only for tooling, so review its result before each release. This targeted dependency remediation does not complete the broader release-security audit.
+The all-configuration OSV scan is a blocking CI gate for root Gradle tooling and test dependencies, as well as the separate Node comparison adapter lockfile. The shipped-artifact scan remains a distinct blocking check. This targeted dependency remediation does not complete the broader release-security audit.
 
 ## Post-remediation CI scan — 2026-11-12
 
-After the tool-only pins were applied, [CI run 43130621290](https://github.com/bxanedot/eXcor/actions/runs/43130621290) scanned 238 packages across all Gradle configurations and reported no issues; the separate shipped-runtime scan covered 115 packages and also reported no issues. The all-configuration tooling scan remains report-only and should be reviewed before release. G12 remains partial until the broader release-security audit is complete.
+After the tool-only pins were applied, [CI run 43130621290](https://github.com/bxanedot/eXcor/actions/runs/43130621290) scanned 238 packages across all Gradle configurations and reported no issues; the separate shipped-runtime scan covered 115 packages and also reported no issues. CI now gates on findings in both scans. G12 remains partial until the broader release-security audit is complete.

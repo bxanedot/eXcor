@@ -53,9 +53,8 @@ jobs:
         run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/newpipe-jvm assemble installDist
       - name: Build and test the separate InnerTubeX comparison adapter
         run: ./gradlew $GRADLE_ARGS -p samples/black-box-comparison/innertubex-jvm build installDist
-      # Known vulnerabilities (OSV) in what ships: the published variants' runtime dependencies fail the build. Build
-      # tooling (Android lint) and test-only dependencies are reported without failing. The lockfile exists only for
-      # this step; normal builds don't lock.
+      # Fail on known vulnerabilities (OSV) in either the full resolved graph or what ships. The lockfile exists only
+      # for this step; normal builds don't lock.
       - name: Dependency vulnerability scan
         run: |
           printf 'rootProject { dependencyLocking { lockAllConfigurations() } }\n' > "$RUNNER_TEMP/lock.gradle"
@@ -65,9 +64,9 @@ jobs:
           chmod +x "$RUNNER_TEMP/osv-scanner"
           mkdir -p "$RUNNER_TEMP/shipped"
           grep -E '=(.*,)?(jvmRuntimeClasspath|androidRuntimeClasspath|ios(Arm64|SimulatorArm64|X64)CompileKlibraries)(,|$)' gradle.lockfile > "$RUNNER_TEMP/shipped/gradle.lockfile"
-          echo "All configurations, report only:"
-          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile || true
-          echo "Shipped runtime dependencies, gating:"
+          echo "All root Gradle configurations and the Node comparison adapter, gating:"
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile samples/black-box-comparison/youtubejs-node/package-lock.json
+          echo "Shipped runtime and compile dependencies, gating:"
           "$RUNNER_TEMP/osv-scanner" scan source --lockfile "$RUNNER_TEMP/shipped/gradle.lockfile"
 
   windows:
