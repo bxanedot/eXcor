@@ -17,6 +17,24 @@ python samples/black-box-comparison/report.py --input results.jsonl --format mar
 
 The report preserves all sanitized per-sample outcomes. It counts access blocks, unsupported transports and technical failures separately. p50/p95 use the nearest-rank method and include PASS samples only; each metric reports its own eligible sample count. Groups separate adapter/version, lane, cold/warm phase, comparison ID, commit, date, OS, network/content category, session category, timeout, locale and decoder.
 
+## Run a matched owner comparison
+
+`run_matched.py` coordinates the four isolated adapters from one owner-controlled machine and network. First build/install each adapter using the instructions below. For eXcor, publish the library to `mavenLocal()` first with `./gradlew publishToMavenLocal`; install the eXcor, InnerTubeX, and NewPipe launchers with their documented `installDist` commands; install the YouTube.js package with `npm ci --ignore-scripts` in `youtubejs-node`. These steps resolve/build code but make no YouTube requests. Review the separate adapters' license notices before distributing them.
+
+Run from the repository root, on an authorized network, with public video IDs you are permitted to check:
+
+```powershell
+python samples/black-box-comparison/run_matched.py `
+  --video-id dQw4w9WgXcQ --video-id kJQP7kiw5Fk `
+  --comparison-id owner-home-2026-11-12 `
+  --network-category home --content-category music_video `
+  --phases cold warm --sample-indices 1 2 3 `
+  --timeout-seconds 30 `
+  --output results/owner-home-2026-11-12.jsonl
+```
+
+The runner captures one shared commit, UTC timestamp, OS, locale, timeout and category context, preflights every selected adapter with `--help`, then executes samples sequentially in an interleaved order. It emits only schema-validated JSON lines, never raw adapter output, and refuses to overwrite an existing output file. `--adapters` can select a subset for diagnosis; subset runs do not provide four-way comparisons. The adapters make signed-out direct-audio requests only. A `PASS` still means extraction plus an initial read of at most 64 KiB: full decode, backward/forward seek and playback parity remain unmeasured, so G11 stays partial until owner-run results and those measurements are reviewed.
+
 ## eXcor JVM adapter
 
 The standalone adapter in [`excor-jvm`](excor-jvm/) uses the published eXcor JVM API and emits one normalized JSON line. Build it with `./gradlew -p samples/black-box-comparison/excor-jvm installDist` on Linux/macOS or `.\gradlew.bat -p samples/black-box-comparison/excor-jvm installDist` on Windows, after the library has been published to `mavenLocal()` (the Linux CI job does this first). Building and testing the adapter makes no YouTube requests; Gradle may resolve Maven artifacts. Running it performs signed-out metadata and extraction calls, then requests at most the first 64 KiB of the selected media stream using a bounded HTTP Range request. It never prints the signed media URL or request headers. The whole-sample timeout is limited to 30 seconds to match eXcor's current per-request cap.
