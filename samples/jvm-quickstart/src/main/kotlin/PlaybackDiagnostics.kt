@@ -164,7 +164,7 @@ private fun runPlayer(url: String, seconds: Int, byteLimitExceeded: () -> Boolea
     return waitForProcess(process, seconds.toLong(), byteLimitExceeded)
 }
 
-private fun waitForProcess(process: Process, timeoutSeconds: Long, byteLimitExceeded: () -> Boolean): String {
+internal fun waitForProcess(process: Process, timeoutSeconds: Long, byteLimitExceeded: () -> Boolean): String {
     val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds)
     return try {
         while (true) {
@@ -198,7 +198,7 @@ internal fun ffplayArguments(url: String): List<String> =
     listOf("ffplay", "-showmode", "1", "-loglevel", "quiet", "-autoexit", url)
 
 private fun runFullDecode(proxy: LoopbackMediaProxy, videoId: String, expected: Long?) {
-    val duration = runProbe(proxy.localUrl)
+    val duration = runProbe(proxy.localUrl) { proxy.byteLimitExceeded }
     if (duration == null) {
         val result = if (proxy.byteLimitExceeded) "byte_limit" else "unavailable"
         println("full_decode=$result; ffprobe returned no duration.")
@@ -235,15 +235,14 @@ private fun runFullDecode(proxy: LoopbackMediaProxy, videoId: String, expected: 
     printStats("full_decode", proxy.snapshotAndReset(), proxy.byteLimitExceeded)
 }
 
-private fun runProbe(url: String): Double? {
+private fun runProbe(url: String, byteLimitExceeded: () -> Boolean): Double? {
     val process = try {
         ProcessBuilder("ffprobe", "-v", "error", "-show_entries", "format=duration",
             "-of", "default=noprint_wrappers=1:nokey=1", url)
             .redirectError(ProcessBuilder.Redirect.DISCARD).start()
     } catch (_: Exception) { return null }
     return try {
-        if (!process.waitFor(60, TimeUnit.SECONDS)) { process.destroyForcibly(); return null }
-        if (process.exitValue() != 0) return null
+        if (waitForProcess(process, 60, byteLimitExceeded) != "finished") return null
         process.inputStream.bufferedReader().use { it.readLine()?.take(32)?.toDoubleOrNull()?.takeIf { n -> n.isFinite() && n > 0 } }
     } catch (_: Exception) { process.destroyForcibly(); null }
 }

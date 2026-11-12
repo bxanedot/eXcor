@@ -3,6 +3,11 @@ import org.testng.Assert.assertFalse
 import org.testng.Assert.assertNull
 import org.testng.Assert.assertTrue
 import org.testng.annotations.Test
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.concurrent.TimeUnit
 
 class PlaybackDiagnosticsTest {
     @Test
@@ -33,6 +38,14 @@ class PlaybackDiagnosticsTest {
 
         assertEquals(budget.consumedBytes(), 10L)
         assertTrue(budget.isExceeded())
+    }
+
+    @Test
+    fun processStopsAsSoonAsTheSharedByteBudgetIsExceeded() {
+        val process = WaitingProcess()
+
+        assertEquals(waitForProcess(process, 60) { true }, "byte_limit")
+        assertFalse(process.isAlive)
     }
 
     @Test
@@ -99,5 +112,19 @@ class PlaybackDiagnosticsTest {
         assertEquals(classifyPlayabilityStatus("LOGIN_REQUIRED"), "LOGIN_REQUIRED")
         assertEquals(classifyPlayabilityStatus("UNRECOGNIZED:https://example.test/?token=secret"), "OTHER")
         assertNull(classifyPlayabilityStatus(null))
+    }
+
+    private class WaitingProcess : Process() {
+        override fun getOutputStream(): OutputStream = ByteArrayOutputStream()
+        override fun getInputStream(): InputStream = ByteArrayInputStream(byteArrayOf())
+        override fun getErrorStream(): InputStream = ByteArrayInputStream(byteArrayOf())
+        override fun waitFor(): Int = 0
+        override fun exitValue(): Int = if (isAlive) throw IllegalThreadStateException() else 143
+        override fun destroy() { alive = false }
+        override fun destroyForcibly(): Process { alive = false; return this }
+        override fun isAlive(): Boolean = alive
+        override fun waitFor(timeout: Long, unit: TimeUnit): Boolean = !alive
+
+        private var alive = true
     }
 }
