@@ -13,6 +13,11 @@ repositories {
     mavenCentral()
 }
 
+// The preview-only Android graph includes Guava; keep it on OSV's fixed Android artifact.
+configurations.configureEach {
+    resolutionStrategy.force("com.google.guava:guava:33.7.2-android")
+}
+
 android {
     namespace = "com.excor.preview"
     compileSdk = 37
