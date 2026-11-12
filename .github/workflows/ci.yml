@@ -108,15 +108,16 @@ jobs:
       # for this step; normal builds don't lock.
       - name: Dependency vulnerability scan
         run: |
-          printf 'rootProject { dependencyLocking { lockAllConfigurations() } }\n' > "$RUNNER_TEMP/lock.gradle"
-          ./gradlew $GRADLE_ARGS -q --init-script "$RUNNER_TEMP/lock.gradle" :dependencies --write-locks > /dev/null
+          printf 'gradle.allprojects { project -> project.dependencyLocking { lockAllConfigurations() } }\n' > "$RUNNER_TEMP/lock.gradle"
+          # Gradle's dependencies report runs one project at a time; resolve the root and both included preview apps.
+          ./gradlew $GRADLE_ARGS -q --init-script "$RUNNER_TEMP/lock.gradle" :dependencies :preview-android:dependencies :preview-desktop:dependencies --write-locks > /dev/null
           curl -sSfL -o "$RUNNER_TEMP/osv-scanner" https://github.com/google/osv-scanner/releases/download/v2.0.0/osv-scanner_linux_amd64
           echo "b60c273474aecad1158cfe1e9828f3841483701ba0fe3560517a45b2db16e84c  $RUNNER_TEMP/osv-scanner" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/osv-scanner"
           mkdir -p "$RUNNER_TEMP/shipped"
           grep -E '=(.*,)?(jvmRuntimeClasspath|androidRuntimeClasspath|ios(Arm64|SimulatorArm64|X64)CompileKlibraries)(,|$)' gradle.lockfile > "$RUNNER_TEMP/shipped/gradle.lockfile"
-          echo "All root Gradle configurations and the Node comparison adapter, gating:"
-          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile samples/black-box-comparison/youtubejs-node/package-lock.json
+          echo "All library, preview and Node adapter dependencies, gating:"
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile preview/android/gradle.lockfile --lockfile preview/desktop/gradle.lockfile --lockfile samples/black-box-comparison/youtubejs-node/package-lock.json
           echo "Shipped runtime and compile dependencies, gating:"
           "$RUNNER_TEMP/osv-scanner" scan source --lockfile "$RUNNER_TEMP/shipped/gradle.lockfile"
 
