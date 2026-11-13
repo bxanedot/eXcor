@@ -153,7 +153,7 @@ private class PreviewWindow {
     private var excor = Excor(host).also { it.init() }
     private var browser = Browser(excor)
     private val signIn = JButton().apply { addActionListener { signInOrOut() } }
-    private val tempDir = File(System.getProperty("java.io.tmpdir"), "excor-preview").apply { mkdirs() }
+    private val tempDir = java.nio.file.Files.createTempDirectory("excor-preview-").toFile()
 
     private fun connect(cookie: String?): Excor {
         job?.cancel()
