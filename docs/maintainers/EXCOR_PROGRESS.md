@@ -482,3 +482,9 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 - Merged PR #151 at `4867fd262cfd4d224c01af7fadcf383848ad3fd2`. All nine CI jobs passed at the exact merge commit in [main run 43433273079](https://github.com/bxanedot/eXcor/actions/runs/43433273079), including Linux, Windows, Android API 26/36, preview, reproducible publications, Kotlin/Native iOS tests and frameworks, XCFramework notices, Swift API checks/tests, and the iOS Simulator package build.
 - The tracked root layout is seven directories, down from 11 on the previous main. The merged feature branch was deleted. GitHub now lists only `main` and `automation/excor-competitiveness`; the latter remains referenced by the README readiness badge and workflow.
 - The live score refreshed successfully in [run 43434527790](https://github.com/bxanedot/eXcor/actions/runs/43434527790): 53/100, Release NO-GO, and main CI success. It is an evidence-readiness score, not a playback-success percentage or direct feature-parity score. G4/G5/G8/G10/G11/G12 remain partial and G6 remains blocked.
+
+## 2026-11-13 — exact-main macOS security and XCFramework notice verification
+
+- Exact-main CI run [43441086314](https://github.com/bxanedot/eXcor/actions/runs/43441086314) passed all nine jobs on `b23993d99e81dfc3d5709bd9281a4c93a1669876`. The macOS job passed Swift package tests, including the populated-cookie-jar regression, and verified `LICENSE` and `NOTICE` in its generated XCFramework.
+- No XCFramework artifact was uploaded by that run, so its linked QuickJS/c-vector contents and published artifact remain uninspected. The cookie test is synthetic; signed-in live playback remains unverified. Older captured-fixture rights, strict implementation isolation, and the complete release-security audit remain open, so G12 stays partial.
+- Strix could not run locally because Docker and model authentication are unavailable. No repository source was uploaded to managed scanning.
