@@ -132,7 +132,7 @@ The JVM tests run on TestNG rather than kotlin-test's default JUnit 4, which is 
 
 ## Clean-room eXcor Kotlin addition (2026-10-28)
 
-This addition is independently implemented under the repository's Apache-2.0 license. It uses only the user-provided `docs/maintainers/BRIEF.md`, the public sources listed below, standard-library behavior and synthetic test data written for this addition. The source tree is restricted to `modules/cleanroom/` for the root library build.
+This addition was independently implemented while the repository used Apache-2.0. The current repository snapshot is GPL-3.0-only; earlier Apache-2.0 grants remain available as described above. It uses only the user-provided `docs/maintainers/BRIEF.md`, the public sources listed below, standard-library behavior and synthetic test data written for this addition. The source tree is restricted to `modules/cleanroom/` for the root library build.
 
 | Source | Version / date | License | Use |
 | --- | --- | --- | --- |
@@ -165,7 +165,7 @@ The Apple/iTunes catalog adapter uses the public API behavior recorded in the Ap
 
 ## Native Swift eXcorKit addition (2026-10-29)
 
-The `modules/platforms/swift/` package independently implements section 8 under the repository's Apache-2.0 license. The Swift source and `ExcorURLShim.js` are original work; no YouTubeKit source was read or copied. It uses the Apple SDK frameworks below and the EJS bundles documented above.
+The `modules/platforms/swift/` package independently implements section 8. It was added while the repository used Apache-2.0; the current repository snapshot is GPL-3.0-only, with earlier Apache-2.0 grants preserved as described above. The Swift source and `ExcorURLShim.js` are original work; no YouTubeKit source was read or copied. It uses the Apple SDK frameworks below and the EJS bundles documented above.
 
 | Source | Version / date | License | Use |
 | --- | --- | --- | --- |
@@ -174,7 +174,7 @@ The `modules/platforms/swift/` package independently implements section 8 under 
 
 ## Clean-room music engine addition (2026-11-01)
 
-The `com.excor.music` package is under the repository's Apache-2.0 license. It adds no new dependencies; it uses Ktor, kotlinx.coroutines and kotlinx.serialization, listed above. See `docs/CLEAN_ROOM.md` for the implementer disclosure.
+The `com.excor.music` package was added while the repository used Apache-2.0. The current repository snapshot is GPL-3.0-only, with earlier Apache-2.0 grants preserved as described above. It adds no new dependencies; it uses Ktor, kotlinx.coroutines and kotlinx.serialization, listed above. See `docs/CLEAN_ROOM.md` for the implementer disclosure.
 
 | Source | Version / date | License / terms | Use |
 | --- | --- | --- | --- |
