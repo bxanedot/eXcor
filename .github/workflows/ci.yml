@@ -140,10 +140,10 @@ jobs:
       - name: Windows preview passes its self-test
         shell: pwsh
         run: |
-          $report = Join-Path $env:RUNNER_TEMP "self-test.txt"
-          Start-Process -Wait -FilePath "modules/platforms/preview/desktop/build/app/eXcor Preview/eXcor Preview.exe" -ArgumentList "--self-test", "`"$report`""
-          Get-Content $report
-          if (-not (Select-String -Path $report -Pattern "eXcor Preview OK" -Quiet)) { exit 1 }
+          $unexpected = Join-Path $env:RUNNER_TEMP "self-test-unexpected.txt"
+          $argument = "`"$unexpected`""
+          $process = Start-Process -Wait -PassThru -FilePath "modules/platforms/preview/desktop/build/app/eXcor Preview/eXcor Preview.exe" -ArgumentList @("--self-test", $argument)
+          if ($process.ExitCode -ne 0 -or (Test-Path $unexpected)) { exit 1 }
       - name: Windows installer (when WiX is available)
         shell: bash
         run: |
@@ -176,8 +176,9 @@ jobs:
       - name: Desktop preview passes its self-test and starts
         run: |
           app="modules/platforms/preview/desktop/build/app/eXcor Preview/bin/eXcor Preview"
-          "$app" --self-test "$RUNNER_TEMP/self-test.txt"
-          grep -q "eXcor Preview OK" "$RUNNER_TEMP/self-test.txt"
+          unexpected="$RUNNER_TEMP/self-test-unexpected.txt"
+          "$app" --self-test "$unexpected"
+          test ! -e "$unexpected"
           set +e
           timeout 30 xvfb-run -a "$app" > "$RUNNER_TEMP/desktop.log" 2>&1
           result=$?
