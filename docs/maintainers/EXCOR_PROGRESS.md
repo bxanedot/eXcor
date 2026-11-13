@@ -21,14 +21,14 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 **Readiness remains 53/100; release NO-GO.** Score refresh run 43032632110 records merge commit `9a01d03` at 53/100. Its CI snapshot listed main run 43032631977 as queued; all six jobs were running when this checkpoint was written. PR #108 is diagnostic hardening and earns no score credit. G6 remains blocked at 0/20.
 
 - **Issue #77:** closed after the deterministic retry, transport, session, diagnostic-redaction and bounded exclusion-cache acceptance checks passed.
-- **G4/G5:** partial. Issue #78 remains open with no owner-run authorized playback/cipher matrix results.
+- **G4/G5:** partial. Issue #78 remains open: owner-run checks now include four signed-out cipher/direct-`n` probe outcomes, but none exposed an eligible challenge and no transformed playback was verified.
 - **G6:** blocked, SABR/UMP playback 0/20. No network transport, playable SABR media, full decode or seek evidence.
 - **G8:** partial. One owner-run signed-out extraction recovered after a locally injected 503, then fully decoded and passed a midpoint HTTP range read. Actual upstream fault and live cancellation behavior remain unverified.
 - **G12:** partial. PRs #103–#108 harden media credential isolation, authenticated-response caching, logged diagnostic redaction and caller-facing rejection messages. Signed-in playback and the broader release-security audit remain incomplete.
 - **G10/G11:** partial. Remote publishing remains unauthorized; reproducible black-box comparison is incomplete.
 - No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used.
 
-**Next:** continue the broader security review and issue #78's owner-authorized playback/cipher matrix. The repeated two-run audio-seek evidence does not close G5 or G11; keep their partial status until the remaining matrix and paired player evidence are complete. Preserve the clean-room boundary.
+**Next:** continue the broader security review and issue #78's owner-authorized playback/cipher matrix. The corrected verifier supports direct-URL `n` challenges and skips before player-script fetch when no challenge is present; its 2026-11-13 four-ID run found no eligible challenge. The repeated two-run audio-seek evidence does not close G5 or G11; keep their partial status until the remaining matrix and paired player evidence are complete. Preserve the clean-room boundary.
 
 ## Release gates
 
