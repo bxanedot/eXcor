@@ -58,7 +58,8 @@ On `dQw4w9WgXcQ`, two signed-out quickstart runs selected VISIONOS WebM audio an
 | Field | Value |
 |---|---|
 | Source commit | PR #154 head `120892be137b6182c512a26a92d74bc64b14e199`; clean-room sources match base `0409b1fd15130a2ce2723bd420cb02e99da2709f` |
-| Command | See the exact PowerShell command in the [sanitized run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-direct-transport-120892b.md) |
+| Date | 2026-11-13 UTC |
+| Command | `$env:EXCOR_LIVE='1'; $env:EXCOR_DECODE_ID='dQw4w9WgXcQ'; $env:EXCOR_VIDEO_HEIGHT='480'; .\gradlew.bat :jvmTest --tests 'com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks' --tests 'com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux' --tests 'com.excor.LivePlaybackTest.formatListIsRangeReadable' --rerun-tasks --no-daemon` |
 | Platform / network | Windows x64 workstation; owner's home network; signed-out test harness |
 | Content | One public music video, `dQw4w9WgXcQ` |
 | Outcome | Full audio decode, 480p video/audio mux and decode, all 27 format range probes passed. This is one ID/network; HTTP ranges are not player seeks, and no InnerTubeX comparison ran in this command. |
