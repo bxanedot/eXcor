@@ -1,21 +1,23 @@
 # Handoff: eXcor (read this first)
 
-Written 2026-11-03 by the cloud session that built PRs #55–#62, for the next session, which was meant to run on the owner's own machine. Updated the same day by a second cloud session (work branch `ccr-f49a6d1e-6h9xd0`, from PR #64), which reran the live checks from another cloud container; the owner's machine is still untried. It covers the project, the owner's rules, the current state, how to build and test, and what to do next. `EXCOR_PROGRESS.md` is the running status file. Update it, and this file, as you work.
+Originally written on 2026-11-03 for the first owner-machine follow-up. Historical notes remain below; `EXCOR_PROGRESS.md` is the running status. Keep this summary current as work proceeds.
 
-## Current state — 2026-11-11 (verified 2026-11-11 13:52:57 UTC)
+## Current state — 2026-11-13 (verified 2026-11-13 12:52 UTC)
 
-- Latest code checkpoint: PR #108 merged as `9a01d0371c67c1350baee5ab9308e1360473c81e`. Exact head `b4cd4ca079a25c125ccdda05ef3bdba0fd5e4562` passed all six supported-target CI jobs in run [43029076515](https://github.com/bxanedot/eXcor/actions/runs/43029076515). Caller-facing player rejection exceptions now pass upstream reason text through the shared URL/credential/control/length sanitizer; synthetic coverage checks cookies, signed URLs and tokens.
-- Readiness is **53/100; release NO-GO**. Score refresh run 43032632110 records main SHA `9a01d03` at 53/100. Main CI run 43032631977 was running all six jobs at this checkpoint; G6 remains blocked at 0/20.
-- Issue #77 is closed after the deterministic acceptance checklist passed. G8 remains partial because owner-run live fault injection is unverified.
-- **G4/G5:** partial. Issue #78 remains open and has no owner-run authorized playback/cipher results.
-- **G6:** blocked, SABR/UMP playback 0/20. No network negotiation, playable media, full decode or seek evidence exists.
-- **G12:** partial. PRs #103–#108 harden media credential isolation, authenticated-response caching and logged/caller-facing diagnostic redaction. Signed-in playback and the broader release-security audit remain unverified.
-- **G10/G11:** partial. Remote publishing is unauthorized; reproducible black-box comparison remains incomplete.
-- No credentials, signed URLs, raw captures, bot-check bypasses or competitor implementation source were used in this checkpoint.
+- The clean local branch `codex/excor-competition-evidence-layout` is based on `main` at `a9995256e3629b583f0e15faa4f73479aa54208a` and contains the committed root-to-`modules/` reorganization and engineering follow-ups. GitHub's published readiness report still reflects `main`, not this feature branch.
+- The JVM library, comparison adapters, quickstart and previews now target Java 17 bytecode and build with a JDK 21 toolchain. Both comparison adapters pass preflight on the local Java 25 runtime. The current-worktree `:jvmTest --rerun-tasks` passed 257 tests, 19 opt-in skips, zero failures and zero errors; `:checkKotlinAbi`, `:assembleAndroidMain` and `:preview-android:compileDebugKotlin` passed. `:preview-desktop:run --args=--self-test` passed on JDK 21. `:preview-android:connectedDebugAndroidTest` passed on API 36 with synthetic media and CookieVault data; API 26 instrumentation is prior evidence. iOS arm64/simulator/x64 compilation passed earlier in this worktree; Swift tests and iOS simulator/device tests still need macOS.
+- GitHub lists only `main` and `automation/excor-competitiveness`; the automation branch is unmerged and remains referenced by the README readiness badge. No obsolete merged branch was available to delete.
+- **G4/G5:** partial. Signed-out direct audio and 480p video/audio decode/range checks pass on `dQw4w9WgXcQ`. The paired adapter passed 3/3 cold and 3/3 warm samples per implementation on that same ID/network, and a Java 25 runtime recheck again passed full decode and both range probes in 3/3 per adapter. Two separate eXcor ffplay runs observed backward/forward audio seeking on that ID/network. Earlier runs on four additional IDs showed InnerTubeX 3/3 full-decode/range passes while eXcor was access-blocked before media in 3/3; a later aqz-KE-bpKQ rerun passed eXcor full decode and both HTTP range probes in 1/3 attempts against InnerTubeX 3/3, with eXcor blocked before media in its other two attempts. On `M7lc1UVf-VE`, eXcor was blocked before media in 3/3; InnerTubeX passed both range probes but timed out during full decode in 3/3 after 73,728 bytes per sample. These are access or timeout outcomes, not extra shared media passes. Signed-out Android 8.0/API 26 and Android 16/API 36 previews rendered 720p video on that ID; they did not verify full decode or player seeks and have no InnerTubeX Android counterpart. A signed-out Android 16/API 36 HLS attempt on `dQw4w9WgXcQ` returned `UNPLAYABLE` before a manifest, so Media3 did not start. A TVHTML5-only run fetched the player script once, then returned `The page needs to be reloaded.` before media, with no ciphered playback evidence. More eligible videos/networks, ciphered playback, video player seeks, successful HLS playback and InnerTubeX player-seek comparison remain open; see `PLAYBACK_EVIDENCE_MATRIX.md` and the sanitized reports under `modules/samples/black-box-comparison/results/`.
+- **G6:** blocked at 0/20. The 2026-11-13 primary-source recheck found partial UMP documentation but no complete independent service contract or authorized exchange/decode/seek fixture. Do not copy competitor implementation or infer missing transport details.
+- **G8:** partial. A signed-out live extraction recovered after one locally injected 503 before the player POST, then fully decoded audio and passed a midpoint HTTP range read. This did not simulate an upstream YouTube/network fault or live cancellation; see `modules/samples/black-box-comparison/results/owner-home-2026-11-13-live-503-recovery.md`.
+- **G10:** partial. Local publication is verified, but remote publishing and announcement require owner authorization.
+- **G11:** partial. The 11:32 UTC paired run after lazy watch-page fetching passed full decode and both HTTP ranges in 3/3 attempts per adapter and phase. First-media p50/p95 was 357/438 ms vs 1,344/1,662 ms cold, and 98/106 ms vs 168/187 ms warm (eXcor vs InnerTubeX). A separate Temurin JDK 17.0.20.1 run also passed full 3,507,483-byte decode and both ranges in 3/3 cold and 3/3 warm attempts per adapter; cold first-media p50/p95 was 460/528 ms vs 1,359/1,447 ms, warm was 125/139 ms vs 185/193 ms. Both are one video/network from a dirty worktree and excluded from readiness scoring. InnerTubeX request counts remain incomplete; the player-seek harnesses differ. No representative benchmark or broad reliability claim is supported. The JDK 17 second-ID rerun on aqz-KE-bpKQ was ACCESS_DENIED for eXcor in 3/3 while InnerTubeX decoded and passed ranges in 3/3; the earlier JDK 25 run had eXcor pass only 1/3.
+- **G12:** partial. The JVM/Android clone disables a host OkHttp cookie jar while preserving explicit session cookies; the localhost regression and supported JVM/Android checks pass. Android preview cookies now migrate to AES-GCM storage under Android Keystore; API 26 and 36 instrumentation verifies migration, round-trip, tamper rejection and sign-out cleanup. Desktop preview cookies are session-only, and startup removes the legacy plaintext Preferences value; the desktop self-test passes. The latest local JVM rerun passed 257 tests with 19 opt-in skips; the desktop self-test and API 36 Android instrumentation also passed, while API 26 is prior evidence. Swift URLSession cookie-isolation fixes still need `swift test` on macOS, and the full release-side security/provenance audits remain open. A TruffleHog v3.99.8 no-verification filesystem scan found no key-shaped matches in working-tree fixtures and two synthetic URI/JWT findings in archived tests. Its current Git-history scan found 29 unverified findings: 24 API-key-detector hits in three historical YouTube capture paths and five synthetic URI/JWT test findings. No values were printed or verified; history was not rewritten, so those key-shaped values remain in repository objects. The sanitized historical fixture copies are now tracked under `modules/legacy/fixtures/`; Git history was not rewritten. Strix is installed locally, but Docker and model/API configuration are absent; no source was uploaded to Strix Cloud.
+- No real account credentials, signed URLs, raw media captures, access-challenge bypasses or competitor implementation source were used in this work.
 
 ## Next action
 
-Continue the broader security review and track issue #78's owner-authorized playback matrix. Keep G4/G5/G6 unchanged until independently repeatable, owner-authorized playback evidence exists. Preserve the Apache-2.0 clean-room boundary.
+Expand the matched comparison across additional eligible videos and networks, test Swift cookie isolation on macOS, and continue the release-security/provenance review. Expand issue #78 on owner-authorized media; video player seeks, mobile-data playback, HLS and ciphered playback remain open. Keep G4/G5/G6/G8/G10/G11/G12 open until their own evidence passes; never treat HTTP range probes as player seeks or access denials as extractor failures. Preserve the Apache-2.0 clean-room boundary and do not publish remotely without owner authorization.
 
 ## Historical handoff (written 2026-11-03)
 
@@ -69,8 +71,8 @@ The primary benchmark is InnerTubeX; YouTube.js and NewPipeExtractor are seconda
 
 **Clean-room and content:**
 - Clean room only. Never read, copy, translate or import GPL/LGPL/AGPL extractor code. InnerTubeX is GPL-3.0: its README and black-box behaviour may guide requirements; its code may not.
-- yt-dlp (Unlicense) is fine as a reference. Its EJS solver is vendored in `cleanroom-src/ejs`.
-- Don't access `bxanedot/vyonex` or `bxanedot/vyon`. Don't copy legacy code from `src/`.
+- yt-dlp (Unlicense) is fine as a reference. Its EJS solver is vendored in `modules/cleanroom/ejs`.
+- Don't access `bxanedot/vyonex` or `bxanedot/vyon`. Don't copy legacy code from `modules/legacy/`.
 
 **Security:**
 - Never bypass bot checks, captchas, consent screens, DRM or access restrictions.
@@ -88,27 +90,30 @@ The primary benchmark is InnerTubeX; YouTube.js and NewPipeExtractor are seconda
 
 | Path | What |
 |---|---|
-| `cleanroom-src/` | The library: `commonMain`, `jvmCommonMain` (JVM and Android), `iosMain`, tests, `ejs/` |
+| `modules/cleanroom/` | The library: `commonMain`, JVM and Android sources, `iosMain`, tests and synthetic fixtures |
 | `api/` | Published Kotlin ABI baselines and the Swift package API checker in `swift-check/` |
-| `preview/` | Grouped unpublished preview apps; Gradle task names remain `:preview-android` and `:preview-desktop` |
-| `preview/android/` | Preview app, debug APK (Compose, Media3). YouTube Music and YouTube search with filters, album, playlist and artist pages, details, play audio and video, downloads to Downloads/eXcor (`TrackJoiner`, `Saver`), formats, log. `src/androidTest`: `JoinCheck`, a plain Instrumentation run by CI |
-| `preview/desktop/` | Preview app, Swing. The same browsing; `packageApp` uses jpackage to build `eXcor Preview.exe` with a bundled runtime, plus an installer when WiX is present. `--self-test <file>` checks the package |
-| `preview/common/` | Kotlin sources compiled into both preview apps: the browsing model (`Browse.kt`) and range downloads (`Download.kt`). No Android or Swing types |
-| `samples/jvm-quickstart/` | A standalone consumer that installs the library the way the README says |
-| `swift/` | The `eXcorKit` Swift package |
-| `docs/` | `EXCOR_ENGINEERING_AUDIT.md`, `release-gates.json` (G1–G12), `FEATURE_MATRIX.md`, `COMPETITOR_MATRIX.md`, `PERFORMANCE.md`, `ERROR_HANDLING.md`, `CLEAN_ROOM.md`, `PROVENANCE.md` and others |
-| `src/`, `ejs/` (root) | The quarantined historical engine. **Nothing compiles it.** Leave it alone until the provenance audit |
-| `fixtures/` | Test fixtures, all hand-written or redacted |
+| `modules/platforms/preview/` | Unpublished Android and desktop previews; Gradle task names remain `:preview-android` and `:preview-desktop` |
+| `modules/platforms/preview/android/` | Compose and Media3 preview APK, instrumentation tests, search, music, playback, downloads, formats and logs |
+| `modules/platforms/preview/desktop/` | Swing preview; `packageApp` uses jpackage and a bundled runtime; `--self-test` checks startup and legacy preference cleanup |
+| `modules/platforms/preview/common/` | Browse model and range downloads shared by the preview apps |
+| `modules/samples/` | Black-box comparison harness and standalone JVM quickstart |
+| `modules/platforms/swift/` | The separate `eXcorKit` Swift package |
+| `modules/legacy/` | Preserved historical material and captured service responses, excluded from the clean-room build |
+| `docs/` | Feature and competitor matrices, release gates, performance, error handling, clean-room and provenance records |
 
 The music-player apps (`app-core`, `android-app`, `desktop-app`, `ios-app`) and `historical-engine` were removed on 2026-11-03 at the owner's request. Don't bring them back.
 
 ## Build and test
 
-You need JDK 27 (Gradle toolchains) and, for the APK, the Android SDK (`ANDROID_HOME`).
+You need JDK 21 (Gradle toolchains) and, for the APK, the Android SDK (`ANDROID_HOME`).
 
 ```bash
-# Library: all targets plus the offline suite (165 tests, 17 opt-in skipped, 0 failed at handoff)
+# Library: current offline suite (257 tests, 19 opt-in skipped, 0 failed)
 ./gradlew :jvmTest :assembleAndroidMain :compileKotlinIosArm64 :compileKotlinIosSimulatorArm64 :compileKotlinIosX64 :compileCommonMainKotlinMetadata
+# ABI and consumer checks
+./gradlew :checkKotlinAbi :preview-android:compileDebugKotlin
+./gradlew publishToMavenLocal
+./gradlew -p modules/samples/jvm-quickstart installDist
 # iOS tests and frameworks: macOS only (see the macos job in .github/workflows/ci.yml)
 
 # Live checks (real network)
@@ -124,7 +129,7 @@ EXCOR_BENCH=1 EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LiveVideoInfoTes
 ./gradlew :preview-desktop:packageApp -PpreviewPackageType=exe   # Windows installer; needs WiX
 
 # Installability
-./gradlew publishToMavenLocal && ./gradlew -p samples/jvm-quickstart run
+./gradlew publishToMavenLocal && ./gradlew -p modules/samples/jvm-quickstart run
 ```
 
 On Windows, use `gradlew.bat`, and `set EXCOR_LIVE=1` (cmd) or `$env:EXCOR_LIVE=1` (PowerShell).
@@ -145,11 +150,11 @@ Each push makes two runs (push and PR). One fully green run on the head commit i
 
 | Gate | Status | Note |
 |---|---|---|
-| G1 preserved, G2 build, G3 InnerTube, G7 YouTube Music, G9 usability | Passing | G7: songs and albums were withheld from the cloud network, so they were never observed live |
+| G1 preserved, G2 build, G3 InnerTube, G7 YouTube Music, G9 usability | Passing | G7: songs and albums passed owner-network live checks; one artist album-shelf pagination flow also passed on 2026-11-13 |
 | G4 player compatibility | Partial | The VISIONOS path is verified. The player-script path (signature and n) is untested live, because the watch page was captcha'd |
 | G5 streaming | Partial | Audio, video (480p and 1080p) and the format list are verified for `dQw4w9WgXcQ`; most other videos were bot-checked from the cloud |
-| G6 SABR/UMP | Blocked | Offline framing and response assembly exist; there is no complete independent SABR service contract or network/playback transport, and the direct URLs play |
-| G8 reliability | Partial | Typed failures, bounded retries, WARN diagnostics; no live fault injection |
+| G6 SABR/UMP | Blocked | The offline UMP decoder now has a 16 MiB cumulative per-response byte cap across feeds; JVM tests and iOS arm64 compilation pass. There is no complete independent SABR service contract or network/playback transport, and direct URLs play. |
+| G8 reliability | Partial | One signed-out extraction recovered after a locally injected 503, then passed full decode and a midpoint HTTP 206; upstream faults and live cancellation remain unverified |
 | G10 release packaging | Partial | Local publish works; no remote release is authorized |
 | G11 competitive analysis | Partial | `docs/COMPETITOR_MATRIX.md` |
 | G12 security | Partial | The OSV scan gates on shipped dependencies; tooling findings are report-only |
@@ -172,10 +177,10 @@ Each push makes two runs (push and PR). One fully green run on the head commit i
 
 ## Next tasks, in order
 
-1. **Run the live checks on the owner's normal network:** `LiveVideoInfoTest`, `LivePlaybackTest`, `LiveMusicTest`. Two cloud containers have now given the same answers, so only a non-cloud network can move G4, G5 and G7.
+1. **Continue the owner-network playback matrix:** `LivePlaybackTest` and `LiveMusicTest`; rerun `LiveVideoInfoTest` when metadata changes. YouTube Music songs/albums and one artist album-discography flow have passed live checks, while G4 and G5 still need broader playback evidence.
    - If many more videos play there, `publicMusicVideosReturnRangeReadableAudio` (it fails on `kJQP7kiw5Fk` in the cloud) should pass. Update G5 and the docs with exactly what you measured.
    - If the watch page loads, the player-script path (TVHTML5, signature and `n`) can finally be checked live. That is G4.
-   - If YouTube Music offers Songs and Albums there, verify them. That is G7.
+   - Expand the YouTube Music album-shelf check to more artists and networks; Singles & EPs remain unverified. This is broader evidence, not a current G7 blocker.
 2. **Preview apps: get the owner's verdict on the new build.** On 2026-11-03 the owner tried the APK on their phone. Play audio failed with "Sign in to confirm you're not a bot", search had no artist, playlist, album or song filters, and there were no downloads. The filters, album/playlist/artist pages and Android downloads are now built. Still open:
    - whether the downloads work on the owner's phone: their network bot-checks playback, so only a video YouTube serves there can be downloaded;
    - the bot check itself: a signed-in session or a host-supplied PO token (`TokenProvider`) are the legitimate routes. Ask the owner before building either; never bypass the check.

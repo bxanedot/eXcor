@@ -2,14 +2,16 @@
 
 ## Build boundary
 
-The root Gradle project publishes the draft KMP library from `cleanroom/`. Its public Kotlin API is in `com.excor`. The preserved `legacy/src/` implementation is not compiled at all. The preview apps (`preview-android`, `preview-desktop`) are separate unpublished modules under `platforms/preview/` that use the library.
+The root Gradle project publishes the draft KMP library from `modules/cleanroom/`. Its public Kotlin API is in `com.excor`. The preserved `modules/legacy/src/` implementation is not compiled at all. The preview apps (`preview-android`, `preview-desktop`) are separate unpublished modules under `modules/platforms/preview/` that use the library.
 
 ## Repository layout
 
-- `cleanroom/` is the active clean-room Kotlin Multiplatform source tree selected by Gradle.
-- `legacy/src/` and `legacy/ejs/` retain the old, uncompiled implementation and its bundled files.
-- `platforms/preview/` contains the Android and desktop preview apps; their Gradle project IDs remain `:preview-android` and `:preview-desktop`.
-- `platforms/swift/` contains the separate native Swift package.
+- `api/` holds the Kotlin ABI validation baseline used by Gradle.
+
+- `modules/cleanroom/` is the active clean-room Kotlin Multiplatform source tree selected by Gradle.
+- `modules/legacy/src/` and `modules/legacy/ejs/` retain the old, uncompiled implementation and its bundled files.
+- `modules/platforms/preview/` contains the Android and desktop preview apps; their Gradle project IDs remain `:preview-android` and `:preview-desktop`.
+- `modules/platforms/swift/` contains the separate native Swift package.
 - `docs/maintainers/` keeps the source brief, open questions, benchmark notes, and dated handoff records out of the repository root.
 
 ## Request path

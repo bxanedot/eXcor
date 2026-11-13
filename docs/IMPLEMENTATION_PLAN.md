@@ -1,10 +1,10 @@
 # eXcor implementation plan
 
-This plan follows the user's master engineering plan and the current clean-room repository boundary. The detailed catalog work is in [`superpowers/plans/2026-10-29-metadata-catalog.md`](superpowers/plans/2026-10-29-metadata-catalog.md). Do not include preserved historical source in the clean-room artifact.
+This plan follows the user's master engineering plan and the current clean-room repository boundary. Current competitive work is tracked in [`superpowers/plans/2026-11-10-excor-competitor-plan.md`](superpowers/plans/2026-11-10-excor-competitor-plan.md). Do not include preserved historical source in the clean-room artifact.
 
 ## Phase 0 — repository audit and baseline
 
-The active root build uses `cleanroom/`, plus a separate native Swift package under `platforms/swift/`. Current `main` CI is green. The provenance and functional audit explicitly excludes historical implementation files because the user previously prohibited opening them; whole-repository provenance therefore remains unresolved. See [`REPOSITORY_AUDIT.md`](REPOSITORY_AUDIT.md).
+The active root build uses `modules/cleanroom/`, plus a separate native Swift package under `modules/platforms/swift/`. Current `main` CI is green. The provenance and functional audit explicitly excludes historical implementation files because the user previously prohibited opening them; whole-repository provenance therefore remains unresolved. See [`REPOSITORY_AUDIT.md`](REPOSITORY_AUDIT.md).
 
 ## Phase 1 — stable library core
 

@@ -26,7 +26,7 @@ The chosen approach means the root KMP build will compile the new clean-room sou
 - Shared parsing, URL allowlist, player selection, response models and cache/exclusion behavior: common Kotlin source and focused `commonTest` cases.
 - JVM Ktor/OkHttp transport and atomic three-entry player cache: JVM source and tests.
 - Player JavaScript preparation: QuickJS-KT, an explicitly license-checked yt-dlp EJS solver bundle, and a synthetic deterministic challenge fixture because live YouTube access is blocked in this environment.
-- Offline fixtures and tests: `fixtures/cleanroom/`, shared by Kotlin and Swift; synthetic test inputs are labeled as such. Capture tests only use responses actually obtained from YouTube.
+- Offline fixtures and tests: `modules/cleanroom/fixtures/`, shared by Kotlin and Swift; synthetic test inputs are labeled as such. Capture tests only use responses actually obtained from YouTube.
 - Swift actor, Foundation `URLSession`, `JavaScriptCore`, Swift tests and the macOS CI job: `swift/`.
 - Append source, license, commit/date and usage details to `PROVENANCE.md`; append the YouTube egress failure and any unresolved behavior to `QUESTIONS.md`.
 

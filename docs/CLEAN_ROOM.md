@@ -1,6 +1,6 @@
 # eXcor clean-room policy
 
-The `cleanroom/` Kotlin implementation is an independent implementation of the user-provided brief, with owner-approved eXcor naming amendments. It is kept separate from the repository's earlier implementation source.
+The `modules/cleanroom/` Kotlin implementation is an independent implementation of the user-provided brief, with owner-approved eXcor naming amendments. It is kept separate from the repository's earlier implementation source.
 
 ## Source rules
 
@@ -13,15 +13,15 @@ The `cleanroom/` Kotlin implementation is an independent implementation of the u
 
 ## Repository boundary
 
-The new Kotlin source is selected from `cleanroom/` by the root Gradle build. Existing `legacy/src/` and `legacy/ejs/` content is retained as a separate historical implementation. Its prior provenance record is not a legal clearance and does not establish that it is part of the clean-room build. Nothing compiles it: the apps that used it, and the `historical-engine/` module that built it for them, were removed on 2026-11-03. The preview apps that replaced them use only the clean-room library.
+The new Kotlin source is selected from `modules/cleanroom/` by the root Gradle build. Existing `modules/legacy/src/` and `modules/legacy/ejs/` content is retained as a separate historical implementation. Its prior provenance record is not a legal clearance and does not establish that it is part of the clean-room build. Nothing compiles it: the apps that used it, and the `historical-engine/` module that built it for them, were removed on 2026-11-03. The preview apps that replaced them use only the clean-room library.
 
-The old captured responses in `fixtures/` are not used by the clean-room tests. New tests use synthetic data in `fixtures/cleanroom/`. The old captures contain third-party content and remain subject to the limits described in `fixtures/README.md` and `maintainers/QUESTIONS.md`.
+The old captured responses in `modules/legacy/fixtures/` are not used by the clean-room tests. New tests use synthetic data in `modules/cleanroom/fixtures/`. The old captures contain third-party content and remain subject to the limits described in `modules/legacy/fixtures/README.md` and `maintainers/QUESTIONS.md`.
 
 ## Naming amendment
 
 The source brief's naming amendment controls the new deliverables: Kotlin package `com.excor`, artifact `com.excor:eXcor`, XCFramework `eXcor`, and separate Swift package/module `eXcorKit`. API names in sections 2–8 use this mapping. Section 1 retains exact identifiers for forbidden historical sources. Existing historical implementations remain separate and are not thereby API-compatible with the clean-room deliverables.
 
-## Music engine (`cleanroom/commonMain/kotlin/com/excor/music/`, 2026-11-01)
+## Music engine (`modules/cleanroom/commonMain/kotlin/com/excor/music/`, 2026-11-01)
 
 The music engine was written from:
 - the providers' official documentation (Spotify Web API reference and its 2026 changelogs and migration guide, Apple Music API and MusicKit documentation, Deezer's public API responses);
@@ -35,10 +35,10 @@ The reference projects named in the brief were read only at README level:
 
 No code of theirs was opened.
 
-**Disclosure.** The engine was implemented by the same assistant session that earlier wrote, and read in full, the historical engine in `legacy/src/`, including that engine's Spotify, Deezer and Apple Music catalog code. During this work `legacy/src/` was not opened or consulted. The music engine's structure and tests were written afresh against the sources above.
+**Disclosure.** The engine was implemented by the same assistant session that earlier wrote, and read in full, the historical engine in `modules/legacy/src/`, including that engine's Spotify, Deezer and Apple Music catalog code. During this work `modules/legacy/src/` was not opened or consulted. The music engine's structure and tests were written afresh against the sources above.
 
-However, the separation rests on that working practice, not on an implementer who never saw the historical code. Anyone who needs strict implementer isolation should treat this package as not meeting it, and have it reviewed or reimplemented by someone who has not seen `legacy/src/`.
+However, the separation rests on that working practice, not on an implementer who never saw the historical code. Anyone who needs strict implementer isolation should treat this package as not meeting it, and have it reviewed or reimplemented by someone who has not seen `modules/legacy/src/`.
 
-Its fixtures are synthetic test inputs stored under `fixtures/cleanroom/`. The per-file manifest maps them to their offline tests and records the declared origin. This is a process record, not independent proof of authorship or legal clearance.
+Its fixtures are synthetic test inputs stored under `modules/cleanroom/fixtures/`. The per-file manifest maps them to their offline tests and records the declared origin. This is a process record, not independent proof of authorship or legal clearance.
 
-`VideoInfo.kt`, `YouTubeSearch.kt`, `YouTubePlaylist.kt`, `YouTubeChannel.kt`, `YouTubeWatch.kt`, `YouTubeMusic.kt` and `InnerTube.kt` (YouTube metadata, search, playlists, channels, related videos and comments, 2026-11-01) fall under the same disclosure. It reads YouTube's own player response, using fields observed live (`videoDetails`, `microformat.playerMicroformatRenderer`, `playabilityStatus`), and reuses the clean-room client identities. `legacy/src/` and InnerTubeX were not opened.
+`VideoInfo.kt`, `YouTubeSearch.kt`, `YouTubePlaylist.kt`, `YouTubeChannel.kt`, `YouTubeWatch.kt`, `YouTubeMusic.kt` and `InnerTube.kt` (YouTube metadata, search, playlists, channels, related videos and comments, 2026-11-01) fall under the same disclosure. It reads YouTube's own player response, using fields observed live (`videoDetails`, `microformat.playerMicroformatRenderer`, `playabilityStatus`), and reuses the clean-room client identities. `modules/legacy/src/` and InnerTubeX were not opened.

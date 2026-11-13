@@ -15,5 +15,5 @@ rootProject.name = "eXcor"
 // Preview apps for trying the library by hand: an Android APK and a Windows EXE. Not published.
 include(":preview-android")
 include(":preview-desktop")
-project(":preview-android").projectDir = file("platforms/preview/android")
-project(":preview-desktop").projectDir = file("platforms/preview/desktop")
+project(":preview-android").projectDir = file("modules/platforms/preview/android")
+project(":preview-desktop").projectDir = file("modules/platforms/preview/desktop")

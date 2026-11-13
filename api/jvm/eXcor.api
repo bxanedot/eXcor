@@ -5,6 +5,7 @@ public final class com/excor/Excor {
 	public static synthetic fun channel$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;Lcom/excor/ExcorYouTubeChannelTab;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun channelAbout (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun chapters (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun close ()V
 	public final fun comments (Ljava/lang/String;Ljava/lang/String;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun comments$default (Lcom/excor/Excor;Ljava/lang/String;Ljava/lang/String;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun exclude (Ljava/lang/String;Ljava/lang/String;)V

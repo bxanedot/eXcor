@@ -2,7 +2,7 @@
 
 Audit base: `main` at `e12ba98e6fd57c7d53ea8557197e7365d04da664` (2026-10-29). Branch `feature/catalog-metadata` adds an experimental metadata catalog prototype. This is a product and build inventory, not a legal opinion or release approval.
 
-> **Layout note (2026-11-12):** This audit is a snapshot from 2026-10-29. Its path names reflect that date; current locations are documented in [the architecture guide](ARCHITECTURE.md).
+> **Layout note (2026-11-12):** This audit is a snapshot from 2026-10-29. Since then, active code, platform packages, and samples were grouped under `modules/`; the current layout is documented in [the architecture guide](ARCHITECTURE.md).
 
 ## Build boundary and layout
 
@@ -10,7 +10,7 @@ Audit base: `main` at `e12ba98e6fd57c7d53ea8557197e7365d04da664` (2026-10-29). B
 - The Kotlin API at the audit base exposes YouTube audio extraction, audio candidates, session/token host interfaces, and stream state. Branch `feature/catalog-metadata` adds experimental catalog models and Apple/iTunes and Spotify adapters for search, URL lookup, album tracks, and artist albums. Deezer remains unsupported and YouTube Music remains restricted.
 - `swift/` contains the separate `eXcorKit` Swift package. Its public actor currently provides YouTube extraction and audio-candidate operations; it has no music-catalog provider API.
 - `src/` and other preserved implementation areas are outside the clean-room root source-set mapping, and nothing compiles them. The former app modules (`app-core/`, `android-app/`, `desktop-app/`, `ios-app/`, `historical-engine/`) were removed on 2026-11-03; `preview/android/` and `preview/desktop/` use the root library.
-- `fixtures/cleanroom/` supplies synthetic inputs to the clean-room tests. Older fixtures are not inputs to the current root library build.
+- `cleanroom/fixtures/` supplies synthetic inputs to the clean-room tests. Older fixtures are not inputs to the current root library build.
 
 ## Clean-room boundary
 
@@ -33,4 +33,4 @@ The active Kotlin implementation's source record is in the clean-room section of
 5. An authorized YouTube Music catalog path covering music-specific search, songs, albums, and artists has not been verified; private undocumented endpoints remain out of scope.
 6. The app modules are not integrated against the new root API, and the excluded source's legal/provenance audit remains open.
 
-The ordered work is tracked in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) and [`superpowers/plans/2026-10-29-metadata-catalog.md`](superpowers/plans/2026-10-29-metadata-catalog.md).
+The ordered work is tracked in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) and the [current competitor plan](superpowers/plans/2026-11-10-excor-competitor-plan.md).

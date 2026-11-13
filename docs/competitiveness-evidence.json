@@ -2,7 +2,7 @@
   "schema_version": 1,
   "target": "InnerTubeX",
   "method": "Evidence-attested engineering readiness, not a live playback success rate",
-  "last_reviewed_utc": "2026-11-11",
+  "last_reviewed_utc": "2026-11-13",
   "criteria": [
     {
       "id": "metadata_browsing",
@@ -54,10 +54,11 @@
       "points": 6,
       "state": "verified",
       "gate": "G5",
-      "label": "Full direct-audio decode and range seek",
+      "label": "Full direct-audio decode and mid-file HTTP range read",
       "evidence_paths": [
         "docs/release-gates.json",
-        "cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
+        "modules/cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-12-range-full.md"
       ]
     },
     {
@@ -66,10 +67,10 @@
       "points": 5,
       "state": "verified",
       "gate": "G5",
-      "label": "Direct video/audio mux, decode and seek",
+      "label": "Direct video/audio mux, decode and mid-file HTTP range read",
       "evidence_paths": [
         "docs/release-gates.json",
-        "cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
+        "modules/cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
       ]
     },
     {

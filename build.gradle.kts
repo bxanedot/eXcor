@@ -1,3 +1,5 @@
+import java.util.zip.ZipFile
+import org.gradle.api.tasks.bundling.Zip
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -36,7 +38,7 @@ allprojects {
 // The challenge solver scripts must reach every target, and Kotlin/Native has no resource
 // loading, so they are compiled in as string constants.
 val generateEjs = tasks.register("generateEjs") {
-    val input = layout.projectDirectory.dir("cleanroom/ejs")
+    val input = layout.projectDirectory.dir("modules/cleanroom/ejs")
     val output = layout.buildDirectory.dir("generated/ejs")
     inputs.dir(input)
     outputs.dir(output)
@@ -69,9 +71,9 @@ kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
     abiValidation()
 
-    jvmToolchain(27)
+    jvmToolchain(21)
     jvm {
-        compilerOptions { jvmTarget = JvmTarget.JVM_26 }
+        compilerOptions { jvmTarget = JvmTarget.JVM_17 }
         // TestNG (Apache-2.0) instead of the default JUnit 4 (EPL-1.0), so every dependency is permissive.
         testRuns.named("test") { executionTask.configure { useTestNG() } }
     }
@@ -109,7 +111,7 @@ kotlin {
     sourceSets {
         // Keep this library build isolated from the existing application implementation.
         configureEach {
-            kotlin.setSrcDirs(listOf("cleanroom/$name"))
+            kotlin.setSrcDirs(listOf("modules/cleanroom/$name"))
         }
         commonMain {
             kotlin.srcDir(generateEjs)
@@ -132,9 +134,9 @@ kotlin {
     }
 }
 
-// Tests read the shared top-level fixtures/ folder by absolute path, which also works from the iOS simulator.
+// Tests read the shared clean-room fixture tree by absolute path, which also works from the iOS simulator.
 val generateFixturesPath = tasks.register("generateFixturesPath") {
-    val path = file("fixtures/cleanroom").absolutePath
+    val path = file("modules/cleanroom/fixtures").absolutePath
     val output = layout.buildDirectory.dir("generated/fixtures")
     inputs.property("path", path)
     outputs.dir(output)
@@ -151,4 +153,39 @@ tasks.withType<Test>().configureEach {
 }
 tasks.withType<AbstractTestTask>().configureEach {
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
+
+tasks.withType<Zip>().configureEach {
+    from(files("LICENSE", "NOTICE")) { into("META-INF") }
+    doLast {
+        ZipFile(archiveFile.get().asFile).use { archive ->
+            listOf("LICENSE", "NOTICE").forEach { notice ->
+                check(archive.getEntry("META-INF/$notice") != null) {
+                    "${archive.name} is missing META-INF/$notice"
+                }
+            }
+        }
+    }
+}
+
+val releaseXcframework = layout.buildDirectory.dir("XCFrameworks/release/eXcor.xcframework")
+val includeReleaseXcframeworkNotices = tasks.register("includeReleaseXcframeworkNotices") {
+    val notices = files("LICENSE", "NOTICE")
+    inputs.files(notices)
+    outputs.files(
+        releaseXcframework.map { it.file("LICENSE") },
+        releaseXcframework.map { it.file("NOTICE") },
+    )
+    onlyIf { releaseXcframework.get().asFile.isDirectory }
+    doLast {
+        copy {
+            from(notices)
+            into(releaseXcframework.get().asFile)
+        }
+        check(releaseXcframework.get().file("LICENSE").asFile.isFile)
+        check(releaseXcframework.get().file("NOTICE").asFile.isFile)
+    }
+}
+tasks.matching { it.name == "assembleEXcorReleaseXCFramework" }.configureEach {
+    finalizedBy(includeReleaseXcframeworkNotices)
 }
