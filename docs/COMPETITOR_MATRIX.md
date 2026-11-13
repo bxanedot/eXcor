@@ -7,7 +7,7 @@ eXcor is compared on capabilities that are documented or can be observed from ou
 - **YouTube.js:** public README, [Getting Started](https://ytjs.dev/guide/getting-started), [API docs](https://ytjs.dev/api/), and [npm package metadata](https://www.npmjs.com/package/youtubei.js), checked 2026-11-11. The separate adapter pins MIT-licensed `youtubei.js@18.3.0`, uses direct-URL audio only, and does not execute player JavaScript.
 - **NewPipeExtractor:** official README, v0.27.1 release notes and v0.27.1 Javadocs, checked 2026-11-11.
 
-**Latest exact-main live comparison — 2026-11-13, eXcor main `4e5e67d`:** signed-out eXcor 0.1.4 and InnerTubeX 0.11.6 adapter 0.1.3 ran three cold and three same-instance warm full-decode/range samples per video on one Windows home network.
+**Earlier two-video exact-main live comparison — 2026-11-13, eXcor main `4e5e67d`:** signed-out eXcor 0.1.4 and InnerTubeX 0.11.6 adapter 0.1.3 ran three cold and three same-instance warm full-decode/range samples per video on one Windows home network.
 
 | Video | eXcor | InnerTubeX | First-media p50/p95 (cold / warm) |
 |---|---|---|---|
@@ -15,6 +15,8 @@ eXcor is compared on capabilities that are documented or can be observed from ou
 | `kJQP7kiw5Fk` | `ACCESS_DENIED` before media in 6/6 | 6/6 full-decode and range passes | No eXcor media timing; InnerTubeX 1,469/1,966 ms, 173/174 ms |
 
 The result exposes both a shared playable case and a repeatable access differential. It is one network with different adapter extraction paths, not a general reliability/performance ranking. HTTP range probes are not player seeks; InnerTubeX request counts are incomplete. The run does not measure video playback, HLS, SABR/UMP, ciphered playback, or signed-in sessions. See the per-video [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d-report.json) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.jsonl).
+
+**Latest exact-main follow-up — 2026-11-13, eXcor main `d3d5d1a`:** on stable public video `aqz-KE-bpKQ`, eXcor was `ACCESS_DENIED` before media in all three cold and all three warm samples. InnerTubeX passed full audio decode and forward/backward HTTP byte-range probes in all six samples. First-media p50/p95 was 1,505/2,111 ms cold and 177/362 ms warm; decode p50/p95 was 1,506/1,606 ms cold and 1,414/1,463 ms warm. This is a one-network direct-audio access differential, not a player-seek or broad reliability/performance result. See the exact-main [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-aqz-recheck.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-aqz-recheck-report.json), and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-aqz-recheck.jsonl).
 
 | Capability | InnerTubeX (public docs) | eXcor (evidence) |
 |---|---|---|
