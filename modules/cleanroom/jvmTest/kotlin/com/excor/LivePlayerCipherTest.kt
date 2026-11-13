@@ -36,6 +36,44 @@ class LivePlayerCipherTest {
     }
 
     @Test
+    fun signatureCipherChallengeIsEligibleWithoutNParameter() {
+        val challenge = assertNotNull(
+            playerChallenge(
+                PlayerFormat(
+                    url = "",
+                    signatureCipher = "url=https%3A%2F%2Frr1---sn-a5mekn7e.googlevideo.com%2Fvideoplayback%3Fexpire%3D1893456000&s=synthetic_signature_challenge&sp=sig",
+                    mimeType = "audio/webm; codecs=opus",
+                    bitrate = 128_000,
+                    averageBitrate = null,
+                    channels = null,
+                    sampleRate = null,
+                ),
+            ),
+        )
+
+        assertEquals("synthetic_signature_challenge", challenge.encryptedSignature)
+        assertEquals("sig", challenge.signatureParameter)
+        assertNull(challenge.nChallenge)
+    }
+
+    @Test
+    fun malformedNParameterDoesNotDowngradeSignatureChallenge() {
+        val challenge = playerChallenge(
+            PlayerFormat(
+                url = "",
+                signatureCipher = "url=https%3A%2F%2Frr1---sn-a5mekn7e.googlevideo.com%2Fvideoplayback%3Fexpire%3D1893456000%26n%3D&s=synthetic_signature_challenge&sp=sig",
+                mimeType = "audio/webm; codecs=opus",
+                bitrate = 128_000,
+                averageBitrate = null,
+                channels = null,
+                sampleRate = null,
+            ),
+        )
+
+        assertNull(challenge)
+    }
+
+    @Test
     fun firstPartyPlayerTransformsProduceDecodableAudio() {
         if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
         if (runCatching { ProcessBuilder("ffmpeg", "-version").start().waitFor() }.getOrNull() != 0) {
@@ -73,7 +111,7 @@ class LivePlayerCipherTest {
                     )
                 val format = challenges.firstOrNull()
                     ?: throw SkipException(
-                        "No eligible audio player challenge was exposed (audio=${audioFormats.size}, signatureCipher=${audioFormats.count { it.signatureCipher != null }}, directN=${audioFormats.count { it.signatureCipher == null && playerChallenge(it) != null }})",
+                        "No eligible audio player challenge was exposed (audio=${audioFormats.size}, signatureCipher=${challenges.count { it.encryptedSignature != null }}, directN=${challenges.count { it.encryptedSignature == null && it.nChallenge != null }})",
                     )
 
                 val scriptPath = assertNotNull(page.playerResponse.playerScriptUrl, "The watch page did not identify a player script")
@@ -86,7 +124,7 @@ class LivePlayerCipherTest {
                     playerScript = playerScript,
                     preparedPlayer = null,
                     signatures = listOfNotNull(format.encryptedSignature),
-                    throttling = listOf(format.nChallenge),
+                    throttling = listOfNotNull(format.nChallenge),
                 ) ?: throw AssertionError("The current player script could not solve the observed audio challenges")
                 val mediaUrlBuilder = format.url.newBuilder().apply {
                     format.encryptedSignature?.let { encryptedSignature ->
@@ -95,11 +133,11 @@ class LivePlayerCipherTest {
                         setQueryParameter(format.signatureParameter ?: "signature", signature)
                     }
                 }
-                val transformedN = solved.throttling[format.nChallenge]
-                    ?: throw AssertionError("The current player script returned no n-transform result")
-                val mediaUrl = mediaUrlBuilder
-                    .setQueryParameter("n", transformedN)
-                    .build()
+                val mediaUrl = format.nChallenge?.let { nChallenge ->
+                    val transformedN = solved.throttling[nChallenge]
+                        ?: throw AssertionError("The current player script returned no n-transform result")
+                    mediaUrlBuilder.setQueryParameter("n", transformedN).build()
+                } ?: mediaUrlBuilder.build()
                 assertTrue(isAllowedPlaybackUrl(mediaUrl.toString()), "The transformed media URL failed Excor's URL policy")
 
                 val range = executeMediaRequest(http, mediaUrl, userAgent, "bytes=0-1023")
@@ -128,7 +166,7 @@ class LivePlayerCipherTest {
                     bytes
                 }
 
-                println("First-party player transform check passed: video=$videoId itag=${format.format.itag} signature=${format.encryptedSignature != null} n=true; HTTP range=$rangeCode; full FFmpeg decode=$decodedBytes bytes")
+                println("First-party player transform check passed: video=$videoId itag=${format.format.itag} signature=${format.encryptedSignature != null} n=${format.nChallenge != null}; HTTP range=$rangeCode; full FFmpeg decode=$decodedBytes bytes")
             }
         } finally {
             http.connectionPool.evictAll()
@@ -161,7 +199,9 @@ class LivePlayerCipherTest {
         val signatureParameter = if (query == null) null else {
             query.queryParameter("sp")?.takeIf { it.matches(Regex("[A-Za-z0-9_]{1,16}")) } ?: "signature"
         }
-        val nChallenge = url.queryParameter("n")?.takeIf { it.length in 1..MAX_CHALLENGE_LENGTH } ?: return null
+        val nChallenge = url.queryParameter("n")
+        if (nChallenge != null && nChallenge.length !in 1..MAX_CHALLENGE_LENGTH) return null
+        if (signature == null && nChallenge == null) return null
         if (!isAllowedPlaybackUrl(url.toString())) return null
         return PlayerChallenge(format, url, signature, signatureParameter, nChallenge)
     }
@@ -244,7 +284,7 @@ class LivePlayerCipherTest {
         val url: HttpUrl,
         val encryptedSignature: String?,
         val signatureParameter: String?,
-        val nChallenge: String,
+        val nChallenge: String?,
     )
 
     private companion object {

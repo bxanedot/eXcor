@@ -14,13 +14,14 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-13 17:58 UTC
+## Latest evidence checkpoint — 2026-11-13 18:22 UTC
 
-- The verifier change is at `4154f8e90095a62c5d45469300ed7afea8b1cc1f`; the evidence and README update is at `6da33c0e732ce84cc829eebee7fe7a592af934f0`. All nine exact-head CI jobs passed in [run 43475723632](https://github.com/bxanedot/eXcor/actions/runs/43475723632). The readiness refresh passed in [run 43475743099](https://github.com/bxanedot/eXcor/actions/runs/43475743099): 53/100, Release NO-GO.
-- The offline regression confirms a direct playable URL with an `n` query can qualify without `signatureCipher`; the verifier fetches the player script only after an eligible challenge is found. Four signed-out public IDs exposed neither `signatureCipher` nor direct-URL `n`, so all skipped before JavaScript/media requests. This is access evidence, not solver or transformed-playback evidence.
+- The verifier change is at `4154f8e90095a62c5d45469300ed7afea8b1cc1f`; the eight-case expansion ran at `fd423509d8624dc2ea7442597f66fba881478aa3`. All nine jobs passed on that exact head in [run 43478360693](https://github.com/bxanedot/eXcor/actions/runs/43478360693). The score refresh passed in [run 43478360547](https://github.com/bxanedot/eXcor/actions/runs/43478360547): 53/100, Release NO-GO.
+- The offline regression confirms a direct playable URL with an `n` query can qualify without `signatureCipher`; the verifier fetches the player script only after an eligible challenge is found. Twelve signed-out public IDs (four initial plus eight additional) exposed neither `signatureCipher` nor direct-URL `n`; every test skipped before JavaScript/media requests. This is access evidence, not solver or transformed-playback evidence.
+- A follow-up audit found the test-only verifier still required `n` for every signature cipher. It now accepts a valid signature-only cipher, applies `n` only when present, and rejects malformed empty `n` instead of downgrading it. The direct-URL `n`, signature-only and malformed-`n` focused JVM regressions pass; the live sample had no cipher entries and does not verify these transform paths.
 - Issue #78 remains open. There are no open PRs or obsolete merged branches. The only remote branches are `main` and the active `automation/excor-competitiveness` readiness branch. Current distribution is GPL-3.0-only; preserve the clean-room source boundary.
 
-**Next:** expand issue #78 across eligible videos and networks until a live signature or direct-`n` challenge reaches the solver, then verify transformed playback. Keep G4/G5 partial and release NO-GO until the required evidence is obtained.
+**Next:** find additional eligible videos and network conditions that expose a live signature or direct-`n` challenge, then verify transformed playback. Keep G4/G5 partial and release NO-GO until the required evidence is obtained.
 
 ## Previous verified checkpoint — 2026-11-11 13:52:57
 
