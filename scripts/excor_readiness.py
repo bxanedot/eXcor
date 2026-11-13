@@ -96,9 +96,9 @@ def github_ci(repository: str, sha: str, token: str = "") -> dict:
     if not isinstance(repository, str):
         return info
     owner, separator, name = repository.partition("/")
-    allowed = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-"
-    if (not separator or not owner or not name or owner in {".", ".."} or name in {".", ".."} or "/" in name
-            or any(character not in allowed for character in owner + name)):
+    component = r"[A-Za-z0-9_.-]{1,200}"
+    if (not separator or owner in {".", ".."} or name in {".", ".."}
+            or not re.fullmatch(component, owner) or not re.fullmatch(component, name)):
         return info
     if not re.fullmatch(r"[a-fA-F0-9]{40}", sha or ""):
         return info

@@ -74,6 +74,13 @@ class ReadinessScoreTest(unittest.TestCase):
                 self.assertEqual("unknown", github_ci(repository, "a" * 40)["status"])
                 connect.assert_not_called()
 
+    def test_ci_accepts_safe_repository_punctuation(self):
+        response = FakeResponse(200, b'{"workflow_runs":[]}')
+        connection = FakeConnection(response)
+        with patch("excor_readiness.http.client.HTTPSConnection", return_value=connection):
+            github_ci("owner-name/repo_name.v1", "a" * 40)
+        self.assertIn("/repos/owner-name/repo_name.v1/actions/workflows/ci.yml/runs?", connection.requests[0][1])
+
     def test_baseline_and_allocation(self):
         r = calculate(self.rubric, self.gates, ROOT)
         self.assertEqual(53, r["score"])
