@@ -2274,6 +2274,7 @@ final class com.excor/Excor { // com.excor/Excor|null[0]
     final val musicCatalog // com.excor/Excor.musicCatalog|{}musicCatalog[0]
         final fun <get-musicCatalog>(): com.excor.catalog/ExcorMusicCatalog // com.excor/Excor.musicCatalog.<get-musicCatalog>|<get-musicCatalog>(){}[0]
 
+    final fun close() // com.excor/Excor.close|close(){}[0]
     final fun exclude(kotlin/String, kotlin/String) // com.excor/Excor.exclude|exclude(kotlin.String;kotlin.String){}[0]
     final fun headersFor(kotlin/String): kotlin.collections/Map<kotlin/String, kotlin/String>? // com.excor/Excor.headersFor|headersFor(kotlin.String){}[0]
     final fun initialize() // com.excor/Excor.initialize|initialize(){}[0]

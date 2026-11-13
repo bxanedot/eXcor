@@ -3,9 +3,9 @@
 Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as subsystems change. **Verified** means a live check passes from this environment. **Tested** means offline tests only. **Blocked** means an external constraint prevents verification here.
 
 **Project facts:**
-- **Code:** Kotlin Multiplatform, package `com.excor`, coordinates `com.excor:eXcor:0.2.0`, built from `cleanroom/`.
-- **Targets:** JVM (JDK 26 bytecode), Android (minSdk 26, Java 17 bytecode), iOS arm64, simulator arm64 and x64, plus the XCFramework `eXcor`.
-- **Separate deliverables:** the `eXcorKit` Swift package under `platforms/swift/`, and the preview apps `preview-android` (APK) and `preview-desktop` (Windows EXE), both unpublished and built on the library.
+- **Code:** Kotlin Multiplatform, package `com.excor`, coordinates `com.excor:eXcor:0.2.0`, built from `modules/cleanroom/`.
+- **Targets:** JVM (Java 17 bytecode), Android (minSdk 26, Java 17 bytecode), iOS arm64, simulator arm64 and x64, plus the XCFramework `eXcor`.
+- **Separate deliverables:** the `eXcorKit` Swift package under `modules/platforms/swift/`, and the preview apps `preview-android` (APK) and `preview-desktop` (Windows EXE), both unpublished and built on the library.
 
 ## Subsystems
 
@@ -22,7 +22,7 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | Related videos, comments, chapters, credited songs | `YouTubeWatch.kt` | Verified | `relatedVideosAndComments`, `videoMetadataAndCrossProviderMatch` |
 | YouTube Music: search, suggestions, artists, playlists, radio | `YouTubeMusic.kt` | Verified | `youTubeMusicSearchArtistPlaylistAndRadio`, `YouTubeMusicTest` |
 | YouTube Music: songs, albums, discographies | `YouTubeMusic.kt` | Tested; Blocked live | Not offered here: no Songs or Albums filter, no `MPREb_` IDs, empty Releases tabs |
-| Player script and signature handling | `PlayerJs.kt`, `cleanroom/ejs` | Tested | `PlayerJsTest`; no playable response to apply it to here |
+| Player script and signature handling | `PlayerJs.kt`, `modules/cleanroom/ejs` | Tested | `PlayerJsTest`; no playable response to apply it to here |
 | Stream selection and URL validation | `Selection.kt`, `UrlPolicy.kt`, `UrlParameters.kt` | Tested | `SelectionTest`, `UrlPolicyTest` |
 | Direct audio streams | `ExcorEngine.kt`, `PlayerRequest.kt`, `Clients.kt` | Verified (for videos YouTube serves here) | `LivePlaybackTest.extractedAudioDecodesFullyAndSeeks`: full download, ffmpeg decode, duration match, mid-file seek. `EngineStateTest.extractionWorksWithoutTheWatchPageAndFollowsOnlyAllowedMediaRedirects`. Most videos remain bot-checked from here |
 | Video streams (video track plus matching audio) | `ExcorEngine.kt` (`extractVideo`), `Selection.kt` (`rankVideoFormats`), `PlayerModels.kt` | Verified (for videos YouTube serves here) | `LivePlaybackTest.extractedVideoAndAudioDecodeAndMux` (480p and 1080p H.264, ffmpeg mux and full decode, seek); `VideoSelectionTest`; `EngineStateTest.videoExtractionPairsTheBestPlayableVideoWithAudioInTheSameContainer` |
@@ -32,7 +32,7 @@ Baseline taken 2026-11-02 on `main` after bxanedot/eXcor#55; it is updated as su
 | Hashtag pages | — | Blocked | Robot check |
 | Music catalogs: Deezer, keyless Apple; matching; playlist conversion | `music/` | Verified | `LiveMusicTest` |
 | Spotify, full Apple Music API | `music/` | Tested | Need credentials |
-| Packaging and installability | `build.gradle.kts`, `samples/jvm-quickstart` | Verified | Full `publishToMavenLocal` on Linux. The sample installs through the README steps and runs live. Fixed: the shared metadata didn't compile (`RegexOption.DOT_MATCHES_ALL` isn't in common Kotlin), so the library couldn't be published until 2026-11-02 |
+| Packaging and installability | `build.gradle.kts`, `modules/samples/jvm-quickstart` | Verified | Full `publishToMavenLocal` on Linux. The sample installs through the README steps and runs live. Fixed: the shared metadata didn't compile (`RegexOption.DOT_MATCHES_ALL` isn't in common Kotlin), so the library couldn't be published until 2026-11-02 |
 | Session invalidation and secret redaction | `ExcorEngine.kt`, `Api.kt` | Tested | `EngineStateTest`; `ExcorSession.toString` hides cookies and visitor data |
 | Dependency vulnerabilities (OSV-Scanner 2.0.0 in CI) | `.github/workflows/ci.yml` | Verified | CI now gates the full root Gradle graph, the Node comparison adapter lockfile and the shipped-runtime subset. The post-remediation Gradle scans in run 43130621290 found no issues in 238 all-configuration packages or 115 shipped-runtime packages; the broader release-security review remains incomplete |
 | Benchmarks | `LiveVideoInfoTest.benchmark`, `LiveMusicTest.benchmark` | Verified | `docs/PERFORMANCE.md` (measured 2026-11-02) |

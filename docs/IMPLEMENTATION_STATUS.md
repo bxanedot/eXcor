@@ -1,31 +1,22 @@
-# eXcor implementation status
+# Implementation status
 
-Updated 2026-11-02, based on `main` after bxanedot/eXcor#53. This repository remains a draft SDK, not a verified public release. Nothing here is a legal clearance.
+Updated 2026-11-13. eXcor remains a draft SDK and the current release decision is **NO-GO**. The live [readiness report](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) measures evidence-backed release readiness, not playback success rate or a feature/performance percentage against InnerTubeX.
 
-## Current deliverables
+Use these as the current sources of detail:
 
-| Deliverable | State |
-|---|---|
-| Clean-room Kotlin YouTube audio engine | Implemented in `cleanroom/` with offline tests. Stream extraction can't be verified from this cloud environment: YouTube answers `LOGIN_REQUIRED` or `UNPLAYABLE` and a reCAPTCHA here, and eXcor does not work around it |
-| Clean-room YouTube metadata (`Excor`) | Live-verified 2026-11-02 with `EXCOR_LIVE=1`: video metadata, search with YouTube's own filters and Shorts, playlists, mixes, channels (Videos, Shorts, Live, Playlists, Posts tabs; About panel), related videos, comments (top and newest, replies), chapters, credited songs, suggestions, and `findOnYouTube` for tracks from other providers. Transcripts, hashtag pages, the caption track list and the Releases tab are blocked from this environment; see `FEATURE_MATRIX.md` |
-| Music engine (`Excor.music`) | Implemented in `cleanroom/commonMain/kotlin/com/excor/music/`: models, capabilities, matching, enrichment, playlist sync, audio-format and DRM reporting, OAuth/PKCE, LRC/TTML parsing |
-| Deezer metadata | Live-verified 2026-11-02 (keyless public API) by `LiveMusicTest.deezerCatalogEndToEnd`; writes are offline-tested only |
-| Apple Music metadata | Keyless iTunes Search/Lookup live-verified 2026-11-02, including a Deezer-to-Apple match (one transient 403 noted in `MUSIC_LIMITATIONS.md`). The full Apple Music API needs a developer token and is offline-tested only |
-| Spotify metadata and remote control | Offline-tested only; live checks need a host-supplied token (`EXCOR_SPOTIFY_TOKEN`) and run skipped here |
-| YouTube Music | Live-verified 2026-11-02: search with filters and continuations, suggestions, artist pages, playlists and radio queues, through `Excor`. Songs, albums and discographies are withheld from this environment |
-| Native Swift `eXcorKit` | Under `platforms/swift/`; built and tested on the macOS CI job |
-| Apps | The music-player apps were removed on 2026-11-03. The preview apps use the clean-room library: an Android APK (`preview` job, linted, started on API 26 and 36 emulators) and a desktop app packaged with jpackage (self-test and start on Linux; `eXcor Preview.exe` built and self-tested on Windows) |
-| CI | Green on Linux, Windows, macOS, apps and Android devices (API 26 and 36) for every merged PR through bxanedot/eXcor#53 |
-| Provenance | Active clean-room sources are logged in `PROVENANCE.md`; the clean-room disclosure is in `CLEAN_ROOM.md` |
+- [Release gates](release-gates.json) lists each gate's status, evidence, command and blockers.
+- [Feature matrix](FEATURE_MATRIX.md) records implemented behavior and dated live checks.
+- [Competitor matrix](COMPETITOR_MATRIX.md) and the root [README](../README.md) summarize documented capabilities and matched results.
+- [Maintainer progress](maintainers/EXCOR_PROGRESS.md) records dated investigations, local runs and limitations.
 
-## Environment and local verification
+## Open release gaps
 
-The full JVM suite, Android library packaging and Kotlin compilation for iOS arm64, simulator arm64 and x64 pass locally. Linux cannot run the iOS simulator or link Apple frameworks, so those checks run on the macOS workflow. Live checks are opt-in (`EXCOR_LIVE=1`) and never run in CI.
+- G4/G5 are partial: one same-ID/network direct-audio seek check now has eXcor FFplay and the InnerTubeX v0.11.6 PCM harness passing backward and forward seeks at exact tag commit `64c7df4d88d27e6964157b3b341f7ec70f88ea6e`. The harnesses differ, so timing is not directly comparable. A signed-out TVHTML5-only recheck fetched the player script once but got a reload refusal before media; it does not verify ciphered playback. Video seeks and repeatable playback across eligible videos/networks remain unverified. HTTP byte-range probes do not count as player seeks.
+- G6 is blocked at 0/20: SABR/UMP has no independently validated full contract, authorized playback fixture, audio/video decode or seek evidence. The offline UMP response decoder now enforces a cumulative 16 MiB default byte limit across transport reads, with synthetic regression coverage; this is framing hardening only and does not establish SABR interoperability.
+- G8 and G10–G12 remain partial: one real extraction recovered from a locally injected synthetic 503, but upstream fault/cancellation behavior is unverified; exact-head XCFramework inspection, complete provenance/fixture-rights review, and the full release security audit are outstanding. No remote publication or release has occurred.
+- The latest paired direct-audio rerun after lazy watch-page fetching passed full 3,507,483-byte Opus decode and both HTTP byte-range probes in all 3 cold and 3 warm samples per adapter. Cold first-media p50/p95 was 357/438 ms for eXcor and 1,344/1,662 ms for InnerTubeX; warm was 98/106 ms and 168/187 ms. eXcor now avoids the watch-page request for profiles that do not need a player script, while scripted fallbacks retain the fetch. This is one signed-out video and one Windows home network; HTTP ranges are not player seeks, and InnerTubeX request counts remain incomplete. The dirty-worktree results are excluded from public readiness claims. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch.jsonl).
+- A second-video follow-up on `aqz-KE-bpKQ` passed full 10,332,653-byte decode and both byte-range probes in 1/3 eXcor attempts and 3/3 InnerTubeX attempts; two eXcor attempts were blocked before media. This adds one shared successful video while showing inconsistent access on that ID. It remains one network and a dirty-worktree diagnostic, not 3/3 eXcor repeatability or a broad performance result. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch-aqz.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch-aqz-report.json) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch-aqz.jsonl).
+- Both comparison adapters also passed full decode and both HTTP byte-range probes in 3/3 cold and 3/3 warm attempts under Temurin JDK 17.0.20.1 on the same video/network. Cold first-media p50/p95 was 460/528 ms for eXcor and 1,359/1,447 ms for InnerTubeX; warm was 125/139 ms and 185/193 ms. This closes local JDK 17 direct-audio adapter execution for one ID/network, not broader runtime or player-seek coverage. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-direct-audio.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-direct-audio.jsonl).
+- A JDK 17 repeat on `aqz-KE-bpKQ` was blocked before media for eXcor in 3/3 attempts (`ACCESS_DENIED`); InnerTubeX passed full 10,332,653-byte decode and both HTTP ranges in 3/3. A prior JDK 25 run had eXcor pass in 1/3. This shows inconsistent access on one network, not a decoder failure; see the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-aqz-repeat.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-aqz-repeat.jsonl).
 
-## Remaining release gates
-
-- Verify Spotify and the full Apple Music API live with real credentials, and confirm current provider terms and eligibility.
-- Verify stream extraction from a normal network; it can't be observed from this environment.
-- Integrate the apps with the clean-room API.
-- Complete clean-room/provenance and fixture-rights review for excluded repository content before making any whole-repository legal claim.
-- Add release metadata, public API compatibility checks and reproducible publication workflows for verified targets.
+The current Windows worktree is based on `a999525` and has uncommitted changes. Its full root `:jvmTest` passed 257 tests (19 opt-in live/benchmark skips, zero failures/errors); the desktop preview self-test and Kotlin/Native arm64, simulator arm64, x64, and common metadata compilations also passed. Android Keystore migration and tamper checks have prior synthetic API 26/API 36 instrumentation evidence, but the Android SDK is unavailable on this workstation for a fresh compile. iOS simulator tests and native Swift tests still require macOS. These local checks do not replace exact-head cross-platform CI.

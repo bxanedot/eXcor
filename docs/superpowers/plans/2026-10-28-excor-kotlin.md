@@ -6,7 +6,7 @@
 
 **Architecture:** The root Gradle project stays the published KMP library (`com.excor:eXcor:0.2.0`) and selects only `cleanroom-src/` for its Kotlin source sets. Existing Android app modules and implementation files stay in the tree; library CI tasks do not compile those apps. Shared behavior lives in `commonMain`; transport and player cache use the JVM and iOS source sets.
 
-**Tech Stack:** Kotlin 2.4.21, Gradle 9.8.2, JDK 27/JVM 26, Ktor 3.6.0, kotlinx.coroutines 1.11.0, kotlinx.serialization-json 1.12.0, QuickJS-KT 1.0.15, and the license-checked yt-dlp EJS solver.
+**Tech Stack:** Kotlin 2.4.21, Gradle 9.8.2, JDK 21/JVM 17, Ktor 3.6.0, kotlinx.coroutines 1.11.0, kotlinx.serialization-json 1.12.0, QuickJS-KT 1.0.15, and the license-checked yt-dlp EJS solver.
 
 **Spec:** `BRIEF.md` sections 1–7; design: `docs/superpowers/specs/2026-10-28-clean-room-eXcor-design.md`.
 
@@ -88,7 +88,7 @@
 
 ### Task 7: Watch-page fallback, metadata errors and offline tests
 
-**Files:** Add `WatchPage.kt`, `Unplayable.kt`, fixtures under `fixtures/cleanroom/`, and common tests.
+**Files:** Add `WatchPage.kt`, `Unplayable.kt`, fixtures under `modules/cleanroom/fixtures/`, and common tests.
 
 - [ ] Add `WatchPageTest.readsEmbeddedPlayerResponseAndScriptUrl`, `WatchPageTest.nonOkPlayabilityReturnsNoStream`, `EngineTest.audioCandidatesReturnsEveryAllowedFormat`, `EngineTest.audioCandidatesReturnsEmptyAfterFailure`, and `WatchPageTest.mapsMimesAndCodecs`; observe RED.
 - [ ] Implement watch-page fallback and failure messages, preserving cancellation.

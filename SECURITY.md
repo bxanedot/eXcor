@@ -16,4 +16,4 @@ Reports are in scope when they demonstrate a security issue in eXcor's maintaine
 
 YouTube access denials, rate limits, service changes, unsupported media formats, and vulnerabilities confined to third-party services are not eXcor vulnerabilities by themselves. For a third-party dependency issue, report it to that project's maintainers as well and identify any concrete impact on eXcor.
 
-The historical implementation retained in `legacy/src/` and `legacy/ejs/` is quarantined and is not part of the active build. Do not use it as an input to clean-room fixes; report a vulnerability there with the affected path and commit so it can be assessed separately.
+The historical implementation retained in `modules/legacy/src/` and `modules/legacy/ejs/` is quarantined and is not part of the active build. Do not use it as an input to clean-room fixes; report a vulnerability there with the affected path and commit so it can be assessed separately.

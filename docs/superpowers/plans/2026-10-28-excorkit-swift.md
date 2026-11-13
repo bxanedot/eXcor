@@ -15,7 +15,7 @@
 - Build after Kotlin PR is open and branch from that PR as `rewrite-swift-additive`.
 - Preserve all current files and put the package in root `swift/`, use `Excor*` public types, and name the module/product `eXcorKit`.
 - Match exact Swift-style names/signatures in section 8 and the iOS extraction/fallback behavior in section 4.
-- Keep fixture inputs shared from root `fixtures/cleanroom/`; test code resolves this path relative to its source file.
+- Keep fixture inputs shared from root `modules/cleanroom/fixtures/`; test code resolves this path relative to its source file.
 - No token/cookie/log leaks; exact HTTPS playback URL allowlist; propagate task cancellation.
 - Do not claim local iOS build results on Linux; rely on the required macOS CI job.
 - Section 5's added catalog/download features have no Swift API contract in section 8 beyond the audio extraction behavior; keep them documented as open scope questions rather than guessing.

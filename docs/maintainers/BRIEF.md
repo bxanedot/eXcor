@@ -1,6 +1,6 @@
 # eXcor clean-room rewrite — original source brief
 
-> **Layout update (2026-11-12):** The Swift package described below is now in `platforms/swift/`; the public package and module names are unchanged.
+> **Layout update (2026-11-12):** The Swift package described below is now in `modules/platforms/swift/`; the public package and module names are unchanged.
 
 > **Owner naming amendment (2026-10-28):** The deliverable names are `eXcor`, Kotlin package `com.excor`, Maven coordinates `com.excor:eXcor`, XCFramework `eXcor`, and native Swift package/module `eXcorKit`. API names in sections 2–8 use this mapping. It does not change the functional requirements or clean-room rules. Section 1 retains the exact identifiers needed to avoid forbidden historical sources.
 
@@ -35,7 +35,7 @@ This brief tells you **what** the library must do. It deliberately does not tell
 
 - Gradle project, group `com.excor`, artifact `eXcor`, version `0.2.0`, license Apache-2.0.
 - Kotlin Multiplatform targets: `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64`. Static iOS framework and an XCFramework, both named `eXcor`.
-- Toolchain: Gradle 9.8.2, Kotlin 2.4.21, JDK 27 toolchain, JVM bytecode target 26.
+- Toolchain: Gradle 9.8.2, Kotlin 2.4.21, JDK 21 toolchain, JVM bytecode target 17.
 - Dependencies, matched to the host app (all permissively licensed):
   - Ktor 3.6.0: OkHttp engine on JVM, Darwin engine on iOS.
   - kotlinx.coroutines 1.11.0 and kotlinx.serialization-json 1.12.0.
@@ -69,9 +69,11 @@ The host app compiles against these exact names, packages and members. Keep them
 | Type | JVM | iOS |
 |---|---|---|
 | `ExcorHost : ExcorHostServices` | adds `tokenProvider: TokenProvider?`, `filesDir: java.io.File?`, `httpClient: okhttp3.OkHttpClient` | adds `tokenProvider: TokenProvider?` |
-| `Excor(host: ExcorHost)` | `init()` | `initialize()` (Swift reserves `init`) |
+| `Excor(host: ExcorHost)` | `init()` | `initialize()` (Swift reserves `init`); both expose `close()` |
 
 On **both** platforms `Excor` also has: `initializeFallback()`, `suspend audioCandidates(videoId: String): List<ExcorAudioCandidate>`, `suspend extract(videoId: String, maxKbps: Int, skipClients: Set<String> = emptySet(), requireM4a: Boolean = false): ExcorStream?`, `headersFor(url: String): Map<String, String>?`, `onRefused(url: String): String?`, `exclude(videoId: String, profileId: String)`, `onSessionChanged()`.
+
+`close()` releases eXcor's transport resources. On JVM and Android, the host retains ownership of the supplied OkHttp client.
 
 ### PO token types (the host app imports these exact paths)
 
@@ -180,7 +182,7 @@ Bandcamp, SoundCloud, PeerTube, MediaCCC, comments, channels, playlists, search,
 
 ## 6. Tests and definition of done
 
-- **Offline unit tests** (`commonTest`, plus `jvmTest` where needed), using fixtures **you capture yourself** from YouTube and store in the top-level `fixtures/` folder (shared with the Swift tests, see section 8). Cover:
+- **Offline unit tests** (`commonTest`, plus `jvmTest` where needed), using fixtures **you capture yourself** from YouTube and store in `modules/cleanroom/fixtures/` (shared with the Swift tests). Cover:
   - format selection (all three modes and the "no cap above 64" rule)
   - the URL allowlist
   - remember, forget, cap and clear of streams
@@ -225,6 +227,6 @@ A pure-Swift package with the same job and behavior as the Kotlin library, for A
   - Main type `ExcorKit(host:)`: `initialize()`, `audioCandidates(videoId:) async -> [ExcorAudioCandidate]`, `extract(videoId:maxKbps:skipClients:requireM4a:) async throws -> ExcorStream?`, `headers(for:)`, `onRefused(url:) -> String?`, `exclude(videoId:profileId:)`, `onSessionChanged()`.
   - The host may pass its own `URLSession`; otherwise use a dedicated one with the section 4.7 JVM timeouts.
 - **Behavior:** exactly section 4, with `extract` working like the **iOS** version (primary clients, then the watch-page fallback). Caches stay in memory; an on-disk cache in the app's Caches folder is optional.
-- **Parity:** put the captured YouTube fixtures in a top-level `fixtures/` folder that both the Kotlin and Swift tests read, so both engines are checked against the same inputs.
+- **Parity:** keep shared clean-room test fixtures under `modules/cleanroom/fixtures/` for Kotlin and Swift, so both engines are checked against the same inputs.
 - **Tests:** offline XCTest or Swift Testing cases covering the same list as section 6, plus the opt-in live test under `EXCOR_LIVE=1`.
 - **CI:** add to the macOS job `swift test` in `swift/`, and an `xcodebuild` build of `eXcorKit` for the iOS Simulator.

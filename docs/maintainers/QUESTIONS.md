@@ -11,8 +11,8 @@ Each item names the reading chosen; nothing was looked up in the old code.
 ## Blocked by YouTube from the cloud build machine
 
 1. **Watch page.** `GET https://www.youtube.com/watch?v=…` redirected the cloud build machine to
-   Google's bot check (`fixtures/watch-page-blocked.html`); I did not try to get around it.
-   **Update 2026-10-27:** a real page from the owner's network is now `fixtures/watch-page.html`
+   Google's bot check (`modules/legacy/fixtures/watch-page-blocked.html`); I did not try to get around it.
+   **Update 2026-10-27:** a real page from the owner's network is now `modules/legacy/fixtures/watch-page.html`
    (IP address redacted). Logged out, its audio formats are SABR-only (no `url`, no
    `signatureCipher`), so by the brief's no-SABR rule the iOS watch-page fallback returns nil and
    `audioCandidates` returns an empty list for logged-out sessions. Logged-in pages may differ;
@@ -75,7 +75,7 @@ Each item names the reading chosen; nothing was looked up in the old code.
    account was available to test logged-in behavior. Offline tests (`LoggedInTest`) now cover
    this with made-up cookies and tokens: login detection, the SAPISIDHASH values, the headers
    sent, the VISIONOS skip, and the PO-token path. It is still untested against a real account.
-9. **Media headers.** `User-Agent` of the identity used, plus `Cookie` only when logged in;
+9. **Media headers.** Use the selected client's `User-Agent` and required playback headers. Never forward account cookies, visitor data or Authorization headers to direct media URLs; keep account credentials on YouTube page/player API requests.
    watch-page streams use the headers listed in 4.3.
 10. **`audioCandidates`** has no `skipClients`, so it does not apply the skip/exclusion rule of
     4.3; "as in 4.3" is read as "load the page the same way".
@@ -94,8 +94,8 @@ Each item names the reading chosen; nothing was looked up in the old code.
     `initialize()` returns immediately. The 6.5 s measurement is from the JVM build machine;
     actual iOS startup, first-play and battery impact remain unmeasured. Revisit if device
     measurements show unacceptable latency or battery use.
-17. **Toolchain.** Gradle itself runs on JDK 21 (locally and in CI); JDK 27 is the compile
-    toolchain and JVM bytecode targets 26, as specified.
+17. **Toolchain.** Gradle and the compile toolchain use JDK 21; JVM bytecode targets 17 to
+    match the supported baseline in InnerTubeX v0.11.6.
 
 ## eXcorKit (Swift)
 
@@ -395,6 +395,9 @@ Each item names the reading chosen; nothing was looked up in the old code.
     the others for 30 minutes; a success or a new session clears it. On the owner's network, where
     YouTube refuses TV_SAMSUNG (item 2), this saves a player request and a probe per video. The
     new clients are untested live: the build machines get a bot check.
+    Follow-up 2026-11-13: signed-out eXcor now uses yt-dlp's documented `tv` (Cobalt) profile in
+    the same three-attempt slot. The current-worktree check returned UNPLAYABLE for Cobalt and
+    passed through VISIONOS, so no playback improvement is credited to the profile change.
 51. **Live streams: HLS and DASH manifests (owner, 2026-10-27: "add an engine for DASH / HLS").**
     `manifest(videoId)` returns the manifest a client offers, as yt-dlp reads it: HLS when there is
     one (yt-dlp skips DASH while live), else DASH; the `/n/` challenge in its path solved with the

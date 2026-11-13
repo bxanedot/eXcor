@@ -5,5 +5,6 @@ local.properties
 *.iml
 .idea/
 *.hprof
-platforms/swift/.build/
-platforms/swift/.swiftpm/
+__pycache__/
+modules/platforms/swift/.build/
+modules/platforms/swift/.swiftpm/
