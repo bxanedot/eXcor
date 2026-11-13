@@ -471,3 +471,9 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 
 - The opt-in signed-out playback test injected one synthetic local HTTP 503 with `Retry-After: 0` after metadata lookup and before the first live player POST. The bounded retry then made one real player POST, selected VISIONOS, fully decoded 3,433,755 bytes and passed a midpoint HTTP 206 range read on `dQw4w9WgXcQ`.
 - This verifies one recovery path through live extraction; it did not induce an upstream/network outage or exercise cancellation under a live fault. G8 remains partial. See the [sanitized report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-13-live-503-recovery.md).
+
+## 2026-11-13 — PR #151 merged and cross-platform state verified
+
+- Merged PR #151 at `4867fd262cfd4d224c01af7fadcf383848ad3fd2`. All nine CI jobs passed at the exact merge commit in [main run 43433273079](https://github.com/bxanedot/eXcor/actions/runs/43433273079), including Linux, Windows, Android API 26/36, preview, reproducible publications, Kotlin/Native iOS tests and frameworks, XCFramework notices, Swift API checks/tests, and the iOS Simulator package build.
+- The tracked root layout is seven directories, down from 11 on the previous main. The merged feature branch was deleted. GitHub now lists only `main` and `automation/excor-competitiveness`; the latter remains referenced by the README readiness badge and workflow.
+- The live score refreshed successfully in [run 43434527790](https://github.com/bxanedot/eXcor/actions/runs/43434527790): 53/100, Release NO-GO, and main CI success. It is an evidence-readiness score, not a playback-success percentage or direct feature-parity score. G4/G5/G8/G10/G11/G12 remain partial and G6 remains blocked.
