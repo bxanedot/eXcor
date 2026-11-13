@@ -1,6 +1,6 @@
 # Dependency licenses
 
-This table covers dependencies declared by the clean-room Kotlin build and the CI workflows at the audited revision. Verify resolved versions and licenses again before release; this is not a substitute for the full dependency graph or legal review.
+The current eXcor source license is GPL-3.0-only. This table covers dependency licenses declared by the clean-room Kotlin build and CI workflows; those dependencies keep their own licenses. Verify resolved versions and licenses again before release; this is not a substitute for the full dependency graph or legal review.
 
 | Dependency | Version | License | Use |
 |---|---:|---|---|

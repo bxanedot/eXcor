@@ -54,9 +54,9 @@ Each item names the reading chosen; nothing was looked up in the old code.
    license text and `PROVENANCE.md` records the source. Do not describe ISC as legally
    equivalent to MIT or BSD; section 2's separate dependency wording is ambiguous if the
    parser is treated as a standalone dependency.
-4. **Fixtures in a public Apache-2.0 repo.** Keep the captured fixtures for deterministic
+4. **Third-party fixtures in a public repository.** Keep the captured fixtures for deterministic
    offline tests, as section 6 asks. They are YouTube-owned third-party files and are not
-   licensed under this repo's Apache-2.0 license; because the repo is public, they are
+   licensed under this repo's license; because the repo is public, they are
    distributed publicly. This is an engineering choice, not rights clearance. [YouTube's
    Terms](https://www.youtube.com/t/terms) restrict reproducing or distributing content except
    as authorized by YouTube, with prior permission, or as allowed by applicable law. Downloading

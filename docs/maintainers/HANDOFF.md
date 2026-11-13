@@ -18,7 +18,7 @@ Originally written on 2026-11-03 for the first owner-machine follow-up. Historic
 
 ## Next action
 
-Expand the matched comparison across additional eligible videos and networks, and continue the release-security/provenance review. Expand issue #78 on owner-authorized media; video player seeks, mobile-data playback, HLS and ciphered playback remain open. Keep G4/G5/G6/G8/G10/G11/G12 open until their own evidence passes; never treat HTTP range probes as player seeks or access denials as extractor failures. Preserve the Apache-2.0 clean-room boundary and do not publish remotely without owner authorization.
+Expand the matched comparison across additional eligible videos and networks, and continue the release-security/provenance review. Expand issue #78 on owner-authorized media; video player seeks, mobile-data playback, HLS and ciphered playback remain open. Keep G4/G5/G6/G8/G10/G11/G12 open until their own evidence passes; never treat HTTP range probes as player seeks or access denials as extractor failures. Preserve GPL-3.0-only distribution and clean-room source boundaries; do not publish a release without owner authorization.
 
 ## Historical handoff (written 2026-11-03)
 

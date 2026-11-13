@@ -2,6 +2,10 @@
 
 > This file preserves historical provenance records for the existing implementation and includes a separate clean-room section for eXcor. The opening contribution note describes the earlier source tree; it is not a legal determination for the clean-room addition.
 
+## Current distribution license
+
+The current repository snapshot is licensed under GPL-3.0-only. Earlier revisions and contributions were also distributed under Apache-2.0; this change does not revoke those existing grants, and the license text remains in `docs/licenses/Apache-2.0.txt`. Third-party dependencies and the vendored EJS solver retain their separately recorded licenses and notices. The clean-room source boundary is unchanged.
+
 The library code was written by Claude in a separate cloud environment with no access to the
 owner's PC. Codex contributed the watch-page capture, live-test runs and results, and
 documentation; its part ended on 2026-10-27 at the owner's decision. During local workspace discovery, Codex listed directory and file metadata under
@@ -34,7 +38,7 @@ Codex's actions and contributions, not a legal or release determination.
 | [YouTube Terms of Service](https://www.youtube.com/t/terms) | accessed 2026-10-27 | Terms of Service, not a content license | assessed public redistribution risk for captured fixtures; see `docs/maintainers/QUESTIONS.md` item 4 |
 | AOSP `frameworks/av` `media/libstagefright/webm/WebmWriter.cpp` at `android-8.0.0_r1`, `android-9.0.0_r1`, `android-10.0.0_r1` (android.googlesource.com) | read 2026-10-27 | Apache-2.0 | which audio codecs Android's WebM muxer accepts per version (Vorbis only before Android 10, Opus from Android 10); `ExcorMerge.supports`. Nothing copied |
 | AndroidX Media3 sources jars `media3-common`, `media3-session`, `media3-exoplayer` 1.11.1 (Google's Maven) | read 2026-10-27 | Apache-2.0 (POM) | how the app's player adds next and previous for the session (`ForwardingSimpleBasePlayer`, as `ForwardingPlayer`'s own documentation advises), that a session's play button prepares an idle player, and that `ExoPlayer.prepare` acts only when idle; `PlaybackService`. Nothing copied |
-| Apache License 2.0 text, https://www.apache.org/licenses/LICENSE-2.0.txt | fetched 2026-10-26 | — | `LICENSE` |
+| Apache License 2.0 text, https://www.apache.org/licenses/LICENSE-2.0.txt | fetched 2026-10-26 | — | Historical eXcor license, retained at `docs/licenses/Apache-2.0.txt` |
 | Synthetic clips made on the build machine with FFmpeg 6.1.1 (Ubuntu package) from its own `testsrc` pattern and `sine` tone; no outside media | 2026-10-27 | generated output; no FFmpeg code is in the repository | `modules/legacy/src/androidDeviceTest/resources/clips/`, used by `MergeCheck`. 64x64, 30 fps, 2 s: `video-avc.mp4` (libx264, `-g 30`) and `audio-aac.m4a` (aac 32k) written with `-movflags frag_keyframe+empty_moov+default_base_moof`, like YouTube's fragmented MP4; `video-vp9.webm` (libvpx-vp9, `-g 30 -b:v 50k`) and `audio-opus.webm` (libopus 24k, 48 kHz); `audio-aac-hls.m4a` (2026-10-28): a 3 s 440 Hz `sine` in AAC 32k written as HLS fMP4 (`-f hls -hls_time 1 -hls_segment_type fmp4`), its init segment and four segments joined in playlist order, as `soundCloud.download` joins SoundCloud's |
 
 Vendored files: `modules/legacy/ejs/core.min.js` sha256 `18da6ce0758b416e7ae645084f4f8801f9f9d59d6c477c05eaa0ff94ebd8cc00`,

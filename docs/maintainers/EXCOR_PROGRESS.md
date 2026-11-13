@@ -10,7 +10,9 @@ The continuation file for the production-engineering directive of 2026-11-02. If
 
 ## Current objective
 
-Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep Apache-2.0 clean-room boundaries and require verified release gates.
+Make eXcor a credible, independently implemented competitor to InnerTubeX by completing the reliability, security, playback verification and transport-compatibility work in the engineering plan. Keep the GPL-3.0-only distribution license, clean-room source boundary and verified release gates.
+
+**License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
 ## Previous verified checkpoint — 2026-11-11 13:52:57
 

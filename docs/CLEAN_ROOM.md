@@ -2,6 +2,8 @@
 
 The `modules/cleanroom/` Kotlin implementation is an independent implementation of the user-provided brief, with owner-approved eXcor naming amendments. It is kept separate from the repository's earlier implementation source.
 
+The current distribution license is GPL-3.0-only. This license change does not change the independent-source policy below or permit copying competitor implementation code.
+
 ## Source rules
 
 - Use the brief, applicable standards and documented, permissively licensed public sources listed in the clean-room section of [PROVENANCE.md](../PROVENANCE.md).

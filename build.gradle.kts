@@ -1,5 +1,6 @@
 import java.util.zip.ZipFile
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.api.publish.maven.MavenPublication
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -13,6 +14,20 @@ plugins {
 
 group = "com.excor"
 version = "0.2.0"
+
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            licenses {
+                license {
+                    name.set("GNU General Public License v3.0 only")
+                    url.set("https://www.gnu.org/licenses/gpl-3.0.html")
+                    distribution.set("repo")
+                }
+            }
+        }
+    }
+}
 
 repositories {
     google()
@@ -156,10 +171,10 @@ tasks.withType<AbstractTestTask>().configureEach {
 }
 
 tasks.withType<Zip>().configureEach {
-    from(files("LICENSE", "NOTICE")) { into("META-INF") }
+    from(files("LICENSE", "NOTICE", "docs/licenses/Apache-2.0.txt")) { into("META-INF") }
     doLast {
         ZipFile(archiveFile.get().asFile).use { archive ->
-            listOf("LICENSE", "NOTICE").forEach { notice ->
+            listOf("LICENSE", "NOTICE", "Apache-2.0.txt").forEach { notice ->
                 check(archive.getEntry("META-INF/$notice") != null) {
                     "${archive.name} is missing META-INF/$notice"
                 }
@@ -170,11 +185,12 @@ tasks.withType<Zip>().configureEach {
 
 val releaseXcframework = layout.buildDirectory.dir("XCFrameworks/release/eXcor.xcframework")
 val includeReleaseXcframeworkNotices = tasks.register("includeReleaseXcframeworkNotices") {
-    val notices = files("LICENSE", "NOTICE")
+    val notices = files("LICENSE", "NOTICE", "docs/licenses/Apache-2.0.txt")
     inputs.files(notices)
     outputs.files(
         releaseXcframework.map { it.file("LICENSE") },
         releaseXcframework.map { it.file("NOTICE") },
+        releaseXcframework.map { it.file("Apache-2.0.txt") },
     )
     onlyIf { releaseXcframework.get().asFile.isDirectory }
     doLast {
@@ -184,6 +200,7 @@ val includeReleaseXcframeworkNotices = tasks.register("includeReleaseXcframework
         }
         check(releaseXcframework.get().file("LICENSE").asFile.isFile)
         check(releaseXcframework.get().file("NOTICE").asFile.isFile)
+        check(releaseXcframework.get().file("Apache-2.0.txt").asFile.isFile)
     }
 }
 tasks.matching { it.name == "assembleEXcorReleaseXCFramework" }.configureEach {
