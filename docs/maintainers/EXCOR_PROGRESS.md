@@ -14,6 +14,14 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
+## Latest verified checkpoint — 2026-11-13 17:58 UTC
+
+- The verifier change is at `4154f8e90095a62c5d45469300ed7afea8b1cc1f`; the evidence and README update is at `6da33c0e732ce84cc829eebee7fe7a592af934f0`. All nine exact-head CI jobs passed in [run 43475723632](https://github.com/bxanedot/eXcor/actions/runs/43475723632). The readiness refresh passed in [run 43475743099](https://github.com/bxanedot/eXcor/actions/runs/43475743099): 53/100, Release NO-GO.
+- The offline regression confirms a direct playable URL with an `n` query can qualify without `signatureCipher`; the verifier fetches the player script only after an eligible challenge is found. Four signed-out public IDs exposed neither `signatureCipher` nor direct-URL `n`, so all skipped before JavaScript/media requests. This is access evidence, not solver or transformed-playback evidence.
+- Issue #78 remains open. There are no open PRs or obsolete merged branches. The only remote branches are `main` and the active `automation/excor-competitiveness` readiness branch. Current distribution is GPL-3.0-only; preserve the clean-room source boundary.
+
+**Next:** expand issue #78 across eligible videos and networks until a live signature or direct-`n` challenge reaches the solver, then verify transformed playback. Keep G4/G5 partial and release NO-GO until the required evidence is obtained.
+
 ## Previous verified checkpoint — 2026-11-11 13:52:57
 
 **Latest code checkpoint:** PR #108 merged as `9a01d0371c67c1350baee5ab9308e1360473c81e`. Its exact head `b4cd4ca079a25c125ccdda05ef3bdba0fd5e4562` passed all six supported-target jobs in [CI run 43029076515](https://github.com/bxanedot/eXcor/actions/runs/43029076515). Player rejection reasons from YouTube are sanitized before they appear in caller-facing exceptions. A synthetic regression checks cookie-like text, signed media URLs and token redaction.
