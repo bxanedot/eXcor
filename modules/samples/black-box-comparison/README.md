@@ -15,7 +15,7 @@ python modules/samples/black-box-comparison/report.py --input results.jsonl --fo
 python modules/samples/black-box-comparison/report.py --input results.jsonl --format markdown --output report.md
 ```
 
-The report preserves all sanitized per-sample outcomes. It counts access blocks, unsupported transports and technical failures separately. p50/p95 use the nearest-rank method and include PASS samples only; each metric reports its own eligible sample count. Groups separate adapter/version, lane, cold/warm phase, comparison ID, commit, date, OS, network/content category, session category, timeout, locale and decoder.
+The report preserves all sanitized per-sample outcomes. It counts access blocks, unsupported transports and technical failures separately. p50/p95 use the nearest-rank method and include PASS samples only; each metric reports its own eligible sample count. Summaries keep each video ID separate and group by adapter/version, lane, cold/warm phase, comparison ID, commit, date, OS, network/content category, session category, timeout, locale and decoder.
 
 ## Run a matched owner comparison
 

@@ -292,14 +292,14 @@ def build_report(samples: list[dict[str, Any]]) -> dict[str, Any]:
         comparison = sample["comparison"]
         key = (
             sample["adapter"], sample["adapterVersion"], sample["runtime"],
-            sample["lane"], sample["phase"],
+            sample["lane"], sample["phase"], sample["videoId"],
             *(comparison[name] for name in GROUP_KEYS),
         )
         groups[key].append(sample)
 
     summaries = []
     for key, rows in sorted(groups.items(), key=lambda pair: tuple(str(v) for v in pair[0])):
-        adapter, version, runtime, lane, phase, *context_values = key
+        adapter, version, runtime, lane, phase, video_id, *context_values = key
         outcomes = Counter(row["outcome"] for row in rows)
         failures = Counter(row["failureClass"] for row in rows if row["failureClass"] is not None)
         metrics: dict[str, dict[str, Any]] = {}
@@ -320,6 +320,7 @@ def build_report(samples: list[dict[str, Any]]) -> dict[str, Any]:
             "runtime": runtime,
             "lane": lane,
             "phase": phase,
+            "videoId": video_id,
             "comparison": dict(zip(GROUP_KEYS, context_values)),
             "totalSamples": len(rows),
             "outcomes": {name: outcomes.get(name, 0) for name in sorted(OUTCOMES)},
@@ -340,8 +341,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "Timings include only PASS samples. Outcome counts include every attempted sample.",
         "The report emits only validated normalized fields; adapters must exclude secrets from those fields.",
         "",
-        "| Comparison | OS | Network | Content | Adapter | Version | Lane | Phase | Samples | PASS | BLOCKED | UNSUPPORTED | FAIL | NOT_RUN | HTTP range F/B |",
-        "|---|---|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---|",
+        "| Comparison | Video ID | OS | Network | Content | Adapter | Version | Lane | Phase | Samples | PASS | BLOCKED | UNSUPPORTED | FAIL | NOT_RUN | HTTP range F/B | First media p50/p95 (ms) | Decode p50/p95 (ms) |",
+        "|---|---|---|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|---:|",
     ]
     for row in report["summaries"]:
         outcomes = row["outcomes"]
@@ -352,18 +353,27 @@ def render_markdown(report: dict[str, Any]) -> str:
             "F " + ", ".join(f"{name}={count}" for name, count in forward_counts.items()) + "; "
             "B " + ", ".join(f"{name}={count}" for name, count in backward_counts.items())
         )
+        first_media = row["metrics"]["firstMediaByteMs"]
+        first_media_summary = (
+            f"{first_media['p50']:.0f}/{first_media['p95']:.0f}"
+            if first_media["eligibleSamples"] else "n/a"
+        )
+        decode = row["metrics"]["decodeMs"]
+        decode_summary = f"{decode['p50']:.0f}/{decode['p95']:.0f}" if decode["eligibleSamples"] else "n/a"
         lines.append(
-            f"| {row['comparison']['id']} | {row['comparison']['os']} | {row['comparison']['networkCategory']} | "
+            f"| {row['comparison']['id']} | {row['videoId']} | {row['comparison']['os']} | {row['comparison']['networkCategory']} | "
             f"{row['comparison']['contentCategory']} | {row['adapter']} | {row['adapterVersion']} | {row['lane']} | {row['phase']} | "
             f"{row['totalSamples']} | {outcomes['PASS']} | {outcomes['BLOCKED']} | "
-            f"{outcomes['UNSUPPORTED']} | {outcomes['FAIL']} | {outcomes['NOT_RUN']} | {range_summary} |"
+            f"{outcomes['UNSUPPORTED']} | {outcomes['FAIL']} | {outcomes['NOT_RUN']} | {range_summary} | "
+            f"{first_media_summary} | {decode_summary} |"
         )
     lines.extend([
         "",
         "HTTP byte-range probes are reported separately from playback seeks. `rangeProbeResults` in JSON contains the method and per-direction result counts; these probes do not establish decoder or player seek behavior.",
         "",
-        "Latency summaries use nearest-rank p50/p95, grouped by comparison ID, commit, date, "
-        "OS, network category, content category, signed-out session, timeout, locale, decoder, "
+        "First-media and decode table timings show nearest-rank p50/p95 in milliseconds, rounded to whole milliseconds. "
+        "JSON retains metric-specific eligible sample counts. All latency summaries are grouped by comparison ID, commit, date, "
+        "video ID, OS, network category, content category, signed-out session, timeout, locale, decoder, "
         "adapter version, lane, and cold/warm phase. `eligibleSamples` is shown per metric in JSON.",
         "",
     ])

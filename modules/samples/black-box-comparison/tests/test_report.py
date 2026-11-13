@@ -87,6 +87,32 @@ class ComparisonReportTest(unittest.TestCase):
             "p95": 300,
         })
 
+    def test_report_keeps_video_outcomes_and_timings_separate(self):
+        first_raw = sample(1, extract_ms=100)
+        first_raw["measurements"]["firstMediaByteMs"] = 120
+        first_raw["measurements"]["decodeMs"] = 800
+        first = report_module.validate_sample(first_raw)
+        second_raw = sample(1, extract_ms=900)
+        second_raw["videoId"] = "aqz-KE-bpKQ"
+        second_raw["measurements"]["firstMediaByteMs"] = 900
+        second_raw["measurements"]["decodeMs"] = 2000
+        second = report_module.validate_sample(second_raw)
+
+        result = report_module.build_report([first, second])
+
+        summaries = {row["videoId"]: row for row in result["summaries"]}
+        self.assertEqual(set(summaries), {"dQw4w9WgXcQ", "aqz-KE-bpKQ"})
+        self.assertEqual(summaries["dQw4w9WgXcQ"]["metrics"]["extractMs"]["p50"], 100)
+        self.assertEqual(summaries["aqz-KE-bpKQ"]["metrics"]["extractMs"]["p50"], 900)
+        markdown = report_module.render_markdown(result)
+        self.assertIn("| Video ID |", markdown)
+        self.assertIn("| dQw4w9WgXcQ |", markdown)
+        self.assertIn("| aqz-KE-bpKQ |", markdown)
+        self.assertIn("| First media p50/p95 (ms) |", markdown)
+        self.assertIn("| Decode p50/p95 (ms) |", markdown)
+        self.assertIn("| 120/120 | 800/800 |", markdown)
+        self.assertIn("| 900/900 | 2000/2000 |", markdown)
+
     def test_cold_warm_and_transport_lanes_are_separate_groups(self):
         rows = [
             report_module.validate_sample(sample(1, phase="cold")),

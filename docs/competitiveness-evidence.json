@@ -58,7 +58,10 @@
       "evidence_paths": [
         "docs/release-gates.json",
         "modules/cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt",
-        "modules/samples/black-box-comparison/results/owner-home-2026-11-12-range-full.md"
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-12-range-full.md",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.md",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d-report.json",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.jsonl"
       ]
     },
     {
@@ -80,7 +83,11 @@
       "state": "blocked",
       "gate": "G5",
       "label": "Multiple eligible videos and networks verified",
-      "evidence_paths": []
+      "evidence_paths": [
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.md",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d-report.json",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.jsonl"
+      ]
     },
     {
       "id": "manifest_coverage",
