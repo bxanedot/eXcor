@@ -3,6 +3,7 @@ package com.excor
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.MediaType.Companion.toMediaType
@@ -138,6 +139,41 @@ class LivePlaybackTest {
             } finally {
                 file.delete()
             }
+        }
+    }
+
+    @Test
+    fun hlsManifestDecodesForHostPlayer() {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
+        if (runCatching { ProcessBuilder("ffmpeg", "-version").start().waitFor() }.getOrNull() != 0) {
+            throw SkipException("ffmpeg is needed to decode the HLS media")
+        }
+        val (excor, _) = newExcor()
+        runBlocking {
+            val videoId = System.getenv("EXCOR_HLS_ID") ?: "dQw4w9WgXcQ"
+            val stream = assertNotNull(
+                liveRequest(videoId) { excor.extractHls(videoId) },
+                "No validated HLS manifest returned for $videoId",
+            )
+            val command = mutableListOf("ffmpeg", "-v", "error", "-xerror", "-rw_timeout", "15000000")
+            if (stream.headers.isNotEmpty()) {
+                command += listOf("-headers", stream.headers.entries.joinToString("\r\n", postfix = "\r\n") { "${it.key}: ${it.value}" })
+            }
+            command += listOf("-i", stream.url, "-t", "8", "-f", "null", "-")
+            val decode = ProcessBuilder(command)
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .start()
+            try {
+                assertTrue(decode.waitFor(45, TimeUnit.SECONDS), "ffmpeg timed out decoding HLS media")
+                assertTrue(decode.exitValue() == 0, "ffmpeg could not decode the first 8 seconds of HLS media")
+            } finally {
+                if (decode.isAlive) {
+                    decode.destroyForcibly()
+                    decode.waitFor(5, TimeUnit.SECONDS)
+                }
+            }
+            println("decoded an HLS sample from ${stream.clientName} (live=${stream.isLive})")
         }
     }
 

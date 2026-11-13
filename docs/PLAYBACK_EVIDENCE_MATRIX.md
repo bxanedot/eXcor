@@ -20,9 +20,10 @@ On Linux/macOS, run from repository root:
 ```bash
 ffmpeg -version
 ffprobe -version
-EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks
-EXCOR_LIVE=1 EXCOR_VIDEO_HEIGHT=480 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux
-EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
+EXCOR_LIVE=1 EXCOR_VIDEO_HEIGHT=480 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable --rerun-tasks
+EXCOR_LIVE=1 EXCOR_HLS_ID=VIDEO_ID ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
 ```
 
 PowerShell on Windows:
@@ -32,16 +33,19 @@ ffmpeg -version
 ffprobe -version
 $env:EXCOR_LIVE="1"
 $env:EXCOR_VIDEO_HEIGHT="480"
-.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks
-.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux
-.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable --rerun-tasks
+$env:EXCOR_HLS_ID="VIDEO_ID"
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
 Remove-Item Env:\EXCOR_LIVE
 Remove-Item Env:\EXCOR_VIDEO_HEIGHT
+Remove-Item Env:\EXCOR_HLS_ID
 ```
 
 Use `EXCOR_DECODE_ID` only for a public video you are allowed to access. With no override, the test uses its existing fixture ID `dQw4w9WgXcQ`. The audio test downloads the complete stream, validates its duration and reads a mid-file HTTP byte range. The video test downloads and muxes selected video/audio, decodes it, checks dimensions/duration, and reads a mid-file HTTP byte range; its default height cap is 480p. These byte-range checks do not drive a player or establish playback seeking. The format-list test probes advertised ranges. These tests may consume significant bandwidth and disk space. They delete temporary media on completion.
 
-The separate `publicMusicVideosReturnRangeReadableAudio` test requires several publicly available IDs to be allowed by YouTube and is known to be access-blocked on some networks. Run it only when that access is available, and report its precise access outcome rather than weakening its assertion.
+The HLS test uses `EXCOR_HLS_ID` (default `dQw4w9WgXcQ`), validates a manifest through the public API, and asks FFmpeg to decode up to eight seconds. It needs a live, eligible video and `ffmpeg`; recognized bot/sign-in challenges are skipped as blocked, while other refusals fail visibly. Use `--rerun-tasks` for a fresh network attempt. Current signed-out results are in the [sanitized JVM HLS report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). The separate `publicMusicVideosReturnRangeReadableAudio` test requires several publicly available IDs to be allowed by YouTube and is known to be access-blocked on some networks. Run it only when that access is available, and report its precise access outcome rather than weakening its assertion.
 
 ## Matrix to execute
 
@@ -58,7 +62,7 @@ On `dQw4w9WgXcQ`, two signed-out quickstart runs selected VISIONOS WebM audio an
 | E | Eligible response requiring player JavaScript | Confirm `s` and/or `n` transform then **actual full decode and seek** | Cipher transform tested; no live eligible stream verified |
 | F | Fault handling | 429, 5xx, cancellation, expiry, refusal and session switch remain bounded and correctly classified | Synthetic cases pass on supported CI; owner-run live fault injection incomplete |
 | G | Stream denied by service | Capture only generalized reason/status and which public client path failed | Known `LOGIN_REQUIRED`, `UNPLAYABLE` cases |
-| H | Experimental HLS on owner's Android device | Tap **Try HLS (experimental)** in the preview; record whether Media3 reaches ready and plays. For a seekable VOD, test backward/forward seek; classify manifest, child-request, decoder and access refusals separately | Attempted 2026-11-13 on signed-out `dQw4w9WgXcQ`, Android 16/API 36: `UNPLAYABLE` (“The page needs to be reloaded”) before a manifest; Media3 did not start. No successful HLS playback. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-android-hls-attempt.md). |
+| H | Experimental HLS on owner's Android device and JVM host | Tap **Try HLS (experimental)** in the preview; record Media3 readiness/playback and, for a seekable VOD, backward/forward seek. The JVM check validates the manifest and decodes up to eight seconds with FFmpeg. Classify manifest, child-request, decoder and access refusals separately | Android and JVM returned `UNPLAYABLE` before a manifest on signed-out `dQw4w9WgXcQ`. Two other JVM attempts, including a public NASA ISS live stream, hit bot checks before a manifest. FFmpeg and Media3 never started; no InnerTubeX HLS comparison was possible. Successful HLS playback remains unverified. See the [Android report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-android-hls-attempt.md) and [JVM report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). |
 | I | Signed out, Android 8.0/API 26 and Android 16/API 36 emulators on workstation Wi-Fi | Preview metadata and visible video playback | `dQw4w9WgXcQ` rendered at 720p H.264 with `audio/mp4` at 130 kbps from VISIONOS on both API levels; frames changed during both runs. API 36 logged two HTTP 206 playback-probe responses. One ID/network; no InnerTubeX Android comparison, full-duration decode, player seek or HLS test. See the [run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-android-preview-playback.md). |
 
 **Earlier isolated-user attempt (2026-11-13; no playback result):** A fresh Android 16/API 36 emulator user stayed at Android’s system “Unlock for all features and data” screen, so no playback operation could be invoked there. This was an environment blocker, not an app failure or YouTube access refusal; the temporary user was removed.

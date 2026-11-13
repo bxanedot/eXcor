@@ -472,6 +472,11 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 - The opt-in signed-out playback test injected one synthetic local HTTP 503 with `Retry-After: 0` after metadata lookup and before the first live player POST. The bounded retry then made one real player POST, selected VISIONOS, fully decoded 3,433,755 bytes and passed a midpoint HTTP 206 range read on `dQw4w9WgXcQ`.
 - This verifies one recovery path through live extraction; it did not induce an upstream/network outage or exercise cancellation under a live fault. G8 remains partial. See the [sanitized report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-13-live-503-recovery.md).
 
+## 2026-11-13 — signed-out JVM HLS verification
+
+- Added an opt-in HLS check that calls the public `extractHls` API and asks FFmpeg to decode up to eight seconds only after a validated manifest is returned. On `dQw4w9WgXcQ`, YouTube returned `UNPLAYABLE` before a manifest; `aqz-KE-bpKQ` and a NASA ISS live stream were blocked by sign-in/bot checks before a manifest.
+- None reached FFmpeg, and no InnerTubeX HLS attempt was possible. This is access-limited evidence, not a successful HLS playback result; G5 remains partial. `EXCOR_HLS_ID` is a Gradle test input and the documented live commands force a fresh run. See the [sanitized report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md).
+
 ## 2026-11-13 — PR #151 merged and cross-platform state verified
 
 - Merged PR #151 at `4867fd262cfd4d224c01af7fadcf383848ad3fd2`. All nine CI jobs passed at the exact merge commit in [main run 43433273079](https://github.com/bxanedot/eXcor/actions/runs/43433273079), including Linux, Windows, Android API 26/36, preview, reproducible publications, Kotlin/Native iOS tests and frameworks, XCFramework notices, Swift API checks/tests, and the iOS Simulator package build.
