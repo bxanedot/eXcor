@@ -17,11 +17,16 @@ import java.util.concurrent.CopyOnWriteArrayList
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ApiCheckTest {
@@ -96,6 +101,33 @@ class ApiCheckTest {
             hostClient.dispatcher.executorService.shutdownNow()
             hostClient.connectionPool.evictAll()
             server.stop(0)
+        }
+    }
+
+    @Test
+    fun extractDoesNotReturnAnEmptyPartialContentResponseAsPlayable() = runBlocking {
+        val hostClient = OkHttpClient.Builder().addInterceptor { chain ->
+            val request = chain.request()
+            val (code, body, type) = when (request.url.encodedPath) {
+                "/youtubei/v1/player" -> Triple(200, fixture("player-response.json"), "application/json")
+                "/videoplayback" -> Triple(206, "", "audio/mp4")
+                else -> Triple(404, "", "text/plain")
+            }
+            Response.Builder()
+                .request(request)
+                .protocol(Protocol.HTTP_1_1)
+                .code(code)
+                .message(if (code == 206) "Partial Content" else if (code == 200) "OK" else "Not Found")
+                .body(body.toResponseBody(type.toMediaType()))
+                .build()
+        }.build()
+        val library = Excor(apiHost(hostClient))
+        try {
+            assertNull(library.extract("dQw4w9WgXcQ", 128))
+        } finally {
+            library.close()
+            hostClient.dispatcher.executorService.shutdownNow()
+            hostClient.connectionPool.evictAll()
         }
     }
 }

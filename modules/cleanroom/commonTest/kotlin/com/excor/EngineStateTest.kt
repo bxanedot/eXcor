@@ -192,7 +192,7 @@ class EngineStateTest {
                     val unique = fixture.replace("range=0-1023", "range=0-${requests.player}")
                     respond(unique, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
                 }
-                "/videoplayback" -> respond("", HttpStatusCode.PartialContent)
+                "/videoplayback" -> respond("x", HttpStatusCode.PartialContent)
                 else -> respond("", HttpStatusCode.NotFound)
             }
         })

@@ -22,6 +22,7 @@ import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.cancel
+import io.ktor.utils.io.readByte
 import kotlinx.coroutines.CancellationException
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
@@ -854,9 +855,9 @@ internal class ExcorEngine(
     }
 
     /**
-     * Reads the first KiB of [url]. googlevideo answers a media request with a 302 to another googlevideo node, so up to
-     * [MAX_MEDIA_REDIRECTS] redirects are followed here (the client follows none), each only to a target that passes
-     * the same playback allowlist.
+     * Requests the first KiB of [url] and reads one byte to confirm it is non-empty. googlevideo answers a media request
+     * with a 302 to another googlevideo node, so up to [MAX_MEDIA_REDIRECTS] redirects are followed here (the client
+     * follows none), each only to a target that passes the same playback allowlist.
      */
     private suspend fun isPlayable(url: String, headers: Map<String, String>): Boolean {
         var target = url
@@ -873,10 +874,22 @@ internal class ExcorEngine(
                 log(ExcorLogLevel.DEBUG, "playback probe failed: ${failure::class.simpleName}")
                 return false
             }
-            response.bodyAsChannel().cancel()
             val status = response.status.value
             log(ExcorLogLevel.DEBUG, "playback probe answered HTTP $status")
-            if (status == 200 || status == 206) return true
+            if (status == 200 || status == 206) {
+                val channel = response.bodyAsChannel()
+                return try {
+                    channel.readByte()
+                    true
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    false
+                } finally {
+                    channel.cancel()
+                }
+            }
+            response.bodyAsChannel().cancel()
             if (status !in MEDIA_REDIRECT_STATUSES) return false
             val location = response.headers[HttpHeaders.Location] ?: return false
             // An absolute Location is used exactly as sent: rebuilding it re-encodes the signed query and breaks it.

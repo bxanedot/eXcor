@@ -2,9 +2,10 @@
 
 Originally written on 2026-11-03 for the first owner-machine follow-up. Historical notes remain below; `EXCOR_PROGRESS.md` is the running status. Keep this summary current as work proceeds.
 
-## Current state — 2026-11-13 (updated 2026-11-13 19:39 UTC)
+## Current state — 2026-11-13 (updated 2026-11-13 20:07 UTC)
 
 - The signed-out verifier correction is at `09a5d45784683710e00a65825249ff5198b9320b`; its CI run `43482332919` passed all nine jobs. The latest measured playback code head is `0f03557d6fbf7351693610a334ad13f284e4e0e3`; exact-head CI run `43489929754` passed all nine jobs, and readiness refresh `43492156052` reports 53/100, Release NO-GO, main CI success. The score is evidence-weighted engineering readiness, not a playback-success percentage or feature-parity score.
+- A public-API JVM regression reproduced eXcor returning a stream for an empty HTTP 206. The probe now reads one byte and rejects empty media responses. The focused test failed before the fix, passed after it, and the full local `:jvmTest` suite passed. This synthetic preflight result does not verify media decoding or live upstream faults; G8 remains partial.
 - Exact-head CI includes JVM tests, ABI, publication, Linux, Windows, preview, Android API 26/36, Kotlin/Native iOS tests and framework/XCFramework builds, XCFramework notices, Swift API checks/package tests and the iOS Simulator package build. Live iOS device playback remains unverified. Three focused eligibility regressions pass: direct-URL `n`, signature-only cipher, and malformed empty `n` rejection. Twelve signed-out public IDs found no eligible live challenge and skipped before player-script or media requests.
 - GitHub lists only `main` and `automation/excor-competitiveness`; the automation branch remains referenced by the README readiness badge and workflow. There are no open pull requests or obsolete merged branches. Issue #78 remains open because no eligible live cipher challenge reached transformed playback.
 - **G6:** blocked at 0/20. The 2026-11-13 primary-source recheck found partial UMP documentation but no complete independent service contract or authorized exchange/decode/seek fixture. Do not copy competitor implementation or infer missing transport details.
