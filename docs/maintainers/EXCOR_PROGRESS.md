@@ -14,7 +14,14 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-13 20:07 UTC
+## Latest verified checkpoint — 2026-11-13 21:45 UTC
+
+- GitHub's extended CodeQL run `43510186351` completed actions, Java/Kotlin, JavaScript/TypeScript, Python and Swift analysis at base `b1b9ef8`. It reported 19 baseline alerts: two in readiness tooling, four in the desktop preview, one Android backup note and twelve in quarantined legacy capture fixtures. The current security remediation addresses the active-code findings without changing captured source.
+- Local verification for the remediation: the readiness suite passed 10 tests (one symlink test skipped on Windows); the packaged Windows desktop app built and passed `--self-test` with an extra path argument left untouched; the Android debug APK assembled successfully using the installed SDK.
+- GitHub secret scanning and push protection, Dependabot alerts and security updates, private vulnerability reporting, and automatic deletion of merged PR branches are enabled. Seven historical API-key-shaped alerts remain open and unverified; no values were printed, verified or removed from Git history. G12 remains partial.
+- Readiness remains 53/100, Release NO-GO. Issue #78 remains open because no eligible live cipher challenge has reached transformed playback.
+
+## Previous verified checkpoint — 2026-11-13 20:07 UTC
 
 - A public-API JVM regression reproduced `extract` returning a stream for an empty HTTP 206. The media probe now reads one byte and rejects an empty 200/206 response while preserving cancellation and closing the response body. The synthetic regression failed before the fix and passed after it; the full local `:jvmTest` suite passed. This is HTTP preflight evidence only, not full decode or live upstream-fault verification; G8 remains partial.
 - On the previous main head `d82cd4e6f8bc9d67ca864249608a18c27e1339ef`, all exact-head CI jobs except macOS passed in [run 43494678820](https://github.com/bxanedot/eXcor/actions/runs/43494678820); its macOS Kotlin/Native and XCFramework job was still running. The live score remains 53/100, Release NO-GO. The score is evidence-weighted readiness, not playback-success rate or feature parity.

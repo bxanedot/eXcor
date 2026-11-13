@@ -59,18 +59,17 @@ import javax.swing.WindowConstants
  *
  * Arguments other than `--self-test` are a search or link to open at start.
  *
- * `--self-test <file>` starts the library without a window and writes "OK" to the file: a check that the packaged app
- * and its bundled runtime work.
+ * `--self-test` starts the library without a window and reports whether the packaged app and bundled runtime work.
  */
 fun main(args: Array<String>) {
-    if (args.firstOrNull() == "--self-test") return selfTest(args.getOrNull(1))
+    if (args.firstOrNull() == "--self-test") return selfTest()
     SwingUtilities.invokeLater {
         runCatching { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) }
         PreviewWindow().show(initial = args.joinToString(" ").trim().takeIf { it.isNotEmpty() })
     }
 }
 
-private fun selfTest(path: String?) {
+private fun selfTest() {
     val host = excorDefaultHost()
     val excor = Excor(host)
     try {
@@ -96,6 +95,11 @@ private fun selfTest(path: String?) {
         // Browser sign-in: the packaged runtime loads the SQLite driver and reads a Firefox-style cookie store.
         val profile = java.nio.file.Files.createTempDirectory("excor-self-test").toFile()
         try {
+            val windows = System.getProperty("os.name").startsWith("Windows")
+            val executable = File(profile, if (windows) "ffmpeg.exe" else "ffmpeg").apply { writeText("") }
+            if (!windows) check(executable.setExecutable(true))
+            check(executableOnPath(executable.name, profile.absolutePath, windows) == executable.absolutePath)
+            check(executableOnPath(executable.name, "", windows) == null)
             java.sql.DriverManager.getConnection("jdbc:sqlite:${profile.resolve("cookies.sqlite").path}").use { db ->
                 db.createStatement().use {
                     it.execute("CREATE TABLE moz_cookies (name TEXT, value TEXT, host TEXT, expiry INTEGER, lastAccessed INTEGER)")
@@ -107,7 +111,7 @@ private fun selfTest(path: String?) {
             profile.deleteRecursively()
         }
         val report = "eXcor Preview OK (Java ${System.getProperty("java.version")}, ${excor::class.simpleName})"
-        if (path != null) File(path).writeText(report + "\n") else println(report)
+        println(report)
     } finally {
         excor.close()
         host.httpClient.connectionPool.evictAll()
@@ -495,11 +499,17 @@ private class PreviewWindow {
     private suspend fun download(url: String, headers: Map<String, String>, file: File, label: String) =
         com.excor.preview.download(downloads, url, headers, file) { done, total -> setStatus("$label… ${megabytes(done, total)}") }
 
-    private fun ffmpegAvailable(): Boolean =
-        runCatching { ProcessBuilder("ffmpeg", "-version").redirectErrorStream(true).start().apply { inputStream.readBytes() }.waitFor() == 0 }.getOrDefault(false)
+    private fun ffmpegPath(): String? {
+        val windows = System.getProperty("os.name").startsWith("Windows")
+        return executableOnPath(if (windows) "ffmpeg.exe" else "ffmpeg", System.getenv("PATH"), windows)
+    }
+
+    private fun ffmpegAvailable(): Boolean = ffmpegPath()?.let { path ->
+        runCatching { ProcessBuilder(path, "-version").redirectErrorStream(true).start().apply { inputStream.readBytes() }.waitFor() == 0 }.getOrDefault(false)
+    } ?: false
 
     private suspend fun mux(video: File, audio: File, output: File) = withContext(Dispatchers.IO) {
-        val process = ProcessBuilder("ffmpeg", "-v", "error", "-y", "-i", video.path, "-i", audio.path, "-c", "copy", output.path)
+        val process = ProcessBuilder(ffmpegPath() ?: error("ffmpeg is no longer available"), "-v", "error", "-y", "-i", video.path, "-i", audio.path, "-c", "copy", output.path)
             .redirectErrorStream(true).start()
         val errors = process.inputStream.bufferedReader().readText()
         check(process.waitFor() == 0) { "ffmpeg could not join the tracks: ${errors.take(200)}" }
@@ -511,6 +521,13 @@ private class PreviewWindow {
         if (!opened) setStatus("Saved to ${file.path}, but no default player could open it.")
     }
 }
+
+private fun executableOnPath(name: String, path: String?, windows: Boolean): String? =
+    path.orEmpty().split(File.pathSeparatorChar).asSequence()
+        .filter { it.isNotBlank() && File(it).isAbsolute }
+        .map { File(it, name) }
+        .firstOrNull { it.isFile && (windows || it.canExecute()) }
+        ?.absolutePath
 
 /** A left-aligned FlowLayout that wraps onto more lines and asks its container for the height they take. */
 private class WrapLayout : FlowLayout(LEFT, 4, 2) {

@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import http.client
 import json
 import os
 from pathlib import Path
 import re
 import sys
-from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
 GROUPS = {
     "metadata": ("YouTube and YouTube Music metadata", 20),
@@ -94,21 +93,34 @@ def calculate(evidence: dict, gate_file: dict, root: Path) -> dict:
 
 def github_ci(repository: str, sha: str, token: str = "") -> dict:
     info = {"status": "unknown", "conclusion": None, "url": None, "sha": sha}
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository or ""):
+    if not isinstance(repository, str):
+        return info
+    owner, separator, name = repository.partition("/")
+    component = r"[A-Za-z0-9_.-]{1,200}"
+    if (not separator or owner in {".", ".."} or name in {".", ".."}
+            or not re.fullmatch(component, owner) or not re.fullmatch(component, name)):
         return info
     if not re.fullmatch(r"[a-fA-F0-9]{40}", sha or ""):
         return info
     query = urlencode({"branch": "main", "head_sha": sha, "event": "push", "per_page": 20})
-    url = f"https://api.github.com/repos/{repository}/actions/workflows/ci.yml/runs?{query}"
+    target = f"/repos/{owner}/{name}/actions/workflows/ci.yml/runs?{query}"
     headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
                "User-Agent": "excor-evidence-checker"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    connection = None
     try:
-        with urlopen(Request(url, headers=headers), timeout=15) as reply:
-            runs = json.load(reply).get("workflow_runs", [])
-    except (HTTPError, URLError, TimeoutError, ValueError):
+        connection = http.client.HTTPSConnection("api.github.com", timeout=15)
+        connection.request("GET", target, headers=headers)
+        reply = connection.getresponse()
+        if reply.status != 200:
+            return info
+        runs = json.load(reply).get("workflow_runs", [])
+    except (http.client.HTTPException, OSError, ValueError):
         return info
+    finally:
+        if connection is not None:
+            connection.close()
     runs = [r for r in runs if r.get("head_sha") == sha and r.get("event") == "push" and r.get("head_branch") == "main"]
     if runs:
         run = max(runs, key=lambda r: r.get("run_number", 0))

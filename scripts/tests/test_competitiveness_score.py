@@ -14,6 +14,28 @@ from io import BytesIO
 ROOT = Path(__file__).resolve().parents[2]
 
 
+class FakeResponse(BytesIO):
+    def __init__(self, status, payload):
+        super().__init__(payload)
+        self.status = status
+
+
+class FakeConnection:
+    def __init__(self, response):
+        self.response = response
+        self.requests = []
+        self.closed = False
+
+    def request(self, method, target, headers):
+        self.requests.append((method, target, headers))
+
+    def getresponse(self):
+        return self.response
+
+    def close(self):
+        self.closed = True
+
+
 class ReadinessScoreTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -28,10 +50,36 @@ class ReadinessScoreTest(unittest.TestCase):
             {"head_sha": sha, "event": "push", "head_branch": "main",
              "status": "completed", "conclusion": "failure", "run_number": 98},
         ]}).encode()
-        response = BytesIO(payload)
-        with patch("excor_readiness.urlopen", return_value=response):
+        connection = FakeConnection(FakeResponse(200, payload))
+        with patch("excor_readiness.http.client.HTTPSConnection", return_value=connection) as connect:
             result = github_ci("example/repo", sha)
+        connect.assert_called_once_with("api.github.com", timeout=15)
         self.assertEqual("failure", result["conclusion"])
+        self.assertTrue(connection.closed)
+
+    def test_ci_does_not_follow_redirects_from_the_fixed_github_origin(self):
+        sha = "a" * 40
+        connection = FakeConnection(FakeResponse(302, b""))
+        with patch("excor_readiness.http.client.HTTPSConnection", return_value=connection) as connect:
+            result = github_ci("example/repo", sha)
+        connect.assert_called_once_with("api.github.com", timeout=15)
+        self.assertEqual("GET", connection.requests[0][0])
+        self.assertIn("/repos/example/repo/actions/workflows/ci.yml/runs?", connection.requests[0][1])
+        self.assertEqual("unknown", result["status"])
+        self.assertTrue(connection.closed)
+
+    def test_ci_rejects_dot_segments_before_request(self):
+        for repository in ("../repo", "./repo", "owner/..", "owner/."):
+            with self.subTest(repository=repository), patch("excor_readiness.http.client.HTTPSConnection") as connect:
+                self.assertEqual("unknown", github_ci(repository, "a" * 40)["status"])
+                connect.assert_not_called()
+
+    def test_ci_accepts_safe_repository_punctuation(self):
+        response = FakeResponse(200, b'{"workflow_runs":[]}')
+        connection = FakeConnection(response)
+        with patch("excor_readiness.http.client.HTTPSConnection", return_value=connection):
+            github_ci("owner-name/repo_name.v1", "a" * 40)
+        self.assertIn("/repos/owner-name/repo_name.v1/actions/workflows/ci.yml/runs?", connection.requests[0][1])
 
     def test_baseline_and_allocation(self):
         r = calculate(self.rubric, self.gates, ROOT)
