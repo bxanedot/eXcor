@@ -49,6 +49,10 @@ Acceptance: green CI with no public-API regression; synthetic secrets never appe
 - [x] Verify synthetic signed-in session replacement and cancellation without copying or uploading account credentials. Session-generation tests reject stale player/media/format results; the next player request uses only the replacement cookie and authorization hash. Live signed-in playback remains unverified.
 - [ ] Reproduce each discovered regression in an offline synthetic test before repair.
 
+- **2026-11-14 exact-main recheck:** eXcor 0.2.0 and InnerTubeX 0.11.6 both passed full decode and forward/backward HTTP ranges in 6/6 cold/warm samples on one signed-out music video. First-media p50/p95 was 395/555 ms and 96/98 ms for eXcor, versus 1,388/1,488 ms and 142/145 ms for InnerTubeX. This is one network and does not verify player seeks; see `modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md`.
+
+- **2026-11-14 second-ID result:** aqz-KE-bpKQ was ACCESS_DENIED before media for eXcor in all 6 signed-out attempts while InnerTubeX passed full decode and both ranges in all 6. This remains one home network; see modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md.
+
 Acceptance: qualified real playback/seek/cipher evidence on the supported platforms. Report network access denials separately from parser/transport failures. Do not mark G4/G5 passing without reproducible evidence.
 
 ### P2 — SABR/UMP decision and implementation track

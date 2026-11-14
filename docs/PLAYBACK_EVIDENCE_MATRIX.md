@@ -136,6 +136,16 @@ Post only this sanitized template to issue #78; private raw diagnostics must sta
 
 **Live extraction with one injected 503 (2026-11-13 12:44 UTC):** A signed-out test locally returned one synthetic HTTP 503 with `Retry-After: 0` before the first `/youtubei/v1/player` request was sent. The bounded retry made one live player POST; VISIONOS returned usable audio. eXcor fully decoded 3,433,755 bytes and passed a midpoint HTTP 206 range read. This verifies recovery in one real extraction flow, not an upstream outage or player seek. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-live-503-recovery.md). G8 remains partial.
 
+## 2026-11-14 — current-main matched direct-audio check
+
+At exact main `ad7a6f1514c1f320b493c1e62d9bbb6c04c82a5a`, the owner-run Windows x64 signed-out comparison used the home network and the public music video `dQw4w9WgXcQ`. It ran three cold and three warm attempts per adapter with a 30-second timeout and FFmpeg 9.0.2. eXcor 0.2.0 was rebuilt from this checkout; InnerTubeX was pinned to v0.11.6. Both decoded the same 3,507,483-byte Opus stream and passed both HTTP byte-range probes in 6/6 attempts. First-media p50/p95 was 395/555 ms cold and 96/98 ms warm for eXcor, versus 1,388/1,488 ms and 142/145 ms for InnerTubeX. Full-decode p50/p95 was 464/475 ms and 322/331 ms for eXcor, versus 455/540 ms and 364/367 ms for InnerTubeX. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.jsonl).
+
+A separate current-main LivePlaybackTest on the same ID also passed full 3,433,755-byte Opus decode and a midpoint HTTP 206 range; see the [sanitized run](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-playback.md).
+
+This is one video and one network, not broad parity or a performance ranking. The range requests are not player-controlled seeks. The per-sample report records forward/backward player seeks as `NOT_TESTED`; audio/video mux, ciphered playback and another network remain open.
+
+On a second public video, aqz-KE-bpKQ, the same adapters on the same network gave eXcor ACCESS_DENIED before media in all six attempts while InnerTubeX passed full decode and both byte-range probes in all six. This does not establish a cause for the access difference. See the [second-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.jsonl).
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.

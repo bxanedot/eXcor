@@ -1,6 +1,6 @@
 # Implementation status
 
-Updated 2026-11-13. eXcor remains a draft SDK and the current release decision is **NO-GO**. The live [readiness report](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) measures evidence-backed release readiness, not playback success rate or a feature/performance percentage against InnerTubeX.
+Updated 2026-11-14. eXcor remains a draft SDK and the current release decision is **NO-GO**. The live [readiness report](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) measures evidence-backed release readiness, not playback success rate or a feature/performance percentage against InnerTubeX.
 
 Use these as the current sources of detail:
 
@@ -9,7 +9,11 @@ Use these as the current sources of detail:
 - [Competitor matrix](COMPETITOR_MATRIX.md) and the root [README](../README.md) summarize documented capabilities and matched results.
 - [Maintainer progress](maintainers/EXCOR_PROGRESS.md) records dated investigations, local runs and limitations.
 
+- The latest exact-main direct-audio comparison (`ad7a6f1514c1f320b493c1e62d9bbb6c04c82a5a`, 2026-11-14) passed full 3,507,483-byte decode and both HTTP byte-range probes in 6/6 cold/warm attempts for eXcor and InnerTubeX on one signed-out Windows home-network music video. eXcor first-media p50/p95 was 395/555 ms cold and 96/98 ms warm; InnerTubeX was 1,388/1,488 ms and 142/145 ms. One ID/network; HTTP ranges do not verify player seeking. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.jsonl).
+
 ## Open release gaps
+
+- On stable public aqz-KE-bpKQ, the same exact-main comparison found eXcor ACCESS_DENIED before media in all six signed-out attempts while InnerTubeX passed full decode and both byte-range probes in all six. This is a second ID-specific access differential on the same network, not evidence of a decoder bug or broad reliability ranking. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md).
 
 - A four-adapter exact-main direct-audio comparison on `dQw4w9WgXcQ` and `aqz-KE-bpKQ` (2026-11-13, `0f03557`) recorded 48 signed-out cold/warm attempts on one Windows home network. eXcor, InnerTubeX and NewPipe passed only the bounded initial read in 6/6 on dQ; on aqz, eXcor was `ACCESS_DENIED` in 6/6 while InnerTubeX and NewPipe passed in 6/6. YouTube.js was `UNSUPPORTED_TRANSPORT` on both IDs in 6/6. This does not verify full decode, byte ranges or player seeking; see the [dQ report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-four-adapter-dq.md), [aqz report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-four-adapter-aqz.md) and their sanitized sample files.
 - A one-attempt-per-ID profile trace found YouTube returning `LOGIN_REQUIRED` with its bot-check reason to eXcor's VISIONOS and TVHTML5 profiles on aqz; WEB was skipped because no streaming-token provider was configured. VISIONOS returned audio for dQ. This identifies the observed block on this signed-out route, not the cause of every cross-adapter difference; see the [sanitized profile diagnostic](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-profile-diagnostic.md).

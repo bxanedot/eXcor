@@ -3,9 +3,22 @@
 eXcor is compared on capabilities that are documented or can be observed from outside. Competitor implementation code is not used or copied. Sources are recorded in `PROVENANCE.md`.
 
 **Sources:**
-- **InnerTubeX:** public [README](https://github.com/MetrolistGroup/innertubex) and [CHANGELOG.md](https://github.com/MetrolistGroup/innertubex/blob/main/CHANGELOG.md), plus the v0.11.6 [JVM build configuration](https://github.com/MetrolistGroup/innertubex/blob/v0.11.6/build.gradle.kts), checked 2026-11-13. The latest published release is v0.11.6; its README install snippet still pins v0.11.5. The v0.11.6 README documents a source-built JVM playback harness. We ran it at exact release commit `64c7df4d88d27e6964157b3b341f7ec70f88ea6e` for the seek check below.
+- **InnerTubeX:** public [README](https://github.com/MetrolistGroup/innertubex) and [CHANGELOG.md](https://github.com/MetrolistGroup/innertubex/blob/main/CHANGELOG.md), plus the v0.11.6 [JVM build configuration](https://github.com/MetrolistGroup/innertubex/blob/v0.11.6/build.gradle.kts), checked 2026-11-14. The latest published release is v0.11.6; its README install snippet still pins v0.11.5. The v0.11.6 README documents a source-built JVM playback harness. We ran it at exact release commit `64c7df4d88d27e6964157b3b341f7ec70f88ea6e` for the seek check below.
 - **YouTube.js:** public README, [Getting Started](https://ytjs.dev/guide/getting-started), [API docs](https://ytjs.dev/api/), and [npm package metadata](https://www.npmjs.com/package/youtubei.js), checked 2026-11-11. The separate adapter pins MIT-licensed `youtubei.js@18.3.0`, uses direct-URL audio only, and does not execute player JavaScript.
 - **NewPipeExtractor:** official README, v0.27.1 release notes and v0.27.1 Javadocs, checked 2026-11-11.
+
+**Latest exact-main paired direct-audio run — 2026-11-14, eXcor main `ad7a6f1514c1f320b493c1e62d9bbb6c04c82a5a`:** signed-out JVM adapters ran three cold and three warm samples on `dQw4w9WgXcQ` (music video) from one Windows home network. eXcor 0.2.0 was rebuilt from the recorded main commit; InnerTubeX adapter 0.1.3 uses v0.11.6. Both adapters passed full decode of the same 3,507,483-byte Opus stream and forward/backward HTTP byte-range probes in 6/6 attempts.
+
+| Phase | Measure (p50/p95) | eXcor | InnerTubeX |
+|---|---|---:|---:|
+| Cold | First media (ms) | 395/555 | 1,388/1,488 |
+| Warm | First media (ms) | 96/98 | 142/145 |
+| Cold | Full decode (ms) | 464/475 | 455/540 |
+| Warm | Full decode (ms) | 322/331 | 364/367 |
+
+This is one ID on one network with separate extraction adapters; it does not support a broad performance or reliability ranking. The sanitized report lists decoder/version, exact commit, command, sample counts and per-metric eligibility. HTTP byte ranges are not player seeks; forward/backward player seeks were `NOT_TESTED`. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full-report.json) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.jsonl).
+
+**Second current-main paired direct-audio run — 2026-11-14, exact same eXcor main commit:** on stable public video aqz-KE-bpKQ, eXcor 0.2.0 was classified ACCESS_DENIED before media in all three cold and all three warm attempts. InnerTubeX 0.11.6 passed full decode and both HTTP byte-range probes in all six. Its first-media p50/p95 was 1,033/1,080 ms cold and 148/173 ms warm; decode was 965/969 ms and 958/959 ms. This is an access differential on the same Windows home network, not a decoder-failure finding or broad ranking. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full-report.json) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.jsonl).
 
 **Earlier two-video exact-main live comparison — 2026-11-13, eXcor main `4e5e67d`:** signed-out eXcor 0.1.4 and InnerTubeX 0.11.6 adapter 0.1.3 ran three cold and three same-instance warm full-decode/range samples per video on one Windows home network.
 

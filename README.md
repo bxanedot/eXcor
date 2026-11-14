@@ -8,16 +8,20 @@ eXcor is a clean-room Kotlin Multiplatform library and separate Swift package fo
 
 ## Comparison evidence
 
-A paired full-decode and HTTP byte-range run from eXcor main `4e5e67d` was recorded on 2026-11-13. It used signed-out JVM adapters on one Windows home network, with three cold and three warm attempts per video.
+The latest matched direct-audio comparisons used eXcor main ad7a6f1 on 2026-11-14. Signed-out JVM adapters ran three cold and three warm attempts per video on one Windows home network. For dQw4w9WgXcQ, both eXcor 0.2.0 and InnerTubeX 0.11.6 fully decoded the same 3,507,483-byte Opus stream and passed forward and backward HTTP byte-range probes in all six attempts.
 
-| Public video | eXcor | InnerTubeX |
-|---|---|---|
-| `dQw4w9WgXcQ` | 6/6 full audio decodes and forward/backward byte-range checks passed | 6/6 passed |
-| `kJQP7kiw5Fk` | Access blocked before media in 6/6 attempts | 6/6 full audio decodes and byte-range checks passed |
+| Phase | Measure (p50/p95) | eXcor, dQw4w9WgXcQ | InnerTubeX, dQw4w9WgXcQ |
+|---|---|---|---|
+| Cold | First media (ms) | 395/555 | 1,388/1,488 |
+| Warm | First media (ms) | 96/98 | 142/145 |
+| Cold | Full decode (ms) | 464/475 | 455/540 |
+| Warm | Full decode (ms) | 322/331 | 364/367 |
 
-On the shared playable video, first-media p50 was 379 ms cold / 118 ms warm for eXcor and 1,524 ms cold / 185 ms warm for InnerTubeX. This is a diagnostic comparison from one network using separate extraction adapters, not a broad performance or reliability claim. HTTP byte-range checks are not decoder or player seeks.
+On a second public video, aqz-KE-bpKQ, eXcor was access-blocked before media in all six attempts. InnerTubeX passed full decode and both byte-range probes in all six; its first-media p50/p95 was 1,033/1,080 ms cold and 148/173 ms warm. This is a two-video comparison on one network using separate extraction adapters, not a broad performance or reliability claim. HTTP byte-range probes are not decoder or player seeks; the adapters recorded player seeks as NOT_TESTED.
 
-A current-main signed-out spot check on `ddaf925` (2026-11-14) found one range-readable result and two YouTube access blocks across three public music videos. It requested only the first 1 KiB and did not compare InnerTubeX or establish full playback. See the [per-ID result](modules/samples/black-box-comparison/results/owner-home-2026-11-13-per-id-range-matrix.md), [competitive matrix](docs/COMPETITOR_MATRIX.md), [normalized report](modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d-report.json), and [readiness score details](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
+A separate [current-main live check](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-playback.md) fully decoded 3,433,755 bytes and received HTTP 206 for a midpoint range. The results keep the release at **NO-GO**: ciphered playback, multi-network coverage, video mux and real player-seek evidence remain incomplete.
+
+See the [dQ comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md), [aqz comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md), [competitive matrix](docs/COMPETITOR_MATRIX.md), and [live readiness score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
 
 ## Build and verify
 
