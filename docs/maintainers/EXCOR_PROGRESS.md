@@ -516,3 +516,15 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 - On one signed-out Windows home network, the matched runner collected 24 cold/warm samples for `dQw4w9WgXcQ` and `kJQP7kiw5Fk`. For `dQw4w9WgXcQ`, both adapters passed full decode and forward/backward HTTP byte-range probes in all 6 attempts. First-media p50/p95 was 379/406 ms cold and 118/139 ms warm for eXcor; InnerTubeX was 1,524/1,645 ms cold and 185/189 ms warm. For `kJQP7kiw5Fk`, eXcor was `ACCESS_DENIED` before media in all 6 attempts, while InnerTubeX passed full decode and both ranges in all 6.
 - Updated the report to keep video outcomes separate and show first-media/decode p50/p95; all 18 comparison-tool tests passed. These results show one shared playable ID and one access differential on one network, not broad performance/reliability parity. HTTP ranges are not player seeks; G5 and G11 remain partial.
 - See the [per-video report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.md), [JSON summary](../../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d-report.json), and [sanitized samples](../../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.jsonl).
+
+## 2026-11-13 — per-ID initial-range matrix
+
+- Updated the opt-in JVM playback matrix to accept `EXCOR_LIVE_IDS`, keep going after recognized access blocks, validate 11-character IDs and record sanitized per-ID outcomes. The prior test stopped at its second ID on an access challenge.
+- On the signed-out Windows home network, `dQw4w9WgXcQ` returned a valid 1 KiB range; `kJQP7kiw5Fk` and `JGwWNGJdvx8` were access-blocked before media. The exact test commit passed with all three outcomes recorded.
+- This adds no full-decode, player-seek, cipher, HLS, or InnerTubeX evidence and does not advance G4/G5/G11. See the [sanitized matrix report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-13-per-id-range-matrix.md).
+
+## 2026-11-14 — repeat per-ID initial-range matrix
+
+- Re-ran `:jvmTest --tests 'com.excor.LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId' --rerun-tasks --no-daemon --console=plain` at test source `9cc903163d58ef97f11f4352fef02a3c51baee90`, signed out on the same Windows home network.
+- Gradle reported one test, zero skips, zero failures. The matrix again recorded `dQw4w9WgXcQ:RANGE_READABLE`, `kJQP7kiw5Fk:ACCESS_BLOCKED`, and `JGwWNGJdvx8:ACCESS_BLOCKED`.
+- This confirms repeatability of the classification on one network only; it adds no new playable ID, full decode, seek, cipher or InnerTubeX evidence. G4/G5/G11 remain partial.

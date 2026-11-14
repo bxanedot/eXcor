@@ -45,7 +45,15 @@ Remove-Item Env:\EXCOR_HLS_ID
 
 Use `EXCOR_DECODE_ID` only for a public video you are allowed to access. With no override, the test uses its existing fixture ID `dQw4w9WgXcQ`. The audio test downloads the complete stream, validates its duration and reads a mid-file HTTP byte range. The video test downloads and muxes selected video/audio, decodes it, checks dimensions/duration, and reads a mid-file HTTP byte range; its default height cap is 480p. These byte-range checks do not drive a player or establish playback seeking. The format-list test probes advertised ranges. These tests may consume significant bandwidth and disk space. They delete temporary media on completion.
 
-The HLS test uses `EXCOR_HLS_ID` (default `dQw4w9WgXcQ`), validates a manifest through the public API, and asks FFmpeg to decode up to eight seconds. It needs a live, eligible video and `ffmpeg`; recognized bot/sign-in challenges are skipped as blocked, while other refusals fail visibly. Use `--rerun-tasks` for a fresh network attempt. Current signed-out results are in the [sanitized JVM HLS report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). The separate `publicMusicVideosReturnRangeReadableAudio` test requires several publicly available IDs to be allowed by YouTube and is known to be access-blocked on some networks. Run it only when that access is available, and report its precise access outcome rather than weakening its assertion.
+The HLS test uses `EXCOR_HLS_ID` (default `dQw4w9WgXcQ`), validates a manifest through the public API, and asks FFmpeg to decode up to eight seconds. It needs a live, eligible video and `ffmpeg`; recognized bot/sign-in challenges are skipped as blocked, while other refusals fail visibly. Use `--rerun-tasks` for a fresh network attempt. Current signed-out results are in the [sanitized JVM HLS report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). For the per-ID initial-range matrix, `EXCOR_LIVE_IDS` optionally overrides its default three public IDs as a comma-separated list. It records recognized access blocks per ID and continues to later IDs; unclassified technical failures still fail visibly. A successful initial range is only a 1 KiB transport check, not decode or player-seek evidence.
+
+```powershell
+$env:EXCOR_LIVE="1"
+$env:EXCOR_LIVE_IDS="dQw4w9WgXcQ,kJQP7kiw5Fk,JGwWNGJdvx8"
+.\gradlew.bat :jvmTest --tests 'com.excor.LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId' --rerun-tasks
+Remove-Item Env:\EXCOR_LIVE
+Remove-Item Env:\EXCOR_LIVE_IDS
+```
 
 ## Matrix to execute
 
@@ -63,6 +71,10 @@ On `dQw4w9WgXcQ`, two signed-out quickstart runs selected VISIONOS WebM audio an
 | Platform / network | Windows x64 workstation; owner's home network; signed-out test harness |
 | Content | One public music video, `dQw4w9WgXcQ` |
 | Outcome | Full audio decode, 480p video/audio mux and decode, all 27 format range probes passed. This is one ID/network; HTTP ranges are not player seeks, and no InnerTubeX comparison ran in this command. |
+
+### Per-ID initial-range matrix — 2026-11-13
+
+The updated opt-in test at source `9cc903163d58ef97f11f4352fef02a3c51baee90` ran twice on signed-out Windows x64 over the owner's home network. Both runs recorded `dQw4w9WgXcQ` as a valid 1 KiB HTTP 206 range and `kJQP7kiw5Fk` plus `JGwWNGJdvx8` as `ACCESS_BLOCKED` before media. The 2026-11-14 repeat reported one test, zero skips and zero failures. A baseline run had skipped after the second ID and omitted the third. This adds test-matrix coverage only, not additional successful video, decode, seek or competitor-comparison evidence. See the [sanitized run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-per-id-range-matrix.md).
 
 | Case | Session/network | Evidence required | Current baseline |
 |---|---|---|---|

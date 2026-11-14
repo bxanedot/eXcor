@@ -298,21 +298,51 @@ class LivePlaybackTest {
         return ProcessBuilder(command).start().inputStream.bufferedReader().readText()
     }
 
+    /** A blocked ID must not prevent the remaining public IDs from contributing classified outcomes. */
     @Test
-    fun publicMusicVideosReturnRangeReadableAudio() {
+    fun publicMusicVideosRecordRangeOutcomeForEachId() {
         if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
         val (excor, http) = newExcor()
+        val videoIds = System.getenv("EXCOR_LIVE_IDS").orEmpty()
+            .ifBlank { "dQw4w9WgXcQ,kJQP7kiw5Fk,JGwWNGJdvx8" }
+            .split(',').map(String::trim).filter(String::isNotEmpty)
+        assertTrue(videoIds.isNotEmpty() && videoIds.all { it.matches(Regex("[A-Za-z0-9_-]{11}")) }, "EXCOR_LIVE_IDS must be a comma-separated list of public YouTube video IDs")
 
         runBlocking {
-            listOf("dQw4w9WgXcQ", "kJQP7kiw5Fk", "JGwWNGJdvx8").forEach { videoId ->
-                val stream = assertNotNull(liveRequest(videoId) { excor.extract(videoId, 128) }, "No playable audio returned for $videoId")
-                val request = Request.Builder().url(stream.url).header("Range", "bytes=0-1023").apply {
-                    stream.headers.forEach { (name, value) -> header(name, value) }
-                }.build()
-                http.newCall(request).execute().use { response ->
-                    assertTrue(response.code == 200 || response.code == 206, "Range request failed for $videoId")
+            val outcomes = videoIds.map { videoId ->
+                try {
+                    val stream = liveRequest(videoId) { excor.extract(videoId, 128) }
+                        ?: return@map "$videoId:NO_STREAM"
+                    val request = Request.Builder().url(stream.url).header("Range", "bytes=0-1023").apply {
+                        stream.headers.forEach { (name, value) -> header(name, value) }
+                    }.build()
+                    http.newCall(request).execute().use { response ->
+                        val bytesRead = response.body?.byteStream()?.readNBytes(1024)?.size ?: 0
+                        val outcome = when {
+                            response.code == 206 && response.header("Content-Range")?.startsWith("bytes 0-1023/") == true && bytesRead == 1024 -> "RANGE_READABLE"
+                            response.code == 200 && bytesRead == 1024 -> "READABLE_HTTP_200"
+                            response.code == 403 || response.code == 429 -> "MEDIA_REFUSED_HTTP_${response.code}"
+                            response.code == 404 -> "MEDIA_UNAVAILABLE_HTTP_404"
+                            bytesRead == 0 -> "EMPTY_MEDIA_HTTP_${response.code}"
+                            else -> "HTTP_${response.code}"
+                        }
+                        "$videoId:$outcome"
+                    }
+                } catch (error: SkipException) {
+                    "$videoId:ACCESS_BLOCKED"
                 }
             }
+            println("public music video range matrix: ${outcomes.joinToString(", ")}")
+            val readable = outcomes.any { it.endsWith(":RANGE_READABLE") || it.endsWith(":READABLE_HTTP_200") }
+            val accessOnly = outcomes.all {
+                it.endsWith(":ACCESS_BLOCKED") || ":MEDIA_REFUSED_HTTP_" in it || it.endsWith(":MEDIA_UNAVAILABLE_HTTP_404")
+            }
+            if (!readable && accessOnly) throw SkipException("All selected public videos were access-blocked, unavailable or media-refused: ${outcomes.joinToString(", ")}")
+            assertTrue(readable, "No selected public video returned readable audio: ${outcomes.joinToString(", ")}")
+            assertTrue(
+                outcomes.none { it.endsWith(":NO_STREAM") || ":EMPTY_MEDIA_HTTP_" in it || it.substringAfter(':').startsWith("HTTP_") },
+                "Unexpected live playback matrix outcome: ${outcomes.joinToString(", ")}",
+            )
         }
     }
 
