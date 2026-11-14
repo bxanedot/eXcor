@@ -35,6 +35,35 @@ class ComparisonAdapterTest {
     }
 
     @Test
+    fun acceptsExplicitPlayerSeekMode() {
+        val parsed = parseOptions(validArgs() + "--player-seek")
+        assertTrue(parsed.playerSeek)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--player-seek")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--full-decode")) }.isSuccess)
+    }
+
+    @Test
+    fun sharedPlayerPassesOnlyTheLoopbackAddressAndRejectsUntrustedHosts() {
+        val proxy = LoopbackMediaProxy(
+            PlaybackMediaSource(
+                "https://r1---sn-ab5l6.googlevideo.com/videoplayback?token=signed",
+                mapOf("Cookie" to "private", "User-Agent" to "eXcor comparison"),
+            ),
+        )
+        try {
+            assertTrue(proxy.localUrl.startsWith("http://127.0.0.1:"))
+            assertFalse(ffplayArguments(proxy.localUrl).any { "googlevideo" in it || "token=" in it })
+        } finally {
+            proxy.close()
+        }
+
+        val rejected = runCatching {
+            LoopbackMediaProxy(PlaybackMediaSource("https://example.test/videoplayback", emptyMap()))
+        }
+        assertTrue(rejected.isFailure)
+    }
+
+    @Test
     fun fullMediaRangeMustCoverTheKnownObjectFromByteZero() {
         assertTrue(HttpRangeProbe.fullResponseIsComplete(200, null, 100))
         assertTrue(HttpRangeProbe.fullResponseIsComplete(206, "bytes 0-99/100", 100))
