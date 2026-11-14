@@ -77,8 +77,12 @@ class ComparisonAdapterTest {
     fun acceptsExplicitPlayerSeekMode() {
         val parsed = parseOptions(validArgs() + "--player-seek")
         assertTrue(parsed.playerSeek)
+        val video = parseOptions(validArgs() + "--player-seek-video")
+        assertTrue(video.playerSeekVideo)
         assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--player-seek")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--player-seek-video")) }.isSuccess)
         assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--full-decode")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek-video", "--full-decode")) }.isSuccess)
     }
 
     @Test
