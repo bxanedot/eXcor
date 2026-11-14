@@ -362,15 +362,16 @@ class LivePlaybackTest {
         override fun log(level: ExcorLogLevel, message: String, trackId: String?) = println("[$level] $message")
     }
 }
-internal fun isKnownYouTubeAccessChallenge(message: String?): Boolean {
+internal fun isKnownYouTubeAccessRefusal(message: String?): Boolean {
     val reason = message?.lowercase()?.replace('’', '\'') ?: return false
     return reason.startsWith("excor sign in to confirm you're not a bot") ||
-        reason.startsWith("excor sign in to confirm your age")
+        reason.startsWith("excor sign in to confirm your age") ||
+        reason.startsWith("excor the page needs to be reloaded.")
 }
 
 internal suspend fun <T> liveRequest(videoId: String, request: suspend () -> T): T = try {
     request()
 } catch (error: IllegalStateException) {
-    if (!isKnownYouTubeAccessChallenge(error.message)) throw error
-    throw SkipException("YouTube access challenge blocked live verification for $videoId")
+    if (!isKnownYouTubeAccessRefusal(error.message)) throw error
+    throw SkipException("YouTube access refusal blocked live verification for $videoId")
 }
