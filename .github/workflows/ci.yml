@@ -29,12 +29,14 @@ jobs:
             27
             21
       - name: Build all Maven publications
-        run: ./gradlew $GRADLE_ARGS publishToMavenLocal
+        run: ./gradlew $GRADLE_ARGS -Dmaven.repo.local="$RUNNER_TEMP/excor-publication" publishToMavenLocal
+      - name: Verify Android Maven publication
+        run: python3 scripts/check_android_publication.py "$RUNNER_TEMP/excor-publication/com/excor"
       - name: Hash the published artifacts
         shell: bash
         run: |
           set -euo pipefail
-          publication="$HOME/.m2/repository/com/excor"
+          publication="$RUNNER_TEMP/excor-publication/com/excor"
           test -d "$publication"
           (
             cd "$publication"
