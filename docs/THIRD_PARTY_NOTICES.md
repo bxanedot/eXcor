@@ -13,6 +13,8 @@ python3 scripts/check_android_publication.py build/check-maven/com/excor
 
 On 2026-11-13, all six Maven POMs were generated with GPL-3.0-only metadata, and the JVM JAR and sources JAR were verified with all three notices. PR #168's macOS CI checks the release XCFramework's root notices and the QuickJS `JS_Eval` symbol separately in its device arm64, simulator arm64, and simulator x86_64 binaries. Remote artifact publication and inspection remain outstanding.
 
+The Android preview APK contains the same three files under `assets/excor-notices/`. CI matches the asset bytes to their repository sources before uploading the APK. The APK includes four Android QuickJS binaries through its dependency graph.
+
 The clean-room Kotlin source includes the yt-dlp/ejs 0.8.0 solver bundles from the PyPI wheel identified in [`PROVENANCE.md`](../PROVENANCE.md). The bundles retain their embedded notices for meriyah (ISC) and astring (MIT). Do not remove those notices when updating the bundles.
 
 The Kotlin Multiplatform SDK also depends on QuickJS-KT 1.0.15. Its native build pins QuickJS and c-vector submodules under MIT; their complete license texts and exact commit identifiers are in [`NOTICE`](../NOTICE) and [`PROVENANCE.md`](../PROVENANCE.md). The release XCFramework packaging step copies those notices alongside the framework. PR #168's macOS check tests `JS_Eval` separately in each device/simulator architecture; it does not inventory every native object or verify a future published package. The separate Swift package uses JavaScriptCore and does not depend on QuickJS-KT.
