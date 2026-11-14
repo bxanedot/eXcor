@@ -148,6 +148,10 @@ This is one video and one network, not broad parity or a performance ranking. Th
 
 On a second public video, aqz-KE-bpKQ, the same adapters on the same network gave eXcor ACCESS_DENIED before media in all six attempts while InnerTubeX passed full decode and both byte-range probes in all six. This does not establish a cause for the access difference. See the [second-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.jsonl).
 
+## 2026-11-14 — exact-source strict range validation
+
+At exact source commit `e990cb32a05c096cba9c02eed7962febf275ef0c`, nine selected tests passed with zero skips or failures. The signed-out Windows x64 run fully decoded 3,433,755 bytes of Opus, muxed and fully decoded 480p H.264/AAC, and validated MIME type, content length, exact range boundaries and body sizes. All 27 VISIONOS format-list entries returned valid HTTP 206 ranges. Synthetic regressions rejected misaligned ranges, body-length mismatches, MIME mismatches and excess bytes, and accepted a short final range and valid HTTP 200 full response. This is one public ID and one network; it is not an InnerTubeX comparison or player-seek result. See the [sanitized exact-source report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md).
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
