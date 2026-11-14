@@ -2,6 +2,10 @@
 
 > This file preserves historical provenance records for the existing implementation and includes a separate clean-room section for eXcor. The opening contribution note describes the earlier source tree; it is not a legal determination for the clean-room addition.
 
+## Research-access disclosure (2026-11-14)
+
+A research-only subagent accessed the InnerTubeX v0.11.6 GPL-3.0 implementation source before noticing the repository's clean-room prohibition in `docs/CLEAN_ROOM.md`. It was stopped immediately after disclosing the access. It reported no file changes and sent no source-derived implementation details to the main agent; none are being used. No code or fixtures were added. This event means strict implementer isolation is not established for that research session. It is a process disclosure, not a legal determination. See the [InnerTubeX v0.11.6 source tree](https://github.com/MetrolistGroup/innertubex/tree/v0.11.6).
+
 ## Current distribution license
 
 The current repository snapshot is licensed under GPL-3.0-only. Earlier revisions and contributions were also distributed under Apache-2.0; this change does not revoke those existing grants, and the license text remains in `docs/licenses/Apache-2.0.txt`. Third-party dependencies and the vendored EJS solver retain their separately recorded licenses and notices. The clean-room source boundary is unchanged.
