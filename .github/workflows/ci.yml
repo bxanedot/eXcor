@@ -275,7 +275,7 @@ jobs:
           count=0
           while IFS= read -r binary; do
             file "$binary"
-            xcrun nm -gU "$binary" | grep -q 'JS_Eval'
+            xcrun nm -gU "$binary" | grep 'JS_Eval' > /dev/null
             count=$((count + 1))
           done < <(find "$framework" -path '*/eXcor.framework/eXcor' -type f)
           test "$count" -ge 2
