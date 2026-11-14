@@ -14,12 +14,13 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-14 13:36 UTC
+## Latest verified checkpoint — 2026-11-14 14:03 UTC
 
-- PR #175 merged to main as 2a9f8dd6a0de4cef37724fad7102fc50c0c8a0cf; all nine exact-head CI jobs and CodeQL passed. Its topic branch was deleted locally and remotely.
-- Current-main signed-out playback checks passed on dQw4w9WgXcQ: full 3,433,755-byte Opus decode and 480p H.264/AAC mux plus full decode (854×480, 25 fps, 213.089 seconds). Midpoint HTTP byte ranges returned 206.
-- The three-ID initial-range matrix classified dQ as readable and kJQP7kiw5Fk/JGwWNGJdvx8 as YouTube bot-check access blocks. One network and eXcor-only; no player seek or InnerTubeX video comparison. See the [sanitized report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md).
-- Issue #78 remains open. This does not satisfy its multi-ID/network, cipher, or real player-seek criteria; keep G4/G5/G11 partial, G6 blocked, G12 partial, and release NO-GO.
+- PR #176 merged to main as `392be6a77fb0cc3a792cee51a27a1fc735f1c8db`. Its exact head passed all nine CI jobs and all five CodeQL language analyses. GitHub removed its remote topic branch. Post-merge main CI run [43602463707](https://github.com/bxanedot/eXcor/actions/runs/43602463707) was still in progress at 14:03 UTC; do not treat it as a passing main run until it completes.
+- The readiness refresh [43602463708](https://github.com/bxanedot/eXcor/actions/runs/43602463708) succeeded and records 53/100 with Release NO-GO. The score remains evidence-weighted engineering readiness, not playback-success percentage.
+- The latest exact-main signed-out playback report is tied to main `2a9f8dd6a0de4cef37724fad7102fc50c0c8a0cf`: dQw4w9WgXcQ fully decoded Opus audio and a 480p H.264/AAC mux; two other IDs hit YouTube bot checks. This is one network and eXcor-only; it does not verify player-controlled seeking or ciphered playback. See the [sanitized report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md).
+- The latest paired comparison remains tied to eXcor main `ad7a6f1`: both adapters passed audio decode and HTTP byte ranges for dQw4w9WgXcQ; eXcor was access-blocked on aqz-KE-bpKQ in all six attempts while InnerTubeX passed. This is a two-ID, one-network direct-audio comparison, not broad reliability or video/player-seek parity. See the [dQ report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md) and [aqz report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md).
+- Issue #78 remains open for eligible playback, live cipher outcomes, broader networks and real player seeks. Keep G4/G5/G11 partial, G6 blocked, G12 partial and release NO-GO. GPL-3.0-only remains the distribution license; the clean-room source-independence rules are unchanged.
 
 ## Latest verified checkpoint — 2026-11-14 13:11 UTC
 
