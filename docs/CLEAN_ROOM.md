@@ -15,7 +15,7 @@ The current distribution license is GPL-3.0-only. This license change does not c
 
 ## Repository boundary
 
-The new Kotlin source is selected from `modules/cleanroom/` by the root Gradle build. Existing `modules/legacy/src/` and `modules/legacy/ejs/` content is retained as a separate historical implementation. Its prior provenance record is not a legal clearance and does not establish that it is part of the clean-room build. Nothing compiles it: the apps that used it, and the `historical-engine/` module that built it for them, were removed on 2026-11-03. The preview apps that replaced them use only the clean-room library.
+The new Kotlin source is selected from `modules/cleanroom/` by the root Gradle build. CI's `scripts/tests/test_cleanroom_boundary.py` guards this source-set selection and checks that the historical tree is not an included Gradle project. This verifies build selection only; it does not prove authorship, strict implementer isolation, or fixture rights. Existing `modules/legacy/src/` and `modules/legacy/ejs/` content is retained as a separate historical implementation. Its prior provenance record is not a legal clearance and does not establish that it is part of the clean-room build. Nothing compiles it: the apps that used it, and the `historical-engine/` module that built it for them, were removed on 2026-11-03. The preview apps that replaced them use only the clean-room library.
 
 The old captured responses in `modules/legacy/fixtures/` are not used by the clean-room tests. New tests use synthetic data in `modules/cleanroom/fixtures/`. The old captures contain third-party content and remain subject to the limits described in `modules/legacy/fixtures/README.md` and `maintainers/QUESTIONS.md`.
 
