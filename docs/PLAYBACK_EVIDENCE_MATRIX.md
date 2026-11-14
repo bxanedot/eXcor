@@ -152,6 +152,11 @@ On a second public video, aqz-KE-bpKQ, the same adapters on the same network gav
 
 At exact source commit `e990cb32a05c096cba9c02eed7962febf275ef0c`, nine selected tests passed with zero skips or failures. The signed-out Windows x64 run fully decoded 3,433,755 bytes of Opus, muxed and fully decoded 480p H.264/AAC, and validated MIME type, content length, exact range boundaries and body sizes. All 27 VISIONOS format-list entries returned valid HTTP 206 ranges. Synthetic regressions rejected misaligned ranges, body-length mismatches, MIME mismatches and excess bytes, and accepted a short final range and valid HTTP 200 full response. This is one public ID and one network; it is not an InnerTubeX comparison or player-seek result. See the [sanitized exact-source report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md).
 
+## 2026-11-14 — exact-main signed-out playback and range matrix
+
+At main commit 2a9f8dd6a0de4cef37724fad7102fc50c0c8a0cf, the per-ID range matrix found dQw4w9WgXcQ range-readable and two known public IDs access-blocked by YouTube bot checks. Two further selected tests on dQ fully decoded 3,433,755-byte Opus audio and a 480p H.264/AAC mux (854×480, 25 fps, 213.089 seconds). Midpoint byte ranges returned HTTP 206. Exact commands, timestamps, environment and limits are in the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md).
+
+This is one signed-out Windows home network and eXcor-only. It does not compare InnerTubeX video, test player-controlled seeking or exercise a ciphered path. The two access blocks are reported separately from technical failures. G4/G5 remain partial.
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.

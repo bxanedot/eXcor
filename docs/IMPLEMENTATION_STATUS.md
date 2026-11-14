@@ -13,6 +13,8 @@ Use these as the current sources of detail:
 
 ## Open release gaps
 
+- A current-main, signed-out eXcor-only run on 2026-11-14 decoded full Opus audio and a 480p H.264/AAC mux for dQw4w9WgXcQ; the same three-ID range matrix classified kJQP7kiw5Fk and JGwWNGJdvx8 as YouTube bot-check access blocks. This is one Windows home network, not an InnerTubeX comparison or player-seek result. See the [exact-main report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md); G4/G5 remain partial.
+
 - A signed-out HLS check on 2026-11-14 received YouTube's `The page needs to be reloaded` refusal before a manifest was returned. No HLS decode ran; this is access-block evidence, so HLS remains unverified. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-hls-blocked.md).
 
 - On stable public aqz-KE-bpKQ, the same exact-main comparison found eXcor ACCESS_DENIED before media in all six signed-out attempts while InnerTubeX passed full decode and both byte-range probes in all six. This is a second ID-specific access differential on the same network, not evidence of a decoder bug or broad reliability ranking. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md).

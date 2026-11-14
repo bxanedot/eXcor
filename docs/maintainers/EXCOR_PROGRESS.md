@@ -14,6 +14,13 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
+## Latest verified checkpoint — 2026-11-14 13:36 UTC
+
+- PR #175 merged to main as 2a9f8dd6a0de4cef37724fad7102fc50c0c8a0cf; all nine exact-head CI jobs and CodeQL passed. Its topic branch was deleted locally and remotely.
+- Current-main signed-out playback checks passed on dQw4w9WgXcQ: full 3,433,755-byte Opus decode and 480p H.264/AAC mux plus full decode (854×480, 25 fps, 213.089 seconds). Midpoint HTTP byte ranges returned 206.
+- The three-ID initial-range matrix classified dQ as readable and kJQP7kiw5Fk/JGwWNGJdvx8 as YouTube bot-check access blocks. One network and eXcor-only; no player seek or InnerTubeX video comparison. See the [sanitized report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md).
+- Issue #78 remains open. This does not satisfy its multi-ID/network, cipher, or real player-seek criteria; keep G4/G5/G11 partial, G6 blocked, G12 partial, and release NO-GO.
+
 ## Latest verified checkpoint — 2026-11-14 13:11 UTC
 
 - PR #174 merged to main as `b02d710e8271b199931876902100a772a9647a2c`; all nine exact-head CI jobs passed in run `43596914127`. It adds synthetic coverage for an allowed HLS manifest redirect and updates the recorded TestNG/JCommander versions; no runtime behavior or release gate changed.
