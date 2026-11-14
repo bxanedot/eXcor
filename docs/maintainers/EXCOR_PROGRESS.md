@@ -1,6 +1,6 @@
 # eXcor progress
 
-The continuation file for the production-engineering directive of 2026-11-02. If work is interrupted, resume from **Next tasks**; don't repeat the audit.
+The continuation file for the production-engineering directive of 2026-11-02. If work is interrupted, resume from the latest checkpoint and its **Next** section; do not repeat completed audits.
 
 **Related files:**
 - `HANDOFF.md`: start here in a new session (rules, layout, commands, next tasks).
@@ -14,7 +14,21 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-13 21:45 UTC
+## Latest verified checkpoint: 2026-11-14 09:04 UTC
+
+- PR #168 merged to main as 9b4dcf0879e65c5956bdbfea216b3584b2ad79b1. Its exact-head CI and CodeQL passed before merge; the post-merge main CI run 43577790067 passed all nine jobs, and CodeQL run 43577790061 passed all five analyses.
+- Score refresh 43578808737 records the same main SHA, CI success, 53/100 and Release NO-GO. It remains an evidence-weighted readiness score, not a playback-success or feature-parity percentage.
+- The macOS CI gate separately found QuickJS JS_Eval in the device arm64, simulator arm64 and simulator x86_64 XCFramework binaries and confirmed root LICENSE/NOTICE files. This does not inspect a remote release artifact or the full native dependency inventory.
+- PR #168's topic branch was deleted locally and remotely. Current branches are main and the required automation/excor-competitiveness score branch; no PRs are open. The tracked root layout has seven directories, with implementation code grouped under modules/ and maintainer guidance under docs/.
+- The latest matched playback comparison uses implementation commit ad7a6f1. Both adapters decoded one video in 6/6 cold/warm attempts; eXcor was access-blocked on the second ID in 6/6 while InnerTubeX passed 6/6. Only live-test files changed since ad7a6f1; this remains one-network evidence without broad parity or player-seek proof.
+- A [second primary-source review](../SABR_VIEWER_CONTRACT_RECHECK_2026-11-14.md) independently found no public viewer-side SABR/UMP contract or authorized fixture corpus. G6 remains blocked; no service code or score credit was added.
+- [Issue #78](https://github.com/bxanedot/eXcor/issues/78) remains open for eligible playback, cipher and real-seek outcomes. G4/G5/G8/G11 and G12 remain partial; G10 artifact and provenance gaps remain. Direct-endpoint policy applicability, historical fixture rights, strict implementer isolation and a full release-security review remain unresolved.
+
+## Next
+
+Advance issue #78 only with eligible authorized cases; classify service refusals separately and never bypass them. For G12, resolve policy scope and complete artifact/provenance review. Keep G6 at no-go until the independent contract and authorized fixture re-entry criteria are satisfied.
+
+## Previous verified checkpoint — 2026-11-13 21:45 UTC
 
 - GitHub's extended CodeQL run `43510186351` completed actions, Java/Kotlin, JavaScript/TypeScript, Python and Swift analysis at base `b1b9ef8`. It reported 19 baseline alerts: two in readiness tooling, four in the desktop preview, one Android backup note and twelve in quarantined legacy capture fixtures. The current security remediation addresses the active-code findings without changing captured source.
 - Local verification for the remediation: the readiness suite passed 10 tests (one symlink test skipped on Windows); the packaged Windows desktop app built and passed `--self-test` with an extra path argument left untouched; the Android debug APK assembled successfully using the installed SDK.
