@@ -13,6 +13,8 @@ Use these as the current sources of detail:
 
 ## Open release gaps
 
+- A signed-out HLS check on 2026-11-14 received YouTube's `The page needs to be reloaded` refusal before a manifest was returned. No HLS decode ran; this is access-block evidence, so HLS remains unverified. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-hls-blocked.md).
+
 - On stable public aqz-KE-bpKQ, the same exact-main comparison found eXcor ACCESS_DENIED before media in all six signed-out attempts while InnerTubeX passed full decode and both byte-range probes in all six. This is a second ID-specific access differential on the same network, not evidence of a decoder bug or broad reliability ranking. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md).
 
 - A four-adapter exact-main direct-audio comparison on `dQw4w9WgXcQ` and `aqz-KE-bpKQ` (2026-11-13, `0f03557`) recorded 48 signed-out cold/warm attempts on one Windows home network. eXcor, InnerTubeX and NewPipe passed only the bounded initial read in 6/6 on dQ; on aqz, eXcor was `ACCESS_DENIED` in 6/6 while InnerTubeX and NewPipe passed in 6/6. YouTube.js was `UNSUPPORTED_TRANSPORT` on both IDs in 6/6. This does not verify full decode, byte ranges or player seeking; see the [dQ report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-four-adapter-dq.md), [aqz report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-four-adapter-aqz.md) and their sanitized sample files.
