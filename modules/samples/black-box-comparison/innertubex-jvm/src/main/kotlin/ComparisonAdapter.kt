@@ -868,7 +868,7 @@ private suspend fun runPlayerSeek(options: AdapterOptions) {
             return
         }
         proxy.use {
-            val result = runInteractivePlayer(proxy.localUrl, options.timeoutSeconds, 0, { proxy.byteLimitExceeded }, options.playerSeekVideo)
+            val result = runInteractivePlayer(proxy.localUrl, options.timeoutSeconds, 0, showVideo = options.playerSeekVideo) { proxy.byteLimitExceeded }
             println("player_seek_result=$result")
             printStats("player_seek", proxy.snapshotAndReset(), proxy.byteLimitExceeded)
         }

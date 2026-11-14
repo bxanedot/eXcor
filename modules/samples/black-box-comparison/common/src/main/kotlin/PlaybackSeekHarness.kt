@@ -72,8 +72,8 @@ internal fun runInteractivePlayer(
     url: String,
     seconds: Int,
     seekSeconds: Int,
-    byteLimitExceeded: () -> Boolean,
     showVideo: Boolean = false,
+    byteLimitExceeded: () -> Boolean,
 ): String {
     val process = try {
         ProcessBuilder(ffplayArguments(url, seekSeconds, showVideo))
