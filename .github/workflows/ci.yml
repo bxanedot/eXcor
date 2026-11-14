@@ -267,6 +267,18 @@ jobs:
         run: |
           test -f build/XCFrameworks/release/eXcor.xcframework/LICENSE
           test -f build/XCFrameworks/release/eXcor.xcframework/NOTICE
+      - name: Verify XCFramework native runtime linkage
+        shell: bash
+        run: |
+          set -euo pipefail
+          framework=build/XCFrameworks/release/eXcor.xcframework
+          count=0
+          while IFS= read -r binary; do
+            file "$binary"
+            xcrun nm -gU "$binary" | grep -q 'JS_Eval'
+            count=$((count + 1))
+          done < <(find "$framework" -path '*/eXcor.framework/eXcor' -type f)
+          test "$count" -ge 2
       - name: Swift check of the published Kotlin API
         run: >
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
