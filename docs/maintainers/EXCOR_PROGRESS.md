@@ -14,7 +14,14 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint: 2026-11-14 09:54 UTC
+## Latest verified checkpoint — 2026-11-14 11:26 UTC
+
+- PR #171 merged to main as `a7a8ddd015a58e87fbacabfb04973d522997d636`; PR CI 43587776234 passed all nine jobs and PR CodeQL 43587774181 passed all five analyses. Exact-main CI 43588807823 also passed all nine jobs. The merged topic branch was deleted; the only remote branches are `main` and the active readiness-score branch `automation/excor-competitiveness`.
+- The exact-source strict range-validation report records nine selected live/synthetic tests passing at `e990cb3`. Audio fully decoded, 480p video/audio muxed and fully decoded, and all 27 listed formats passed exact range, MIME and length checks. This is one public ID/network and eXcor-only; no InnerTubeX video comparison or player-controlled seek was run. See `modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md`.
+- Score refresh 43589944914 records 53/100, main CI success and Release NO-GO. Keep G4/G5/G11 partial, G6 blocked and G12 partial. GPL-3.0-only and the clean-room boundary remain in force.
+- Issue #78 remains open for eligible ciphered playback, repeatability across IDs/networks and player-seek evidence; the stricter test harness improves evidence quality but does not satisfy those acceptance criteria.
+
+## Previous verified checkpoint — 2026-11-14 09:54 UTC
 
 - PR #169 merged to main at `36d5bd0a08a39c1c708b9d71405cbacc2ca1fc8b`; its docs branch was deleted. Exact-main CI 43581522803 passed all nine jobs and CodeQL 43581522640 passed all five analyses. Post-CI score run 43582520939 reports 53/100, CI success and Release NO-GO for that SHA.
 - Two selected signed-out `LivePlaybackTest` cases passed on that exact main and public ID `dQw4w9WgXcQ`: full Opus decode (3,433,755 bytes) and 480p H.264/AAC mux plus full decode (854×480, 25 fps, 213.089 seconds). Midpoint HTTP ranges returned 206. This is eXcor-only evidence on one video/network; HTTP ranges are not player seeks, and no InnerTubeX video comparison ran. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md).
