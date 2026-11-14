@@ -14,7 +14,15 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint: 2026-11-14 09:04 UTC
+## Latest verified checkpoint: 2026-11-14 09:54 UTC
+
+- PR #169 merged to main at `36d5bd0a08a39c1c708b9d71405cbacc2ca1fc8b`; its docs branch was deleted. Exact-main CI 43581522803 passed all nine jobs and CodeQL 43581522640 passed all five analyses. Post-CI score run 43582520939 reports 53/100, CI success and Release NO-GO for that SHA.
+- Two selected signed-out `LivePlaybackTest` cases passed on that exact main and public ID `dQw4w9WgXcQ`: full Opus decode (3,433,755 bytes) and 480p H.264/AAC mux plus full decode (854×480, 25 fps, 213.089 seconds). Midpoint HTTP ranges returned 206. This is eXcor-only evidence on one video/network; HTTP ranges are not player seeks, and no InnerTubeX video comparison ran. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md).
+- The matched audio comparison remains tied to implementation commit ad7a6f1: both eXcor and InnerTubeX passed full decode and ranges on one ID, while eXcor was access-blocked on a second ID. This is one-network evidence, not broad parity.
+- GPL-3.0-only distribution and the clean-room boundary remain in force. The score branch is required; the merged docs branch is deleted. Current work should keep G4/G5/G11 partial, G6 blocked, and G12 partial.
+- Issue #78 remains open for repeatable playback, live cipher outcomes and real player-seek evidence. The latest live result adds video mux coverage but does not meet the issue acceptance criteria.
+
+## Previous verified checkpoint — 2026-11-14 09:04 UTC
 
 - PR #168 merged to main as 9b4dcf0879e65c5956bdbfea216b3584b2ad79b1. Its exact-head CI and CodeQL passed before merge; the post-merge main CI run 43577790067 passed all nine jobs, and CodeQL run 43577790061 passed all five analyses.
 - Score refresh 43578808737 records the same main SHA, CI success, 53/100 and Release NO-GO. It remains an evidence-weighted readiness score, not a playback-success or feature-parity percentage.
