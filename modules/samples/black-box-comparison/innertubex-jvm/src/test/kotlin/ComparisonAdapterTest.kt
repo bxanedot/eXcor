@@ -74,6 +74,14 @@ class ComparisonAdapterTest {
     }
 
     @Test
+    fun acceptsExplicitPlayerSeekMode() {
+        val parsed = parseOptions(validArgs() + "--player-seek")
+        assertTrue(parsed.playerSeek)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--player-seek")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--full-decode")) }.isSuccess)
+    }
+
+    @Test
     fun rejectsIdentifierAndTimeoutProblemsWithoutEchoingInput() {
         val badId = validArgs().toMutableList().also { it[1] = "https://media.example/private?token=secret" }
         val idError = try {

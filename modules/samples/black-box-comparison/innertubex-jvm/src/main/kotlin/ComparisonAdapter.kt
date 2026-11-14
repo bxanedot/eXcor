@@ -63,6 +63,7 @@ internal data class AdapterOptions(
     val rangeProbes: Boolean,
     val fullDecode: Boolean,
     val decoderVersion: String?,
+    val playerSeek: Boolean = false,
 )
 
 internal fun parseOptions(args: List<String>): AdapterOptions {
@@ -76,9 +77,16 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
     val values = linkedMapOf<String, String>()
     var rangeProbes = false
     var fullDecode = false
+    var playerSeek = false
     var index = 0
     while (index < args.size) {
         val key = args[index]
+        if (key == "--player-seek") {
+            if (playerSeek) throw SafeUsageException("invalid arguments")
+            playerSeek = true
+            index += 1
+            continue
+        }
         if (key == "--range-probes") {
             if (rangeProbes) throw SafeUsageException("invalid arguments")
             rangeProbes = true
@@ -128,11 +136,12 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         (decoderVersion != null && (!fullDecode || !Regex("^ffmpeg-[A-Za-z0-9._+\\-]{1,64}$").matches(decoderVersion))) ||
         timeout !in 1..30 ||
         phase !in setOf("cold", "warm") ||
-        sampleIndex < 1
+        sampleIndex < 1 ||
+        (playerSeek && (rangeProbes || fullDecode))
     ) {
         throw SafeUsageException("invalid option value")
     }
-    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes, fullDecode, decoderVersion)
+    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes, fullDecode, decoderVersion, playerSeek)
 }
 
 private object HelpRequested : RuntimeException()
@@ -779,19 +788,89 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
     }
 }
 
+private suspend fun runPlayerSeek(options: AdapterOptions) {
+    val apiClient = newHttpClient(options.timeoutSeconds, followRedirects = true, jsonContentNegotiation = true)
+    val mediaClient = newHttpClient(options.timeoutSeconds, followRedirects = false)
+    val innerTube = InnerTube(httpClient = apiClient)
+    val configStore = RemotePlayerConfigStore(
+        httpClient = apiClient,
+        repository = PlayerConfigRepository.disabled(),
+    )
+    val cipher = YouTubeCipherService(apiClient, configStore)
+    val extractor = InnerTubeExtractor(
+        configParser = YtConfigParserImpl(apiClient, innerTube, configStore, cipherService = cipher),
+        cipherService = cipher,
+        innerTube = innerTube,
+    )
+    val language = options.locale.substringBefore('-')
+    val region = options.locale.substringAfter('-', "US")
+    innerTube.locale = YouTubeLocale(hl = language, gl = region)
+    try {
+        val started = System.nanoTime()
+        val stream = try {
+            withTimeout(options.timeoutSeconds * 1_000L) {
+                extractor.extract(
+                    videoId = options.videoId,
+                    hints = ContentHints(wantVideo = false).withStreamCapabilities(
+                        allowHls = false,
+                        allowSabr = false,
+                        allowBoundedRange = true,
+                    ),
+                    audioQuality = AudioQuality.HIGH,
+                )
+            }
+        } catch (_: TimeoutCancellationException) {
+            println("player_seek=stream_resolution_timeout")
+            return
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            println("player_seek=stream_resolution_failed")
+            return
+        }
+        if (stream == null) {
+            println("player_seek=no_direct_audio_stream")
+            return
+        }
+        val directOutcome = directStreamOutcome(stream)
+        if (directOutcome != null) {
+            println("player_seek=unavailable outcome=${directOutcome.status} failureClass=${directOutcome.failureClass ?: "none"}")
+            return
+        }
+        println("player_seek=ready adapter=innertubex videoId=${options.videoId} mime=${safeMime(stream.mimeType) ?: "unknown"} lookupMs=${durationMs(started)}")
+        println("Focus ffplay and press Right then Left Arrow before its ${options.timeoutSeconds} second limit.")
+        val proxy = try {
+            LoopbackMediaProxy(PlaybackMediaSource(stream.audioUrl, mediaHeaders(stream.headers), 160))
+        } catch (_: Exception) {
+            println("player_seek=proxy_unavailable")
+            return
+        }
+        proxy.use {
+            val result = runInteractivePlayer(proxy.localUrl, options.timeoutSeconds, 0) { proxy.byteLimitExceeded }
+            println("player_seek_result=$result")
+            printStats("player_seek", proxy.snapshotAndReset(), proxy.byteLimitExceeded)
+        }
+    } finally {
+        try { cipher.dispose() } catch (_: Exception) {}
+        innerTube.close()
+        apiClient.close()
+        mediaClient.close()
+    }
+}
+
 fun main(args: Array<String>) {
     val options = try {
         parseOptions(args.toList())
     } catch (_: HelpRequested) {
-        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes] [--full-decode]")
+        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes | --full-decode | --player-seek]")
         return
     } catch (error: SafeUsageException) {
         System.err.println("comparison adapter: ${error.message}")
         exitProcess(2)
     }
     try {
-        val sample = runBlocking { runSample(options) }
-        println(sample.toJson())
+        if (options.playerSeek) runBlocking { runPlayerSeek(options) }
+        else println(runBlocking { runSample(options) }.toJson())
     } catch (_: CancellationException) {
         System.err.println("comparison adapter cancelled")
         exitProcess(130)

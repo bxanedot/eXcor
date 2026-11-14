@@ -35,7 +35,7 @@ python modules/samples/black-box-comparison/run_matched.py `
   --output results/owner-home-2026-11-12.jsonl
 ```
 
-The runner captures one shared commit, UTC timestamp, OS, locale, timeout and category context, preflights every selected adapter with `--help`, then executes samples sequentially in an interleaved order. It emits only schema-validated JSON lines, never raw adapter output, and refuses to overwrite an existing output file. `--adapters` can select a subset for diagnosis; subset runs do not provide four-way comparisons. The adapters make signed-out direct-audio requests only. By default, `PASS` means extraction plus an initial read of at most 64 KiB. The paired JVM adapters can opt into full direct-audio decode; player seeks and playback parity remain unmeasured, so G11 stays partial until owner-run results are reviewed.
+The runner captures one shared commit, UTC timestamp, OS, locale, timeout and category context, preflights every selected adapter with `--help`, then executes samples sequentially in an interleaved order. It emits only schema-validated JSON lines, never raw adapter output, and refuses to overwrite an existing output file. `--adapters` can select a subset for diagnosis; subset runs do not provide four-way comparisons. The adapters make signed-out direct-audio requests only. By default, `PASS` means extraction plus an initial read of at most 64 KiB. The paired JVM adapters can opt into full direct-audio decode and a separate shared FFplay player-seek mode; neither proves broad playback parity, so G11 stays partial until owner-run results are reviewed.
 
 To compare HTTP byte-range handling between eXcor and InnerTubeX, run the paired JVM adapters with the opt-in flag:
 
@@ -64,6 +64,22 @@ python modules/samples/black-box-comparison/run_matched.py `
 ```
 
 Full decode requires exactly those two adapters. The runner records one sanitized FFmpeg version for both. Each adapter requires a known media size no larger than 256 MiB, requests `Range: bytes=0-`, validates that a `206` response covers the complete known object, and streams exactly the expected bytes to FFmpeg through stdin. A `200` response is accepted only if its content length and bytes read match the known size. The signed media URL is never passed to FFmpeg or written to the report. Missing FFmpeg, unknown length or an oversized stream yields `decode: UNSUPPORTED`; HTTP, timeout and decoder failures retain their own outcomes. `decodeMs` covers the full transfer and decoder process time. This is a whole-file decode check, not playback startup or interactive seeking, so `startupMs`, `forwardSeek` and `backwardSeek` remain unmeasured.
+
+## Same-harness interactive player seeks
+
+The eXcor and InnerTubeX JVM adapters also accept `--player-seek`. This starts the same installed FFplay build for either adapter, with the same initial position, 160 Kbit/s relay pacing, 256 MiB cap and 30-second maximum (or the selected lower `--timeout-seconds`). The bounded localhost relay validates HTTPS media hosts and paths, forwards only an allowlist of non-secret headers, and keeps signed media URLs inside the adapter process. Focus the FFplay window and press Right Arrow, then Left Arrow before it exits. The adapter prints only sanitized relay range/status/byte counts. This interactive mode is intentionally separate from `run_matched.py` JSON reports.
+
+For a paired owner run in PowerShell, build the adapters as above, then run both back-to-back with one captured metadata context:
+
+```powershell
+$mainCommit = (git rev-parse main).Trim()
+$runDateUtc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$common = "--video-id dQw4w9WgXcQ --comparison-id owner-home-shared-player --main-commit $mainCommit --run-date-utc $runDateUtc --network-category home --content-category music_video --phase cold --sample-index 1 --timeout-seconds 30"
+./gradlew.bat -p modules/samples/black-box-comparison/excor-jvm run --args="$common --player-seek"
+./gradlew.bat -p modules/samples/black-box-comparison/innertubex-jvm run --args="$common --player-seek"
+```
+
+Record whether both keys moved the player and preserve each adapter's sanitized `rangeRequests`, `rangeStarts`, HTTP statuses and bytes relayed in a manual owner report. The stream extraction and signed media URL differ by adapter, so this is one Windows/network/video comparison; repeat across eligible public IDs and networks before drawing a competitive reliability conclusion.
 
 ## eXcor JVM adapter
 

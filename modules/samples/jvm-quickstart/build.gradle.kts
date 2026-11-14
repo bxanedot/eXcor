@@ -25,6 +25,9 @@ tasks.withType<Test>().configureEach {
 kotlin {
     jvmToolchain(21)
     compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+    sourceSets.main {
+        kotlin.srcDir("../black-box-comparison/common/src/main/kotlin")
+    }
 }
 
 java {
