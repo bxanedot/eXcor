@@ -75,3 +75,7 @@ This is content-integrity evidence for the layout change, not independent proof 
 ## Exact-main CI distribution check — 2026-11-13
 
 Exact-main CI run [43441086314](https://github.com/bxanedot/eXcor/actions/runs/43441086314) passed on `b23993d99e81dfc3d5709bd9281a4c93a1669876`. The macOS job passed Swift package tests, including the populated-cookie-jar isolation regression, and the XCFramework redistribution-notice check. This confirms the notice files were present in the CI-generated framework. The run did not upload an XCFramework artifact, so native QuickJS/c-vector linkage and the actual built framework contents remain uninspected. The local Maven JAR and Android AAR checks above are not checks of remote published artifacts. Older captured-fixture rights and strict implementation isolation also remain unresolved; this follow-up is engineering evidence, not legal clearance.
+
+## 2026-11-14 follow-up
+
+PR #168 adds an exact-head macOS CI check that inspects the release XCFramework's device arm64, simulator arm64, and simulator x86_64 binaries separately for QuickJS's `JS_Eval` symbol, and verifies `LICENSE` and `NOTICE` at the XCFramework root. The required CI run must pass before merge. This verifies symbol presence and notice files in generated CI output; it does not inspect every native object, prove c-vector linkage, or inspect a remotely published artifact. Android AAR contents, archived fixture rights, strict implementation isolation, and the full release-side audit remain open. No remote publication or release was performed.
