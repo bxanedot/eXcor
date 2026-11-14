@@ -275,10 +275,13 @@ jobs:
           count=0
           while IFS= read -r binary; do
             file "$binary"
-            xcrun nm -gU "$binary" | grep 'JS_Eval' > /dev/null
-            count=$((count + 1))
+            for arch in $(lipo -archs "$binary"); do
+              printf 'Checking JS_Eval in %s (%s)\n' "$binary" "$arch"
+              xcrun nm -arch "$arch" -gU "$binary" | grep -E '(^|[[:space:]])_?JS_Eval$' > /dev/null
+              count=$((count + 1))
+            done
           done < <(find "$framework" -path '*/eXcor.framework/eXcor' -type f)
-          test "$count" -ge 2
+          test "$count" -ge 3
       - name: Swift check of the published Kotlin API
         run: >
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
