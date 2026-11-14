@@ -21,5 +21,6 @@ Read [architecture](docs/ARCHITECTURE.md) before changing module boundaries and 
 - Report access blocks separately from technical failures. A byte-range probe is not a decoder or player seek, and a green offline test does not promote a live release gate.
 - Update [release gates](docs/release-gates.json) only when the evidence meets their stated scope. Check the [competitive matrix](docs/COMPETITOR_MATRIX.md) and [engineering plan](docs/superpowers/plans/2026-11-10-excor-competitor-plan.md) for outstanding work.
 - Do not publish artifacts or announce a release without owner authorization.
+- After confirming a PR is merged, delete its local and remote topic branch and prune stale refs; retain active automation branches and branches with unmerged work.
 
 Start with the root [README](README.md) for the current capability and comparison snapshot.
