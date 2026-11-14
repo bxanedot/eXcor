@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    # Hourly scoreboard JSON commits are not source changes; do not rebuild every platform.
-    branches-ignore:
-      - automation/excor-competitiveness
+    # Feature branches use the pull_request trigger, avoiding a duplicate full matrix.
+    branches: [main]
   pull_request:
 
 permissions:
