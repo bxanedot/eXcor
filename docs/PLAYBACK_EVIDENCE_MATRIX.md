@@ -22,7 +22,7 @@ ffmpeg -version
 ffprobe -version
 EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
 EXCOR_LIVE=1 EXCOR_VIDEO_HEIGHT=480 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
-EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable --rerun-tasks
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.formatListReportsRangeSupport --rerun-tasks
 EXCOR_LIVE=1 EXCOR_HLS_ID=VIDEO_ID ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
 ```
 
@@ -35,7 +35,7 @@ $env:EXCOR_LIVE="1"
 $env:EXCOR_VIDEO_HEIGHT="480"
 .\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
 .\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
-.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable --rerun-tasks
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.formatListReportsRangeSupport --rerun-tasks
 $env:EXCOR_HLS_ID="VIDEO_ID"
 .\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
 Remove-Item Env:\EXCOR_LIVE
