@@ -8,6 +8,8 @@ There is a narrower supported surface for viewer behavior: YouTube's public IFra
 
 The public YouTube API catalog describes the Data API and Live Streaming API as product APIs; the Data API reference documents video upload, listing, and metadata operations, not a viewer-side media-stream endpoint or SABR/UMP schema ([YouTube APIs](https://developers.google.com/youtube/apis), [Data API reference](https://developers.google.com/youtube/data/reference/rest), [video resource](https://developers.google.com/youtube/data/reference/rest/v3/videos)). Google's Cobalt page describes a platform for running HTML5 applications, including the YouTube TV app; it is not a SABR/UMP protocol specification ([Cobalt](https://developers.google.com/youtube/cobalt)). Targeted searches of the official YouTube developer domain for `SABR`, `UMP`, and `Unified Media Protocol` returned no results. This search result is evidence of what was located, not an exhaustive proof of absence.
 
+The public [DASH live-streaming guide](https://developers.google.com/youtube/data/live/guides/encoding-with-dash) is for encoder-to-YouTube delivery; its endpoint records `PUT` requests from an encoder. The [HLS ingestion guide](https://developers.google.com/youtube/data/live/guides/hls-ingestion) likewise describes an encoder sending playlists and segments to YouTube. These ingestion guides do not specify how a viewer requests SABR/UMP media.
+
 Generic standards do not fill the gap. HTTP specifications define generic request/response and message framing semantics, not the application-specific YouTube message schema ([RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html), [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113.html), [RFC 9114](https://www.rfc-editor.org/rfc/rfc9114.html)). Likewise, Protocol Buffers' encoding documentation says field names and declared types are resolved from the message definition; a generic encoding guide cannot supply a missing UMP schema ([Protocol Buffers encoding](https://protobuf.dev/programming-guides/encoding/)).
 
 ## Separate policy-scope question
@@ -51,9 +53,11 @@ Until those conditions are met, the independently verifiable viewer integration 
 - [YouTube Data API REST reference](https://developers.google.com/youtube/data/reference/rest)
 - [YouTube video resource](https://developers.google.com/youtube/data/reference/rest/v3/videos)
 - [YouTube Cobalt](https://developers.google.com/youtube/cobalt)
+- [YouTube Live DASH ingestion guide](https://developers.google.com/youtube/data/live/guides/encoding-with-dash)
+- [YouTube Live HLS ingestion guide](https://developers.google.com/youtube/data/live/guides/hls-ingestion)
 - [YouTube API Services Developer Policies](https://developers.google.com/youtube/terms/developer-policies)
 - [YouTube API Services Terms of Service](https://developers.google.com/youtube/terms/api-services-terms-of-service)
 - [RFC 9110: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html), [RFC 9113: HTTP/2](https://www.rfc-editor.org/rfc/rfc9113.html), [RFC 9114: HTTP/3](https://www.rfc-editor.org/rfc/rfc9114.html)
 - [Protocol Buffers: Encoding](https://protobuf.dev/programming-guides/encoding/)
 
-All web sources accessed 2026-11-14. Research was limited to official first-party documentation/APIs and public standards; no extractor implementation or repository research/provenance summary was consulted.
+All web sources were accessed 2026-11-14. Research was limited to official first-party documentation/APIs and public standards; no extractor implementation was opened. One reviewer read `AGENTS.md`, `docs/CLEAN_ROOM.md`, and `PROVENANCE.md` for repository policy, but excluded implementation-derived summaries and does not claim strict researcher isolation. A second review reports that it did not consult repository research or provenance summaries. This report does not claim strict researcher isolation.

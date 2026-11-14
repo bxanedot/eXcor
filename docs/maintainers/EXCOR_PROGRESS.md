@@ -14,6 +14,12 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
+## Latest verified checkpoint — 2026-11-14 13:11 UTC
+
+- PR #174 merged to main as `b02d710e8271b199931876902100a772a9647a2c`; all nine exact-head CI jobs passed in run `43596914127`. It adds synthetic coverage for an allowed HLS manifest redirect and updates the recorded TestNG/JCommander versions; no runtime behavior or release gate changed.
+- The merged topic branch was deleted locally and remotely. The remote has `main` and the active readiness-score branch `automation/excor-competitiveness`; the root README badge depends on the latter.
+- Issue #78 remains open. G4/G5/G11 remain partial, G6 remains blocked, and the release decision remains NO-GO.
+
 ## Latest verified checkpoint — 2026-11-14 11:26 UTC
 
 - PR #171 merged to main as `a7a8ddd015a58e87fbacabfb04973d522997d636`; PR CI 43587776234 passed all nine jobs and PR CodeQL 43587774181 passed all five analyses. Exact-main CI 43588807823 also passed all nine jobs. The merged topic branch was deleted; the only remote branches are `main` and the active readiness-score branch `automation/excor-competitiveness`.
