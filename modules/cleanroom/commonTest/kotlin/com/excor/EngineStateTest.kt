@@ -447,6 +447,36 @@ class EngineStateTest {
     }
 
     @Test
+    fun hlsManifestProbeFollowsAnAllowedRedirectAndPreservesItsSignedQuery() = runTest {
+        val manifestUrl = "https://manifest.googlevideo.com/api/manifest/hls_variant/test/file/index.m3u8?signature=initial"
+        val redirectedUrl = "https://rr5---sn.googlevideo.com/api/manifest/hls_variant/redirected/file/index.m3u8?signature=redirected"
+        val player = """{"playabilityStatus":{"status":"OK"},"streamingData":{"hlsManifestUrl":"$manifestUrl"}}"""
+        val requestedUrls = mutableListOf<String>()
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                "/youtubei/v1/player" -> respond(player, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+                "/api/manifest/hls_variant/test/file/index.m3u8" -> {
+                    requestedUrls += request.url.toString()
+                    respond("", HttpStatusCode.Found, headersOf(HttpHeaders.Location, redirectedUrl))
+                }
+                "/api/manifest/hls_variant/redirected/file/index.m3u8" -> {
+                    requestedUrls += request.url.toString()
+                    respond("#EXTM3U\n#EXT-X-ENDLIST\n", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/vnd.apple.mpegurl"))
+                }
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        }) { followRedirects = false }
+        try {
+            val stream = assertNotNull(ExcorEngine(FakeHost(), null, client).extractHls(VIDEO_ID, emptySet()))
+            assertEquals(redirectedUrl, stream.url)
+            assertEquals(listOf(manifestUrl, redirectedUrl), requestedUrls)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
     fun videoExtractionPairsTheBestPlayableVideoWithAudioInTheSameContainer() = runTest {
         val failingItags = mutableSetOf<String>()
         val probedItags = mutableListOf<String>()

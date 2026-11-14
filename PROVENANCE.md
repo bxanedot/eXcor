@@ -115,8 +115,8 @@ From Maven Central, and the AndroidX ones from Google's Maven; licenses as decla
 | org.jetbrains:annotations | 13.0, 23.0.0 | Apache-2.0 | main |
 | slf4j-api (via Ktor) | 2.0.19 | MIT | main (JVM) |
 | ktor-client-mock (serves fixtures to the engine in tests) | 3.6.0 | Apache-2.0 | test |
-| TestNG | 7.0.0 | Apache-2.0 | test (JVM) |
-| JCommander (via TestNG) | 1.72 | Apache-2.0 | test (JVM) |
+| TestNG | 7.5.1 | Apache-2.0 | test (JVM) |
+| JCommander (via TestNG) | 1.78 | Apache-2.0 | test (JVM) |
 | Gradle wrapper | 9.8.2 | Apache-2.0 | build |
 | Android Gradle Plugin (`com.android.kotlin.multiplatform.library`, `com.android.application`), from Google's Maven | 9.4.1 | Apache-2.0 | build |
 | Kotlin Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose`) | 2.4.21 | Apache-2.0 | build (app) |
@@ -159,7 +159,7 @@ This addition was independently implemented while the repository used Apache-2.0
 | [Foojay Toolchains resolver](https://github.com/gradle/foojay-toolchains) | `1.0.0` | Apache-2.0 | Gradle JDK toolchain provisioning. |
 | [OkHttp](https://github.com/square/okhttp) / [Okio](https://github.com/square/okio) | `5.5.0` / `3.18.2` | Apache-2.0 | Host-provided JVM/Android transport dependency. |
 | [SLF4J API](https://www.slf4j.org/) / [JetBrains annotations](https://github.com/JetBrains/java-annotations) | `2.0.19` / `23.0.0` | MIT / Apache-2.0 | Ktor/Kotlin transitive runtime dependencies. |
-| [TestNG](https://github.com/testng-team/testng) / [JCommander](https://github.com/cbeust/jcommander) | `7.0.0` / `1.72` | Apache-2.0 | JVM test runner and its command-line dependency. |
+| [TestNG](https://github.com/testng-team/testng) / [JCommander](https://github.com/cbeust/jcommander) | `7.5.1` / `1.78` | Apache-2.0 | JVM test runner and its command-line dependency. |
 | [Gradle](https://github.com/gradle/gradle) | `9.8.2` | Apache-2.0 | Wrapper/build runtime. |
 | [actions/checkout](https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1), [actions/setup-java](https://github.com/actions/setup-java/commit/b843ebf9b913146b38da2eaa7aeddf76074ae1ad), [actions/setup-node](https://github.com/actions/setup-node/commit/249970729cb0ef3589644e2896645e5dc5ba9c38), [actions/upload-artifact](https://github.com/actions/upload-artifact/commit/cf430e030ddbb5b0abf93d22962f4752f3646cd9) | checkout v7, setup-java v6, setup-node v6, upload-artifact v7 | MIT | CI actions pinned to their official release commits; Dependabot checks action updates monthly. |
 
