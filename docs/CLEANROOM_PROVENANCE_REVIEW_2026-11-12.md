@@ -2,7 +2,7 @@
 
 **Baseline revision:** `6146d8d69f725010822f2991cf986353fd0312d4`.
 
-**Follow-up review:** working-tree changes on branch `docs/cleanroom-provenance-review`, 2026-11-12 (not yet committed).
+**Follow-up review:** included on `main` through commit `4e5e67d5e1bfab3b424831e9cd18d3219409da8f` (2026-11-13). The review remains open; see the conclusion for unresolved artifact, fixture and strict-isolation gaps.
 
 ## Scope and limits
 
