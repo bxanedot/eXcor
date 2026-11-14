@@ -21,6 +21,8 @@ On a second public video, aqz-KE-bpKQ, eXcor was access-blocked before media in 
 
 A separate signed-out live run on merged main `36d5bd0` fully decoded 3,433,755 bytes of Opus audio and muxed/decoded 480p H.264 plus AAC for the same 213-second public video. Audio and video midpoint HTTP byte-range reads returned 206. This is eXcor-only evidence on one network; it is not an InnerTubeX video comparison or a player-controlled seek. See the [current-main audio/video run](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md) and the earlier [audio-only live check](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-playback.md). Release remains **NO-GO**: ciphered playback, multi-network coverage, repeatability across IDs, and real player-seek evidence remain incomplete.
 
+At exact source commit `e990cb3`, a stricter signed-out rerun fully decoded the same audio/video and verified MIME types, lengths and exact HTTP range boundaries; all 27 listed formats returned valid 206 ranges. This remains eXcor-only evidence for one video/network, not a matched InnerTubeX video test or player-controlled seek. See the [exact-source verification report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md).
+
 See the [dQ comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md), [aqz comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md), [competitive matrix](docs/COMPETITOR_MATRIX.md), and [live readiness score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
 
 ## Build and verify

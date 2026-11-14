@@ -22,7 +22,7 @@ ffmpeg -version
 ffprobe -version
 EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
 EXCOR_LIVE=1 EXCOR_VIDEO_HEIGHT=480 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
-EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable --rerun-tasks
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.formatListReportsRangeSupport --rerun-tasks
 EXCOR_LIVE=1 EXCOR_HLS_ID=VIDEO_ID ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
 ```
 
@@ -35,7 +35,7 @@ $env:EXCOR_LIVE="1"
 $env:EXCOR_VIDEO_HEIGHT="480"
 .\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
 .\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
-.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.formatListIsRangeReadable --rerun-tasks
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.formatListReportsRangeSupport --rerun-tasks
 $env:EXCOR_HLS_ID="VIDEO_ID"
 .\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
 Remove-Item Env:\EXCOR_LIVE
@@ -147,6 +147,10 @@ On merged main `36d5bd0a08a39c1c708b9d71405cbacc2ca1fc8b`, the signed-out Window
 This is one video and one network, not broad parity or a performance ranking. The range requests are not player-controlled seeks. The per-sample report records forward/backward player seeks as `NOT_TESTED`; ciphered playback, same-harness InnerTubeX video comparison and another network remain open.
 
 On a second public video, aqz-KE-bpKQ, the same adapters on the same network gave eXcor ACCESS_DENIED before media in all six attempts while InnerTubeX passed full decode and both byte-range probes in all six. This does not establish a cause for the access difference. See the [second-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.jsonl).
+
+## 2026-11-14 — exact-source strict range validation
+
+At exact source commit `e990cb32a05c096cba9c02eed7962febf275ef0c`, nine selected tests passed with zero skips or failures. The signed-out Windows x64 run fully decoded 3,433,755 bytes of Opus, muxed and fully decoded 480p H.264/AAC, and validated MIME type, content length, exact range boundaries and body sizes. All 27 VISIONOS format-list entries returned valid HTTP 206 ranges. Synthetic regressions rejected misaligned ranges, body-length mismatches, MIME mismatches and excess bytes, and accepted a short final range and valid HTTP 200 full response. This is one public ID and one network; it is not an InnerTubeX comparison or player-seek result. See the [sanitized exact-source report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md).
 
 ## Release-gate interpretation
 

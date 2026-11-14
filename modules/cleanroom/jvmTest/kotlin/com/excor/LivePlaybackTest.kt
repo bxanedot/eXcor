@@ -1,6 +1,10 @@
 package com.excor
 
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
@@ -10,14 +14,22 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.testng.annotations.AfterMethod
 import org.testng.SkipException
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class LivePlaybackTest {
+    private data class ByteRange(val first: Long, val last: Long, val total: Long) {
+        val length: Long get() = last - first + 1
+    }
+
+    private val contentRangePattern = Regex("bytes (\\d+)-(\\d+)/(\\d+)", RegexOption.IGNORE_CASE)
     private val clients = mutableListOf<OkHttpClient>()
     private val libraries = mutableListOf<Excor>()
     private val playerScriptRequests = AtomicInteger()
@@ -71,7 +83,7 @@ class LivePlaybackTest {
      * The extracted stream is real, complete media, not just a readable first KiB:
      * - the whole file is downloaded with the stream's headers;
      * - ffmpeg decodes every frame without error, and the decoded duration matches the video's length;
-     * - a range read from the middle of the file starts where it was asked to (seeking).
+     * - a midpoint HTTP byte-range request returns the exact requested bytes; this is not a player seek.
      * It needs ffmpeg and ffprobe on PATH, and a video YouTube serves to this network. Set EXCOR_FORCE_TV=1 to test
      * the TVHTML5 player-script path alone or EXCOR_LIVE_503_ONCE=1 to inject one local 503 after metadata lookup.
      * Only a recognized access challenge is skipped; null metadata, streams or formats fail so unknown outcomes remain visible.
@@ -115,10 +127,7 @@ class LivePlaybackTest {
 
             val file = File.createTempFile("excor-decode", if ("webm" in stream.mimeType) ".webm" else ".m4a")
             try {
-                val total = http.newCall(request("bytes=0-")).execute().use { response ->
-                    assertTrue(response.code == 200 || response.code == 206, "full read answered ${response.code}")
-                    response.body!!.byteStream().use { input -> file.outputStream().use { input.copyTo(it) } }
-                }
+                val total = download(http, stream.url, stream.headers, file, stream.mimeType)
                 assertTrue(total > 100_000, "a complete audio file, got $total bytes")
 
                 val decode = ProcessBuilder("ffmpeg", "-v", "error", "-i", file.path, "-f", "null", "-").redirectErrorStream(true).start()
@@ -132,8 +141,12 @@ class LivePlaybackTest {
                 val middle = total / 2
                 http.newCall(request("bytes=$middle-${middle + 65_535}")).execute().use { response ->
                     assertTrue(response.code == 206, "seek read answered ${response.code}")
-                    assertTrue(response.header("Content-Range")?.startsWith("bytes $middle-") == true, "seek landed at ${response.header("Content-Range")}")
-                    assertTrue(response.body!!.bytes().size == 65_536)
+                    val body = assertNotNull(response.body)
+                    assertTrue(body.contentLength() < 0 || body.contentLength() <= 65_536, "midpoint range exceeded 64 KiB")
+                    val bytes = body.byteStream().use { it.readNBytes(65_537) }
+                    val range = assertNotNull(parseContentRange(response.header("Content-Range"), middle, middle + 65_535, bytes.size.toLong()))
+                    assertEquals(total, range.total)
+                    assertEquals(65_536, bytes.size)
                 }
                 println("decoded ${stream.mimeType} from ${stream.clientName}: $total bytes, ${decodedSeconds}s; seek to $middle ok")
             } finally {
@@ -206,8 +219,7 @@ class LivePlaybackTest {
             val dir = kotlin.io.path.createTempDirectory("excor-video").toFile()
             try {
                 val videoFile = File(dir, if ("webm" in video.mimeType) "video.webm" else "video.mp4")
-                val videoBytes = download(http, video.url, video.headers, videoFile)
-                video.contentLength?.let { assertTrue(it == videoBytes, "downloaded $videoBytes of $it bytes") }
+                val videoBytes = download(http, video.url, video.headers, videoFile, video.mimeType, video.contentLength)
 
                 val (width, height) = ffprobe(videoFile, "v:0", "stream=width,height").lines().filter { it.isNotBlank() }.map { it.trim().toInt() }
                 assertTrue(height == video.height && (video.width == null || width == video.width), "file is ${width}x$height, track says ${video.width}x${video.height}")
@@ -215,7 +227,7 @@ class LivePlaybackTest {
                 val inputs = mutableListOf("-i", videoFile.path)
                 streams.audio?.let { audio ->
                     val audioFile = File(dir, if ("webm" in audio.mimeType) "audio.webm" else "audio.m4a")
-                    download(http, audio.url, audio.headers, audioFile)
+                    download(http, audio.url, audio.headers, audioFile, audio.mimeType)
                     inputs += listOf("-i", audioFile.path)
                 }
                 val muxed = File(dir, "muxed.mkv")
@@ -238,7 +250,12 @@ class LivePlaybackTest {
                 }.build()
                 http.newCall(seek).execute().use { response ->
                     assertTrue(response.code == 206, "seek read answered ${response.code}")
-                    assertTrue(response.header("Content-Range")?.startsWith("bytes $middle-") == true, "seek landed at ${response.header("Content-Range")}")
+                    val body = assertNotNull(response.body)
+                    assertTrue(body.contentLength() < 0 || body.contentLength() <= 65_536, "midpoint range exceeded 64 KiB")
+                    val bytes = body.byteStream().use { it.readNBytes(65_537) }
+                    val range = assertNotNull(parseContentRange(response.header("Content-Range"), middle, middle + 65_535, bytes.size.toLong()))
+                    assertEquals(videoBytes, range.total)
+                    assertEquals(65_536, bytes.size)
                 }
                 println(
                     "decoded ${video.qualityLabel} ${video.codec} (${width}x$height, ${video.fps} fps, $videoBytes bytes) " +
@@ -250,45 +267,233 @@ class LivePlaybackTest {
         }
     }
 
-    /** The format list has audio and video, and every listed format answers a range read with the list's headers. */
+    /** Record whether each listed format supports byte ranges or only an initial read. */
     @Test
-    fun formatListIsRangeReadable() {
+    fun formatListReportsRangeSupport() {
         if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
         val (excor, http) = newExcor()
         runBlocking {
             val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
             val list = assertNotNull(liveRequest(videoId) { excor.formats(videoId) }, "No formats returned for $videoId")
             assertTrue(list.formats.any { it.hasVideo && !it.hasAudio } && list.formats.any { it.hasAudio && !it.hasVideo }, "list has ${list.formats}")
-            val refused = list.formats.filter { format ->
+            val outcomes = list.formats.map { format ->
                 val request = Request.Builder().url(format.url).header("Range", "bytes=0-1023").apply {
                     list.headers.forEach { (name, value) -> header(name, value) }
                 }.build()
-                http.newCall(request).execute().use { it.code != 206 && it.code != 200 }
+                http.newCall(request).execute().use { response ->
+                    when (response.code) {
+                        206 -> {
+                            val body = assertNotNull(response.body, "format ${format.itag} had no body")
+                            assertMediaType(body, format.mimeType)
+                            assertTrue(body.contentLength() < 0 || body.contentLength() <= 1024, "format ${format.itag} range exceeded 1024 bytes")
+                            val bytes = body.byteStream().use { it.readNBytes(1025) }
+                            val range = assertNotNull(
+                                parseContentRange(response.header("Content-Range"), 0, 1023, bytes.size.toLong()),
+                                "format ${format.itag} returned an invalid range",
+                            )
+                            if (body.contentLength() >= 0) assertEquals(range.length, body.contentLength())
+                            format.contentLength?.let { assertEquals(it, range.total, "format ${format.itag} total length") }
+                            "RANGE_READABLE"
+                        }
+                        200 -> {
+                            val body = assertNotNull(response.body, "format ${format.itag} had no body")
+                            assertMediaType(body, format.mimeType)
+                            val bytes = body.byteStream().use { it.readNBytes(1025) }
+                            val minimum = minOf(1024L, format.contentLength ?: 1024L).toInt()
+                            assertTrue(bytes.size >= minimum, "format ${format.itag} returned only ${bytes.size} initial bytes")
+                            if (format.contentLength != null && body.contentLength() >= 0) {
+                                assertEquals(format.contentLength, body.contentLength(), "format ${format.itag} total length")
+                            }
+                            "READABLE_HTTP_200"
+                        }
+                        else -> "HTTP_${response.code}"
+                    }
+                }
             }
-            assertTrue(refused.isEmpty(), "refused: $refused")
-            println("listed ${list.formats.size} formats from ${list.clientName}; heights ${list.formats.mapNotNull { it.height }.distinct().sortedDescending()}; all range-readable")
+            assertTrue(outcomes.all { it == "RANGE_READABLE" || it == "READABLE_HTTP_200" }, "format outcomes: $outcomes")
+            println("listed ${list.formats.size} formats from ${list.clientName}; ${outcomes.count { it == "RANGE_READABLE" }} range-readable, ${outcomes.count { it == "READABLE_HTTP_200" }} initially readable only")
         }
     }
 
-    private fun download(http: OkHttpClient, url: String, headers: Map<String, String>, file: File): Long {
+    @Test
+    fun rangedDownloadRejectsMisalignedContentRange() {
+        val http = rangeResponseClient("bytes 1-150000/150001", 150_000)
+        try {
+            val error = assertFailsWith<AssertionError> { downloadSyntheticResponse(http) }
+            assertTrue("Content-Range" in error.message.orEmpty())
+        } finally {
+            closeTestClient(http)
+        }
+    }
+
+    @Test
+    fun rangedDownloadRejectsContentRangeBodyLengthMismatch() {
+        val http = rangeResponseClient("bytes 0-149999/150000", 150_001)
+        try {
+            val error = assertFailsWith<AssertionError> { downloadSyntheticResponse(http) }
+            assertTrue("Content-Range" in error.message.orEmpty())
+        } finally {
+            closeTestClient(http)
+        }
+    }
+
+    @Test
+    fun rangedDownloadAcceptsAnAccurateShortFinalRange() {
+        val http = rangeResponseClient("bytes 0-149999/150000", 150_000)
+        try {
+            assertEquals(150_000, downloadSyntheticResponse(http))
+        } finally {
+            closeTestClient(http)
+        }
+    }
+
+    @Test
+    fun rangedDownloadAcceptsAFullResponseWhenRangeIsIgnored() {
+        val http = rangeResponseClient(null, 150_000, status = 200)
+        try {
+            assertEquals(150_000, downloadSyntheticResponse(http))
+        } finally {
+            closeTestClient(http)
+        }
+    }
+
+    @Test
+    fun rangedDownloadRejectsAMismatchedMediaType() {
+        val http = rangeResponseClient("bytes 0-149999/150000", 150_000, contentType = "audio/mp4")
+        try {
+            val error = assertFailsWith<AssertionError> { downloadSyntheticResponse(http) }
+            assertTrue("MIME type" in error.message.orEmpty())
+        } finally {
+            closeTestClient(http)
+        }
+    }
+
+    @Test
+    fun boundedRangeCopyNeverWritesPastTheExpectedLength() {
+        val output = ByteArrayOutputStream()
+        assertFailsWith<AssertionError> {
+            copyBody(ByteArrayInputStream(byteArrayOf(1, 2)), output, 1)
+        }
+        assertTrue(output.size() <= 1)
+    }
+
+    private fun rangeResponseClient(
+        contentRange: String?,
+        bodyBytes: Int,
+        contentType: String = "video/mp4",
+        status: Int = 206,
+    ): OkHttpClient =
+        OkHttpClient.Builder().addInterceptor { chain ->
+            Response.Builder()
+                .request(chain.request())
+                .protocol(Protocol.HTTP_1_1)
+                .code(status)
+                .message(if (status == 206) "Partial Content" else "OK")
+                .apply { contentRange?.let { header("Content-Range", it) } }
+                .body(ByteArray(bodyBytes).toResponseBody(contentType.toMediaType()))
+                .build()
+        }.build()
+
+    private fun downloadSyntheticResponse(http: OkHttpClient): Long {
+        val file = File.createTempFile("excor-range", ".mp4")
+        return try {
+            download(http, "https://media.example.invalid/video", emptyMap(), file, "video/mp4")
+        } finally {
+            file.delete()
+        }
+    }
+
+    private fun closeTestClient(http: OkHttpClient) {
+        http.connectionPool.evictAll()
+        http.dispatcher.executorService.shutdown()
+    }
+
+    private fun download(
+        http: OkHttpClient,
+        url: String,
+        headers: Map<String, String>,
+        file: File,
+        expectedMimeType: String,
+        expectedLength: Long? = null,
+    ): Long {
+        // shortcut: skip owner-run media larger than 256 MiB, raise after sizing the selected stream.
         val chunk = 4L * 1024 * 1024
+        val maximumSize = 256L * 1024 * 1024
+        assertTrue(expectedLength == null || expectedLength in 1..maximumSize, "invalid expected media length $expectedLength")
         var offset = 0L
+        var total: Long? = null
         file.outputStream().use { out ->
             while (true) {
-                val request = Request.Builder().url(url).header("Range", "bytes=$offset-${offset + chunk - 1}").apply {
+                val requestedEnd = minOf(offset + chunk - 1, maximumSize - 1)
+                val request = Request.Builder().url(url).header("Range", "bytes=$offset-$requestedEnd").apply {
                     headers.forEach { (name, value) -> header(name, value) }
                 }.build()
-                val (read, total) = http.newCall(request).execute().use { response ->
+                val (read, responseTotal) = http.newCall(request).execute().use { response ->
                     assertTrue(response.code == 206 || (response.code == 200 && offset == 0L), "range read at $offset answered ${response.code}")
-                    val total = response.header("Content-Range")?.substringAfter('/')?.toLongOrNull()
-                    response.body!!.byteStream().copyTo(out) to total
+                    val body = assertNotNull(response.body, "media response had no body")
+                    assertMediaType(body, expectedMimeType)
+                    val declaredLength = body.contentLength()
+                    val (expectedBytes, responseTotal) = if (response.code == 206) {
+                        val range = assertNotNull(
+                            parseContentRange(response.header("Content-Range"), offset, requestedEnd),
+                            "invalid Content-Range: ${response.header("Content-Range")}",
+                        )
+                        range.length to range.total
+                    } else {
+                        val length = declaredLength.takeIf { it >= 0 } ?: expectedLength
+                        val completeLength = assertNotNull(length, "full response had no verifiable content length")
+                        completeLength to completeLength
+                    }
+                    assertTrue(responseTotal <= maximumSize, "media exceeded $maximumSize bytes")
+                    if (declaredLength >= 0) assertEquals(expectedBytes, declaredLength, "Content-Length did not match Content-Range")
+                    if (expectedLength != null) assertEquals(expectedLength, responseTotal, "stream content length")
+                    val read = copyBody(body.byteStream(), out, expectedBytes)
+                    assertEquals(expectedBytes, read, "body length did not match response range")
+                    read to responseTotal
                 }
+                assertTrue(responseTotal > offset, "media range made no progress at byte $offset")
+                assertTrue(total == null || total == responseTotal, "media total changed from $total to $responseTotal")
+                total = responseTotal
                 offset += read
-                if (read == 0L || total == null || offset >= total) break
+                assertTrue(offset <= responseTotal, "media response exceeded its reported total length")
+                if (offset == responseTotal) break
             }
         }
         assertTrue(offset > 100_000, "a complete media file, got $offset bytes")
+        assertEquals(total, offset, "downloaded media length")
         return offset
+    }
+
+    private fun assertMediaType(body: ResponseBody, expectedMimeType: String) {
+        assertTrue(matchesMediaType(body, expectedMimeType), "media response MIME type did not match $expectedMimeType")
+    }
+
+    private fun matchesMediaType(body: ResponseBody, expectedMimeType: String): Boolean {
+        val actual = body.contentType()?.let { "${it.type}/${it.subtype}" }?.lowercase()
+        return expectedMimeType.substringBefore(';').trim().lowercase() == actual
+    }
+
+    private fun parseContentRange(value: String?, requestedStart: Long, requestedEnd: Long, bodyBytes: Long? = null): ByteRange? {
+        val match = contentRangePattern.matchEntire(value.orEmpty()) ?: return null
+        val first = match.groupValues[1].toLongOrNull() ?: return null
+        val last = match.groupValues[2].toLongOrNull() ?: return null
+        val total = match.groupValues[3].toLongOrNull() ?: return null
+        if (first != requestedStart || last < first || total <= last || last != minOf(requestedEnd, total - 1)) return null
+        if (bodyBytes != null && last - first + 1 != bodyBytes) return null
+        return ByteRange(first, last, total)
+    }
+
+    private fun copyBody(input: InputStream, output: OutputStream, maximumBytes: Long): Long {
+        var copied = 0L
+        val buffer = ByteArray(8 * 1024)
+        while (true) {
+            val remaining = maximumBytes - copied
+            val count = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining + 1).toInt())
+            if (count < 0) return copied
+            assertTrue(count.toLong() <= remaining, "media response exceeded its validated byte range")
+            output.write(buffer, 0, count)
+            copied += count
+        }
     }
 
     private fun ffprobe(file: File, select: String?, entries: String): String {
@@ -317,14 +522,29 @@ class LivePlaybackTest {
                         stream.headers.forEach { (name, value) -> header(name, value) }
                     }.build()
                     http.newCall(request).execute().use { response ->
-                        val bytesRead = response.body?.byteStream()?.readNBytes(1024)?.size ?: 0
-                        val outcome = when {
-                            response.code == 206 && response.header("Content-Range")?.startsWith("bytes 0-1023/") == true && bytesRead == 1024 -> "RANGE_READABLE"
-                            response.code == 200 && bytesRead == 1024 -> "READABLE_HTTP_200"
-                            response.code == 403 || response.code == 429 -> "MEDIA_REFUSED_HTTP_${response.code}"
-                            response.code == 404 -> "MEDIA_UNAVAILABLE_HTTP_404"
-                            bytesRead == 0 -> "EMPTY_MEDIA_HTTP_${response.code}"
-                            else -> "HTTP_${response.code}"
+                        val body = response.body
+                        val readLimit = if (response.code == 206) 1025 else 1024
+                        val bytesRead = body.byteStream().use { it.readNBytes(readLimit).size }
+                        val range = if (response.code == 206) {
+                            parseContentRange(response.header("Content-Range"), 0, 1023, bytesRead.toLong())
+                        } else {
+                            null
+                        }
+                        val mimeTypeMatches = matchesMediaType(body, stream.mimeType)
+                        val outcome = when (response.code) {
+                            206 -> when {
+                                !mimeTypeMatches -> "MIME_MISMATCH"
+                                range == null || (body.contentLength() >= 0 && range.length != body.contentLength()) -> "INVALID_RANGE"
+                                else -> "RANGE_READABLE"
+                            }
+                            200 -> when {
+                                !mimeTypeMatches -> "MIME_MISMATCH"
+                                bytesRead == 1024 -> "READABLE_HTTP_200"
+                                else -> "EMPTY_MEDIA_HTTP_200"
+                            }
+                            403, 429 -> "MEDIA_REFUSED_HTTP_${response.code}"
+                            404 -> "MEDIA_UNAVAILABLE_HTTP_404"
+                            else -> if (bytesRead == 0) "EMPTY_MEDIA_HTTP_${response.code}" else "HTTP_${response.code}"
                         }
                         "$videoId:$outcome"
                     }
@@ -340,7 +560,7 @@ class LivePlaybackTest {
             if (!readable && accessOnly) throw SkipException("All selected public videos were access-blocked, unavailable or media-refused: ${outcomes.joinToString(", ")}")
             assertTrue(readable, "No selected public video returned readable audio: ${outcomes.joinToString(", ")}")
             assertTrue(
-                outcomes.none { it.endsWith(":NO_STREAM") || ":EMPTY_MEDIA_HTTP_" in it || it.substringAfter(':').startsWith("HTTP_") },
+                outcomes.none { it.endsWith(":NO_STREAM") || ":EMPTY_MEDIA_HTTP_" in it || it.endsWith(":INVALID_RANGE") || it.endsWith(":MIME_MISMATCH") || it.substringAfter(':').startsWith("HTTP_") },
                 "Unexpected live playback matrix outcome: ${outcomes.joinToString(", ")}",
             )
         }
