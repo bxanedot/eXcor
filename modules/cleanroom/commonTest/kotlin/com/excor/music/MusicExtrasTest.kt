@@ -1,0 +1,219 @@
+package com.excor.music
+
+import com.excor.catalog.ExcorCatalogError
+import com.excor.catalog.ExcorCatalogException
+import com.excor.catalog.ExcorCatalogProvider
+import com.excor.catalog.ExcorCatalogTokenProvider
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.request.HttpRequestData
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
+import io.ktor.http.headersOf
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
+
+// Synthetic responses only.
+class MusicExtrasTest {
+    private val requests = mutableListOf<HttpRequestData>()
+
+    private fun music(routes: Map<String, Pair<Int, String>>): ExcorMusic {
+        val client = HttpClient(MockEngine { r ->
+            requests += r
+            val (status, body) = routes["${r.method.value} ${r.url.encodedPath}"] ?: (404 to "{}")
+            if (status == 204) respond("", HttpStatusCode.NoContent)
+            else respond(body, HttpStatusCode.fromValue(status), headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        val tokens = mapOf(ExcorCatalogProvider.SPOTIFY to "s", ExcorCatalogProvider.APPLE_MUSIC to "a")
+        return ExcorMusic(client, ExcorMusicConfig(tokens = ExcorCatalogTokenProvider { tokens[it] }, appleMusicUserToken = { "u" }), nowMs = { 0L })
+    }
+
+    @Test
+    fun spotifyRemoteControlSendsCommandsToTheUsersClient() = runTest {
+        val m = music(mapOf(
+            "PUT /v1/me/player/play" to (204 to ""),
+            "PUT /v1/me/player/pause" to (403 to """{"error":{"status":403,"message":"Player command failed: Premium required","reason":"PREMIUM_REQUIRED"}}"""),
+            "PUT /v1/me/player/seek" to (204 to ""),
+            "GET /v1/me/player/devices" to (200 to """{"devices":[{"id":"abc123","name":"Phone","type":"Smartphone","is_active":true,"is_restricted":false},{"name":"no id"}]}"""),
+        ))
+        m.spotifyCatalog.play(listOf("spotify:track:0123456789abcdefABCDEF"), deviceId = "abc123")
+        val play = requests.last()
+        assertEquals(HttpMethod.Put, play.method)
+        assertEquals("abc123", play.url.parameters["device_id"])
+        assertEquals("""{"uris":["spotify:track:0123456789abcdefABCDEF"]}""", (play.body as TextContent).text)
+
+        assertEquals(ExcorCatalogError.ACCESS_DENIED, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.pause() }.error)
+        m.spotifyCatalog.seek(30_000)
+        assertEquals("30000", requests.last().url.parameters["position_ms"])
+        assertEquals(listOf("abc123"), m.spotifyCatalog.devices().map { it.id })
+
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.play(listOf("spotify:track:x\"]}")) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.play(listOf("spotify:album:2222222222222222222222")) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.pause("bad id&x=1") }.error)
+    }
+
+    @Test
+    fun spotifyEpisodesAndShowsStayOutOfMusicModels() = runTest {
+        val episode = """{"type":"episode","id":"5555555555555555555555","name":"Episode One","description":"About things","duration_ms":1800000,
+            "release_date":"2026-01-02","explicit":false,"language":"en","is_playable":true,
+            "show":{"id":"6666666666666666666666","name":"The Show"},"external_urls":{"spotify":"https://open.spotify.com/episode/5555555555555555555555"},
+            "images":[{"url":"https://i.scdn.co/image/ep","width":640,"height":640}]}"""
+        val m = music(mapOf(
+            "GET /v1/episodes/5555555555555555555555" to (200 to episode),
+            "GET /v1/shows/6666666666666666666666" to (200 to """{"type":"show","id":"6666666666666666666666","name":"The Show","languages":["en"],"total_episodes":1}"""),
+            "GET /v1/shows/6666666666666666666666/episodes" to (200 to """{"items":[$episode],"total":1,"next":null}"""),
+        ))
+        val e = m.spotifyCatalog.episode("5555555555555555555555")
+        assertEquals("The Show", e.showTitle)
+        assertEquals(1_800_000L, e.durationMs)
+        assertEquals(listOf("en"), e.languages)
+        val show = m.spotifyCatalog.show("6666666666666666666666")
+        assertEquals(1, show.episodes.items.size)
+        assertEquals(null, show.publisher)
+    }
+
+    @Test
+    fun appleMusicVideosStationsAndRecommendations() = runTest {
+        val m = music(mapOf(
+            "GET /v1/catalog/us/music-videos/8001" to (200 to """{"data":[{"id":"8001","type":"music-videos","attributes":{"name":"Glass River (Video)","artistName":"Mira Vale",
+                "isrc":"QZAAA2400002","durationInMillis":210000,"has4K":true,"hasHDR":false,"contentRating":"clean","genreNames":["Pop","Music"],
+                "url":"https://music.apple.com/us/music-video/glass-river/8001","artwork":{"url":"https://is1-ssl.mzstatic.com/v/{w}x{h}.jpg","width":1920,"height":1080}}}]}"""),
+            "GET /v1/catalog/us/stations/ra.123" to (200 to """{"data":[{"id":"ra.123","type":"stations","attributes":{"name":"Mira Vale Radio","isLive":false,"url":"https://music.apple.com/us/station/ra.123"}}]}"""),
+            "GET /v1/me/recommendations" to (200 to """{"data":[{"id":"r1","type":"personal-recommendation","attributes":{"title":{"stringForDisplay":"Made for You"}},
+                "relationships":{"contents":{"data":[{"id":"pl.abc","type":"playlists"},{"id":"7000","type":"albums"},{"id":"x","type":"apps"}]}}}]}"""),
+        ))
+        val video = m.appleMusicCatalog.musicVideo("8001")
+        assertEquals(true, video.has4K)
+        assertEquals(false, video.explicit)
+        assertEquals(listOf("Pop"), video.genres)
+        assertEquals(listOf(300, 600, 1200, 1920), video.artwork.map { it.width })
+        assertEquals("Mira Vale Radio", m.appleMusicCatalog.station("ra.123").name)
+        val recs = m.appleMusicCatalog.recommendations()
+        assertEquals("Made for You", recs.single().title)
+        assertEquals(listOf(ExcorMusicKind.PLAYLIST, ExcorMusicKind.ALBUM), recs.single().items.map { it.kind })
+        assertTrue(requests.last().headers["Music-User-Token"] == "u")
+        assertEquals(ExcorCatalogError.INVALID_URL, assertFailsWith<ExcorCatalogException> { m.appleMusicCatalog.station("../me") }.error)
+    }
+
+    @Test
+    fun spotifyLibraryWritesQueueAndVolume() = runTest {
+        val m = music(mapOf(
+            "PUT /v1/me/library" to (200 to ""),
+            "DELETE /v1/me/library" to (200 to ""),
+            "GET /v1/me/library/contains" to (200 to "[true,false]"),
+            "POST /v1/me/player/queue" to (204 to ""),
+            "PUT /v1/me/player/volume" to (204 to ""),
+        ))
+        val uris = (0 until 45).map { "spotify:track:" + it.toString().padStart(22, '0') }
+        m.spotifyCatalog.saveToLibrary(uris)
+        val puts = requests.filter { it.method == HttpMethod.Put }
+        assertEquals(listOf(40, 5), puts.map { it.url.parameters["uris"]!!.split(',').size })
+        m.spotifyCatalog.removeFromLibrary(uris.take(2))
+        assertEquals(HttpMethod.Delete, requests.last().method)
+        assertEquals(listOf(true, false), m.spotifyCatalog.libraryContains(uris.take(2)))
+        assertEquals(ExcorCatalogError.MALFORMED_RESPONSE, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.libraryContains(uris.take(3)) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.saveToLibrary(listOf("https://open.spotify.com/track/x")) }.error)
+        m.spotifyCatalog.queue("spotify:episode:5555555555555555555555")
+        assertEquals("spotify:episode:5555555555555555555555", requests.last().url.parameters["uri"])
+        m.spotifyCatalog.setVolume(35)
+        assertEquals("35", requests.last().url.parameters["volume_percent"])
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.setVolume(101) }.error)
+    }
+
+    @Test
+    fun ttmlLyricsWithLineAndWordTimes() {
+        val ttml = """<?xml version="1.0" encoding="UTF-8"?>
+            <tt xmlns="http://www.w3.org/ns/ttml" xml:lang="en"><body><div>
+              <p begin="00:00:01.500" end="00:00:04.000"><span begin="1.5s">Glass</span> <span begin="00:02.100">river &amp;</span> <span begin="2600ms">light</span></p>
+              <p begin="5.25s">Second<br/>line</p>
+              <p begin="1:00:00.000">Late</p>
+            </div></body></tt>"""
+        val lyrics = excorParseTtml(ttml, source = "test")
+        assertEquals(ExcorLyricsSync.WORD, lyrics.sync)
+        assertEquals("en", lyrics.language)
+        assertEquals(listOf(1_500L, 5_250L, 3_600_000L), lyrics.lines.map { it.startMs })
+        assertEquals("Glass river & light", lyrics.lines[0].text)
+        assertEquals(listOf(1_500L, 2_100L, 2_600L), lyrics.lines[0].words.map { it.startMs })
+        assertEquals("Second line", lyrics.lines[1].text)
+        assertEquals(ExcorLyricsSync.NONE, excorParseTtml("<tt><body><p>Untimed &#x263A;</p></body></tt>", "test").sync)
+        assertEquals("Untimed \u263A", excorParseTtml("<tt><body><p>Untimed &#x263A;</p></body></tt>", "test").lines.single().text)
+        assertEquals(null, ttmlTime("soon"))
+    }
+
+    @Test
+    fun spotifyPlaylistEditing() = runTest {
+        val m = music(mapOf(
+            "POST /v1/me/playlists" to (201 to """{"type":"playlist","id":"7777777777777777777777","name":"Night \"Mix\"","public":false,"collaborative":true,"snapshot_id":"s0"}"""),
+            "POST /v1/playlists/7777777777777777777777/items" to (201 to """{"snapshot_id":"s1"}"""),
+            "DELETE /v1/playlists/7777777777777777777777/items" to (200 to """{"snapshot_id":"s2"}"""),
+            "PUT /v1/playlists/7777777777777777777777/items" to (200 to """{"snapshot_id":"s3"}"""),
+        ))
+        val created = m.spotifyCatalog.createPlaylist("Night \"Mix\"", collaborative = true)
+        assertEquals("7777777777777777777777", created.id)
+        assertEquals("s0", created.snapshot)
+        assertTrue("\"name\":\"Night \\\"Mix\\\"\"" in (requests.last().body as TextContent).text) // escaped, not spliced
+
+        val uris = (0 until 150).map { "spotify:track:" + it.toString().padStart(22, '0') }
+        assertEquals("s1", m.spotifyCatalog.addToPlaylist(created.id, uris, position = 10))
+        val adds = requests.takeLast(2).map { (it.body as TextContent).text }
+        assertTrue("\"position\":10" in adds[0] && "\"position\":110" in adds[1])
+        assertEquals("s2", m.spotifyCatalog.removeFromPlaylist(created.id, uris.take(1), snapshot = "s1"))
+        assertTrue("\"snapshot_id\":\"s1\"" in (requests.last().body as TextContent).text)
+        assertEquals("s3", m.spotifyCatalog.reorderPlaylist(created.id, rangeStart = 5, insertBefore = 0))
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.createPlaylist("x", public = true, collaborative = true) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.addToPlaylist(created.id, listOf("spotify:album:2222222222222222222222")) }.error)
+        assertEquals(ExcorCatalogError.INVALID_URL, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.addToPlaylist("../me", uris.take(1)) }.error)
+    }
+
+    @Test
+    fun spotifyPlaylistDetailsAndCover() = runTest {
+        val m = music(mapOf(
+            "PUT /v1/playlists/7777777777777777777777" to (200 to ""),
+            "PUT /v1/playlists/7777777777777777777777/images" to (202 to ""),
+        ))
+        m.spotifyCatalog.updatePlaylist("7777777777777777777777", name = "Renamed", public = false)
+        assertEquals("""{"name":"Renamed","public":false}""", (requests.last().body as TextContent).text)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.updatePlaylist("7777777777777777777777") }.error)
+
+        val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 1, 2, 3)
+        m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", jpeg)
+        val upload = requests.last().body as TextContent
+        assertEquals("image/jpeg", upload.contentType.toString())
+        assertEquals("/9j/4AECAw==", upload.text)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47)) }.error)
+        assertEquals(ExcorCatalogError.INVALID_REQUEST, assertFailsWith<ExcorCatalogException> { m.spotifyCatalog.uploadPlaylistCover("7777777777777777777777", jpeg + ByteArray(200_000)) }.error)
+    }
+
+    @Test
+    fun deezerPodcastsAndEditorialCharts() = runTest {
+        val episode = """{"id":9001,"title":"Episode 1","description":"About","available":true,"release_date":"2026-10-29 00:05:00","duration":4591,
+            "link":"https://www.deezer.com/episode/9001","track_token":"SYNTHETIC-NEVER-READ","podcast":{"id":900,"title":"The Show"},"type":"episode"}"""
+        val show = """{"id":900,"title":"The Show","description":"Talk","available":true,"fans":10,"link":"https://www.deezer.com/show/900",
+            "picture_xl":"https://cdn-images.dzcdn.net/images/talk/x/1000x1000.jpg","type":"podcast"}"""
+        val m = music(mapOf(
+            "GET /search/podcast" to (200 to """{"data":[$show],"total":1}"""),
+            "GET /podcast/900" to (200 to show),
+            "GET /podcast/900/episodes" to (200 to """{"data":[$episode],"total":1}"""),
+            "GET /episode/9001" to (200 to episode),
+            "GET /editorial/0/charts" to (200 to """{"tracks":{"data":[],"total":0},"albums":{"data":[],"total":0},"artists":{"data":[{"id":27,"name":"Synthetic Duo","type":"artist"}],"total":1},"playlists":{"data":[],"total":0},"podcasts":{"data":[$show],"total":1}}"""),
+        ))
+        assertEquals("900", m.deezerCatalog.searchPodcasts("talk").items.single().id)
+        val podcast = m.deezerCatalog.podcast("900")
+        assertEquals(ExcorCatalogProvider.DEEZER, podcast.provider)
+        assertEquals(1, podcast.totalEpisodes)
+        assertEquals(4_591_000L, podcast.episodes.items.single().durationMs)
+        val e = m.deezerCatalog.episode("9001")
+        assertEquals("The Show", e.showTitle)
+        assertTrue("SYNTHETIC-NEVER-READ" !in e.toString())
+        val charts = m.deezerCatalog.editorialCharts()
+        assertEquals("Synthetic Duo", charts.artists.single().name)
+        assertEquals(1, charts.podcasts.size)
+        assertEquals(ExcorMusicKind.SHOW, m.parse("https://www.deezer.com/en/show/900")!!.kind)
+    }
+}

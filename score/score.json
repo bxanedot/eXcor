@@ -1,0 +1,388 @@
+{
+  "score": 53,
+  "max": 100,
+  "target": "InnerTubeX",
+  "method": "Evidence-attested engineering readiness, not a live playback success rate",
+  "last_reviewed_utc": "2026-11-13",
+  "groups": {
+    "metadata": {
+      "label": "YouTube and YouTube Music metadata",
+      "score": 17,
+      "max": 20,
+      "allocated": 20
+    },
+    "direct_streaming": {
+      "label": "Direct audio/video streaming",
+      "score": 11,
+      "max": 20,
+      "allocated": 20
+    },
+    "player_cipher": {
+      "label": "Player and cipher compatibility",
+      "score": 8,
+      "max": 15,
+      "allocated": 15
+    },
+    "sabr": {
+      "label": "SABR/UMP playback",
+      "score": 0,
+      "max": 20,
+      "allocated": 20
+    },
+    "reliability_security": {
+      "label": "Reliability and security",
+      "score": 11,
+      "max": 15,
+      "allocated": 15
+    },
+    "platforms": {
+      "label": "Platforms and developer usability",
+      "score": 6,
+      "max": 10,
+      "allocated": 10
+    }
+  },
+  "criteria": [
+    {
+      "id": "metadata_browsing",
+      "group": "metadata",
+      "points": 7,
+      "state": "verified",
+      "gate": "G3",
+      "label": "YouTube metadata, search, browse, channels",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/FEATURE_MATRIX.md"
+      ],
+      "earned": 7
+    },
+    {
+      "id": "music_catalog",
+      "group": "metadata",
+      "points": 7,
+      "state": "verified",
+      "gate": "G7",
+      "label": "YouTube Music catalog and artist operations",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/FEATURE_MATRIX.md"
+      ],
+      "earned": 7
+    },
+    {
+      "id": "cross_provider_catalog",
+      "group": "metadata",
+      "points": 3,
+      "state": "verified",
+      "gate": "G7",
+      "label": "Keyless music metadata and cross-provider catalog",
+      "evidence_paths": [
+        "docs/FEATURE_MATRIX.md"
+      ],
+      "earned": 3
+    },
+    {
+      "id": "catalog_completeness",
+      "group": "metadata",
+      "points": 3,
+      "state": "unverified",
+      "gate": "G7",
+      "label": "Complete catalog coverage",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "full_audio_decode_seek",
+      "group": "direct_streaming",
+      "points": 6,
+      "state": "verified",
+      "gate": "G5",
+      "label": "Full direct-audio decode and mid-file HTTP range read",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "modules/cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-12-range-full.md",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.md",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d-report.json",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.jsonl"
+      ],
+      "earned": 6
+    },
+    {
+      "id": "video_mux_decode_seek",
+      "group": "direct_streaming",
+      "points": 5,
+      "state": "verified",
+      "gate": "G5",
+      "label": "Direct video/audio mux, decode and mid-file HTTP range read",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "modules/cleanroom/jvmTest/kotlin/com/excor/LivePlaybackTest.kt"
+      ],
+      "earned": 5
+    },
+    {
+      "id": "multi_video_reliability",
+      "group": "direct_streaming",
+      "points": 5,
+      "state": "blocked",
+      "gate": "G5",
+      "label": "Multiple eligible videos and networks verified",
+      "evidence_paths": [
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.md",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d-report.json",
+        "modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.jsonl"
+      ],
+      "earned": 0
+    },
+    {
+      "id": "manifest_coverage",
+      "group": "direct_streaming",
+      "points": 4,
+      "state": "unverified",
+      "gate": "G5",
+      "label": "HLS/DASH transport and seeking verification",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "allowed_player_profiles",
+      "group": "player_cipher",
+      "points": 4,
+      "state": "verified",
+      "gate": "G4",
+      "label": "Allowlisted player requests and direct playback",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/COMPETITOR_MATRIX.md"
+      ],
+      "earned": 4
+    },
+    {
+      "id": "js_signature_transforms",
+      "group": "player_cipher",
+      "points": 4,
+      "state": "verified",
+      "gate": "G4",
+      "label": "Player-JS signature and n handling",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/FEATURE_MATRIX.md"
+      ],
+      "earned": 4
+    },
+    {
+      "id": "ciphered_stream_decode",
+      "group": "player_cipher",
+      "points": 5,
+      "state": "blocked",
+      "gate": "G4",
+      "label": "Live ciphered stream decodes and seeks",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "authenticated_playback",
+      "group": "player_cipher",
+      "points": 2,
+      "state": "unverified",
+      "gate": "G4",
+      "label": "Owner-run signed-in playback",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "sabr_negotiation",
+      "group": "sabr",
+      "points": 5,
+      "state": "blocked",
+      "gate": "G6",
+      "label": "Authorized SABR request negotiation",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "sabr_audio",
+      "group": "sabr",
+      "points": 5,
+      "state": "blocked",
+      "gate": "G6",
+      "label": "SABR audio assembly and decoding",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "sabr_video",
+      "group": "sabr",
+      "points": 5,
+      "state": "blocked",
+      "gate": "G6",
+      "label": "SABR video assembly and decoding",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "sabr_seek",
+      "group": "sabr",
+      "points": 5,
+      "state": "blocked",
+      "gate": "G6",
+      "label": "SABR seeking and stream recovery",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "url_dependency_safety",
+      "group": "reliability_security",
+      "points": 2,
+      "state": "verified",
+      "gate": "G12",
+      "label": "URL policy and shipped dependency safety",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/EXCOR_ENGINEERING_AUDIT.md"
+      ],
+      "earned": 2
+    },
+    {
+      "id": "diagnostic_redaction",
+      "group": "reliability_security",
+      "points": 2,
+      "state": "verified",
+      "gate": "G12",
+      "label": "Untrusted diagnostics redaction (#76)",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/maintainers/EXCOR_PROGRESS.md"
+      ],
+      "earned": 2
+    },
+    {
+      "id": "bounded_response",
+      "group": "reliability_security",
+      "points": 3,
+      "state": "verified",
+      "gate": "G12",
+      "label": "Bounded HTTP response streaming (#82)",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/maintainers/EXCOR_PROGRESS.md"
+      ],
+      "earned": 3
+    },
+    {
+      "id": "session_isolation",
+      "group": "reliability_security",
+      "points": 2,
+      "state": "verified",
+      "gate": "G8",
+      "label": "Generation-safe session invalidation (#81)",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/maintainers/EXCOR_PROGRESS.md"
+      ],
+      "earned": 2
+    },
+    {
+      "id": "fault_injection",
+      "group": "reliability_security",
+      "points": 2,
+      "state": "verified",
+      "gate": "G8",
+      "label": "Deterministic fault-injection tests (#80)",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        "docs/maintainers/EXCOR_PROGRESS.md"
+      ],
+      "earned": 2
+    },
+    {
+      "id": "live_faults",
+      "group": "reliability_security",
+      "points": 2,
+      "state": "blocked",
+      "gate": "G8",
+      "label": "Authorized live fault verification",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "security_audit",
+      "group": "reliability_security",
+      "points": 2,
+      "state": "unverified",
+      "gate": "G12",
+      "label": "Full diagnostic and release security audit",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "cross_platform",
+      "group": "platforms",
+      "points": 4,
+      "state": "verified",
+      "gate": "G2",
+      "label": "JVM, Android and iOS builds and tests",
+      "evidence_paths": [
+        "docs/release-gates.json",
+        ".github/workflows/ci.yml"
+      ],
+      "earned": 4
+    },
+    {
+      "id": "preview_smoke",
+      "group": "platforms",
+      "points": 2,
+      "state": "verified",
+      "gate": "G9",
+      "label": "Preview app smoke and device checks",
+      "evidence_paths": [
+        ".github/workflows/ci.yml"
+      ],
+      "earned": 2
+    },
+    {
+      "id": "public_release",
+      "group": "platforms",
+      "points": 2,
+      "state": "unverified",
+      "gate": "G10",
+      "label": "Owner-authorized reproducible remote release",
+      "evidence_paths": [],
+      "earned": 0
+    },
+    {
+      "id": "consumer_parity",
+      "group": "platforms",
+      "points": 2,
+      "state": "unverified",
+      "gate": "G10",
+      "label": "Verified consumer API parity",
+      "evidence_paths": [],
+      "earned": 0
+    }
+  ],
+  "release_gates": {
+    "G1": "passing",
+    "G2": "passing",
+    "G3": "passing",
+    "G4": "partial",
+    "G5": "partial",
+    "G6": "blocked",
+    "G7": "passing",
+    "G8": "partial",
+    "G9": "passing",
+    "G10": "partial",
+    "G11": "partial",
+    "G12": "partial"
+  },
+  "release_decision": "NO-GO",
+  "checked_date_utc": "2026-11-14",
+  "main_sha": "bf26a521dfe58a35878594474860c4e5529269c9",
+  "ci": {
+    "status": "queued",
+    "conclusion": null,
+    "url": "https://github.com/bxanedot/eXcor/actions/runs/43629614796",
+    "sha": "bf26a521dfe58a35878594474860c4e5529269c9"
+  }
+}

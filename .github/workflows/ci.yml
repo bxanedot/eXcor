@@ -1,0 +1,312 @@
+name: CI
+
+on:
+  push:
+    # Feature branches use the pull_request trigger, avoiding a duplicate full matrix.
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_ARGS: -Porg.gradle.java.installations.fromEnv=JAVA_HOME_27_X64,JAVA_HOME_27_ARM64 --stacktrace
+
+jobs:
+  reproducible-publications:
+    name: Maven publication (${{ matrix.builder }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        builder: [one, two]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - name: Build all Maven publications
+        run: ./gradlew $GRADLE_ARGS -Dmaven.repo.local="$RUNNER_TEMP/excor-publication" publishToMavenLocal
+      - name: Verify Android Maven publication
+        run: python3 scripts/check_android_publication.py "$RUNNER_TEMP/excor-publication/com/excor"
+      - name: Hash the published artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          publication="$RUNNER_TEMP/excor-publication/com/excor"
+          test -d "$publication"
+          (
+            cd "$publication"
+            find . -type f ! -name 'maven-metadata-local.xml' -print0 | sort -z | xargs -0 sha256sum
+          ) > "$RUNNER_TEMP/maven-publication.sha256"
+          test -s "$RUNNER_TEMP/maven-publication.sha256"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: maven-publication-${{ matrix.builder }}
+          path: ${{ runner.temp }}/maven-publication.sha256
+          if-no-files-found: error
+
+  compare-reproducible-publications:
+    name: Compare independent Maven publications
+    needs: reproducible-publications
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: maven-publication-*
+          path: ${{ runner.temp }}/maven-publications
+      - name: Compare artifact hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          diff -u \
+            "$RUNNER_TEMP/maven-publications/maven-publication-one/maven-publication.sha256" \
+            "$RUNNER_TEMP/maven-publications/maven-publication-two/maven-publication.sha256"
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Enforce immutable workflow action pins
+        run: python3 scripts/check_action_pins.py --root .github/workflows
+      - name: Check evidence score contract
+        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
+      - name: Check black-box comparison report contract
+        run: python3 -m unittest discover -s modules/samples/black-box-comparison/tests -p 'test_*.py' -v
+      - name: Check matched comparison runner CLI
+        run: python3 modules/samples/black-box-comparison/run_matched.py --help
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - run: ./gradlew $GRADLE_ARGS :jvmTest :jvmJar :assembleAndroidMain
+      # Installability: publish every publication locally (this also compiles the shared metadata, which no platform
+      # build does), then build a standalone consumer that follows the README's installation steps.
+      - run: ./gradlew $GRADLE_ARGS publishToMavenLocal
+      - run: ./gradlew $GRADLE_ARGS -p modules/samples/jvm-quickstart build
+      - name: Build and test the standalone eXcor comparison adapter
+        run: ./gradlew $GRADLE_ARGS -p modules/samples/black-box-comparison/excor-jvm build
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: modules/samples/black-box-comparison/youtubejs-node/package-lock.json
+      - name: Check the standalone YouTube.js comparison adapter
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+        working-directory: modules/samples/black-box-comparison/youtubejs-node
+      - name: Build the standalone NewPipe comparison adapter
+        run: ./gradlew $GRADLE_ARGS -p modules/samples/black-box-comparison/newpipe-jvm assemble installDist
+      - name: Build and test the separate InnerTubeX comparison adapter
+        run: ./gradlew $GRADLE_ARGS -p modules/samples/black-box-comparison/innertubex-jvm build installDist
+      # Fail on known vulnerabilities (OSV) in either the full resolved graph or what ships. The lockfile exists only
+      # for this step; normal builds don't lock.
+      - name: Dependency vulnerability scan
+        run: |
+          printf 'gradle.allprojects { project -> project.dependencyLocking { lockAllConfigurations() } }\n' > "$RUNNER_TEMP/lock.gradle"
+          # Gradle's dependencies report runs one project at a time; resolve the root and both included preview apps.
+          ./gradlew $GRADLE_ARGS -q --init-script "$RUNNER_TEMP/lock.gradle" :dependencies :preview-android:dependencies :preview-desktop:dependencies --write-locks > /dev/null
+          curl -sSfL -o "$RUNNER_TEMP/osv-scanner" https://github.com/google/osv-scanner/releases/download/v2.0.0/osv-scanner_linux_amd64
+          echo "b60c273474aecad1158cfe1e9828f3841483701ba0fe3560517a45b2db16e84c  $RUNNER_TEMP/osv-scanner" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+          mkdir -p "$RUNNER_TEMP/shipped"
+          grep -E '=(.*,)?(jvmRuntimeClasspath|androidRuntimeClasspath|ios(Arm64|SimulatorArm64|X64)CompileKlibraries)(,|$)' gradle.lockfile > "$RUNNER_TEMP/shipped/gradle.lockfile"
+          echo "All library, preview and Node adapter dependencies, gating:"
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile gradle.lockfile --lockfile modules/platforms/preview/android/gradle.lockfile --lockfile modules/platforms/preview/desktop/gradle.lockfile --lockfile modules/samples/black-box-comparison/youtubejs-node/package-lock.json
+          echo "Shipped runtime and compile dependencies, gating:"
+          "$RUNNER_TEMP/osv-scanner" scan source --lockfile "$RUNNER_TEMP/shipped/gradle.lockfile"
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - run: ./gradlew $GRADLE_ARGS :jvmTest :jvmJar :assembleAndroidMain
+        shell: bash
+      # The desktop preview as a Windows app: a folder with "eXcor Preview.exe" and its own Java runtime, plus an
+      # installer when the runner has the WiX toolset jpackage needs for one.
+      - run: ./gradlew $GRADLE_ARGS :preview-desktop:packageApp
+        shell: bash
+      - name: Windows preview passes its self-test
+        shell: pwsh
+        run: |
+          $unexpected = Join-Path $env:RUNNER_TEMP "self-test-unexpected.txt"
+          $argument = "`"$unexpected`""
+          $process = Start-Process -Wait -PassThru -FilePath "modules/platforms/preview/desktop/build/app/eXcor Preview/eXcor Preview.exe" -ArgumentList @("--self-test", $argument)
+          if ($process.ExitCode -ne 0 -or (Test-Path $unexpected)) { exit 1 }
+      - name: Windows installer (when WiX is available)
+        shell: bash
+        run: |
+          if command -v candle.exe > /dev/null || command -v wix.exe > /dev/null || ls -d "/c/Program Files (x86)"/WiX* > /dev/null 2>&1; then
+            ./gradlew $GRADLE_ARGS :preview-desktop:packageApp -PpreviewPackageType=exe
+          else
+            echo "::notice::No WiX toolset on this runner; the portable app folder is the Windows build."
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: excor-preview-windows
+          path: |
+            modules/platforms/preview/desktop/build/app/
+            modules/platforms/preview/desktop/build/installer/*.exe
+          if-no-files-found: error
+
+  # The preview apps, for trying the library by hand: the Android APK (uploaded as an artifact), and the desktop app,
+  # which must package, pass its self-test and start.
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - run: ./gradlew $GRADLE_ARGS :preview-android:assembleDebug :preview-android:lintDebug :preview-desktop:packageApp
+      - name: Desktop preview passes its self-test and starts
+        run: |
+          app="modules/platforms/preview/desktop/build/app/eXcor Preview/bin/eXcor Preview"
+          unexpected="$RUNNER_TEMP/self-test-unexpected.txt"
+          "$app" --self-test "$unexpected"
+          test ! -e "$unexpected"
+          set +e
+          timeout 30 xvfb-run -a "$app" > "$RUNNER_TEMP/desktop.log" 2>&1
+          result=$?
+          set -e
+          cat "$RUNNER_TEMP/desktop.log"
+          # 124: still running when the timeout stopped it, so it started and did not crash.
+          [ "$result" -eq 124 ] && ! grep -q Exception "$RUNNER_TEMP/desktop.log"
+      - run: cp modules/platforms/preview/android/build/outputs/apk/debug/preview-android-debug.apk excor-preview.apk
+      # A debug build signed with this run's throwaway key, for trying the library on a phone.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: excor-preview-apk
+          path: excor-preview.apk
+
+  android-device:
+    runs-on: ubuntu-latest
+    # An emulator that never boots would otherwise hold the runner for hours.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [26, 36]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - run: ./gradlew $GRADLE_ARGS :preview-android:assembleDebug :preview-android:assembleDebugAndroidTest
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot an API ${{ matrix.api }} emulator
+        run: |
+          image="system-images;android-${{ matrix.api }};default;x86_64"
+          adb=$ANDROID_HOME/platform-tools/adb
+          # The runner sets XDG_CONFIG_HOME, which avdmanager follows and the emulator does not; one AVD folder for both.
+          export ANDROID_AVD_HOME=$HOME/.android/avd
+          mkdir -p "$ANDROID_AVD_HOME"
+          # One retry: a download cut short ("Error reading Zip content") fails the install, not the test.
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image" || $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install emulator "$image"
+          echo no | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n check -k "$image"
+          $ANDROID_HOME/emulator/emulator -avd check -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect &
+          # Under the timeout too, so an emulator that exits fails the step instead of holding it to the job limit.
+          timeout 600 sh -c "$adb wait-for-device && until [ \"\$($adb shell getprop sys.boot_completed | tr -d '\r')\" = 1 ]; do sleep 5; done"
+      - name: Preview app starts and opens a shared link on the API ${{ matrix.api }} emulator
+        run: |
+          adb=$ANDROID_HOME/platform-tools/adb
+          $adb install -r modules/platforms/preview/android/build/outputs/apk/debug/preview-android-debug.apk
+          $adb shell am start -W -n com.excor.preview/.MainActivity
+          # A shared link reaches the running screen and loads the video's details.
+          $adb shell am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT https://youtu.be/dQw4w9WgXcQ -n com.excor.preview/.MainActivity
+          sleep 15
+          # Still running, and nothing in the crash log.
+          $adb shell pidof com.excor.preview
+          $adb logcat -d -b crash > crash.txt
+          if grep -q com.excor.preview crash.txt; then cat crash.txt; exit 1; fi
+      # Downloads join YouTube's separate picture and sound on the phone with MediaExtractor and MediaMuxer. JoinCheck
+      # joins synthetic clips with this emulator's own media stack and checks every sample arrives.
+      - name: Picture and sound join on the API ${{ matrix.api }} emulator
+        run: |
+          adb=$ANDROID_HOME/platform-tools/adb
+          $adb install -r modules/platforms/preview/android/build/outputs/apk/androidTest/debug/preview-android-debug-androidTest.apk
+          $adb shell am instrument -w com.excor.preview.test/com.excor.preview.JoinCheck | tee join-check.txt
+          grep -q "result=ok" join-check.txt
+
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: |
+            27
+            21
+      - name: Kotlin tests, iOS targets, frameworks and XCFramework
+        run: >
+          ./gradlew $GRADLE_ARGS :checkKotlinAbi :jvmTest :iosSimulatorArm64Test
+          :linkReleaseFrameworkIosArm64 :linkReleaseFrameworkIosSimulatorArm64 :linkReleaseFrameworkIosX64
+          :assembleEXcorReleaseXCFramework
+      - name: Verify XCFramework redistribution notices
+        run: |
+          test -f build/XCFrameworks/release/eXcor.xcframework/LICENSE
+          test -f build/XCFrameworks/release/eXcor.xcframework/NOTICE
+      - name: Verify XCFramework native runtime linkage
+        shell: bash
+        run: |
+          set -euo pipefail
+          framework=build/XCFrameworks/release/eXcor.xcframework
+          count=0
+          while IFS= read -r binary; do
+            file "$binary"
+            for arch in $(lipo -archs "$binary"); do
+              printf 'Checking JS_Eval in %s (%s)\n' "$binary" "$arch"
+              xcrun nm -arch "$arch" -gU "$binary" | grep -E '(^|[[:space:]])_?JS_Eval$' > /dev/null
+              count=$((count + 1))
+            done
+          done < <(find "$framework" -path '*/eXcor.framework/eXcor' -type f)
+          test "$count" -ge 3
+      - name: Swift check of the published Kotlin API
+        run: >
+          xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
+          -F build/XCFrameworks/release/eXcor.xcframework/ios-arm64_x86_64-simulator
+          api/swift-check/ExcorApiCheck.swift
+      - name: Swift package tests
+        shell: bash
+        working-directory: modules/platforms/swift
+        run: |
+          set +e
+          swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
+          result=${PIPESTATUS[0]}
+          if [ "$result" -ne 0 ]; then
+            {
+              echo '### Swift test failure output'
+              echo '```text'
+              tail -n 100 "$RUNNER_TEMP/swift-test.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            details=$(tail -n 40 "$RUNNER_TEMP/swift-test.log" | python3 -c 'import sys; print(sys.stdin.read().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"), end="")')
+            printf '::error title=Swift test log::%s\n' "$details"
+          fi
+          exit "$result"
+      - name: Swift package iOS Simulator build
+        run: xcodebuild -scheme eXcorKit -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+        working-directory: modules/platforms/swift

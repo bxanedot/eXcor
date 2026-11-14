@@ -1,0 +1,9 @@
+{
+  "resultCount": 4,
+  "results": [
+    {"wrapperType":"track","kind":"song","trackId":740004,"trackName":"Second Disc","artistId":740002,"artistName":"June Harbor","collectionId":740003,"collectionName":"Night Signals","trackNumber":1,"discNumber":2,"trackViewUrl":"https://music.apple.com/us/album/night-signals/740003?i=740004"},
+    {"wrapperType":"track","kind":"song","trackId":740002,"trackName":"Second Track","artistId":740002,"artistName":"June Harbor","collectionId":740003,"collectionName":"Night Signals","trackNumber":2,"discNumber":1,"trackViewUrl":"https://music.apple.com/us/album/night-signals/740003?i=740002"},
+    {"wrapperType":"track","kind":"song","trackId":740001,"trackName":"First Track","artistId":740002,"artistName":"June Harbor","collectionId":740003,"collectionName":"Night Signals","trackNumber":1,"discNumber":1,"trackViewUrl":"https://music.apple.com/us/album/night-signals/740003?i=740001"},
+    {"wrapperType":"track","kind":"song","trackId":740999,"trackName":"Other Album","artistId":740002,"artistName":"June Harbor","collectionId":740998,"collectionName":"Day Signals","trackNumber":1,"discNumber":1,"trackViewUrl":"https://music.apple.com/us/album/day-signals/740998?i=740999"}
+  ]
+}

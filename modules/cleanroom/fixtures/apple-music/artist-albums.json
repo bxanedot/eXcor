@@ -1,0 +1,9 @@
+{
+  "resultCount": 4,
+  "results": [
+    {"wrapperType":"artist","artistId":740002,"artistName":"June Harbor","artistLinkUrl":"https://music.apple.com/us/artist/june-harbor/740002"},
+    {"wrapperType":"collection","collectionType":"Album","collectionId":740003,"collectionName":"Night Signals","artistId":740002,"artistName":"June Harbor","trackCount":9,"collectionViewUrl":"https://music.apple.com/us/album/night-signals/740003"},
+    {"wrapperType":"collection","collectionType":"Album","collectionId":740004,"collectionName":"Guest Appearance","artistId":740099,"artistName":"Other Artist","trackCount":8,"collectionViewUrl":"https://music.apple.com/us/album/guest-appearance/740004"},
+    {"wrapperType":"collection","collectionType":"Album","collectionId":740005,"collectionName":"Harbor Lights","artistId":740002,"artistName":"June Harbor","trackCount":7,"collectionViewUrl":"https://music.apple.com/us/album/harbor-lights/740005"}
+  ]
+}

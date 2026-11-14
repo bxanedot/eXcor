@@ -1,0 +1,17 @@
+{
+  "artists": {
+    "items": [
+      {
+        "external_urls": {"spotify": "https://open.spotify.com/artist/2222222222222222222222"},
+        "genres": ["Electronic"],
+        "id": "2222222222222222222222",
+        "images": [{"url": "https://i.scdn.co/image/artist", "height": 320, "width": 320}],
+        "name": "June Harbor"
+      }
+    ],
+    "limit": 25,
+    "next": null,
+    "offset": 0,
+    "total": 1
+  }
+}

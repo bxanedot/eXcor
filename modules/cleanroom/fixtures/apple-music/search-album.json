@@ -1,0 +1,16 @@
+{
+  "resultCount": 1,
+  "results": [
+    {
+      "wrapperType": "collection",
+      "collectionType": "Album",
+      "collectionId": 740003,
+      "collectionName": "Night Signals",
+      "artistId": 740002,
+      "artistName": "June Harbor",
+      "trackCount": 9,
+      "collectionViewUrl": "https://music.apple.com/us/album/night-signals/740003",
+      "artworkUrl100": "https://is1-ssl.mzstatic.com/image/fake-artwork/100x100bb.jpg"
+    }
+  ]
+}

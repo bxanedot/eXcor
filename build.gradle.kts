@@ -1,0 +1,208 @@
+import java.util.zip.ZipFile
+import org.gradle.api.tasks.bundling.Zip
+import org.gradle.api.publish.maven.MavenPublication
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
+plugins {
+    kotlin("multiplatform") version "2.4.21"
+    id("com.android.kotlin.multiplatform.library") version "9.4.1"
+    `maven-publish`
+}
+
+group = "com.excor"
+version = "0.2.0"
+
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            licenses {
+                license {
+                    name.set("GNU General Public License v3.0 only")
+                    url.set("https://www.gnu.org/licenses/gpl-3.0.html")
+                    distribution.set("repo")
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+// Pin OSV-fixed versions only in build-tool classpaths; published runtime configurations are unchanged.
+allprojects {
+    configurations.configureEach {
+        if (name == "androidLintTool" || name == "swiftExportClasspathResolvable") {
+            resolutionStrategy.force(
+                "com.google.guava:guava:33.7.2-jre",
+                "io.opentelemetry:opentelemetry-api:1.67.0",
+                "org.apache.commons:commons-lang3:3.18.0",
+                "org.apache.httpcomponents:httpclient:4.5.14",
+                "org.bouncycastle:bcpkix-jdk18on:1.85",
+                "org.bouncycastle:bcprov-jdk18on:1.85",
+            )
+        }
+    }
+}
+
+// The challenge solver scripts must reach every target, and Kotlin/Native has no resource
+// loading, so they are compiled in as string constants.
+val generateEjs = tasks.register("generateEjs") {
+    val input = layout.projectDirectory.dir("modules/cleanroom/ejs")
+    val output = layout.buildDirectory.dir("generated/ejs")
+    inputs.dir(input)
+    outputs.dir(output)
+    doLast {
+        fun literal(s: String) = s.chunked(16_000).joinToString(" +\n") { chunk ->
+            buildString {
+                append('"')
+                for (c in chunk) when {
+                    c == '\\' || c == '"' || c == '$' -> append('\\').append(c)
+                    c == '\n' -> append("\\n")
+                    c.code in 0x20..0x7e -> append(c)
+                    else -> append("\\u%04x".format(c.code))
+                }
+                append('"')
+            }
+        }
+        val dir = input.asFile
+        val file = output.get().file("com/excor/internal/Ejs.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            "package com.excor.internal\n\n" +
+                "// Copied from the attested yt-dlp-ejs 0.8.0 wheel; see PROVENANCE.md for its archive and file hashes.\n" +
+                "internal val EJS_LIB: String =\n${literal(dir.resolve("lib.min.js").readText())}\n\n" +
+                "internal val EJS_CORE: String =\n${literal(dir.resolve("core.min.js").readText())}\n",
+        )
+    }
+}
+
+kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation()
+
+    jvmToolchain(21)
+    jvm {
+        compilerOptions { jvmTarget = JvmTarget.JVM_17 }
+        // TestNG (Apache-2.0) instead of the default JUnit 4 (EPL-1.0), so every dependency is permissive.
+        testRuns.named("test") { executionTask.configure { useTestNG() } }
+    }
+
+    // For the Android app (owner's decision, QUESTIONS item 31). API 26 is where java.nio.file, used by the
+    // disk cache, starts.
+    android {
+        namespace = "com.excor"
+        compileSdk = 37
+        minSdk = 26
+        compilerOptions { jvmTarget = JvmTarget.JVM_17 }
+    }
+
+    // The default hierarchy (iosMain and friends) plus jvmCommonMain: the OkHttp and java.io.File host API that
+    // the JVM and Android share.
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmCommon") {
+                withJvm()
+                withCompilations { it.platformType == KotlinPlatformType.androidJvm }
+            }
+        }
+    }
+
+    val xcf = XCFramework("eXcor")
+    listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "eXcor"
+            isStatic = true
+            xcf.add(this)
+        }
+    }
+
+    sourceSets {
+        // Keep this library build isolated from the existing application implementation.
+        configureEach {
+            kotlin.setSrcDirs(listOf("modules/cleanroom/$name"))
+        }
+        commonMain {
+            kotlin.srcDir(generateEjs)
+            dependencies {
+                implementation("io.ktor:ktor-client-core:3.6.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+                implementation("io.github.dokar3:quickjs-kt:1.0.15")
+            }
+        }
+        getByName("jvmCommonMain").dependencies { api("io.ktor:ktor-client-okhttp:3.6.0") }
+        iosMain.dependencies { implementation("io.ktor:ktor-client-darwin:3.6.0") }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+            implementation("io.ktor:ktor-client-mock:3.6.0")
+        }
+        // kotlin-test-testng brings TestNG 7.0.0, which has GHSA-rc2q-x9mf-w3vf (fixed in 7.5.1). Test-only.
+        jvmTest.dependencies { implementation("org.testng:testng:7.5.1") }
+    }
+}
+
+// Tests read the shared clean-room fixture tree by absolute path, which also works from the iOS simulator.
+val generateFixturesPath = tasks.register("generateFixturesPath") {
+    val path = file("modules/cleanroom/fixtures").absolutePath
+    val output = layout.buildDirectory.dir("generated/fixtures")
+    inputs.property("path", path)
+    outputs.dir(output)
+    doLast {
+        output.get().file("com/excor/FixturesPath.kt").asFile.apply { parentFile.mkdirs() }
+            .writeText("package com.excor\n\ninternal const val FIXTURES = \"${path.replace("\\", "/")}\"\n")
+    }
+}
+kotlin.sourceSets.commonTest { kotlin.srcDir(generateFixturesPath) }
+
+// Declared so that changing EXCOR_LIVE or EXCOR_LIVE_IDS re-runs the tests instead of reusing results.
+tasks.withType<Test>().configureEach {
+    listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS", "EXCOR_BENCH", "EXCOR_HLS_ID").forEach { environment(it, System.getenv(it) ?: "") }
+}
+tasks.withType<AbstractTestTask>().configureEach {
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
+
+tasks.withType<Zip>().configureEach {
+    from(files("LICENSE", "NOTICE", "docs/licenses/Apache-2.0.txt")) { into("META-INF") }
+    doLast {
+        ZipFile(archiveFile.get().asFile).use { archive ->
+            listOf("LICENSE", "NOTICE", "Apache-2.0.txt").forEach { notice ->
+                check(archive.getEntry("META-INF/$notice") != null) {
+                    "${archive.name} is missing META-INF/$notice"
+                }
+            }
+        }
+    }
+}
+
+val releaseXcframework = layout.buildDirectory.dir("XCFrameworks/release/eXcor.xcframework")
+val includeReleaseXcframeworkNotices = tasks.register("includeReleaseXcframeworkNotices") {
+    val notices = files("LICENSE", "NOTICE", "docs/licenses/Apache-2.0.txt")
+    inputs.files(notices)
+    outputs.files(
+        releaseXcframework.map { it.file("LICENSE") },
+        releaseXcframework.map { it.file("NOTICE") },
+        releaseXcframework.map { it.file("Apache-2.0.txt") },
+    )
+    onlyIf { releaseXcframework.get().asFile.isDirectory }
+    doLast {
+        copy {
+            from(notices)
+            into(releaseXcframework.get().asFile)
+        }
+        check(releaseXcframework.get().file("LICENSE").asFile.isFile)
+        check(releaseXcframework.get().file("NOTICE").asFile.isFile)
+        check(releaseXcframework.get().file("Apache-2.0.txt").asFile.isFile)
+    }
+}
+tasks.matching { it.name == "assembleEXcorReleaseXCFramework" }.configureEach {
+    finalizedBy(includeReleaseXcframeworkNotices)
+}

@@ -1,0 +1,1803 @@
+{
+  "samples": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 453.09,
+        "firstMediaByteMs": 481.9,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": -7028208,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 1268.008,
+        "firstMediaByteMs": 1310.343,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 32797168,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 1,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "UNSUPPORTED_TRANSPORT",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 274.598,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 0,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "UNSUPPORTED",
+      "phase": "cold",
+      "runtime": "node",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 1527.805,
+        "firstMediaByteMs": 1579.547,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 7,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 452.522,
+        "firstMediaByteMs": 481.873,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": -8565088,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 1346.863,
+        "firstMediaByteMs": 1394.241,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 35291752,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 1,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "UNSUPPORTED_TRANSPORT",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 297.936,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 0,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "UNSUPPORTED",
+      "phase": "cold",
+      "runtime": "node",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 1816.793,
+        "firstMediaByteMs": 1867.269,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 7,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 397.273,
+        "firstMediaByteMs": 427.428,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": -7049864,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 1281.651,
+        "firstMediaByteMs": 1325.628,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 35731504,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 1,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "UNSUPPORTED_TRANSPORT",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 301.549,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 0,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "UNSUPPORTED",
+      "phase": "cold",
+      "runtime": "node",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 1737.369,
+        "firstMediaByteMs": 1781.19,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 7,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 86.442,
+        "firstMediaByteMs": 114.728,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 13675608,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 124.12,
+        "firstMediaByteMs": 166.189,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 2208992,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 1,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "UNSUPPORTED_TRANSPORT",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 268.815,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 0,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "UNSUPPORTED",
+      "phase": "warm",
+      "runtime": "node",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 963.127,
+        "firstMediaByteMs": 1011.284,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 6,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 97.044,
+        "firstMediaByteMs": 134.217,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 12484424,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 128.037,
+        "firstMediaByteMs": 171.182,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 2185592,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 1,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "UNSUPPORTED_TRANSPORT",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 292.389,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 0,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "UNSUPPORTED",
+      "phase": "warm",
+      "runtime": "node",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 1165.818,
+        "firstMediaByteMs": 1217.097,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 6,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 106.818,
+        "firstMediaByteMs": 138.76,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 12688752,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 145.526,
+        "firstMediaByteMs": 188.346,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 2972008,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 1,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "UNSUPPORTED_TRANSPORT",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 309.126,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 0,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 3,
+        "startupMs": null
+      },
+      "outcome": "UNSUPPORTED",
+      "phase": "warm",
+      "runtime": "node",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 65536,
+        "codec": "opus",
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 972.738,
+        "firstMediaByteMs": 1020.546,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 1,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 1,
+        "requestCount": 6,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    }
+  ],
+  "schemaVersion": 1,
+  "summaries": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 65536,
+          "p95": 65536
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 452.522,
+          "p95": 453.09
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 481.873,
+          "p95": 481.9
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 3,
+          "p50": -7049864,
+          "p95": -7028208
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 3,
+          "p95": 3
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 65536,
+          "p95": 65536
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 97.044,
+          "p95": 106.818
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 134.217,
+          "p95": 138.76
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 3,
+          "p50": 12688752,
+          "p95": 13675608
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 3,
+          "p95": 3
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "warm",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 65536,
+          "p95": 65536
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 1281.651,
+          "p95": 1346.863
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 1325.628,
+          "p95": 1394.241
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 3,
+          "p50": 35291752,
+          "p95": 35731504
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 65536,
+          "p95": 65536
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 128.037,
+          "p95": 145.526
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 171.182,
+          "p95": 188.346
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 3,
+          "p50": 2208992,
+          "p95": 2972008
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "warm",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 65536,
+          "p95": 65536
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 1737.369,
+          "p95": 1816.793
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 1781.19,
+          "p95": 1867.269
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 7,
+          "p95": 7
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "newpipe",
+      "adapterVersion": "0.1.0-newpipe-0.27.1",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 65536,
+          "p95": 65536
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 972.738,
+          "p95": 1165.818
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 1020.546,
+          "p95": 1217.097
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 1,
+          "p95": 1
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 6,
+          "p95": 6
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "warm",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {
+        "UNSUPPORTED_TRANSPORT": 3
+      },
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "requestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 0,
+        "UNSUPPORTED": 3
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "node",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "youtubejs",
+      "adapterVersion": "0.1.1-youtubei.js18.3.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": null,
+        "id": "owner-home-2026-11-13-four-adapter-dq",
+        "locale": "en-US",
+        "mainCommit": "0f03557d6fbf7351693610a334ad13f284e4e0e3",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T19:27:10Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {
+        "UNSUPPORTED_TRANSPORT": 3
+      },
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "requestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 0,
+        "UNSUPPORTED": 3
+      },
+      "phase": "warm",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "node",
+      "totalSamples": 3,
+      "videoId": "dQw4w9WgXcQ"
+    }
+  ]
+}

@@ -1,0 +1,907 @@
+{
+  "samples": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 6275.798,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 149949624,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1606.299,
+        "extractMs": 1377.417,
+        "firstMediaByteMs": 1496.236,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 122299648,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 6120.397,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 150671960,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1506.168,
+        "extractMs": 1459.151,
+        "firstMediaByteMs": 1505.443,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 120519368,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 5720.59,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 147704824,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1416.978,
+        "extractMs": 2071.217,
+        "firstMediaByteMs": 2110.861,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 182853384,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": null,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1414.176,
+        "extractMs": 135.912,
+        "firstMediaByteMs": 176.67,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 92898328,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": null,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1411.707,
+        "extractMs": 119.831,
+        "firstMediaByteMs": 362.375,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 94264032,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": null,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": null,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1463.055,
+        "extractMs": 125.898,
+        "firstMediaByteMs": 165.246,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 90691208,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "warm",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    }
+  ],
+  "schemaVersion": 1,
+  "summaries": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {
+        "ACCESS_DENIED": 3
+      },
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "requestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 3,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 0,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {
+        "ACCESS_DENIED": 3
+      },
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "decodeMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "extractMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "requestCount": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 3,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 0,
+        "UNSUPPORTED": 0
+      },
+      "phase": "warm",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 3
+        },
+        "rangeProbeMethod": {
+          "NOT_TESTED": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 10332653,
+          "p95": 10332653
+        },
+        "decodeMs": {
+          "eligibleSamples": 3,
+          "p50": 1506.168,
+          "p95": 1606.299
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 1459.151,
+          "p95": 2071.217
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 1505.443,
+          "p95": 2110.861
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 3,
+          "p50": 122299648,
+          "p95": 182853384
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "PASS": 3
+        },
+        "rangeForwardProbe": {
+          "PASS": 3
+        },
+        "rangeProbeMethod": {
+          "HTTP_BYTE_RANGE": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-main-aqz-recheck",
+        "locale": "en-US",
+        "mainCommit": "d3d5d1a29b783ec277fb3ff32d732ba3fd6ad39c",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T18:59:52Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 10332653,
+          "p95": 10332653
+        },
+        "decodeMs": {
+          "eligibleSamples": 3,
+          "p50": 1414.176,
+          "p95": 1463.055
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 125.898,
+          "p95": 135.912
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 176.67,
+          "p95": 362.375
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 3,
+          "p50": 92898328,
+          "p95": 94264032
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "warm",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "PASS": 3
+        },
+        "rangeForwardProbe": {
+          "PASS": 3
+        },
+        "rangeProbeMethod": {
+          "HTTP_BYTE_RANGE": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3,
+      "videoId": "aqz-KE-bpKQ"
+    }
+  ]
+}

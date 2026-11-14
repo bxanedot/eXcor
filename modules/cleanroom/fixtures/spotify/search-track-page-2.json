@@ -1,0 +1,18 @@
+{
+  "tracks": {
+    "items": [
+      {
+        "album": {"id": "3333333333333333333333", "name": "Night Signals"},
+        "artists": [{"id": "2222222222222222222222", "name": "June Harbor"}],
+        "duration_ms": 194000,
+        "explicit": true,
+        "id": "5555555555555555555555",
+        "name": "After Hours"
+      }
+    ],
+    "limit": 1,
+    "next": null,
+    "offset": 1,
+    "total": 2
+  }
+}
