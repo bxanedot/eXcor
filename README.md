@@ -8,22 +8,24 @@ eXcor is a clean-room Kotlin Multiplatform library and separate Swift package fo
 
 ## Comparison evidence
 
-The latest matched direct-audio comparisons used eXcor main ad7a6f1 on 2026-11-14. Signed-out JVM adapters ran three cold and three warm attempts per video on one Windows home network. For dQw4w9WgXcQ, both eXcor 0.2.0 and InnerTubeX 0.11.6 fully decoded the same 3,507,483-byte Opus stream and passed forward and backward HTTP byte-range probes in all six attempts.
+The latest exact-main matched direct-audio run used eXcor main `c6faa41` on 2026-11-14. Signed-out JVM adapters ran three cold and three warm attempts per video on one Windows home network. On `dQw4w9WgXcQ`, eXcor 0.2.0 and InnerTubeX 0.11.6 both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in all six attempts.
 
-| Phase | Measure (p50/p95) | eXcor, dQw4w9WgXcQ | InnerTubeX, dQw4w9WgXcQ |
-|---|---|---|---|
-| Cold | First media (ms) | 395/555 | 1,388/1,488 |
-| Warm | First media (ms) | 96/98 | 142/145 |
-| Cold | Full decode (ms) | 464/475 | 455/540 |
-| Warm | Full decode (ms) | 322/331 | 364/367 |
+| Phase | Measure (p50/p95) | eXcor | InnerTubeX |
+|---|---|---:|---:|
+| Cold | First media (ms) | 353/353 | 1,377/1,399 |
+| Warm | First media (ms) | 101/102 | 154/185 |
+| Cold | Full decode (ms) | 307/308 | 366/367 |
+| Warm | Full decode (ms) | 310/314 | 360/363 |
 
-On a second public video, aqz-KE-bpKQ, eXcor was access-blocked before media in all six attempts. InnerTubeX passed full decode and both byte-range probes in all six; its first-media p50/p95 was 1,033/1,080 ms cold and 148/173 ms warm. This is a two-video comparison on one network using separate extraction adapters, not a broad performance or reliability claim. HTTP byte-range probes are not decoder or player seeks; existing normalized samples still record seeks as `NOT_TESTED`. A same-FFplay comparison procedure is documented, but no verified matched player-seek result is published yet.
+On the second video, `aqz-KE-bpKQ`, eXcor was classified `ACCESS_DENIED` before media in all six attempts; InnerTubeX passed full decode and both byte-range probes in all six. This is a two-video comparison on one network using separate extraction adapters, not a broad performance or reliability claim. HTTP byte-range probes do not establish player seeks.
 
-The latest exact-main signed-out eXcor-only run is at `2a9f8dd` (2026-11-14): it fully decoded 3,433,755 bytes of Opus audio and a 480p H.264/AAC mux (854×480, 25 fps, 213.089 s). Midpoint HTTP byte-range reads returned 206. Its three-ID matrix classified one ID as range-readable and two as YouTube `LOGIN_REQUIRED` bot-check access blocks. This is one Windows home network; no InnerTubeX video run, ciphered playback, or player-controlled seek was tested. See the [latest exact-main run](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md), the earlier [36d5 playback run](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md), and [strict range validation](modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md). Release remains **NO-GO**: ciphered playback, multi-network coverage, repeatability across IDs, and real player-seek evidence remain incomplete.
+A separate same-FFplay audio-seek check on this main commit sent Right then Left to each adapter once. Both produced an initial range plus the same forward/backward offset ranges, all HTTP 206, before the configured 30-second `time_limit`. This one-ID audio result does not test video seeking or broader reliability. See the [paired seek report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md), [matched comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md), [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.jsonl), and [competitive matrix](docs/COMPETITOR_MATRIX.md).
+
+The latest exact-main signed-out eXcor-only video run is at `2a9f8dd` (2026-11-14): it fully decoded 3,433,755 bytes of Opus audio and a 480p H.264/AAC mux (854×480, 25 fps, 213.089 s). Midpoint HTTP byte-range reads returned 206. Its three-ID matrix classified one ID as range-readable and two as YouTube `LOGIN_REQUIRED` bot-check access blocks. That eXcor-only run did not compare InnerTubeX video or test ciphered playback or player seeks. See the [exact-main run](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md), the earlier [36d5 playback run](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md), and [strict range validation](modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md). Release remains **NO-GO**: ciphered playback, multi-network coverage, repeatable success across eligible IDs, video seeks, and repeated seek evidence remain incomplete.
 
 At exact source commit `e990cb3`, a stricter signed-out rerun fully decoded the same audio/video and verified MIME types, lengths and exact HTTP range boundaries; all 27 listed formats returned valid 206 ranges. This remains eXcor-only evidence for one video/network, not a matched InnerTubeX video test or player-controlled seek. See the [exact-source verification report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md).
 
-See the [dQ comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md), [aqz comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md), [competitive matrix](docs/COMPETITOR_MATRIX.md), and [live readiness score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
+See the latest [paired comparison report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md) and [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.jsonl), the previous [dQ](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md) and [aqz](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md) reports, the [competitive matrix](docs/COMPETITOR_MATRIX.md), and the [live readiness score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
 
 ## Build and verify
 

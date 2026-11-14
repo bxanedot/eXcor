@@ -14,6 +14,17 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
+## Latest verified checkpoint — 2026-11-14 14:56 UTC
+
+- Main is at `c6faa41e8eb817210bbdf796bacca710be08653a`. PR #177 exact-head CI and CodeQL passed; post-merge main CI run [43605472266](https://github.com/bxanedot/eXcor/actions/runs/43605472266) passed all nine jobs.
+- The latest signed-out owner-home comparison ran 24 samples at exact main `c6faa41`: three cold and three warm attempts per adapter on each of two public music videos. eXcor and InnerTubeX both fully decoded the 3,507,483-byte stream and passed both HTTP byte-range probes in 6/6 on `dQw4w9WgXcQ`. On `aqz-KE-bpKQ`, eXcor was `ACCESS_DENIED` before media in 6/6 while InnerTubeX passed in 6/6. See the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md) and [sanitized samples](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.jsonl).
+- One same-FFplay 9.0.2 audio-seek attempt per adapter on `dQw4w9WgXcQ` produced the same initial, forward-offset and backward-offset HTTP 206 reads after Right/Left input. Both stopped at the configured 30-second limit below the byte cap; this does not establish video-seek or multi-network reliability. See the [seek report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md).
+- The evidence is reflected in the README, feature and competitive matrices, playback evidence matrix and release gates. Keep G4/G5/G11 partial, G6 blocked, G12 partial and release NO-GO. Issue #78 remains open for eligible ciphered playback, cross-network repetition, video seeking and broader repeatability. Preserve GPL-3.0-only and the clean-room boundary.
+
+## Next
+
+Continue issue #78 using authorized public cases and classify access refusals separately. Do not claim broad parity from the current one-network comparison or one paired audio-seek case.
+
 ## Latest verified checkpoint — 2026-11-14 14:03 UTC
 
 - PR #176 merged to main as `392be6a77fb0cc3a792cee51a27a1fc735f1c8db`. Its exact head passed all nine CI jobs and all five CodeQL language analyses. GitHub removed its remote topic branch. Post-merge main CI run [43602463707](https://github.com/bxanedot/eXcor/actions/runs/43602463707) was still in progress at 14:03 UTC; do not treat it as a passing main run until it completes.

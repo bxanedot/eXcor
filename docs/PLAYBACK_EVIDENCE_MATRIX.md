@@ -157,6 +157,15 @@ At exact source commit `e990cb32a05c096cba9c02eed7962febf275ef0c`, nine selected
 At main commit 2a9f8dd6a0de4cef37724fad7102fc50c0c8a0cf, the per-ID range matrix found dQw4w9WgXcQ range-readable and two known public IDs access-blocked by YouTube bot checks. Two further selected tests on dQ fully decoded 3,433,755-byte Opus audio and a 480p H.264/AAC mux (854×480, 25 fps, 213.089 seconds). Midpoint byte ranges returned HTTP 206. Exact commands, timestamps, environment and limits are in the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md).
 
 This is one signed-out Windows home network and eXcor-only. It does not compare InnerTubeX video, test player-controlled seeking or exercise a ciphered path. The two access blocks are reported separately from technical failures. G4/G5 remain partial.
+
+## 2026-11-14 — exact-main paired audio, range and FFplay seek checks
+
+At exact main commit `c6faa41e8eb817210bbdf796bacca710be08653a`, the signed-out Windows x64 adapters ran three cold and three warm attempts per ID on one home network. On `dQw4w9WgXcQ`, eXcor 0.2.0 and InnerTubeX v0.11.6 both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in 6/6 attempts. First-media p50/p95 was 353/353 ms cold and 101/102 ms warm for eXcor, versus 1,377/1,399 ms and 154/185 ms for InnerTubeX. Full-decode p50/p95 was 307/308 ms and 310/314 ms for eXcor, versus 366/367 ms and 360/363 ms for InnerTubeX. On `aqz-KE-bpKQ`, eXcor was `ACCESS_DENIED` before media in 6/6 attempts while InnerTubeX passed full decode and both range probes in 6/6. See the [sanitized comparison](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md).
+
+A separate same-FFplay 9.0.2 check used Right then Left once per adapter for `dQw4w9WgXcQ` under shared comparison metadata. Both produced range starts `0`, `497307`, `329300`, all HTTP 206, and relayed 720,896 bytes before the configured 30-second limit. The results support one paired direct-audio seek case, not video seek, multiple-network reliability or ciphered playback. Details and commands are in the [seek report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md).
+
+The current results add repeatable same-ID decode and byte-range evidence plus one paired audio-seek case. They do not close the cross-network, eligible cipher, video-seek or repeated-seek requirements. G4/G5 remain partial.
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
