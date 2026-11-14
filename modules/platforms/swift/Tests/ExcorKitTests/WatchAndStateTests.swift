@@ -51,6 +51,38 @@ final class EngineStateTests: XCTestCase {
         XCTAssertFalse(expired)
     }
 
+    func testExclusionCacheKeepsNewestSixteenProfilesPerVideo() async {
+        let kit = ExcorKit(host: TestHost())
+        for index in 0...16 {
+            await kit.exclude(videoId: "video", profileId: "profile-\(index)")
+        }
+
+        let oldest = await kit.isExcludedForTesting(videoId: "video", profileId: "profile-0")
+        let newest = await kit.isExcludedForTesting(videoId: "video", profileId: "profile-16")
+        XCTAssertFalse(oldest)
+        XCTAssertTrue(newest)
+    }
+
+    func testExclusionCacheKeepsNewest256Videos() async {
+        let kit = ExcorKit(host: TestHost())
+        for index in 0...256 {
+            await kit.exclude(videoId: "video-\(index)", profileId: "web")
+        }
+
+        let oldest = await kit.isExcludedForTesting(videoId: "video-0", profileId: "web")
+        let newest = await kit.isExcludedForTesting(videoId: "video-256", profileId: "web")
+        XCTAssertFalse(oldest)
+        XCTAssertTrue(newest)
+    }
+
+    func testExclusionCacheRejectsKeysOver128Utf16Units() async {
+        let kit = ExcorKit(host: TestHost())
+        await kit.exclude(videoId: String(repeating: "v", count: 129), profileId: "web")
+
+        let excluded = await kit.isExcludedForTesting(videoId: String(repeating: "v", count: 129), profileId: "web")
+        XCTAssertFalse(excluded)
+    }
+
     func testSessionChangeClearsRememberedStreamsAndExclusions() async {
         let kit = ExcorKit(host: TestHost())
         let stream = ExcorStream(videoId: "video", url: "https://rr1.googlevideo.com/videoplayback", kbps: 128, mimeType: "audio/webm", loudnessDb: nil, clientName: "WEB", profileId: "web", headers: [:])

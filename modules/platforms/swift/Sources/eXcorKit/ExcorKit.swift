@@ -13,10 +13,26 @@ public actor ExcorKit {
         let timestamp: Int?
     }
 
+    private struct ProfileExclusion {
+        let expiresAt: Date
+        let sequence: UInt64
+    }
+
+    private struct VideoExclusion {
+        let profiles: [String: ProfileExclusion]
+        let sequence: UInt64
+    }
+
+    private static let exclusionDuration: TimeInterval = 10 * 60
+    private static let maxExcludedVideos = 256
+    private static let maxExcludedProfilesPerVideo = 16
+    private static let maxExclusionKeyLength = 128
+
     private let host: any ExcorKitHost
     private let transport: ExcorTransport
     private var remembered = [String: RememberedStream]()
-    private var exclusions = [String: [String: Date]]()
+    private var exclusions = [String: VideoExclusion]()
+    private var exclusionSequence: UInt64 = 0
     private var playerSources = [String: PlayerSource]()
     private var warmTask: Task<Void, Never>?
     private var sessionGeneration: UInt64 = 0
@@ -100,14 +116,32 @@ public actor ExcorKit {
     }
 
     public func exclude(videoId: String, profileId: String) {
-        exclusions[videoId, default: [:]][profileId] = host.now().addingTimeInterval(10 * 60)
-        host.log(.warn, "eXcor: excluded profile \(profileId) for this video", trackId: videoId)
+        guard (1...Self.maxExclusionKeyLength).contains(videoId.utf16.count),
+              (1...Self.maxExclusionKeyLength).contains(profileId.utf16.count)
+        else { return }
+
+        let now = host.now()
+        pruneExclusions(now: now)
+        exclusionSequence &+= 1
+        var profiles = exclusions.removeValue(forKey: videoId)?.profiles ?? [:]
+        profiles[profileId] = ProfileExclusion(expiresAt: now.addingTimeInterval(Self.exclusionDuration), sequence: exclusionSequence)
+        while profiles.count > Self.maxExcludedProfilesPerVideo {
+            guard let oldest = profiles.min(by: { $0.value.sequence < $1.value.sequence })?.key else { break }
+            profiles.removeValue(forKey: oldest)
+        }
+        exclusions[videoId] = VideoExclusion(profiles: profiles, sequence: exclusionSequence)
+        while exclusions.count > Self.maxExcludedVideos {
+            guard let oldest = exclusions.min(by: { $0.value.sequence < $1.value.sequence })?.key else { break }
+            exclusions.removeValue(forKey: oldest)
+        }
+        host.log(.warn, "eXcor: excluded playback profile", trackId: nil)
     }
 
     public func onSessionChanged() {
         sessionGeneration &+= 1
         remembered.removeAll()
         exclusions.removeAll()
+        exclusionSequence = 0
         playerSources.removeAll()
         warmTask?.cancel()
         warmTask = nil
@@ -314,11 +348,17 @@ public actor ExcorKit {
     }
 
     private func excludedProfiles(videoId: String) -> Set<String> {
-        let now = host.now()
-        var entries = exclusions[videoId] ?? [:]
-        entries = Dictionary(uniqueKeysWithValues: entries.filter { $0.value > now })
-        exclusions[videoId] = entries
-        return Set(entries.keys)
+        pruneExclusions(now: host.now())
+        guard let entry = exclusions[videoId] else { return [] }
+        return Set(entry.profiles.keys)
+    }
+
+    private func pruneExclusions(now: Date) {
+        exclusions = exclusions.compactMapValues { entry in
+            let profiles = entry.profiles.filter { $0.value.expiresAt > now }
+            guard !profiles.isEmpty else { return nil }
+            return VideoExclusion(profiles: profiles, sequence: entry.sequence)
+        }
     }
 
     private func remember(_ stream: ExcorStream) {
