@@ -1,6 +1,6 @@
 # Implementation status
 
-Updated 2026-11-14. eXcor remains a draft SDK and the current release decision is **NO-GO**. The live [readiness report](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) measures evidence-backed release readiness, not playback success rate or a feature/performance percentage against InnerTubeX.
+Updated 2026-11-15. eXcor remains a draft SDK and the current release decision is **NO-GO**. The live [readiness report](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md) measures evidence-backed release readiness, not playback success rate or a feature/performance percentage against InnerTubeX.
 
 Use these as the current sources of detail:
 
@@ -9,7 +9,7 @@ Use these as the current sources of detail:
 - [Competitor matrix](COMPETITOR_MATRIX.md) and the root [README](../README.md) summarize documented capabilities and matched results.
 - [Maintainer progress](maintainers/EXCOR_PROGRESS.md) records dated investigations, local runs and limitations.
 
-- The latest comparison (`c6faa41`, 2026-11-14) covered two IDs on one signed-out Windows home network. Both adapters passed full audio decode and both HTTP byte-range probes in 6/6 attempts on `dQw4w9WgXcQ`. On `aqz-KE-bpKQ`, eXcor was `ACCESS_DENIED` in 6/6 attempts and InnerTubeX passed 6/6. A separate FFplay check recorded matching initial, forward and backward reads after keyboard input, once per adapter on `dQw4w9WgXcQ`. See the [comparison](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md) and [seek record](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md).
+- The latest paired direct-audio follow-up ran on 2026-11-15 local at exact main `c92b2c0`, on one signed-out Windows home network. Both adapters passed full decode and forward/backward HTTP byte ranges in 6/6 attempts on `dQw4w9WgXcQ`. On `M7lc1UVf-VE`, eXcor was `ACCESS_DENIED` before media in 6/6, while InnerTubeX passed both range probes but timed out during full decode after 73,728 bytes in 6/6. This adds one current-head shared playback case; the second ID does not compare successful playback. See the [dQ report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c92-dq-full.md), [M7 report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c92-m7lc-full.md) and their sanitized samples. The earlier exact-main comparison and paired FFplay audio seek are in the [2026-11-14 report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md) and [seek record](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md).
 
 ## Open release gaps
 
