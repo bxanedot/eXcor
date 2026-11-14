@@ -67,7 +67,7 @@ Full decode requires exactly those two adapters. The runner records one sanitize
 
 ## Same-harness interactive player seeks
 
-The eXcor and InnerTubeX JVM adapters also accept `--player-seek`. This starts the same installed FFplay build for either adapter, with the same initial position, 160 Kbit/s relay pacing, 256 MiB cap and 30-second maximum (or the selected lower `--timeout-seconds`). The bounded localhost relay validates HTTPS media hosts and paths, forwards only an allowlist of non-secret headers, and keeps signed media URLs inside the adapter process. Focus the FFplay window and press Right Arrow, then Left Arrow before it exits. The adapter prints only sanitized relay range/status/byte counts. This interactive mode is intentionally separate from `run_matched.py` JSON reports.
+The eXcor and InnerTubeX JVM adapters accept `--player-seek` for a direct audio track and `--player-seek-video` for a direct video track. Both start the same installed FFplay build with the same initial position, 160 Kbit/s relay pacing, 256 MiB cap and 30-second maximum (or the selected lower `--timeout-seconds`). The bounded localhost relay validates HTTPS media hosts and paths, forwards only an allowlist of non-secret headers, and keeps signed media URLs inside the adapter process. Focus FFplay and press Right Arrow, then Left Arrow before it exits. The video mode checks seeking on a direct video track; it does not prove synchronized audio-video playback. The adapter prints only sanitized relay range/status/byte counts. This interactive mode is separate from `run_matched.py` JSON reports.
 
 For a paired owner run in PowerShell, build the adapters as above, then run both back-to-back with one captured metadata context:
 
@@ -77,6 +77,9 @@ $runDateUtc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 $common = "--video-id dQw4w9WgXcQ --comparison-id owner-home-shared-player --main-commit $mainCommit --run-date-utc $runDateUtc --network-category home --content-category music_video --phase cold --sample-index 1 --timeout-seconds 30"
 ./gradlew.bat -p modules/samples/black-box-comparison/excor-jvm run --args="$common --player-seek"
 ./gradlew.bat -p modules/samples/black-box-comparison/innertubex-jvm run --args="$common --player-seek"
+$videoCommon = $common.Replace("owner-home-shared-player", "owner-home-shared-video-player")
+./gradlew.bat -p modules/samples/black-box-comparison/excor-jvm run --args="$videoCommon --player-seek-video"
+./gradlew.bat -p modules/samples/black-box-comparison/innertubex-jvm run --args="$videoCommon --player-seek-video"
 ```
 
 Record whether both keys moved the player and preserve each adapter's sanitized `rangeRequests`, `rangeStarts`, HTTP statuses and bytes relayed in a manual owner report. The stream extraction and signed media URL differ by adapter, so this is one Windows/network/video comparison; repeat across eligible public IDs and networks before drawing a competitive reliability conclusion.

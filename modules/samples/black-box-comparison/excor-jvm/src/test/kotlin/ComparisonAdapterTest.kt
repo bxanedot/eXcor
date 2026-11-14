@@ -38,8 +38,12 @@ class ComparisonAdapterTest {
     fun acceptsExplicitPlayerSeekMode() {
         val parsed = parseOptions(validArgs() + "--player-seek")
         assertTrue(parsed.playerSeek)
+        val video = parseOptions(validArgs() + "--player-seek-video")
+        assertTrue(video.playerSeekVideo)
         assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--player-seek")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--player-seek-video")) }.isSuccess)
         assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek", "--full-decode")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--player-seek-video", "--full-decode")) }.isSuccess)
     }
 
     @Test
@@ -51,8 +55,12 @@ class ComparisonAdapterTest {
             ),
         )
         try {
+            val audioArgs = ffplayArguments(proxy.localUrl)
+            val videoArgs = ffplayArguments(proxy.localUrl, showVideo = true)
             assertTrue(proxy.localUrl.startsWith("http://127.0.0.1:"))
-            assertFalse(ffplayArguments(proxy.localUrl).any { "googlevideo" in it || "token=" in it })
+            assertFalse(audioArgs.any { "googlevideo" in it || "token=" in it })
+            assertEquals(videoArgs[videoArgs.indexOf("-showmode") + 1], "0")
+            assertEquals(audioArgs[audioArgs.indexOf("-showmode") + 1], "1")
         } finally {
             proxy.close()
         }

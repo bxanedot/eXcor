@@ -72,10 +72,11 @@ internal fun runInteractivePlayer(
     url: String,
     seconds: Int,
     seekSeconds: Int,
+    showVideo: Boolean = false,
     byteLimitExceeded: () -> Boolean,
 ): String {
     val process = try {
-        ProcessBuilder(ffplayArguments(url, seekSeconds))
+        ProcessBuilder(ffplayArguments(url, seekSeconds, showVideo))
             .redirectInput(ProcessBuilder.Redirect.INHERIT)
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .redirectError(ProcessBuilder.Redirect.DISCARD)
@@ -117,8 +118,8 @@ private fun stopProcess(process: Process) {
     if (!process.waitFor(3, TimeUnit.SECONDS)) process.destroyForcibly()
 }
 
-internal fun ffplayArguments(url: String, seekSeconds: Int = 0): List<String> =
-    listOf("ffplay", "-ss", seekSeconds.toString(), "-showmode", "1", "-loglevel", "quiet", "-autoexit", url)
+internal fun ffplayArguments(url: String, seekSeconds: Int = 0, showVideo: Boolean = false): List<String> =
+    listOf("ffplay", "-ss", seekSeconds.toString(), "-showmode", if (showVideo) "0" else "1", "-loglevel", "quiet", "-autoexit", url)
 
 internal data class ProxyStats(
     val requests: Long,
