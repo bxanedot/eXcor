@@ -33,9 +33,11 @@ Verification baseline `422d95cde65eacf6cfac68d4c41e66bdcde3d5ae` passed all nine
 
 ## Current exact-main verification — 2026-11-14
 
-Main is 9b4dcf0879e65c5956bdbfea216b3584b2ad79b1. Post-merge CI run [43577790067](https://github.com/bxanedot/eXcor/actions/runs/43577790067) passed all nine jobs; CodeQL run [43577790061](https://github.com/bxanedot/eXcor/actions/runs/43577790061) passed all five analyses. Readiness refresh [43578808737](https://github.com/bxanedot/eXcor/actions/runs/43578808737) records the same main SHA, CI success, 53/100 and Release NO-GO.
+Main is 36d5bd0a08a39c1c708b9d71405cbacc2ca1fc8b. Post-merge CI run [43581522803](https://github.com/bxanedot/eXcor/actions/runs/43581522803) passed all nine jobs; CodeQL run [43581522640](https://github.com/bxanedot/eXcor/actions/runs/43581522640) passed all five analyses. Readiness refresh [43582520939](https://github.com/bxanedot/eXcor/actions/runs/43582520939) records the same main SHA, CI success, 53/100 and Release NO-GO.
 
 The latest matched direct-audio measurements remain tied to source commit ad7a6f1514c1f320b493c1e62d9bbb6c04c82a5a. Comparing that commit with current main shows only two live-test source files changed under modules/cleanroom/ and modules/platforms/; the library implementation is unchanged. The results remain one signed-out Windows home network and do not prove broad reliability or player-seek parity.
+
+On exact merged main `36d5bd0`, two signed-out live JVM checks passed on `dQw4w9WgXcQ`: 3,433,755-byte Opus full decode and 480p H.264/AAC stream-copy mux plus full decode (854×480, 25 fps, 213.089 seconds). Midpoint HTTP range checks returned 206. This is eXcor-only evidence for one video/network; it is not an InnerTubeX video comparison or a player seek. See the [run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md).
 
 [Issue #78](https://github.com/bxanedot/eXcor/issues/78) remains open for eligible ciphered playback and repeatable player-seek evidence. G6 remains blocked after the independent 2026-11-14 source recheck found no public viewer-side contract or authorized fixture corpus. G12 remains partial; in addition to the existing artifact, fixture-rights, strict-isolation and native-dependency gaps, the applicability of YouTube API Services policies to the project's direct endpoints has not been determined. Do not treat this status note as a legal conclusion.
 

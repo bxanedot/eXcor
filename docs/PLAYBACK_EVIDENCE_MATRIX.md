@@ -142,7 +142,9 @@ At exact main `ad7a6f1514c1f320b493c1e62d9bbb6c04c82a5a`, the owner-run Windows 
 
 A separate current-main LivePlaybackTest on the same ID also passed full 3,433,755-byte Opus decode and a midpoint HTTP 206 range; see the [sanitized run](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-playback.md).
 
-This is one video and one network, not broad parity or a performance ranking. The range requests are not player-controlled seeks. The per-sample report records forward/backward player seeks as `NOT_TESTED`; audio/video mux, ciphered playback and another network remain open.
+On merged main `36d5bd0a08a39c1c708b9d71405cbacc2ca1fc8b`, the signed-out Windows owner-workstation test on the same video passed both the full Opus decode and 480p H.264/AAC mux-and-decode cases (two tests, zero skips/failures). The video was 854×480 at 25 fps; the mux contained audio and video and decoded for 213.089 seconds. Midpoint HTTP byte-range probes returned 206 for both tracks. This eXcor-only run does not compare video playback with InnerTubeX; ranges are not player-controlled seeks. See the [exact-main run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md).
+
+This is one video and one network, not broad parity or a performance ranking. The range requests are not player-controlled seeks. The per-sample report records forward/backward player seeks as `NOT_TESTED`; ciphered playback, same-harness InnerTubeX video comparison and another network remain open.
 
 On a second public video, aqz-KE-bpKQ, the same adapters on the same network gave eXcor ACCESS_DENIED before media in all six attempts while InnerTubeX passed full decode and both byte-range probes in all six. This does not establish a cause for the access difference. See the [second-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.jsonl).
 
