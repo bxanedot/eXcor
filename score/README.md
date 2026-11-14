@@ -2,7 +2,7 @@
 
 **Evidence-weighted readiness, not a live media playback success percentage.**
 
-Release: **NO-GO** · main CI: **queued** · rubric reviewed 2026-11-13
+Release: **NO-GO** · main CI: **success** · rubric reviewed 2026-11-13
 
 | Category | Points |
 |---|---:|

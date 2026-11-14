@@ -380,8 +380,8 @@
   "checked_date_utc": "2026-11-14",
   "main_sha": "bf26a521dfe58a35878594474860c4e5529269c9",
   "ci": {
-    "status": "queued",
-    "conclusion": null,
+    "status": "completed",
+    "conclusion": "success",
     "url": "https://github.com/bxanedot/eXcor/actions/runs/43629614796",
     "sha": "bf26a521dfe58a35878594474860c4e5529269c9"
   }
