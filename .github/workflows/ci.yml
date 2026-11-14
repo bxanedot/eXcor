@@ -188,6 +188,12 @@ jobs:
           # 124: still running when the timeout stopped it, so it started and did not crash.
           [ "$result" -eq 124 ] && ! grep -q Exception "$RUNNER_TEMP/desktop.log"
       - run: cp modules/platforms/preview/android/build/outputs/apk/debug/preview-android-debug.apk excor-preview.apk
+      - name: Verify Android preview notice files
+        shell: bash
+        run: |
+          for notice in LICENSE NOTICE docs/licenses/Apache-2.0.txt; do
+            unzip -p excor-preview.apk "assets/excor-notices/${notice##*/}" | cmp - "$notice"
+          done
       # A debug build signed with this run's throwaway key, for trying the library on a phone.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
