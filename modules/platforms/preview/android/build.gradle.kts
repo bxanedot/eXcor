@@ -54,3 +54,25 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.11.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 }
+
+abstract class StagePreviewNotices : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val notices: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val assets: DirectoryProperty
+
+    @TaskAction
+    fun stage() {
+        val directory = assets.dir("excor-notices").get().asFile
+        notices.files.forEach { it.copyTo(directory.resolve(it.name), overwrite = true) }
+    }
+}
+
+androidComponents.onVariants { variant ->
+    val task = tasks.register<StagePreviewNotices>("stage${variant.name.replaceFirstChar { it.uppercaseChar() }}Notices") {
+        notices.from(rootProject.files("LICENSE", "NOTICE", "docs/licenses/Apache-2.0.txt"))
+    }
+    variant.sources.assets?.addGeneratedSourceDirectory(task, StagePreviewNotices::assets)
+}
