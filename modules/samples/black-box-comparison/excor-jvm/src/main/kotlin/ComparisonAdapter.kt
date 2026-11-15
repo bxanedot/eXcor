@@ -1,6 +1,5 @@
 import com.excor.Excor
 import com.excor.ExcorRequestException
-import com.excor.ExcorStream
 import com.excor.excorDefaultHost
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -25,7 +24,7 @@ import kotlin.system.exitProcess
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-private const val ADAPTER_VERSION = "0.1.4-excor0.2.0"
+private const val ADAPTER_VERSION = "0.1.5-excor0.2.0"
 private val videoIdPattern = Regex("^[A-Za-z0-9_-]{11}$")
 private val commitPattern = Regex("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 private val safeIdPattern = Regex("^[A-Za-z0-9_-]{1,64}$")
@@ -49,6 +48,7 @@ internal data class AdapterOptions(
     val sampleIndex: Int,
     val rangeProbes: Boolean,
     val fullDecode: Boolean,
+    val fullVideoDecode: Boolean,
     val decoderVersion: String?,
     val playerSeek: Boolean = false,
     val playerSeekVideo: Boolean = false,
@@ -65,6 +65,7 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
     val values = linkedMapOf<String, String>()
     var rangeProbes = false
     var fullDecode = false
+    var fullVideoDecode = false
     var playerSeek = false
     var playerSeekVideo = false
     var index = 0
@@ -91,6 +92,12 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         if (key == "--full-decode") {
             if (fullDecode) throw SafeUsageException("invalid arguments")
             fullDecode = true
+            index += 1
+            continue
+        }
+        if (key == "--full-video-decode") {
+            if (fullVideoDecode) throw SafeUsageException("invalid arguments")
+            fullVideoDecode = true
             index += 1
             continue
         }
@@ -128,15 +135,16 @@ internal fun parseOptions(args: List<String>): AdapterOptions {
         network !in setOf("home", "mobile", "ci", "other") ||
         content !in setOf("stable_public_video", "music_video", "live", "unavailable_case", "other_public") ||
         !localePattern.matches(locale) ||
-        (decoderVersion != null && (!fullDecode || !Regex("^ffmpeg-[A-Za-z0-9._+\\-]{1,64}$").matches(decoderVersion))) ||
+        (decoderVersion != null && (!(fullDecode || fullVideoDecode) || !Regex("^ffmpeg-[A-Za-z0-9._+\\-]{1,64}$").matches(decoderVersion))) ||
         timeout !in 1..30 ||
         phase !in setOf("cold", "warm") ||
         sampleIndex < 1 ||
-        ((playerSeek || playerSeekVideo) && (rangeProbes || fullDecode))
+        (fullDecode && fullVideoDecode) ||
+        ((playerSeek || playerSeekVideo) && (rangeProbes || fullDecode || fullVideoDecode))
     ) {
         throw SafeUsageException("invalid option value")
     }
-    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes, fullDecode, decoderVersion, playerSeek, playerSeekVideo)
+    return AdapterOptions(videoId, comparisonId, mainCommit, runDateUtc, os, network, content, locale, timeout, phase, sampleIndex, rangeProbes, fullDecode, fullVideoDecode, decoderVersion, playerSeek, playerSeekVideo)
 }
 
 private object HelpRequested : RuntimeException()
@@ -202,7 +210,7 @@ internal data class ComparisonSample(
     fun toJson(): String {
         val decoder = jsonString(options.decoderVersion)
         return """
-            {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":$decoder},"adapter":"excor","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":"direct_audio","phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":${jsonNumber(metadataMs)},"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":${jsonNumber(decodeMs)},"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$rangeRequests,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":${jsonString(decode)},"codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)},"rangeProbeMethod":${jsonString(rangeProbeMethod)},"rangeForwardProbe":${jsonString(rangeForwardProbe)},"rangeBackwardProbe":${jsonString(rangeBackwardProbe)}}}
+            {"schemaVersion":1,"comparison":{"id":${jsonString(options.comparisonId)},"mainCommit":${jsonString(options.mainCommit)},"runDateUtc":${jsonString(options.runDateUtc)},"os":${jsonString(options.os)},"networkCategory":${jsonString(options.networkCategory)},"contentCategory":${jsonString(options.contentCategory)},"sessionCategory":"signed_out","timeoutSeconds":${options.timeoutSeconds},"locale":${jsonString(options.locale)},"decoderVersion":$decoder},"adapter":"excor","adapterVersion":"$ADAPTER_VERSION","runtime":"jvm","lane":${jsonString(if (options.fullVideoDecode) "direct_video" else "direct_audio")},"phase":${jsonString(options.phase)},"sampleIndex":${options.sampleIndex},"videoId":${jsonString(options.videoId)},"outcome":${jsonString(outcome)},"failureClass":${jsonString(failureClass)},"measurements":{"metadataMs":${jsonNumber(metadataMs)},"extractMs":${jsonNumber(extractMs)},"startupMs":null,"firstMediaByteMs":${jsonNumber(firstMediaByteMs)},"decodeMs":${jsonNumber(decodeMs)},"requestCount":$requestCount,"mediaRequestCount":$mediaRequestCount,"bytesRead":$bytesRead,"rangeRequests":$rangeRequests,"heapDeltaBytes":${heapDeltaBytes ?: "null"},"backwardSeek":"NOT_TESTED","forwardSeek":"NOT_TESTED","decode":${jsonString(decode)},"codec":${jsonString(codec)},"mimeType":${jsonString(mimeType)},"rangeProbeMethod":${jsonString(rangeProbeMethod)},"rangeForwardProbe":${jsonString(rangeForwardProbe)},"rangeBackwardProbe":${jsonString(rangeBackwardProbe)}}}
         """.trimIndent()
     }
 }
@@ -355,11 +363,11 @@ private suspend fun executeRangeRequest(
 
 private suspend fun probeInitialRange(
     client: OkHttpClient,
-    stream: ExcorStream,
+    initialUrl: String,
+    headers: Map<String, String>,
     metrics: MediaMetrics,
 ): InitialRangeResult {
-    var current = stream.url
-    val headers = mediaHeaders(stream.headers)
+    var current = initialUrl
     if (!allowedMediaUrl(current)) return InitialRangeResult(SampleOutcome("FAIL", "PARSE"), null, null)
     repeat(4) { hop ->
         val response = try {
@@ -430,16 +438,17 @@ private suspend fun probeOffsetRange(
     return "ERROR"
 }
 
-private suspend fun decodeFullAudio(
+private suspend fun decodeFullMedia(
     client: OkHttpClient,
     initialUrl: String,
     headers: Map<String, String>,
     expectedBytes: Long,
     metrics: MediaMetrics,
     deadlineNs: Long,
+    videoTrack: Boolean,
 ): DecodeAttempt {
-    if (expectedBytes !in 1..FfmpegAudioDecoder.MAX_INPUT_BYTES) return DecodeAttempt(null, "UNSUPPORTED")
-    val decoder = FfmpegAudioDecoder.start() ?: return DecodeAttempt(null, "UNSUPPORTED")
+    if (expectedBytes !in 1..FfmpegMediaDecoder.MAX_INPUT_BYTES) return DecodeAttempt(null, "UNSUPPORTED")
+    val decoder = FfmpegMediaDecoder.start(videoTrack) ?: return DecodeAttempt(null, "UNSUPPORTED")
     return suspendCancellableCoroutine { continuation ->
         val activeCall = AtomicReference<Call?>(null)
         continuation.invokeOnCancellation {
@@ -507,7 +516,7 @@ private suspend fun decodeFullAudio(
                                             if (count < 0) break
                                             if (count == 0) continue
                                             total += count
-                                            if (total > expectedBytes || total > FfmpegAudioDecoder.MAX_INPUT_BYTES) {
+                                            if (total > expectedBytes || total > FfmpegMediaDecoder.MAX_INPUT_BYTES) {
                                                 result = DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
                                                 break
                                             }
@@ -601,6 +610,12 @@ private fun isKnownYouTubeAccessChallenge(message: String?): Boolean {
 internal fun classifyThrownErrorForTest(error: Throwable): SampleOutcome = classifyThrowableOutcome(error)
 
 private suspend fun warmup(excor: Excor, options: AdapterOptions): SampleOutcome? {
+    if (options.fullVideoDecode) {
+        if (excor.extractVideo(options.videoId, maxHeight = 480)?.video == null) {
+            return SampleOutcome("UNSUPPORTED", "UNSUPPORTED_TRANSPORT")
+        }
+        return null
+    }
     if (excor.extract(options.videoId, maxKbps = 160) == null) return SampleOutcome("FAIL", "OTHER")
     return null
 }
@@ -676,24 +691,35 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
     try {
         withTimeout(remainingBudgetMs(deadlineNs)) {
             val extractStarted = System.nanoTime()
-            val stream = try {
-                excor.extract(options.videoId, maxKbps = 160)
+            val media = try {
+                if (options.fullVideoDecode) {
+                    excor.extractVideo(options.videoId, maxHeight = 480)?.video?.let {
+                        Triple(it.url, it.headers, it.mimeType)
+                    }
+                } else {
+                    excor.extract(options.videoId, maxKbps = 160)?.let {
+                        Triple(it.url, it.headers, it.mimeType)
+                    }
+                }
             } finally {
                 extractMs = durationMs(extractStarted)
             }
-            if (stream == null) {
+            if (media == null) {
                 val metadataStarted = System.nanoTime()
                 val info = try {
                     excor.videoInfo(options.videoId)
                 } finally {
                     metadataMs = durationMs(metadataStarted)
                 }
-                outcome = missingStreamOutcome(info?.playabilityStatus)
+                outcome = if (options.fullVideoDecode && classifyPlayability(info?.playabilityStatus) == null) {
+                    SampleOutcome("UNSUPPORTED", "UNSUPPORTED_TRANSPORT")
+                } else missingStreamOutcome(info?.playabilityStatus)
                 return@withTimeout
             }
-            mime = baseMime(stream.mimeType)
-            codec = codecFrom(stream.mimeType)
-            val initialRange = probeInitialRange(mediaClient, stream, metrics)
+            mime = baseMime(media.third)
+            codec = codecFrom(media.third)
+            val headers = mediaHeaders(media.second)
+            val initialRange = probeInitialRange(mediaClient, media.first, headers, metrics)
             if (initialRange.outcome != null) {
                 outcome = initialRange.outcome
             } else {
@@ -707,16 +733,16 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
                         rangeBackwardProbe = "UNAVAILABLE"
                     } else {
                         rangeForwardProbe = probeOffsetRange(
-                            mediaClient, finalUrl, mediaHeaders(stream.headers), metrics,
+                            mediaClient, finalUrl, headers, metrics,
                             startByte = HttpRangeProbe.forwardStart(totalBytes), totalBytes = totalBytes,
                         )
                         rangeBackwardProbe = probeOffsetRange(
-                            mediaClient, finalUrl, mediaHeaders(stream.headers), metrics,
+                            mediaClient, finalUrl, headers, metrics,
                             startByte = HttpRangeProbe.backwardStart(totalBytes), totalBytes = totalBytes,
                         )
                     }
                 }
-                if (options.fullDecode) {
+                if (options.fullDecode || options.fullVideoDecode) {
                     val totalBytes = initialRange.totalBytes
                     val finalUrl = initialRange.finalUrl
                     if (options.decoderVersion == null || totalBytes == null || finalUrl == null) {
@@ -724,8 +750,8 @@ private suspend fun runSample(options: AdapterOptions): ComparisonSample {
                     } else {
                         decodeStartedAtNs = System.nanoTime()
                         decode = "FAIL"
-                        val attempt = decodeFullAudio(
-                            mediaClient, finalUrl, mediaHeaders(stream.headers), totalBytes, metrics, deadlineNs,
+                        val attempt = decodeFullMedia(
+                            mediaClient, finalUrl, headers, totalBytes, metrics, deadlineNs, options.fullVideoDecode,
                         )
                         decode = attempt.result
                         if (attempt.result != "UNSUPPORTED") {
@@ -838,7 +864,7 @@ fun main(args: Array<String>) {
     val options = try {
         parseOptions(args.toList())
     } catch (_: HelpRequested) {
-        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes | --full-decode | --player-seek | --player-seek-video]")
+        System.err.println("Usage: --video-id ID --comparison-id ID --main-commit SHA --run-date-utc UTC --network-category home|mobile|ci|other --content-category CATEGORY --phase cold|warm --sample-index N [--locale en-US] [--timeout-seconds 30] [--range-probes | --full-decode | --full-video-decode | --player-seek | --player-seek-video]")
         return
     } catch (error: SafeUsageException) {
         System.err.println("comparison adapter: ${error.message}")

@@ -585,3 +585,10 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 - Re-ran `:jvmTest --tests 'com.excor.LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId' --rerun-tasks --no-daemon --console=plain` at test source `9cc903163d58ef97f11f4352fef02a3c51baee90`, signed out on the same Windows home network.
 - Gradle reported one test, zero skips, zero failures. The matrix again recorded `dQw4w9WgXcQ:RANGE_READABLE`, `kJQP7kiw5Fk:ACCESS_BLOCKED`, and `JGwWNGJdvx8:ACCESS_BLOCKED`.
 - This confirms repeatability of the classification on one network only; it adds no new playable ID, full decode, seek, cipher or InnerTubeX evidence. G4/G5/G11 remain partial.
+
+## 2026-11-15 — paired direct-video track comparison
+
+- Added an opt-in 480p `--full-video-decode` lane to the isolated eXcor and InnerTubeX JVM adapters. It reuses bounded range/redirect handling, the 256 MiB cap, a shared FFmpeg version and the existing sanitized report schema; it decodes video only and remains separate from player-seek and muxed playback evidence.
+- Both JVM adapter test suites and `installDist` passed; all 21 comparison Python tests passed. A signed-out run on `dQw4w9WgXcQ`, one Windows home network, three cold and three warm attempts, used FFmpeg 9.0.2 and eXcor main `ae9e9ae0d300a04b2b90b341a45c9aff98edf45e`.
+- eXcor passed initial and forward/backward HTTP byte-range checks in 6/6, but full-video decode timed out in 6/6 after 3,940,336–3,973,104 bytes. InnerTubeX returned `UNSUPPORTED/UNSUPPORTED_TRANSPORT` before media access in 6/6. This adds no shared video-decode success and does not establish general video incompatibility; G4/G5/G11 remain partial and issue #78 stays open.
+- See the [report](../../modules/samples/black-box-comparison/results/owner-home-video-decode-2026-11-15.md) and [sanitized samples](../../modules/samples/black-box-comparison/results/owner-home-video-decode-2026-11-15.jsonl).

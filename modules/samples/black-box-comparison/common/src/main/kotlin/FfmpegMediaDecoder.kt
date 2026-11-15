@@ -6,7 +6,7 @@ internal data class FfmpegDecodeResult(
     val elapsedMs: Double?,
 )
 
-internal class FfmpegAudioDecoder private constructor(
+internal class FfmpegMediaDecoder private constructor(
     private val process: Process,
     private val startedAtNs: Long,
 ) {
@@ -65,15 +65,17 @@ internal class FfmpegAudioDecoder private constructor(
     companion object {
         const val MAX_INPUT_BYTES = 256L * 1024 * 1024
 
-        fun start(): FfmpegAudioDecoder? = try {
-            val process = ProcessBuilder(
-                "ffmpeg", "-hide_banner", "-loglevel", "error", "-xerror",
-                "-i", "pipe:0", "-map", "0:a:0", "-f", "null", "-",
-            )
+        internal fun arguments(videoTrack: Boolean): List<String> = listOf(
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-xerror",
+            "-i", "pipe:0", "-map", if (videoTrack) "0:v:0" else "0:a:0", "-f", "null", "-",
+        )
+
+        fun start(videoTrack: Boolean): FfmpegMediaDecoder? = try {
+            val process = ProcessBuilder(*arguments(videoTrack).toTypedArray())
                 .redirectOutput(ProcessBuilder.Redirect.DISCARD)
                 .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start()
-            FfmpegAudioDecoder(process, System.nanoTime())
+            FfmpegMediaDecoder(process, System.nanoTime())
         } catch (_: Exception) {
             null
         }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the isolated direct-audio adapters under one comparison context."""
+"""Run isolated comparison adapters under one shared comparison context."""
 
 from __future__ import annotations
 
@@ -163,6 +163,7 @@ def _parse_adapter_sample(
     phase: str,
     sample_index: int,
     expected_comparison: dict[str, object],
+    expected_lane: str = "direct_audio",
 ) -> dict[str, object]:
     lines = [line for line in stdout.splitlines() if line.strip()]
     if len(lines) != 1 or len(lines[0]) > 32768:
@@ -180,7 +181,7 @@ def _parse_adapter_sample(
     if (
         sample["adapter"] != adapter
         or sample["videoId"] != video_id
-        or sample["lane"] != "direct_audio"
+        or sample["lane"] != expected_lane
         or sample["phase"] != phase
         or sample["sampleIndex"] != sample_index
         or sample["comparison"] != expected_comparison
@@ -233,6 +234,11 @@ def _parse_options(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="download and decode up to 256 MiB of direct audio for the eXcor and InnerTubeX adapters",
     )
+    parser.add_argument(
+        "--full-video-decode",
+        action="store_true",
+        help="download and decode up to 256 MiB of direct video for the eXcor and InnerTubeX adapters",
+    )
     parser.add_argument("--output", required=True, type=Path, help="new JSONL file; existing files are never overwritten")
     args = parser.parse_args(argv)
 
@@ -255,10 +261,14 @@ def _parse_options(argv: Sequence[str] | None = None) -> argparse.Namespace:
     args.adapters = args.adapters or list(ADAPTERS)
     if len(set(args.adapters)) != len(args.adapters):
         raise RunnerError("adapters must be unique")
+    if args.full_decode and args.full_video_decode:
+        raise RunnerError("full audio and video decode modes are mutually exclusive")
     if args.range_probes and set(args.adapters) != {"excor", "innertubex"}:
         raise RunnerError("HTTP byte-range probes require exactly the excor and innertubex adapters")
     if args.full_decode and set(args.adapters) != {"excor", "innertubex"}:
         raise RunnerError("full audio decode requires exactly the excor and innertubex adapters")
+    if args.full_video_decode and set(args.adapters) != {"excor", "innertubex"}:
+        raise RunnerError("full video decode requires exactly the excor and innertubex adapters")
     if len(args.video_id) * len(args.phases) * len(args.sample_indices) * len(args.adapters) > 10000:
         raise RunnerError("comparison request exceeds the report sample limit")
 
@@ -287,7 +297,7 @@ def run(argv: Sequence[str] | None = None) -> int:
         args = _parse_options(argv)
         specs = discover_adapters(args.adapters)
         preflight(specs)
-        decoder_version = _ffmpeg_version() if args.full_decode else None
+        decoder_version = _ffmpeg_version() if args.full_decode or args.full_video_decode else None
         comparison: dict[str, object] = {
             "id": args.comparison_id,
             "mainCommit": args.main_commit,
@@ -332,6 +342,10 @@ def run(argv: Sequence[str] | None = None) -> int:
                             adapter_args.append("--full-decode")
                             if decoder_version is not None:
                                 adapter_args.extend(["--decoder-version", decoder_version])
+                        if args.full_video_decode:
+                            adapter_args.append("--full-video-decode")
+                            if decoder_version is not None:
+                                adapter_args.extend(["--decoder-version", decoder_version])
                         result = _invoke(spec, adapter_args, args.timeout_seconds + 10)
                         if result.returncode != 0:
                             raise RunnerError(f"{spec.name} failed with exit code {result.returncode}; no JSONL output was written")
@@ -342,6 +356,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                             phase=phase,
                             sample_index=sample_index,
                             expected_comparison=comparison,
+                            expected_lane="direct_video" if args.full_video_decode else "direct_audio",
                         )
                         key = (
                             sample["comparison"]["id"], sample["adapter"], sample["lane"],
