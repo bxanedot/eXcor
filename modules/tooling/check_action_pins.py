@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 
-STEP_USE = re.compile(r"^\s*-\s*uses:\s*(?P<reference>[^\s#]+)(?P<suffix>.*)$")
+STEP_USE = re.compile(r"^\s*(?:-\s*)?uses:\s*(?P<reference>[^\s#]+)(?P<suffix>.*)$")
 ACTION_REFERENCE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*@[0-9a-f]{40}$")
 DOCKER_REFERENCE = re.compile(r"^docker://[^\s@]+@sha256:[0-9a-f]{64}$")
 VERSION_COMMENT = re.compile(r"^\s+#\s+v[0-9][A-Za-z0-9._+-]*\s*$")

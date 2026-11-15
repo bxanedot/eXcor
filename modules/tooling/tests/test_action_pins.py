@@ -36,6 +36,14 @@ class ActionPinCheckTest(unittest.TestCase):
         self.assertEqual(count, 1)
         self.assertIn("full 40-character commit SHA", errors[0])
 
+    def test_named_step_cannot_hide_a_mutable_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workflow = Path(directory) / "ci.yml"
+            workflow.write_text("jobs:\n  build:\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v7\n")
+            count, errors = check_action_pins.check_root(Path(directory))
+        self.assertEqual(count, 1)
+        self.assertTrue(any("full 40-character commit SHA" in error for error in errors))
+
     def test_allows_local_actions_without_external_pinning(self):
         with tempfile.TemporaryDirectory() as directory:
             workflow = Path(directory) / "ci.yml"

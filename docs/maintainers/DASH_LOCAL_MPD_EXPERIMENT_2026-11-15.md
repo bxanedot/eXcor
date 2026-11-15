@@ -43,8 +43,8 @@ init 0–740, index 741–1228, timescale 12,800, duration 2,726,912 ticks,
 on one ID/network. This cloud session did not reproduce those reads. A range
 probe is not a player seek.
 
-The integrated follow-up JVM suite passed: 281 tests, 0 failures/errors, 26 opt-in
-skips (255 executed passes), including XML/segment-copy and malformed-SIDX
+The integrated follow-up JVM suite passed: 284 tests, 0 failures/errors, 26 opt-in
+skips (258 executed passes), including XML/segment-copy and malformed-SIDX
 regressions. The separate FFmpeg-enabled run passed all four generated HLS/DASH checks.
 `git diff --check` and the immutable-action-pin check also passed.
 

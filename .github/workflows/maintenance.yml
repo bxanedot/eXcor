@@ -1,0 +1,80 @@
+name: eXcor maintenance audit
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  schedule:
+    - cron: '43 6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Report only; do not apply labels
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: excor-maintenance
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    steps:
+      - name: Read trusted main only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Test maintenance policy
+        run: python3 -m unittest discover -s modules/tooling/tests -p 'test_github_maintenance.py' -v
+      - name: Audit without writes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 modules/tooling/github_maintenance.py --repo "$GITHUB_REPOSITORY" \
+            --output "$RUNNER_TEMP/maintenance.json"
+          python3 -c 'import json,os; p=json.load(open(os.environ["RUNNER_TEMP"]+"/maintenance.json")); print("Maintenance dry-run: issues="+str(len(p["issues"]))+"; PRs="+str(len(p["pull_requests"])))' >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain sanitized audit
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: maintenance-audit
+          path: ${{ runner.temp }}/maintenance.json
+          retention-days: 30
+  triage:
+    needs: audit
+    if: >-
+      vars.EXCOR_MAINTENANCE_APPLY_LABELS == 'true' &&
+      (github.event_name != 'workflow_dispatch' || inputs.dry_run == false)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Read trusted main only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Recheck policy and apply fixed labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m unittest discover -s modules/tooling/tests -p 'test_github_maintenance.py' -v
+          python3 modules/tooling/github_maintenance.py --repo "$GITHUB_REPOSITORY" \
+            --output "$RUNNER_TEMP/triage.json" --apply-labels
+      - name: Retain label audit
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: maintenance-label-audit
+          path: ${{ runner.temp }}/triage.json
+          retention-days: 30
