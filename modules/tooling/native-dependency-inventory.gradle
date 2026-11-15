@@ -1,0 +1,42 @@
+import java.security.DigestInputStream
+import java.security.MessageDigest
+import java.util.zip.ZipFile
+
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    project.tasks.register("nativeDependencyInventory") {
+        doLast {
+            def configurations = [
+                "jvmRuntimeClasspath",
+                "androidRuntimeClasspath",
+                "iosArm64CompileKlibraries",
+                "iosSimulatorArm64CompileKlibraries",
+                "iosX64CompileKlibraries",
+            ]
+            configurations.each { name ->
+                def artifacts = project.configurations.getByName(name).incoming.artifacts.artifacts
+                println "${name}: ${artifacts.size()} archives"
+                artifacts.sort { it.id.displayName }.each { artifact ->
+                    def file = artifact.file
+                    if (!(file.name ==~ /.*\.(jar|aar|klib|zip)/)) {
+                        throw new GradleException("Cannot inspect archive: ${artifact.id.displayName}")
+                    }
+                    new ZipFile(file).withCloseable { zip ->
+                        def entries = zip.entries().findAll {
+                            !it.directory && it.name ==~ /.*\.(so|dylib|dll|jnilib|a|lib|o|obj|bc)(\.\d+)*/
+                        }
+                        if (entries) {
+                            def digest = MessageDigest.getInstance("SHA-256")
+                            new DigestInputStream(file.newInputStream(), digest).withCloseable {
+                                it.transferTo(OutputStream.nullOutputStream())
+                            }
+                            def sha256 = digest.digest().encodeHex()
+                            println "  ${artifact.id.displayName} sha256=${sha256}"
+                            entries*.name.sort().each { println "    ${it}" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
