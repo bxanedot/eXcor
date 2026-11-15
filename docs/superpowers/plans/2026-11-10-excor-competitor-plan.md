@@ -215,3 +215,9 @@ At source commit `6341b95`, the opt-in first-party watch-page probe requested `d
 - On eXcor main `b1d020cbe2eeea9be31687ace29da3ddefb5c2f7`, one signed-out cold FFplay 9.0.2 run per adapter played `dQw4w9WgXcQ` on the same Windows home network and comparison metadata.
 - Both player windows visibly refreshed after Right then Left. The sanitized relays show the offset sequence `0 → 497307 → 329300`, with HTTP 206 for all three requests, 753,664 bytes relayed per adapter, and no byte-cap breach. Each post-key range arrived 71–77 ms after input; this is HTTP range timing, not audible seek latency.
 - This closes one paired direct-audio player-seek observation, not broad parity. Video seeking, more eligible IDs/networks and live cipher coverage remain unverified; keep G4/G5/G11 partial, G6 blocked and issue #78 open. See the [timestamped report](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-b1-player-seek.md).
+
+## 2026-11-15 — repeated paired audio player seeking
+
+- Repeated the same signed-out `dQw4w9WgXcQ` FFplay 9.0.2 Right/Left check twice on current main `17c6febd14d53da67700656dd8daa2030df38796`, for three samples total per adapter. The first sample was on `b1d020c`; the source tree was unchanged across the documentation-only commit.
+- eXcor 0.2.0 and InnerTubeX 0.11.7 visibly refreshed after both keys in all six player runs. Each adapter returned nine HTTP 206 reads at the repeated offsets `0 → 497307 → 329300`; relayed totals were 2,244,608 bytes and 2,211,840 bytes respectively. This confirms repeatable direct-audio seeking on one ID/network, not broader reliability or parity.
+- See the [first sample](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-b1-player-seek.md) and [two repeats](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-17c6-player-seek-repeats.md). Keep G4/G5/G11 partial, G6 blocked, and issue #78 open.
