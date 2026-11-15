@@ -70,6 +70,29 @@ class TriageTests(unittest.TestCase):
         self.assertNotIn("title", plans[0])
         self.assertNotIn("body", plans[0])
 
+    def test_pr_fix_claims_link_open_issues_without_claiming_verified_resolution(self):
+        plans = m.triage([issue(1), issue(2), issue(3, title="Security vulnerability")])
+        pulls = [{"number": 10, "body": "Fixes #1; resolves #2. Cookie: synthetic-secret", "title": "No title in report"},
+                 {"number": 11, "body": "closes #3; fixes #999; fixes other/repo#1"},
+                 {"number": 12, "body": "mentions #1; blocked by #2"},
+                 {"number": 13, "body": "FIXES #1"}]
+        m.link_fix_claims(plans, pulls)
+        self.assertEqual([10, 13], plans[0]["unverified_fix_prs"])
+        self.assertEqual([10], plans[1]["unverified_fix_prs"])
+        self.assertNotIn("unverified_fix_prs", plans[2])
+        self.assertNotIn("synthetic-secret", json.dumps(plans))
+        self.assertNotIn("No title in report", json.dumps(plans))
+
+    def test_pr_fix_claim_scanning_is_bounded_and_deduplicated(self):
+        plans = m.triage([issue(1)])
+        m.link_fix_claims(plans, [{"number": 10, "body": "Fixes #1; fixes #1"},
+                                {"number": 11, "body": "x" * 8192 + " fixes #1"}])
+        self.assertEqual([10], plans[0]["unverified_fix_prs"])
+        with self.assertRaises(ValueError):
+            m.link_fix_claims(plans, [{"number": True, "body": "fixes #1"}])
+        with self.assertRaises(ValueError):
+            m.link_fix_claims(plans, [{"number": n + 1} for n in range(101)])
+
     def test_invalid_ids_and_inventory_limits_fail_closed(self):
         for invalid in (True, 0, -1, "1", 2**31):
             with self.assertRaises(ValueError):
@@ -161,10 +184,10 @@ class TriageTests(unittest.TestCase):
         class SnapshotAPI:
             def request(self, method, path, payload=None):
                 assert method == "GET"
-                if path.startswith("/issues?"): return []
+                if path.startswith("/issues?"): return [issue(1)]
                 if path.startswith("/pulls?"):
                     return [{"number": 2, "head": {"ref": "topic", "sha": "a" * 40},
-                             "base": {"ref": "stack"}, "draft": True}]
+                             "base": {"ref": "stack"}, "draft": True, "body": "Fixes #1"}]
                 if path.startswith("/branches?"):
                     return [{"name": n, "protected": n == "protected", "commit": {"sha": str(i) * 40}}
                             for i, n in enumerate(["main", "topic", "stack", "protected", "release/v1", "automation/excor-competitiveness", "unique", "reachable"])]
@@ -173,6 +196,7 @@ class TriageTests(unittest.TestCase):
                 if "777" in path: return {"status": "ahead", "behind_by": 0}
                 raise AssertionError(path)
         report = m.snapshot(SnapshotAPI())
+        self.assertEqual([2], report["issues"][0]["unverified_fix_prs"])
         self.assertEqual(["unique", "reachable"], [b["branch"] for b in report["branch_audit"]])
         self.assertFalse(report["branch_audit"][0]["reachable_from_main"])
         self.assertTrue(report["branch_audit"][1]["reachable_from_main"])
