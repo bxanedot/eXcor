@@ -250,6 +250,21 @@ On current eXcor main `17c6febd14d53da67700656dd8daa2030df38796`, one signed-out
 See `docs/release-gates.json`, `docs/COMPETITOR_MATRIX.md`, `docs/ERROR_HANDLING.md`, `maintainers/HANDOFF.md`, and issue #78.
 
 
+## 2026-11-15 — DASH indexed MP4 inputs
+
+The signed-out JVM range check used library main `314dd6e` and test source `352e80a` on one Windows x64 home network. At 18:21 UTC, VISIONOS exposed the following MP4 tracks for `dQw4w9WgXcQ`.
+
+| Track | Initialization bytes | Index bytes | Timescale | Duration ticks | References | First movie fragment byte |
+|---|---|---|---:|---:|---:|---:|
+| AAC, itag 139 | 0–731 | 732–1027 | 44,100 | 9,400,320 | 22 | 1,028 |
+| H.264, itag 135 | 0–740 | 741–1228 | 12,800 | 2,726,912 | 38 | 1,229 |
+
+All six range requests returned HTTP 206 with matching byte offsets and lengths. Both initialization ranges held `ftyp` and `moov`. Each index contained one `sidx`, with direct references bounded by the file length. The first reference of each pointed to a `moof` box. This verifies inputs for a DASH manifest on one video. Manifest playback and seeking still need a host player test. [DASH-IF indexed addressing](https://dashif.org/Guidelines-TimingModel/#indexed-addressing)
+
+```sh
+EXCOR_LIVE=1 EXCOR_DECODE_ID=dQw4w9WgXcQ ./gradlew :jvmTest --rerun --tests 'com.excor.LivePlaybackTest.mp4TracksExposeDashInitializationAndIndex'
+```
+
 ## 2026-11-15 — exact-main second-ID paired availability check
 
 - On main `af7697d6cfa49f65c29c2566ed53d8e0cec5ce9a`, signed-out Windows x64 adapters compared the public video `jNQXAC9IVRw` on the owner's home network. The first cold attempt was followed by two additional cold and two warm attempts per adapter.
