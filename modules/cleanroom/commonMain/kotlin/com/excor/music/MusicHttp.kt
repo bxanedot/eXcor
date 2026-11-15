@@ -5,12 +5,13 @@ import com.excor.catalog.ExcorCatalogException
 import com.excor.catalog.ExcorCatalogProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
-import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.request
+import io.ktor.client.request.preparePost
+import io.ktor.client.request.prepareRequest
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.HttpStatement
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -64,7 +65,7 @@ internal class MusicHttp(
             currentCoroutineContext()[FreshReadsKey] == null
         if (cacheable) cached(url)?.let { return it }
         val element = send(provider, url) {
-            http.get(url) {
+            http.prepareGet(url) {
                 header(HttpHeaders.Accept, "application/json")
                 bearer?.let { header(HttpHeaders.Authorization, "Bearer $it") }
                 headers.forEach { (k, v) -> header(k, v) }
@@ -76,7 +77,7 @@ internal class MusicHttp(
 
     suspend fun postForm(provider: ExcorCatalogProvider, url: String, form: Map<String, String>, headers: Map<String, String> = emptyMap()): JsonElement =
         send(provider, url) {
-            http.post(url) {
+            http.preparePost(url) {
                 header(HttpHeaders.Accept, "application/json")
                 headers.forEach { (k, v) -> header(k, v) }
                 setBody(FormDataContent(Parameters.build { form.forEach { (k, v) -> append(k, v) } }))
@@ -93,7 +94,7 @@ internal class MusicHttp(
         contentType: ContentType = ContentType.Application.Json,
     ): JsonElement =
         send(provider, url) {
-            http.request(url) {
+            http.prepareRequest(url) {
                 this.method = method
                 header(HttpHeaders.Accept, "application/json")
                 header(HttpHeaders.Authorization, "Bearer $bearer")
@@ -101,55 +102,55 @@ internal class MusicHttp(
             }
         }
 
-    private suspend fun send(provider: ExcorCatalogProvider, url: String, call: suspend () -> HttpResponse): JsonElement {
+    private suspend fun send(provider: ExcorCatalogProvider, url: String, call: suspend () -> HttpStatement): JsonElement {
         var retried = false
         // The keyless iTunes Search/Lookup API has its own published limit, separate from the Apple Music API's.
         val budget = if (runCatching { Url(url).host }.getOrNull().equals(ITUNES_HOST, ignoreCase = true)) itunesBudget else budgets.getValue(provider)
         while (true) {
             budget.take()
-            val response = try {
-                call()
+            var retryAfterMs = 0L
+            val result = try {
+                call().execute { response ->
+                    if (response.status.value == 429 && !retried) {
+                        val wait = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()
+                        if (wait == null || wait !in 0..MAX_RETRY_AFTER_S) {
+                            throw ExcorCatalogException(provider, ExcorCatalogError.RATE_LIMITED, 429)
+                        }
+                        retryAfterMs = wait * 1_000
+                        null
+                    } else {
+                        read(provider, response)
+                    }
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
+            } catch (failure: ExcorCatalogException) {
+                throw failure
             } catch (_: Exception) {
                 throw ExcorCatalogException(provider, ExcorCatalogError.NETWORK_FAILURE)
             }
-            val status = response.status.value
-            if (status == 429 && !retried) {
-                val wait = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()
-                response.bodyAsChannel().cancel()
-                if (wait != null && wait in 0..MAX_RETRY_AFTER_S) {
-                    retried = true
-                    delay(wait * 1_000)
-                    continue
-                }
-                throw ExcorCatalogException(provider, ExcorCatalogError.RATE_LIMITED, status)
-            }
-            return read(provider, response)
+            if (result != null) return result
+            retried = true
+            delay(retryAfterMs)
         }
     }
 
     private suspend fun read(provider: ExcorCatalogProvider, response: HttpResponse): JsonElement {
         val status = response.status.value
         if (status == 204) {
-            response.bodyAsChannel().cancel()
             return JsonObject(emptyMap())
         }
         if (!response.status.isSuccess()) {
-            response.bodyAsChannel().cancel()
             throw ExcorCatalogException(provider, errorOf(status), status)
         }
         if (response.headers[HttpHeaders.ContentLength]?.toLongOrNull()?.let { it > MAX_BYTES } == true) {
-            response.bodyAsChannel().cancel()
             throw ExcorCatalogException(provider, ExcorCatalogError.RESPONSE_TOO_LARGE)
         }
         val type = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()?.lowercase()
         if (type == null && response.headers[HttpHeaders.ContentLength] == "0") {
-            response.bodyAsChannel().cancel()
             return JsonObject(emptyMap())
         }
         if (type != "application/json" && type != "text/javascript") {
-            response.bodyAsChannel().cancel()
             throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
         }
         val channel = response.bodyAsChannel()

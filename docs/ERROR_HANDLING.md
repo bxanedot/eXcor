@@ -21,6 +21,10 @@ Metadata reads are retried before an exception is thrown:
 
 Stream extraction (`extract`) is separate: a failed player request moves on to the next client instead of throwing.
 
+## Response size limits
+
+The Kotlin library reads player responses, watch pages, scripts, HLS manifests, and catalog responses through Ktor's streaming API. Declared lengths above the relevant limit are rejected from the headers. Bodies without a length are read only until they cross the limit. Direct media probes request a short range and check for a byte before closing the response. The transport can buffer some bytes ahead of the application read. [Ktor response documentation](https://ktor.io/docs/client-responses.html#streaming)
+
 ## What messages contain
 
 `ExcorRequestException.message` is the failure kind and status only, such as `YouTube request failed: SERVER_ERROR (HTTP 503)`. WARN logs name the InnerTube endpoint and status, such as `InnerTube browse answered HTTP 403`. Neither ever includes URLs with query strings, headers, cookies, visitor data or response bodies.
