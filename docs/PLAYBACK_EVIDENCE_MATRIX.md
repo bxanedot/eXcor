@@ -243,7 +243,7 @@ On current eXcor main `17c6febd14d53da67700656dd8daa2030df38796`, one signed-out
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
 - **G5** cannot be called broadly reliable until audio and video full-decode + seek checks work for multiple eligible videos and environments. Service-side access refusals must be tracked separately.
-- **G8** includes one owner-run live extraction that recovered from a locally injected synthetic 503; no upstream YouTube fault or live cancellation was tested, so reliability remains partial.
+- **G8** includes one owner-run extraction that recovered from a locally injected 503 and two live JVM metadata requests cancelled after the response headers arrived. Upstream faults and cancellation during media playback remain unverified.
 - **G6 SABR/UMP remains BLOCKED** until independently verified implementation and seek/decoding tests exist; this matrix cannot close it.
 - **G10 remote publishing remains owner-authorized only**, regardless of these results.
 
@@ -275,3 +275,13 @@ EXCOR_LIVE=1 EXCOR_DECODE_ID=dQw4w9WgXcQ ./gradlew :jvmTest --rerun --tests 'com
 ## 2026-11-15 — current-main paired direct-audio decode refresh
 
 At exact main `1f141412aeb55ee5972cffbe11a1d077d0274aec`, three signed-out cold samples per adapter used `dQw4w9WgXcQ` on one Windows home network. eXcor 0.2.0 and InnerTubeX 0.11.7 both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in 3/3 attempts. First-media p50/p95 was 1,561/1,617 ms for eXcor versus 2,924/3,049 ms for InnerTubeX; transfer-plus-decode p50/p95 was 726/792 ms versus 1,530/1,551 ms. A separate cold attempt six minutes earlier measured eXcor transfer plus decode at 16,951 ms; the reason for that variation is unknown. This is one sample ID/network, not a broad performance ranking. HTTP ranges are not player seeks, and the direct-audio adapters disable SABR. See the [three-sample report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat-report.json), and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.jsonl). The earlier separate [single-sample report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-refresh.md) records the slower result. G4/G5/G11 remain partial, G6 remains blocked, and issue #78 remains open.
+
+## 2026-11-15 — live JVM player request cancellation
+
+On signed-out Windows x64 and one home network, two runs at `6312e7c301d34bfede84e6fadf4adbcd74248040` looked up metadata for `dQw4w9WgXcQ`. At 18:00:08 and 18:00:11 UTC, YouTube returned HTTP 200 headers in both trials. The test paused response delivery in OkHttp after the headers, cancelled the caller, and observed both the OkHttp cancellation event and the coroutine cancellation. Each trial sent one player POST.
+
+```sh
+EXCOR_LIVE=1 EXCOR_DECODE_ID=dQw4w9WgXcQ ./gradlew :jvmTest --rerun --tests 'com.excor.LivePlaybackTest.cancellingMetadataLookupCancelsLivePlayerCall'
+```
+
+G8 stays partial. The result covers host initiated cancellation of a metadata request. Upstream failure recovery, cancellation during a media read, and other platforms require separate evidence.
