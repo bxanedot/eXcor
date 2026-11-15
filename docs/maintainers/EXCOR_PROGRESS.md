@@ -14,18 +14,25 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-15 11:58 UTC
+## Latest verified checkpoint — 2026-11-15 12:55 UTC
+
+- PR #202 is merged as `a021c96fb307e9a4c4051db55428463636bd8f30`. Its exact-main second-video comparison records eXcor `ACCESS_DENIED` in 5/5 attempts while InnerTubeX 0.11.7 fully decoded audio and passed both HTTP byte-range probes in 5/5 on one signed-out Windows home network. This is an access differential, not a shared playback pass or a diagnosis of the refusal.
+- Post-merge main CI [43713814974](https://github.com/bxanedot/eXcor/actions/runs/43713814974) passed all nine jobs, including macOS, Android 26/36, preview and Maven publication. CodeQL [43713814848](https://github.com/bxanedot/eXcor/actions/runs/43713814848) passed all five analyses.
+- The active `automation/excor-competitiveness` branch reports 53/100 for this exact main SHA; Release remains NO-GO. GitHub reports zero open secret-scanning alerts; seven historical Google API key alerts are resolved as `wont_fix`. Secret scanning and push protection are enabled, validity checks are disabled, and no secret values or provider validations were inspected. G12 remains partial.
+- G4/G5/G11 remain partial, G6 remains blocked, issue #78 remains open, and no release gate is promoted from this evidence.
+
+## Next
+
+Continue issue #78 only with eligible, authorized cases; another network, player-controlled video seeking and eligible live cipher playback remain outstanding. Do not retry access refusals or infer a cipher failure from service blocks. If no new eligible sample is available, work on the remaining clean-room provenance and release-security review. Use Ruflo only through MCP from an isolated working directory, and do not run `init` in this checkout.
+
+## Previous verified checkpoint — 2026-11-15 11:58 UTC
 
 - PR #201 merged as `af7697d6cfa49f65c29c2566ed53d8e0cec5ce9a`; GitHub deleted the merged topic branch and `git fetch --prune` removed its stale ref. The active `automation/excor-competitiveness` score branch remains.
 - The exact-main score refresh [43710492664](https://github.com/bxanedot/eXcor/actions/runs/43710492664) succeeded at 53/100, Release NO-GO. Post-merge CI [43710492630](https://github.com/bxanedot/eXcor/actions/runs/43710492630) passed Linux, Windows, Android 26/36, preview and both Maven publications plus artifact comparison; macOS was queued. CodeQL [43710492578](https://github.com/bxanedot/eXcor/actions/runs/43710492578) passed Actions, Java/Kotlin, JavaScript/TypeScript and Python analyses; Swift was queued.
 - A new exact-main signed-out paired audio check on `jNQXAC9IVRw` ran one initial cold sample plus two cold and two warm repeats per adapter on one Windows home network. eXcor 0.2.0 was `ACCESS_DENIED` before media in all five attempts; InnerTubeX 0.11.7 fully decoded audio and passed forward/backward HTTP byte-range probes in all five. This is one-ID access evidence; it does not establish the refusal's cause or a shared playback pass.
 - Sanitized reports and samples are linked in the README, feature/competitor matrices and owner-run matrix. Keep G4/G5/G11 partial, G6 blocked, issue #78 open and Release NO-GO. No live access refusal was retried with another profile or bypassed.
 
-## Next
-
-Continue issue #78 with eligible public streams on another network and across multiple IDs; capture real video-seek and live cipher evidence when accessible. Keep access refusals and unsupported or unclassified outcomes distinct; do not promote release gates from HTTP range probes. For coordination, use Ruflo's MCP-only path and do not run its project-scaffolding `init`.
-
-## Previous verified checkpoint — 2026-11-15 06:14 UTC
+## Earlier verified checkpoint — 2026-11-15 06:14 UTC
 
 - Main is now `dbbe8c14463eca40adc44b9501b51f4e669c932b` after PR #192; post-merge main CI passed. The readiness score remains 53/100, NO-GO, for this exact main SHA; it measures engineering readiness, not playback parity.
 - Two same-metadata video player-seek attempts at main `360c38c` on signed-out `dQw4w9WgXcQ` used FFplay 9.0.2, cold samples and one Windows home network. eXcor received Right then Left in both runs; each reported five HTTP 206 ranges and relayed 786,432 bytes before the 30-second limit. InnerTubeX 0.11.7 returned `stream_resolution_failed` before FFplay opened in both attempts. They lack per-key request timing and decoded-frame measurement. See the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-360-video-player-seek.md).

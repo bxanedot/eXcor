@@ -24,5 +24,6 @@ Read [architecture](docs/ARCHITECTURE.md) before changing module boundaries and 
 - Do not publish artifacts or announce a release without owner authorization.
 - After confirming a PR is merged, delete its local and remote topic branch and prune stale refs; retain active automation branches and branches with unmerged work.
 - Ruflo is optional developer tooling, not an SDK dependency. If used, connect through its MCP-only mode; do not run `init` in this checkout because it scaffolds extra project agent and hook directories.
+- In Ruflo 3.77.1, `metaharness_threat_model` wrote `.claude-flow/policy` under the server's current directory while scanning a separate snapshot; launch that MCP server from a disposable directory outside this checkout.
 
 Start with the root [README](README.md) for the current capability and comparison snapshot.
