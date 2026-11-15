@@ -73,6 +73,20 @@ class ComparisonAdapterTest {
     }
 
     @Test
+    fun decoderSeekRequiresFramesFromThreeOrderedWindows() {
+        fun frames(vararg times: Double) = times.joinToString("\n") { "best_effort_timestamp_time=$it" }
+        val options = parseOptions(validArgs() + "--decoder-seek-video")
+        assertTrue(options.decoderSeekVideo)
+        assertFalse(options.playerSeekVideo)
+        assertFalse(runCatching { parseOptions(validArgs() + listOf("--decoder-seek-video", "--range-probes")) }.isSuccess)
+        assertEquals(decodedSeekStarts(frames(0.0, 0.1, 24.6, 24.7, 5.24)), listOf(0.0, 24.6, 5.24))
+        assertEquals(decodedSeekStarts(frames(0.0, 23.0, 5.24)), null)
+        assertEquals(decodedSeekStarts(frames(0.0, 8.0, 28.0)), null)
+        assertEquals(decodedSeekStarts(frames(0.0, 28.0)), null)
+        assertEquals(decodedSeekStarts(frames(0.0, 28.0, 8.0) + "\ndecoder error"), null)
+    }
+
+    @Test
     fun sharedPlayerPassesOnlyTheLoopbackAddressAndRejectsUntrustedHosts() {
         val proxy = LoopbackMediaProxy(
             PlaybackMediaSource(
