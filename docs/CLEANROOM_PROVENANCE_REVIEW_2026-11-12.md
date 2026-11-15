@@ -79,3 +79,9 @@ Exact-main CI run [43441086314](https://github.com/bxanedot/eXcor/actions/runs/4
 ## 2026-11-14 follow-up
 
 PR #168 adds an exact-head macOS CI check that inspects the release XCFramework's device arm64, simulator arm64, and simulator x86_64 binaries separately for QuickJS's `JS_Eval` symbol, and verifies `LICENSE` and `NOTICE` at the XCFramework root. The required CI run must pass before merge. This verifies symbol presence and notice files in generated CI output; it does not inspect every native object, prove c-vector linkage, or inspect a remotely published artifact. Android AAR contents, archived fixture rights, strict implementation isolation, and the full release-side audit remain open. No remote publication or release was performed.
+
+## CI evidence for archive contents
+
+In the macOS CI job, **Verify XCFramework slices and inventory native objects** checks for the arm64 device archive and the universal simulator archive with arm64 and x86_64. For each slice it checks the defined QuickJS symbol and logs the SHA-256 and the archive member names. **Verify XCFramework redistribution notices** compares the three bundled notices byte for byte with the checkout.
+
+Use the log from the commit under review to inspect generated archive contents. A full release audit still requires attribution of the linked objects and verification against the artifacts distributed to users.

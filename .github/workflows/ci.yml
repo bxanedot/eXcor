@@ -273,23 +273,43 @@ jobs:
           :assembleEXcorReleaseXCFramework
       - name: Verify XCFramework redistribution notices
         run: |
-          test -f build/XCFrameworks/release/eXcor.xcframework/LICENSE
-          test -f build/XCFrameworks/release/eXcor.xcframework/NOTICE
-      - name: Verify XCFramework native runtime linkage
+          framework=build/XCFrameworks/release/eXcor.xcframework
+          cmp LICENSE "$framework/LICENSE"
+          cmp NOTICE "$framework/NOTICE"
+          cmp docs/licenses/Apache-2.0.txt "$framework/Apache-2.0.txt"
+      - name: Verify XCFramework slices and inventory native objects
         shell: bash
         run: |
           set -euo pipefail
           framework=build/XCFrameworks/release/eXcor.xcframework
-          count=0
-          while IFS= read -r binary; do
-            file "$binary"
-            for arch in $(lipo -archs "$binary"); do
-              printf 'Checking JS_Eval in %s (%s)\n' "$binary" "$arch"
-              xcrun nm -arch "$arch" -gU "$binary" | grep -E '(^|[[:space:]])_?JS_Eval$' > /dev/null
-              count=$((count + 1))
+          inspect_slices() {
+            local library="$1"
+            shift
+            local binary="$framework/$library/eXcor.framework/eXcor"
+            local archs arch archive members hash
+            local -a actual
+            archs=$(xcrun lipo -archs "$binary")
+            read -r -a actual <<< "$archs"
+            test "${#actual[@]}" -eq "$#"
+            xcrun lipo "$binary" -verify_arch "$@"
+            shasum -a 256 "$binary"
+            for arch in "$@"; do
+              archive="$binary"
+              if [ "$#" -gt 1 ]; then
+                archive="$RUNNER_TEMP/excor-$library-$arch.a"
+                xcrun lipo "$binary" -thin "$arch" -output "$archive"
+              fi
+              printf 'Checking JS_Eval and listing archive members for %s (%s)\n' "$library" "$arch"
+              xcrun nm -arch "$arch" -gU "$archive" | grep -E '(^|[[:space:]])_?JS_Eval$' > /dev/null
+              hash=$(shasum -a 256 < "$archive")
+              printf 'Slice SHA-256 %s\n' "${hash%% *}"
+              members=$(xcrun ar -t "$archive")
+              test -n "$members"
+              printf '%s\n' "$members"
             done
-          done < <(find "$framework" -path '*/eXcor.framework/eXcor' -type f)
-          test "$count" -ge 3
+          }
+          inspect_slices ios-arm64 arm64
+          inspect_slices ios-arm64_x86_64-simulator arm64 x86_64
       - name: Swift check of the published Kotlin API
         run: >
           xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios15.0-simulator
