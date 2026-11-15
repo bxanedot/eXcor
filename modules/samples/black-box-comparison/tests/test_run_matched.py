@@ -75,6 +75,20 @@ class MatchedRunnerSampleTest(unittest.TestCase):
         )
         self.assertEqual(result["outcome"], "PASS")
 
+    def test_accepts_the_direct_video_lane_when_requested(self):
+        value = sample()
+        value["lane"] = "direct_video"
+        result = runner_module._parse_adapter_sample(
+            json.dumps(value),
+            adapter="excor",
+            video_id="dQw4w9WgXcQ",
+            phase="cold",
+            sample_index=1,
+            expected_comparison=self.expected,
+            expected_lane="direct_video",
+        )
+        self.assertEqual(result["lane"], "direct_video")
+
     def test_rejects_samples_with_a_different_comparison_context(self):
         value = sample()
         value["comparison"]["runDateUtc"] = "2026-11-12T12:00:01Z"
@@ -114,11 +128,57 @@ class MatchedRunnerSampleTest(unittest.TestCase):
                 "--output", str(output),
                 "--range-probes",
             ]
-            with self.assertRaises(runner_module.RunnerError):
+            try:
                 runner_module._parse_options(base)
+            except runner_module.RunnerError:
+                return
+            except SystemExit as error:
+                self.fail(f"runner rejected conflicting modes through argparse with exit code {error.code}")
+            self.fail("runner accepted both full-decode modes")
             options = runner_module._parse_options(base + ["--adapters", "excor", "innertubex"])
             self.assertTrue(options.range_probes)
             self.assertEqual(set(options.adapters), {"excor", "innertubex"})
+
+    def test_full_video_decode_requires_the_matched_jvm_pair(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "results.jsonl"
+            base = [
+                "--video-id", "dQw4w9WgXcQ",
+                "--comparison-id", "run-home-01",
+                "--network-category", "home",
+                "--content-category", "music_video",
+                "--main-commit", "a" * 40,
+                "--output", str(output),
+                "--full-video-decode",
+            ]
+            try:
+                options = runner_module._parse_options(base + ["--adapters", "excor", "innertubex"])
+            except SystemExit as error:
+                self.fail(f"runner rejected full video decode with exit code {error.code}")
+            self.assertTrue(options.full_video_decode)
+            self.assertFalse(options.full_decode)
+            with self.assertRaises(runner_module.RunnerError):
+                runner_module._parse_options(base + ["--adapters", "excor"])
+
+    def test_audio_and_video_full_decode_modes_are_mutually_exclusive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = [
+                "--video-id", "dQw4w9WgXcQ",
+                "--comparison-id", "run-home-01",
+                "--network-category", "home",
+                "--content-category", "music_video",
+                "--main-commit", "a" * 40,
+                "--output", str(Path(directory) / "results.jsonl"),
+                "--full-decode", "--full-video-decode",
+                "--adapters", "excor", "innertubex",
+            ]
+            try:
+                runner_module._parse_options(base)
+            except runner_module.RunnerError:
+                return
+            except SystemExit as error:
+                self.fail(f"runner rejected conflicting modes through argparse with exit code {error.code}")
+            self.fail("runner accepted both full-decode modes")
 
 
 if __name__ == "__main__":

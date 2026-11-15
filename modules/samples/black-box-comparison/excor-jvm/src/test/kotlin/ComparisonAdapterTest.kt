@@ -35,6 +35,30 @@ class ComparisonAdapterTest {
     }
 
     @Test
+    fun fullVideoDecodeUsesTheDirectVideoReportLane() {
+        val options = runCatching {
+            parseOptions(validArgs() + listOf("--full-video-decode", "--decoder-version", "ffmpeg-7.1"))
+        }
+        assertTrue(options.isSuccess, "full-video decoding should be accepted by the paired adapter")
+        val json = ComparisonSample(options.getOrThrow(), "PASS", null).toJson()
+        assertTrue(json.contains("\"lane\":\"direct_video\""))
+        assertTrue(json.contains("\"decoderVersion\":\"ffmpeg-7.1\""))
+        assertEquals(FfmpegMediaDecoder.arguments(true).dropWhile { it != "-map" }.take(2), listOf("-map", "0:v:0"))
+        assertEquals(FfmpegMediaDecoder.arguments(false).dropWhile { it != "-map" }.take(2), listOf("-map", "0:a:0"))
+        assertTrue(parseOptions(validArgs() + listOf("--range-probes", "--full-video-decode")).rangeProbes)
+    }
+
+    @Test
+    fun fullVideoDecodeCannotOverlapFullAudioDecodeOrPlayerSeek() {
+        val videoDecode = validArgs() + "--full-video-decode"
+        val options = runCatching { parseOptions(videoDecode) }
+        assertTrue(options.isSuccess, "full-video decoding should be accepted by the adapter")
+        assertFalse(runCatching { parseOptions(videoDecode + listOf("--full-decode")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(videoDecode + listOf("--player-seek-video")) }.isSuccess)
+        assertFalse(runCatching { parseOptions(videoDecode + listOf("--player-seek")) }.isSuccess)
+    }
+
+    @Test
     fun acceptsExplicitPlayerSeekMode() {
         val parsed = parseOptions(validArgs() + "--player-seek")
         assertTrue(parsed.playerSeek)
