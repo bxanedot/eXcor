@@ -213,6 +213,10 @@ On signed-out Windows x64 and `dQw4w9WgXcQ`, `LivePlaybackTest.hlsManifestDecode
 
 At exact main `360c38cd77e344a801fc0fcf1a292bfcca9eea56`, two signed-out Windows x64 attempts used `dQw4w9WgXcQ`, FFplay 9.0.2 and the 30-second limit. In both attempts the eXcor FFplay window received Right then Left and the adapter reported five HTTP 206 reads, relaying 786,432 bytes before `time_limit`. InnerTubeX 0.11.7 returned `stream_resolution_failed` before FFplay opened in both matched attempts. No per-key range timing or decoded-frame result was captured, and both attempts used one ID/network. This repeated result is not a demonstrated paired seek pass or broad parity evidence. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-360-video-player-seek.md). G4/G5/G11 remain partial.
 
+## 2026-11-15 — InnerTubeX video-seek classification follow-up
+
+One signed-out InnerTubeX 0.11.7 attempt on `dQw4w9WgXcQ`, using the adapter diagnostic fix and eXcor main metadata `dbbe8c1`, returned `UNSUPPORTED/UNSUPPORTED_TRANSPORT` from the existing `NO_PLAYABLE_STREAM` classifier before FFplay or a media request. The earlier `stream_resolution_failed` attempts remain unclassified. This one direct-video extraction result is not a player-seek measurement or general incompatibility evidence. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-dbbe8c-innertubex-video-seek-classification.md). G4/G5/G11 remain partial.
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
