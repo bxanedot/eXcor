@@ -6,6 +6,7 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
+import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
@@ -578,32 +579,114 @@ class LivePlaybackTest {
         runBlocking {
             val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
             val list = assertNotNull(liveRequest(videoId) { excor.formats(videoId) }, "No formats returned for $videoId")
-            val indexed = list.formats.filter { it.initRange != null && it.indexRange != null }
-            val audio = assertNotNull(indexed.firstOrNull {
-                it.hasAudio && !it.hasVideo && it.mimeType.startsWith("audio/mp4;")
-            }, "No indexed audio MP4")
-            val video = assertNotNull(indexed.filter {
-                it.hasVideo && !it.hasAudio && it.mimeType.startsWith("video/mp4;") &&
-                    it.videoCodec == ExcorVideoCodec.H264 && (it.height ?: 0) in 1..480
-            }.maxByOrNull { it.height ?: 0 }, "No indexed H.264 MP4 at or below 480p")
+            indexedMp4Tracks(list, http.newBuilder().followRedirects(false).followSslRedirects(false).build())
+        }
+    }
 
-            val media = http.newBuilder().followRedirects(false).followSslRedirects(false).build()
-            for (format in listOf(audio, video)) {
-                val init = assertNotNull(format.initRange)
-                val index = assertNotNull(format.indexRange)
-                assertEquals(0L, init.first)
-                assertTrue(init.last < index.first, "MP4 initialization and index ranges overlap")
-                val initBoxes = mp4BoxTypes(readMp4Range(media, format, init, list.headers))
-                assertTrue(initBoxes.containsAll(listOf("ftyp", "moov")), "MP4 initialization lacks ftyp or moov")
-                val bytes = readMp4Range(media, format, index, list.headers)
-                val total = assertNotNull(format.contentLength, "MP4 format has no total length")
-                val summary = checkMp4Index(bytes, index.last + 1, total)
-                val first = summary.firstMediaByte
-                val firstHeader = readMp4Range(media, format, first..first + 7, list.headers)
-                assertEquals("moof", firstHeader.decodeToString(4, 8), "First SIDX reference did not lead to a movie fragment")
-                println("MP4 itag=${format.itag} init=$init sidx=$index timescale=${summary.timescale} " +
-                    "durationTicks=${summary.durationTicks} references=${summary.references} firstMoof=$first")
+    @Test
+    fun dashManifestDecodesLiveIndexedMp4Tracks() {
+        if (System.getenv("EXCOR_LIVE") != "1" || System.getenv("EXCOR_DASH_DECODE") != "1") {
+            throw SkipException("Set EXCOR_LIVE=1 and EXCOR_DASH_DECODE=1 to enable DASH media checks")
+        }
+        val (excor, http) = newExcor()
+        val media = http.newBuilder().followRedirects(false).followSslRedirects(false).build()
+        runBlocking {
+            val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
+            val list = assertNotNull(liveRequest(videoId) { excor.formats(videoId) }, "No formats returned for $videoId")
+            val tracks = indexedMp4Tracks(list, media)
+            val dir = kotlin.io.path.createTempDirectory("excor-dash-test-").toFile()
+            try {
+                tracks.forEachIndexed { i, track ->
+                    download(media, track.format.url, list.headers, File(dir, "track-$i.mp4"),
+                        track.format.mimeType, track.format.contentLength)
+                }
+                val manifest = File(dir, "sample.mpd")
+                manifest.writeText(localDashManifest(tracks))
+                val progress = runDashTool(
+                    "ffmpeg", "-nostdin", "-v", "error", "-xerror", "-protocol_whitelist", "file",
+                    "-progress", "pipe:1", "-stats_period", "5", "-i", manifest.path,
+                    "-map", "0:v:0", "-map", "0:a:0", "-f", "null", "-",
+                )
+                val decodedUs = assertNotNull(progress.lineSequence().lastOrNull { it.startsWith("out_time_us=") }
+                    ?.substringAfter('=')?.toLongOrNull())
+                val declaredUs = tracks.maxOf { it.index.endTicks * 1_000_000 / it.index.timescale }
+                assertTrue(kotlin.math.abs(decodedUs - declaredUs) <= 1_000_000, "DASH decode did not cover its declared duration")
+                assertTrue(progress.lineSequence().last { it.isNotBlank() } == "progress=end")
+                println("DASH manifest decoded audio and video: outputUs=$decodedUs declaredUs=$declaredUs")
+            } finally {
+                dir.listFiles()?.forEach { it.delete() }
+                dir.delete()
             }
+        }
+    }
+
+    private fun indexedMp4Tracks(list: ExcorFormatList, media: OkHttpClient): List<IndexedTrack> {
+        val indexed = list.formats.filter { it.initRange != null && it.indexRange != null }
+        val audio = assertNotNull(indexed.firstOrNull {
+            it.hasAudio && !it.hasVideo && it.mimeType.startsWith("audio/mp4;")
+        }, "No indexed audio MP4")
+        val video = assertNotNull(indexed.filter {
+            it.hasVideo && !it.hasAudio && it.mimeType.startsWith("video/mp4;") &&
+                it.videoCodec == ExcorVideoCodec.H264 && (it.height ?: 0) in 1..480
+        }.maxByOrNull { it.height ?: 0 }, "No indexed H.264 MP4 at or below 480p")
+
+        return listOf(audio, video).map { format ->
+            val init = assertNotNull(format.initRange)
+            val index = assertNotNull(format.indexRange)
+            assertEquals(0L, init.first)
+            assertTrue(init.last < index.first, "MP4 initialization and index ranges overlap")
+            val initBoxes = mp4BoxTypes(readMp4Range(media, format, init, list.headers))
+            assertTrue(initBoxes.containsAll(listOf("ftyp", "moov")), "MP4 initialization lacks ftyp or moov")
+            val bytes = readMp4Range(media, format, index, list.headers)
+            val total = assertNotNull(format.contentLength, "MP4 format has no total length")
+            val summary = checkMp4Index(bytes, index.last + 1, total)
+            val first = summary.firstMediaByte
+            val firstHeader = readMp4Range(media, format, first..first + 7, list.headers)
+            assertEquals("moof", firstHeader.decodeToString(4, 8), "First SIDX reference did not lead to a movie fragment")
+            println("MP4 itag=${format.itag} init=$init sidx=$index timescale=${summary.timescale} " +
+                "durationTicks=${summary.durationTicks} references=${summary.segments.size} firstMoof=$first")
+            IndexedTrack(format, init, summary)
+        }
+    }
+
+    private fun localDashManifest(tracks: List<IndexedTrack>): String = buildString {
+        val durationMs = tracks.maxOf { (it.index.endTicks * 1_000 / it.index.timescale) + 1 }
+        val duration = "PT${durationMs / 1_000}.${(durationMs % 1_000).toString().padStart(3, '0')}S"
+        appendLine("""<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" profiles="urn:mpeg:dash:profile:full:2011" type="static" minBufferTime="PT1S" mediaPresentationDuration="$duration">""")
+        appendLine("""<Period start="PT0S">""")
+        tracks.forEachIndexed { i, track ->
+            val type = if (track.format.hasVideo) "video" else "audio"
+            val codecs = track.format.mimeType.substringAfter("codecs=", "").trim().trim('"')
+            assertTrue(codecs.matches(Regex("[A-Za-z0-9.]+")), "Invalid codec string for DASH representation")
+            appendLine("""<AdaptationSet contentType="$type" mimeType="$type/mp4">""")
+            appendLine("""<SegmentList timescale="${track.index.timescale}"><SegmentTimeline>""")
+            track.index.segments.forEachIndexed { j, segment ->
+                val start = if (j == 0) """ t="${track.index.startTicks}"""" else ""
+                appendLine("""<S$start d="${segment.durationTicks}"/>""")
+            }
+            appendLine("</SegmentTimeline></SegmentList>")
+            appendLine("""<Representation id="track-$i" bandwidth="${track.format.kbps * 1000L}" codecs="$codecs"><SegmentList>""")
+            appendLine("""<Initialization sourceURL="track-$i.mp4" range="${track.init.first}-${track.init.last}"/>""")
+            for ((bytes) in track.index.segments) {
+                appendLine("""<SegmentURL media="track-$i.mp4" mediaRange="${bytes.first}-${bytes.last}"/>""")
+            }
+            appendLine("</SegmentList></Representation></AdaptationSet>")
+        }
+        appendLine("</Period></MPD>")
+    }
+
+    private fun runDashTool(vararg command: String): String {
+        val process = ProcessBuilder(*command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        val output = FutureTask { process.inputStream.use { it.readNBytes(32_769) } }
+        Thread(output, "excor-dash-test-output").apply { isDaemon = true; start() }
+        try {
+            assertTrue(process.waitFor(45, TimeUnit.SECONDS), "${command.first()} timed out verifying DASH media")
+            assertEquals(0, process.exitValue(), "${command.first()} failed to process the DASH manifest")
+            val bytes = output.get(2, TimeUnit.SECONDS)
+            assertTrue(bytes.size <= 32_768, "DASH diagnostic output exceeded its limit")
+            return bytes.decodeToString()
+        } finally {
+            if (process.isAlive) process.destroyForcibly().waitFor(5, TimeUnit.SECONDS)
         }
     }
 
@@ -639,7 +722,14 @@ class LivePlaybackTest {
         }
     }
 
-    private data class IndexSummary(val timescale: Long, val durationTicks: Long, val references: Int, val firstMediaByte: Long)
+    private data class IndexedTrack(val format: ExcorMediaFormat, val init: LongRange, val index: IndexSummary)
+    private data class IndexedSegment(val bytes: LongRange, val durationTicks: Long)
+    private data class IndexSummary(
+        val timescale: Long, val startTicks: Long, val durationTicks: Long, val segments: List<IndexedSegment>,
+    ) {
+        val firstMediaByte get() = segments.first().bytes.first
+        val endTicks get() = startTicks + durationTicks
+    }
 
     // DASH-IF indexed addressing uses one SIDX with direct references to media ranges.
     private fun checkMp4Index(bytes: ByteArray, endExclusive: Long, contentLength: Long): IndexSummary {
@@ -653,13 +743,11 @@ class LivePlaybackTest {
         input.int // reference ID
         val timescale = Integer.toUnsignedLong(input.int)
         assertTrue(timescale > 0, "Invalid SIDX timescale")
-        val firstOffset = if (version == 0) {
-            input.int // earliest presentation time
-            Integer.toUnsignedLong(input.int)
+        val (start, firstOffset) = if (version == 0) {
+            Integer.toUnsignedLong(input.int) to Integer.toUnsignedLong(input.int)
         } else {
             assertTrue(input.remaining() >= 20, "Truncated version 1 SIDX")
-            input.long // earliest presentation time
-            input.long
+            input.long to input.long
         }
         assertTrue(endExclusive in 1 until contentLength && firstOffset in 0 until contentLength - endExclusive)
         val firstMediaByte = endExclusive + firstOffset
@@ -668,16 +756,19 @@ class LivePlaybackTest {
         assertTrue(references > 0 && input.remaining() == references * 12, "Invalid SIDX reference table")
         var position = firstMediaByte
         var duration = 0L
-        repeat(references) {
+        val segments = List(references) {
             val size = input.int
             assertTrue(size >= 8 && size.toLong() <= contentLength - position, "SIDX reference is indirect or outside the track")
             val durationTicks = Integer.toUnsignedLong(input.int)
             assertTrue(durationTicks > 0, "SIDX reference has no duration")
             input.int // stream access point flags
+            val segment = IndexedSegment(position until position + size, durationTicks)
             position += size
             duration += durationTicks
+            segment
         }
-        return IndexSummary(timescale, duration, references, firstMediaByte)
+        assertTrue(start in 0..Long.MAX_VALUE / 1_000_000 - duration, "Unsupported SIDX presentation time")
+        return IndexSummary(timescale, start, duration, segments)
     }
 
     private class LiveHost(override val httpClient: OkHttpClient) : ExcorHost {
