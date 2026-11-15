@@ -140,6 +140,17 @@ class TriageTests(unittest.TestCase):
             with self.assertRaises(ValueError): api.request("GET", "/issues")
             with self.assertRaises(ValueError): api.request("DELETE", "/git/refs/heads/main")
 
+    def test_request_rejects_cross_repository_and_unexpected_paths_before_connect(self):
+        with self.assertRaises(ValueError):
+            m.GitHub("other/repository")
+        api = m.GitHub("bxanedot/eXcor")
+        with patch.object(m.http.client, "HTTPSConnection") as connect:
+            for path in ("/../other", "//attacker.invalid", "/issues/1/comments", "/issues/1?redirect=evil",
+                         "/compare/../../evil...main", "/compare/" + "a" * 40 + "...other-branch"):
+                with self.assertRaises(ValueError):
+                    api.request("GET", path)
+            connect.assert_not_called()
+
     def test_branch_audit_preserves_protected_active_unique_and_score_refs(self):
         class SnapshotAPI:
             def request(self, method, path, payload=None):

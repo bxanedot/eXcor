@@ -88,13 +88,25 @@ def triage(issues):
 
 class GitHub:
     def __init__(self, repo, token=""):
-        if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_.-]{1,100}", repo) or repo.split("/")[1] in {".", ".."}:
-            raise ValueError("Invalid repository")
-        self.prefix, self.token, self.calls = f"/repos/{repo}", token, 0
+        if repo != "bxanedot/eXcor":
+            raise ValueError("Repository is not allowed by maintenance policy")
+        self.token, self.calls = token, 0
 
     def request(self, method, path, payload=None):
         if self.calls >= 80 or method not in {"GET", "POST"} or (path != "" and not path.startswith("/")):
             raise ValueError("API request limit or method rejected")
+        target = "/repos/bxanedot/eXcor" + path
+        # Validate the final origin-form target at the network boundary, not only its callers.
+        if not re.fullmatch(
+            r"/repos/bxanedot/eXcor(?:"
+            r"/(?:issues|pulls)\?state=open&per_page=100|"
+            r"/(?:branches|labels)\?per_page=100|/labels|"
+            r"/issues/[1-9][0-9]{0,9}(?:/labels)?|"
+            r"/compare/[0-9a-f]{40}\.\.\.main)?", target
+        ):
+            raise ValueError("API target is not allowed by maintenance policy")
+        if method == "POST" and path != "/labels" and not re.fullmatch(r"/issues/[1-9][0-9]{0,9}/labels", path):
+            raise ValueError("API write target is not allowed")
         self.calls += 1
         headers = {"Accept": "application/vnd.github+json", "User-Agent": "excor-maintenance",
                    "X-GitHub-Api-Version": "2022-11-28"}
@@ -112,7 +124,7 @@ class GitHub:
         else:
             connection = http.client.HTTPSConnection("api.github.com", timeout=15)
         try:
-            connection.request(method, self.prefix + path, body=data, headers=headers)
+            connection.request(method, target, body=data, headers=headers)
             response = connection.getresponse()
             if not 200 <= response.status < 300:
                 raise ValueError(f"GitHub API HTTP {response.status}")
@@ -166,6 +178,8 @@ def snapshot(api):
     branches = api.request("GET", "/branches?per_page=100")
     repo = api.request("GET", "")
     main = repo["default_branch"]
+    if main != "main":
+        raise ValueError("Default branch requires maintenance policy review")
     excluded = {main, "automation/excor-competitiveness"}
     excluded |= {p["head"]["ref"] for p in pulls} | {p["base"]["ref"] for p in pulls}
     branch_plan = []
