@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
@@ -568,6 +569,115 @@ class LivePlaybackTest {
                 "Unexpected live playback matrix outcome: ${outcomes.joinToString(", ")}",
             )
         }
+    }
+
+    @Test
+    fun mp4TracksExposeDashInitializationAndIndex() {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
+        val (excor, http) = newExcor()
+        runBlocking {
+            val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
+            val list = assertNotNull(liveRequest(videoId) { excor.formats(videoId) }, "No formats returned for $videoId")
+            val indexed = list.formats.filter { it.initRange != null && it.indexRange != null }
+            val audio = assertNotNull(indexed.firstOrNull {
+                it.hasAudio && !it.hasVideo && it.mimeType.startsWith("audio/mp4;")
+            }, "No indexed audio MP4")
+            val video = assertNotNull(indexed.filter {
+                it.hasVideo && !it.hasAudio && it.mimeType.startsWith("video/mp4;") &&
+                    it.videoCodec == ExcorVideoCodec.H264 && (it.height ?: 0) in 1..480
+            }.maxByOrNull { it.height ?: 0 }, "No indexed H.264 MP4 at or below 480p")
+
+            val media = http.newBuilder().followRedirects(false).followSslRedirects(false).build()
+            for (format in listOf(audio, video)) {
+                val init = assertNotNull(format.initRange)
+                val index = assertNotNull(format.indexRange)
+                assertEquals(0L, init.first)
+                assertTrue(init.last < index.first, "MP4 initialization and index ranges overlap")
+                val initBoxes = mp4BoxTypes(readMp4Range(media, format, init, list.headers))
+                assertTrue(initBoxes.containsAll(listOf("ftyp", "moov")), "MP4 initialization lacks ftyp or moov")
+                val bytes = readMp4Range(media, format, index, list.headers)
+                val total = assertNotNull(format.contentLength, "MP4 format has no total length")
+                val summary = checkMp4Index(bytes, index.last + 1, total)
+                val first = summary.firstMediaByte
+                val firstHeader = readMp4Range(media, format, first..first + 7, list.headers)
+                assertEquals("moof", firstHeader.decodeToString(4, 8), "First SIDX reference did not lead to a movie fragment")
+                println("MP4 itag=${format.itag} init=$init sidx=$index timescale=${summary.timescale} " +
+                    "durationTicks=${summary.durationTicks} references=${summary.references} firstMoof=$first")
+            }
+        }
+    }
+
+    private fun readMp4Range(
+        http: OkHttpClient, format: ExcorMediaFormat, range: LongRange, headers: Map<String, String>,
+    ): ByteArray {
+        assertTrue(range.first >= 0 && range.last >= range.first && range.last - range.first < 65_536, "MP4 range exceeds 64 KiB")
+        val request = Request.Builder().url(format.url).apply {
+            headers.forEach { (name, value) -> header(name, value) }
+            header("Range", "bytes=${range.first}-${range.last}")
+        }.build()
+        return http.newCall(request).execute().use { response ->
+            assertEquals(206, response.code, "MP4 range request was not honored")
+            val bytes = response.body.byteStream().use { it.readNBytes((range.last - range.first + 2).toInt()) }
+            val confirmed = assertNotNull(parseContentRange(response.header("Content-Range"), range.first, range.last, bytes.size.toLong()))
+            assertEquals(range.last, confirmed.last)
+            format.contentLength?.let { assertEquals(it, confirmed.total) }
+            bytes
+        }
+    }
+
+    private fun mp4BoxTypes(bytes: ByteArray): List<String> {
+        val input = ByteBuffer.wrap(bytes)
+        return buildList {
+            while (input.hasRemaining()) {
+                val start = input.position()
+                assertTrue(input.remaining() >= 8, "Truncated MP4 box header")
+                val size = input.int
+                assertTrue(size in 8..(input.limit() - start), "MP4 box is not contained in the requested range")
+                add(ByteArray(4).also { input.get(it) }.decodeToString())
+                input.position(start + size)
+            }
+        }
+    }
+
+    private data class IndexSummary(val timescale: Long, val durationTicks: Long, val references: Int, val firstMediaByte: Long)
+
+    // DASH-IF indexed addressing uses one SIDX with direct references to media ranges.
+    private fun checkMp4Index(bytes: ByteArray, endExclusive: Long, contentLength: Long): IndexSummary {
+        val input = ByteBuffer.wrap(bytes)
+        assertTrue(input.remaining() >= 32, "Truncated SIDX")
+        assertEquals(bytes.size, input.int, "The index range must contain exactly one box")
+        assertEquals("sidx", bytes.decodeToString(4, 8))
+        input.position(8)
+        val version = input.int ushr 24
+        assertTrue(version == 0 || version == 1, "Unsupported SIDX version")
+        input.int // reference ID
+        val timescale = Integer.toUnsignedLong(input.int)
+        assertTrue(timescale > 0, "Invalid SIDX timescale")
+        val firstOffset = if (version == 0) {
+            input.int // earliest presentation time
+            Integer.toUnsignedLong(input.int)
+        } else {
+            assertTrue(input.remaining() >= 20, "Truncated version 1 SIDX")
+            input.long // earliest presentation time
+            input.long
+        }
+        assertTrue(endExclusive in 1 until contentLength && firstOffset in 0 until contentLength - endExclusive)
+        val firstMediaByte = endExclusive + firstOffset
+        input.short // reserved
+        val references = input.short.toInt() and 0xffff
+        assertTrue(references > 0 && input.remaining() == references * 12, "Invalid SIDX reference table")
+        var position = firstMediaByte
+        var duration = 0L
+        repeat(references) {
+            val size = input.int
+            assertTrue(size >= 8 && size.toLong() <= contentLength - position, "SIDX reference is indirect or outside the track")
+            val durationTicks = Integer.toUnsignedLong(input.int)
+            assertTrue(durationTicks > 0, "SIDX reference has no duration")
+            input.int // stream access point flags
+            position += size
+            duration += durationTicks
+        }
+        return IndexSummary(timescale, duration, references, firstMediaByte)
     }
 
     private class LiveHost(override val httpClient: OkHttpClient) : ExcorHost {
