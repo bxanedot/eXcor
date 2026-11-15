@@ -14,12 +14,12 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-15 09:00 UTC
+## Latest verified checkpoint — 2026-11-15 10:05 UTC
 
-- Main is `ae437714f9ec84d839aebad631bd8d2f529025f1` after PR #196. Its nine CI jobs and five CodeQL language analyses passed; post-merge main CI run [43696187646](https://github.com/bxanedot/eXcor/actions/runs/43696187646) also passed. The readiness refresh [43697137976](https://github.com/bxanedot/eXcor/actions/runs/43697137976) records 53/100, Release NO-GO, for this exact main SHA. The score measures engineering readiness, not playback parity.
-- The README and [playback evidence matrix](../PLAYBACK_EVIDENCE_MATRIX.md) carry the latest paired direct-audio decode and availability results, with their source revisions and limits. The dQw4w9WgXcQ full-decode comparison is tied to eXcor source `d29f6ae`; the ScMzIvxBSi4 access differential is from one signed-out Windows home network. HTTP ranges are not player seeks, and neither result establishes broad reliability or SABR parity.
-- PR #196's merged topic branch `fix/live-availability-matrix` was deleted. The only remaining branches are `main` and the required `automation/excor-competitiveness` score branch; there are no open PRs.
-- Keep G4/G5/G11 partial, G6 blocked, issue #78 open, and release NO-GO. See the [live score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
+- Main is `c3091d31920bd6769402322fb2ee83d521fda3cc` after PR #197. PR #197's nine CI jobs and five CodeQL language analyses passed. Exact-main CI run [43699895566](https://github.com/bxanedot/eXcor/actions/runs/43699895566) had eight jobs passed and macOS queued at 10:05 UTC; readiness refresh [43699895540](https://github.com/bxanedot/eXcor/actions/runs/43699895540) succeeded with 53/100, Release NO-GO. The score measures engineering readiness, not playback parity.
+- A current-main paired audio player-seek check on `dQw4w9WgXcQ` produced three HTTP 206 reads per adapter. FFplay visibly responded to Right for both adapters and to Left for InnerTubeX; eXcor's lower final range offset suggests backward I/O, but its window closed before the final UI capture. This is one ID/network with adapter-specific comparison IDs and no per-key timing. See the [manual report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c309-player-seek.md).
+- The latest repeated direct-audio decode comparison remains tied to eXcor source `d29f6ae`; the `ScMzIvxBSi4` availability differential remains a one-network observation. Neither establishes broad reliability or SABR parity.
+- `git fetch --prune` found no stale branches to delete. Keep the active `automation/excor-competitiveness` score branch, remove merged topic branches after their PRs, and keep G4/G5/G11 partial, G6 blocked, issue #78 open and release NO-GO. See the [live score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
 
 ## Next
 
