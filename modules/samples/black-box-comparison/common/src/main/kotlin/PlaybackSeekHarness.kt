@@ -127,23 +127,30 @@ internal data class ProxyStats(
     val rangeRequests: Long,
     val statuses: Map<Int, Long>,
     val rangeStarts: List<Long>,
+    val rangeTimesUtcMs: List<Long>,
     val bytes: Long,
 )
 
-private class Stats {
+internal class Stats {
     private val lock = Any()
     private var requests = 0L
     private var upstream = 0L
     private var ranges = 0L
     private val statuses = TreeMap<Int, Long>()
     private val starts = mutableListOf<Long>()
+    private val rangeTimesUtcMs = mutableListOf<Long>()
     private val bytes = AtomicLong()
 
     fun request(range: String?) = synchronized(lock) {
         requests++
         if (range != null) {
             ranges++
-            parseRangeStart(range)?.let { if (starts.size < 1000) starts += it }
+            parseRangeStart(range)?.let {
+                if (starts.size < 1000) {
+                    starts += it
+                    rangeTimesUtcMs += System.currentTimeMillis()
+                }
+            }
         }
     }
 
@@ -151,14 +158,15 @@ private class Stats {
     fun status(value: Int) = synchronized(lock) { statuses[value] = (statuses[value] ?: 0L) + 1 }
     fun bytes(count: Int) { bytes.addAndGet(count.toLong()) }
     fun reset() = synchronized(lock) {
-        ProxyStats(requests, upstream, ranges, statuses.toMap(), starts.toList(), bytes.get()).also {
+        ProxyStats(requests, upstream, ranges, statuses.toMap(), starts.toList(), rangeTimesUtcMs.toList(), bytes.get()).also {
             requests = 0; upstream = 0; ranges = 0; statuses.clear(); starts.clear(); bytes.set(0)
+            rangeTimesUtcMs.clear()
         }
     }
 }
 
 internal fun printStats(label: String, stats: ProxyStats, byteLimitExceeded: Boolean) {
-    println("$label requests=${stats.requests} upstreamRequests=${stats.upstreamRequests} rangeRequests=${stats.rangeRequests} rangeStarts=${stats.rangeStarts.take(16).ifEmpty { listOf("none") }} httpStatuses=${stats.statuses.ifEmpty { mapOf(0 to 0L) }} bytesRelayed=${stats.bytes} relayByteLimitExceeded=$byteLimitExceeded relayByteLimitBytes=$MAX_RELAY_BYTES")
+    println("$label requests=${stats.requests} upstreamRequests=${stats.upstreamRequests} rangeRequests=${stats.rangeRequests} rangeStarts=${stats.rangeStarts.take(16).ifEmpty { listOf("none") }} rangeTimesUtcMs=${stats.rangeTimesUtcMs.take(16).ifEmpty { listOf("none") }} httpStatuses=${stats.statuses.ifEmpty { mapOf(0 to 0L) }} bytesRelayed=${stats.bytes} relayByteLimitExceeded=$byteLimitExceeded relayByteLimitBytes=$MAX_RELAY_BYTES")
 }
 
 internal class LoopbackMediaProxy(source: PlaybackMediaSource) : AutoCloseable {

@@ -2,6 +2,8 @@ import org.testng.Assert.assertEquals
 import org.testng.Assert.assertFalse
 import org.testng.Assert.assertTrue
 import org.testng.annotations.Test
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 
 class ComparisonAdapterTest {
     private fun validArgs() = listOf(
@@ -93,6 +95,30 @@ class ComparisonAdapterTest {
             LoopbackMediaProxy(PlaybackMediaSource("https://example.test/videoplayback", emptyMap()))
         }
         assertTrue(rejected.isFailure)
+    }
+
+    @Test
+    fun proxyStatsPairValidRangeStartsWithBoundedUtcTimestamps() {
+        val stats = Stats()
+        val before = System.currentTimeMillis()
+        stats.request("bytes=1024-")
+        val after = System.currentTimeMillis()
+
+        val snapshot = stats.reset()
+        assertEquals(snapshot.rangeStarts, listOf(1024L))
+        assertEquals(snapshot.rangeTimesUtcMs.size, snapshot.rangeStarts.size)
+        assertTrue(snapshot.rangeTimesUtcMs.single() in before..after)
+        assertTrue(stats.reset().rangeTimesUtcMs.isEmpty())
+
+        val originalOut = System.out
+        val output = ByteArrayOutputStream()
+        try {
+            System.setOut(PrintStream(output, true, Charsets.UTF_8))
+            printStats("player_seek", snapshot, false)
+        } finally {
+            System.setOut(originalOut)
+        }
+        assertTrue(output.toString(Charsets.UTF_8).contains("rangeStarts=[1024] rangeTimesUtcMs=[${snapshot.rangeTimesUtcMs.single()}]"))
     }
 
     @Test
