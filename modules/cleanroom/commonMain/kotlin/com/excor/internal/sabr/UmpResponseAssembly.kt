@@ -9,6 +9,7 @@ package com.excor.internal.sabr
  * the previously outstanding payload length. This strict rule deliberately rejects
  * inconsistent or ambiguous continuation data. A non-empty part must make payload progress
  * in each complete response, so empty continuation bodies cannot be accepted indefinitely.
+ * The per-response part limit includes the type-20 header and any incomplete final part.
  */
 internal class UmpResponseAssembler(
     private val maxPartBytes: Int = 8 * 1024 * 1024,
@@ -60,6 +61,8 @@ internal class UmpResponseAssembler(
         var offset = start.dataOffset + start.length
         var mustContinue = partial != null
         while (offset < body.size) {
+            // Count the incoming part before allocating or retaining a partial payload.
+            if (parts.size >= maxPartsPerResponse) throw UmpFramingException("too many UMP parts in response")
             val part = readPartHeader(body, offset)
             offset = part.dataOffset
             val active = partial

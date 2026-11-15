@@ -116,6 +116,20 @@ class UmpResponseAssemblyTest {
     }
 
     @Test
+    fun partLimitRejectsAnIncompleteExtraPartAndPoisonsTheAssembler() {
+        val decoder = UmpResponseAssembler(maxPartsPerResponse = 2)
+        // The header and empty type-21 part exhaust the limit. Type 22 must not
+        // become pending merely because only one of its two payload bytes arrived.
+        assertFailsWith<UmpFramingException> {
+            decoder.acceptResponse(byteArrayOf(20, 0, 21, 0, 22, 2, 7))
+        }
+        assertFailsWith<UmpFramingException> {
+            decoder.acceptResponse(byteArrayOf(20, 0, 22, 1, 8))
+        }
+        assertFailsWith<UmpFramingException> { decoder.finish() }
+    }
+
+    @Test
     fun boundsPartsPerResponseAndPoisonsDecoderAfterMalformedData() {
         val decoder = UmpResponseAssembler(maxPartsPerResponse = 2)
         assertFailsWith<UmpFramingException> {
