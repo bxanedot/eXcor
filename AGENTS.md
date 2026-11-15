@@ -8,6 +8,7 @@ Use this as the short entry point; the linked docs hold the authoritative detail
 - `modules/platforms/swift/` — separate native Swift package and tests.
 - `modules/platforms/preview/` — unpublished Android and desktop host examples.
 - `modules/samples/black-box-comparison/` — isolated comparison adapters and sanitized evidence tooling.
+- `modules/tooling/` — offline repository checks, Python test helpers, and readiness scoring.
 - `modules/legacy/` — historical, uncompiled source and captured fixtures. Preserve it for provenance; do not use it for new implementation or include it in builds.
 - `api/` — Kotlin ABI baselines. Review intentional public API changes with the platform/API checks.
 

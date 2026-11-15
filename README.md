@@ -35,6 +35,7 @@ YouTube live checks are opt-in. The [comparison guide](modules/samples/black-box
 - `modules/platforms/swift/` — Swift package and tests.
 - `modules/platforms/preview/` — unpublished Android and desktop host examples.
 - `modules/samples/black-box-comparison/` — public-API adapters and evidence tooling.
+- `modules/tooling/` — offline repository checks and readiness scoring.
 - `modules/legacy/` — quarantined historical source and fixtures; do not use for new implementation.
 
 Before implementation work, read the [architecture](docs/ARCHITECTURE.md), [clean-room policy](docs/CLEAN_ROOM.md), [feature matrix](docs/FEATURE_MATRIX.md), and [source provenance](PROVENANCE.md). Never copy competitor implementation code. The repository is licensed under the [GNU General Public License v3.0 only](LICENSE).

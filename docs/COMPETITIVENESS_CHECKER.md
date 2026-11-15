@@ -43,13 +43,13 @@ Score-only commits do not launch expensive multiplatform CI. If the report does 
 
 Python 3.10+ (standard library only):
 
-    python3 -m unittest discover -s scripts/tests -p test_competitiveness_score.py -v
-    python3 scripts/excor_readiness.py --root . --out-dir /tmp/excor-readiness
+    python3 -m unittest discover -s modules/tooling/tests -p test_competitiveness_score.py -v
+    python3 modules/tooling/excor_readiness.py --root . --out-dir /tmp/excor-readiness
     cat /tmp/excor-readiness/README.md
 
 To check GitHub CI too, provide the exact current main commit:
 
-    python3 scripts/excor_readiness.py --root . --out-dir /tmp/excor-readiness --repo bxanedot/eXcor --sha YOUR_MAIN_COMMIT_SHA --fetch-ci
+    python3 modules/tooling/excor_readiness.py --root . --out-dir /tmp/excor-readiness --repo bxanedot/eXcor --sha YOUR_MAIN_COMMIT_SHA --fetch-ci
 
 The optional GH_TOKEN is read from the environment, never a command-line argument.
 

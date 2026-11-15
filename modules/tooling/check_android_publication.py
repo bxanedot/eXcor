@@ -10,7 +10,7 @@ from pathlib import Path
 from zipfile import BadZipFile, ZipFile
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 NOTICE_FILES = ("LICENSE", "NOTICE", "docs/licenses/Apache-2.0.txt")
 MAVEN_NS = {"": "http://maven.apache.org/POM/4.0.0"}
 

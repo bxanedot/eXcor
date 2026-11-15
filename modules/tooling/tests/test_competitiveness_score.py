@@ -11,7 +11,7 @@ from excor_readiness import calculate, EvidenceError, markdown, github_ci
 from unittest.mock import patch
 from io import BytesIO
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 class FakeResponse(BytesIO):

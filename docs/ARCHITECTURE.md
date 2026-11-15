@@ -12,6 +12,7 @@ The root Gradle project publishes the draft KMP library from `modules/cleanroom/
 - `modules/legacy/src/` and `modules/legacy/ejs/` retain the old, uncompiled implementation and its bundled files.
 - `modules/platforms/preview/` contains the Android and desktop preview apps; their Gradle project IDs remain `:preview-android` and `:preview-desktop`.
 - `modules/platforms/swift/` contains the separate native Swift package.
+- `modules/tooling/` contains offline maintenance checks, their tests, and the readiness scorer.
 - `docs/maintainers/` keeps the source brief, open questions, benchmark notes, and dated handoff records out of the repository root.
 
 ## Request path
