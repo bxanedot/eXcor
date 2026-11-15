@@ -3,7 +3,7 @@ import com.excor.ExcorYouTubeChannelTab
 import com.excor.excorDefaultHost
 import kotlinx.coroutines.runBlocking
 
-/** Exercises the README quick start against live YouTube and prints what it found; exits non-zero on a failed step. */
+/** Exercises the JVM getting-started guide against live YouTube and prints what it found; exits non-zero on a failed step. */
 fun main(args: Array<String>) {
     when (args.firstOrNull()) {
         "--playback" -> runBlocking { runPlaybackDiagnostics(args.drop(1)) }
