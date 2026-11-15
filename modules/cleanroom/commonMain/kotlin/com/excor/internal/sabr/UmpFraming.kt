@@ -43,7 +43,8 @@ private fun umpVarintWidth(first: Int): Int = when {
  * Bounded, incremental decoder for one raw UMP response's type/length/payload framing.
  * Does not negotiate SABR, interpret protobuf data, or join parts across HTTP response boundaries.
  * Accepts arbitrary *transport read* chunk boundaries without assuming a frame fits in a read; cumulative input is
- * capped across all feeds to this decoder instance.
+ * capped across all feeds to this decoder instance. A declared payload must fit the remaining response budget,
+ * including bytes not yet consumed in the current chunk; impossible declarations fail before allocation.
  */
 internal class UmpFrameDecoder(
     private val maxPayloadBytes: Int = 8 * 1024 * 1024,
@@ -110,6 +111,9 @@ internal class UmpFrameDecoder(
                         }
                         Phase.LENGTH -> {
                             if (value > maxPayloadBytes.toLong()) throw UmpFramingException("UMP part exceeds size bound")
+                            // responseBytesFed includes this whole chunk, including its unread payload bytes.
+                            val remaining = maxResponseBytes.toLong() - responseBytesFed + (chunk.size - at)
+                            if (value > remaining) throw UmpFramingException("UMP part cannot fit response byte limit")
                             framePayload = ByteArray(value.toInt())
                             payloadUsed = 0
                             phase = Phase.PAYLOAD
