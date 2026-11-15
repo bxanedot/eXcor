@@ -240,6 +240,37 @@ class ComparisonAdapterTest {
     }
 
     @Test
+    fun playerSeekResolutionFailureReportsSanitizedCauseCategory() {
+        val secret = "https://googlevideo.com/videoplayback?token=secret"
+        val unsupported = StreamResolveException(
+            StreamResolveException.Reason.NO_PLAYABLE_STREAM,
+            secret,
+            IllegalStateException(secret),
+            StreamDiagnostics(emptyList(), false),
+        )
+        val denied = StreamResolveException(
+            StreamResolveException.Reason.NETWORK,
+            secret,
+            InnerTubeHttpException(secret, HttpStatusCode.Forbidden),
+            StreamDiagnostics(emptyList(), false),
+        )
+
+        assertEquals(
+            playerSeekResolutionFailure(unsupported),
+            "player_seek=unavailable outcome=UNSUPPORTED failureClass=UNSUPPORTED_TRANSPORT",
+        )
+        assertEquals(
+            playerSeekResolutionFailure(denied),
+            "player_seek=unavailable outcome=BLOCKED failureClass=ACCESS_DENIED",
+        )
+        assertEquals(
+            playerSeekResolutionFailure(IllegalStateException(secret)),
+            "player_seek=unavailable outcome=FAIL failureClass=OTHER",
+        )
+        assertFalse(playerSeekResolutionFailure(denied).contains("secret"))
+    }
+
+    @Test
     fun jsonStringEscapesControlsAndQuotes() {
         assertEquals(jsonString("a\"b\\c\n"), "\"a\\\"b\\\\c\\n\"")
         assertEquals(jsonString(null), "null")

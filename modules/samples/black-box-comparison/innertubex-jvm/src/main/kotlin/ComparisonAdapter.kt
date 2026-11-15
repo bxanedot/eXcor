@@ -612,6 +612,11 @@ private fun classifyThrowableOutcome(error: Throwable): SampleOutcome {
     return if (failure == "ACCESS_DENIED") SampleOutcome("BLOCKED", failure) else SampleOutcome("FAIL", failure)
 }
 
+internal fun playerSeekResolutionFailure(error: Throwable): String {
+    val outcome = if (error is StreamResolveException) classifyStreamError(error) else classifyThrowableOutcome(error)
+    return "player_seek=unavailable outcome=${outcome.status} failureClass=${outcome.failureClass ?: "none"}"
+}
+
 private suspend fun runSample(options: AdapterOptions): ComparisonSample {
     val apiRequestCount = AtomicLong()
     val mediaRequestCount = AtomicLong()
@@ -852,8 +857,8 @@ private suspend fun runPlayerSeek(options: AdapterOptions) {
             return
         } catch (error: CancellationException) {
             throw error
-        } catch (_: Exception) {
-            println("player_seek=stream_resolution_failed")
+        } catch (error: Exception) {
+            println(playerSeekResolutionFailure(error))
             return
         }
         if (stream == null) {
