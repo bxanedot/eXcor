@@ -102,6 +102,33 @@ class UmpFramingTest {
     }
 
     @Test
+    fun rejectsPayloadThatCannotFitTheRemainingResponseBudget() {
+        val decoder = UmpFrameDecoder(maxPayloadBytes = 1024, maxResponseBytes = 16)
+        // Both integer fields count: only 14 payload bytes can fit, although the part cap is larger.
+        assertFailsWith<UmpFramingException> { decoder.feed(byteArrayOf(21, 15)) }
+        assertFailsWith<UmpFramingException> { decoder.feed(byteArrayOf()) }
+        assertFailsWith<UmpFramingException> { decoder.finish() }
+    }
+
+    @Test
+    fun remainingResponseBudgetIncludesPriorReadsAndHeaderBytes() {
+        val decoder = UmpFrameDecoder(maxPayloadBytes = 8, maxResponseBytes = 8)
+        assertEquals(1, decoder.feed(byteArrayOf(20, 0)).size)
+        assertTrue(decoder.feed(byteArrayOf(21)).isEmpty())
+        // Four bytes consumed across three reads; the remaining five-byte declaration cannot fit.
+        assertFailsWith<UmpFramingException> { decoder.feed(byteArrayOf(5)) }
+    }
+
+    @Test
+    fun exactRemainingBudgetIncludesUnreadBytesInTheCurrentChunk() {
+        val decoder = UmpFrameDecoder(maxPayloadBytes = 8, maxResponseBytes = 8)
+        decoder.feed(byteArrayOf(20, 0))
+        val parts = decoder.feed(byteArrayOf(21, 4, 1, 2, 3, 4))
+        assertContentEquals(byteArrayOf(1, 2, 3, 4), parts.single().payload)
+        decoder.finish()
+    }
+
+    @Test
     fun diagnosticsNeverRenderPayloadContent() {
         val part = UmpFrame(21, "synthetic-secret".encodeToByteArray())
         assertFalse("synthetic-secret" in part.toString())
