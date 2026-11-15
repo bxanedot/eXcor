@@ -13,8 +13,8 @@ remains unsupported; release gates and readiness points are unchanged.
   decoder result. The initial Gradle distribution connection refusal was
   resolved by using the environment's configured Java proxy.
 - A synthetic XML regression reproduced the draft's two-level SegmentList.
-  The builder now keeps initialization, timescale, timeline and inclusive
-  media ranges together in one representation-level SegmentList; that XML
+  The builder now keeps initialization, timescale, timeline and segment
+  references together in one representation-level SegmentList; that XML
   regression passes. It checks XML structure, not full DASH XSD conformance.
 - Generated two-second AAC/H.264 fragmented MP4 tracks exercise the same SIDX
   parser and MPD builder without service access. On Debian FFmpeg
@@ -23,9 +23,17 @@ remains unsupported; release gates and readiness points are unchanged.
   files logged duplicate FTYP/MOOV and corrupt H.264 packets after a nonzero
   media-range open. This is a failed local-file experiment, not successful
   DASH playback, full decode, or seeking. Other FFmpeg versions are untested.
-- The synthetic decode remains explicitly opt-in and is expected to fail on
-  that tested build. The PR must remain draft pending resolution or removal
-  of this experiment; green default CI would not validate the decode path.
+- The follow-up removes local-file byte ranges from the MPD. It copies each
+  validated initialization/media range into a distinct temporary file, then
+  decodes that reconstructed SegmentList MPD. On the same FFmpeg 7.1.5 build,
+  all three focused checks pass: XML structure, exact range-copy/truncated-file
+  rejection, and complete generated AAC/H.264 decode (at least two SIDX
+  references per track). This resolves the local experiment only. It does not
+  demonstrate HTTP byte-range MPD consumption, live service DASH, or seeking.
+- Linux CI now installs FFmpeg, records its version and runs these three
+  generated-media checks with EXCOR_LIVE=0. This checks reconstruction without
+  a YouTube request. Exact-head CI for this follow-up is still required.
+  The PR remains draft; no production capability is promoted.
 
 The only service SIDX/range evidence remains PR #217's existing 2026-11-15
 Windows home-network sample: itag 139 init 0–731, index 732–1027, timescale
@@ -35,15 +43,21 @@ init 0–740, index 741–1228, timescale 12,800, duration 2,726,912 ticks,
 on one ID/network. This cloud session did not reproduce those reads. A range
 probe is not a player seek.
 
-The final default JVM suite passed: 277 tests, 0 failures/errors, 24 opt-in
-skips (253 executed passes), including XML/range and malformed-SIDX regressions.
-`git diff --check` also passed.
+The follow-up default JVM suite passed: 278 tests, 0 failures/errors, 24 opt-in
+skips (254 executed passes), including XML/segment-copy and malformed-SIDX
+regressions. The separate FFmpeg-enabled focused run passed all three tests.
+`git diff --check` and the immutable-action-pin check also passed.
 
 ## Bounds and scope
 
 The experiment downloads complete tracks in validated HTTP ranges to temporary
-files, then synthesizes an MPD; it does not consume a service MPD or implement
-SDK DASH transport. The combined declared track length is limited to 256 MiB;
+files, copies initialization and SIDX media ranges to individual segment files,
+then synthesizes an MPD. Original full-track files are removed after successful
+reconstruction; a temporary directory is removed on success or failure. The
+8 KiB copy buffer does not load live tracks into memory. Peak media disk usage
+is at most 512 MiB (256 MiB original tracks plus at most 256 MiB copied ranges).
+This does not consume a service MPD or implement SDK DASH transport.
+The combined declared track length is limited to 256 MiB;
 existing downloads validate totals, MIME, Content-Range and actual body length.
 Index/probe reads are limited to 64 KiB each. The media client forbids redirects,
 uses a 15-second per-call timeout and stops starting calls after a shared
