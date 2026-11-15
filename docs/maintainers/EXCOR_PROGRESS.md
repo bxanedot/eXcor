@@ -605,3 +605,9 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 - Ran `:jvmTest --tests 'com.excor.LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId'` at exact main `17f160417d3d98449e3ab6cd6cd07c6c0aa5eada`, signed out on the owner's Windows home network.
 - The test passed with zero skips or failures. It recorded `dQw4w9WgXcQ:RANGE_READABLE`; `kJQP7kiw5Fk`, `JGwWNGJdvx8`, `aqz-KE-bpKQ`, and `M7lc1UVf-VE` were recognized as `ACCESS_BLOCKED` and did not prevent later IDs from running.
 - This is one range-readable ID on one network. It adds no full-decode, seek, cipher, or competitor evidence; G4/G5/G11 remain partial. See the [sanitized matrix report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-17f-range-matrix.md).
+
+## 2026-11-15 — exact-main HLS and video-seek follow-up
+
+- At main `59f87af558ff749e1e1477598f7c9aeaa982f575`, the signed-out HLS test for `dQw4w9WgXcQ` was skipped after a recognized access refusal before the manifest; FFmpeg did not run.
+- Two video-seek adapter attempts each reached the configured 30-second limit with two HTTP 206 reads, but the desktop automation could not target FFplay and sent no seek keys. No player-seek or InnerTubeX video-seek result is claimed.
+- This adds no successful playback evidence; G4/G5/G11 remain partial and G6 remains blocked. See the [sanitized follow-up report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-59f-hls-video-seek.md).

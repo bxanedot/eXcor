@@ -205,6 +205,10 @@ At the same exact main SHA, signed-out JVM adapters ran three cold and three war
 
 At exact main `17f160417d3d98449e3ab6cd6cd07c6c0aa5eada`, the signed-out Windows x64 JVM test `LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId` ran on one home network. It recorded one `RANGE_READABLE` outcome (`dQw4w9WgXcQ`) and four recognized `ACCESS_BLOCKED` outcomes (`kJQP7kiw5Fk`, `JGwWNGJdvx8`, `aqz-KE-bpKQ`, `M7lc1UVf-VE`). The test completed with one pass, zero skips and zero failures; it continues after each recognized access block. This adds no new playable ID, full decode, player seek or cipher evidence and does not establish cross-network reliability. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-17f-range-matrix.md).
 
+## 2026-11-15 — exact-main 59f HLS and video-seek follow-up
+
+On signed-out Windows x64 and `dQw4w9WgXcQ`, `LivePlaybackTest.hlsManifestDecodesForHostPlayer` completed as one skipped test with zero failures or errors: a recognized access refusal arrived before the HLS manifest, so FFmpeg did not run. Two separate `excor-jvm --player-seek-video` attempts reached the 30-second limit and each relayed two HTTP 206 reads, but the desktop automation could not target FFplay and sent no Right/Left keys. Those HTTP reads do not prove playback or a player seek; no InnerTubeX video-seek attempt ran. See the [sanitized follow-up report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-59f-hls-video-seek.md). G4/G5/G11 remain partial.
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
