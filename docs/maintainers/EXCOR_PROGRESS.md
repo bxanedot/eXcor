@@ -629,3 +629,9 @@ The InnerTubeX matrix was rechecked against its public README and changelog on 2
 - At main `59f87af558ff749e1e1477598f7c9aeaa982f575`, the signed-out HLS test for `dQw4w9WgXcQ` was skipped after a recognized access refusal before the manifest; FFmpeg did not run.
 - Two video-seek adapter attempts each reached the configured 30-second limit with two HTTP 206 reads, but the desktop automation could not target FFplay and sent no seek keys. No player-seek or InnerTubeX video-seek result is claimed.
 - This adds no successful playback evidence; G4/G5/G11 remain partial and G6 remains blocked. See the [sanitized follow-up report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-59f-hls-video-seek.md).
+
+## 2026-11-15 — exact-main second-ID paired direct-audio check
+
+- At main `acff0a3bc43d19dc44572ea66fcc254fc70685ae`, signed-out Windows x64 JVM adapters ran three cold and three warm attempts for `yydNF8tuVmU` on one home network. eXcor 0.2.0 was `BLOCKED/ACCESS_DENIED` before media in all 6/6 attempts; InnerTubeX 0.11.7 decoded the full 4,147,964-byte Opus stream and passed forward/backward HTTP byte-range probes in 6/6.
+- InnerTubeX first-media p50/p95 was 1,360/2,108 ms cold and 148/161 ms warm; decode p50/p95 was 585/680 ms cold and 611/634 ms warm. eXcor has no media timing in this run. This is an availability differential, not a shared decode or speed comparison, and it adds no new network or shared playable ID. HTTP byte ranges are not player seeks. G4/G5/G11 remain partial, G6 remains blocked, and issue #78 stays open.
+- See the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full.md), [JSON summary](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full-report.json), and [sanitized samples](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full.jsonl).
