@@ -158,7 +158,11 @@ At main commit 2a9f8dd6a0de4cef37724fad7102fc50c0c8a0cf, the per-ID range matrix
 
 This is one signed-out Windows home network and eXcor-only. It does not compare InnerTubeX video, test player-controlled seeking or exercise a ciphered path. The two access blocks are reported separately from technical failures. G4/G5 remain partial.
 
-## 2026-11-15 — exact-main paired direct-audio follow-up
+## 2026-11-15 — latest exact-main paired direct-audio follow-up
+
+At exact main commit `2818f68490e596f26f43f3be9902c3bc762b198b`, the signed-out Windows x64 JVM adapters ran three cold and three warm attempts on one home network for `aqz-KE-bpKQ`. eXcor was `ACCESS_DENIED` before media in all six attempts. InnerTubeX v0.11.6 fully decoded the stream and passed forward/backward HTTP byte-range probes in all six. Its first-media p50/p95 was 1,204/1,366 ms cold and 140/181 ms warm; decode p50/p95 was 1,114/1,156 ms cold and 1,117/1,120 ms warm. eXcor has no media timing for this access-blocked run. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.jsonl).
+
+## 2026-11-15 — previous exact-main paired direct-audio follow-up
 
 At exact main commit `c92b2c0cc14849a42937253cbd7014cf88405670`, the signed-out Windows x64 JVM adapters ran three cold and three warm attempts per ID on one home network. On `dQw4w9WgXcQ`, eXcor 0.2.0 and InnerTubeX v0.11.6 both fully decoded the direct-audio stream and passed forward/backward HTTP byte-range probes in 6/6 attempts. First-media p50/p95 was 356/363 ms cold and 93/104 ms warm for eXcor, versus 1,285/1,292 ms and 141/152 ms for InnerTubeX. Full-decode p50/p95 was 320/378 ms and 321/348 ms for eXcor, versus 373/394 ms and 384/390 ms for InnerTubeX.
 

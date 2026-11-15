@@ -121,8 +121,8 @@ never invent certificates or put secrets in the repository.
 
 ## Strict clean-room and security constraints
 
-1. **Read `BRIEF.md` and `PROVENANCE.md` first.** The old GPL-based
-   VyonEx/Vyon repositories and listed local sources remain strictly
+1. **Read `BRIEF.md` and `PROVENANCE.md` first.** Historical GPL-based
+   extractor repositories and listed local sources remain strictly
    off-limits. Do not search, clone, diff, browse, or read their history.
 2. Do not inspect GPL/LGPL/AGPL extractor implementations for algorithms.
    Allowed documentation/source and license requirements are exactly those
