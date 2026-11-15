@@ -92,7 +92,7 @@
       "name": "Release packaging",
       "status": "partial",
       "evidence": "A fresh local Maven publication of the Android AAR passed byte-for-byte checks for LICENSE, NOTICE, and the preserved Apache-2.0 text. The AAR contained an Android manifest and classes.jar, and its POM declares GPL-3.0-only. Both Maven publication CI jobs run the same check before hashing the artifacts. PR #168's macOS CI builds the release XCFramework, verifies root LICENSE/NOTICE, and checks QuickJS JS_Eval separately in the device arm64, simulator arm64, and simulator x86_64 binaries. See docs/THIRD_PARTY_NOTICES.md.",
-      "command": "./gradlew -Dmaven.repo.local=\"$PWD/build/check-maven\" publishToMavenLocal && python3 scripts/check_android_publication.py build/check-maven/com/excor",
+      "command": "./gradlew -Dmaven.repo.local=\"$PWD/build/check-maven\" publishToMavenLocal && python3 modules/tooling/check_android_publication.py build/check-maven/com/excor",
       "blockers": [
         "No remote repository publication or release has been authorized. Verify the distributed artifacts after authorized publication."
       ]

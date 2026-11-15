@@ -8,7 +8,7 @@ To run the same check, use an empty path for the local Maven repository:
 
 ```sh
 ./gradlew -Dmaven.repo.local="$PWD/build/check-maven" publishToMavenLocal
-python3 scripts/check_android_publication.py build/check-maven/com/excor
+python3 modules/tooling/check_android_publication.py build/check-maven/com/excor
 ```
 
 On 2026-11-13, all six Maven POMs were generated with GPL-3.0-only metadata, and the JVM JAR and sources JAR were verified with all three notices. PR #168's macOS CI checks the release XCFramework's root notices and the QuickJS `JS_Eval` symbol separately in its device arm64, simulator arm64, and simulator x86_64 binaries. Remote artifact publication and inspection remain outstanding.

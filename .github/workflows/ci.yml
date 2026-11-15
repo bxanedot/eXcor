@@ -31,7 +31,7 @@ jobs:
       - name: Build all Maven publications
         run: ./gradlew $GRADLE_ARGS -Dmaven.repo.local="$RUNNER_TEMP/excor-publication" publishToMavenLocal
       - name: Verify Android Maven publication
-        run: python3 scripts/check_android_publication.py "$RUNNER_TEMP/excor-publication/com/excor"
+        run: python3 modules/tooling/check_android_publication.py "$RUNNER_TEMP/excor-publication/com/excor"
       - name: Hash the published artifacts
         shell: bash
         run: |
@@ -71,9 +71,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Enforce immutable workflow action pins
-        run: python3 scripts/check_action_pins.py --root .github/workflows
+        run: python3 modules/tooling/check_action_pins.py --root .github/workflows
       - name: Check evidence score contract
-        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
+        run: python3 -m unittest discover -s modules/tooling/tests -p 'test_*.py' -v
       - name: Check black-box comparison report contract
         run: python3 -m unittest discover -s modules/samples/black-box-comparison/tests -p 'test_*.py' -v
       - name: Check matched comparison runner CLI

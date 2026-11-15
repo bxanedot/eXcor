@@ -37,13 +37,13 @@ jobs:
           persist-credentials: false
 
       - name: Validate scoring criteria
-        run: python3 -m unittest discover -s scripts/tests -p 'test_competitiveness_score.py' -v
+        run: python3 -m unittest discover -s modules/tooling/tests -p 'test_competitiveness_score.py' -v
 
       - name: Calculate evidence score and latest main CI
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 scripts/excor_readiness.py --root . \
+          python3 modules/tooling/excor_readiness.py --root . \
             --out-dir "$RUNNER_TEMP/excor-score" \
             --repo "$GITHUB_REPOSITORY" \
             --sha "$(git rev-parse HEAD)" --fetch-ci
