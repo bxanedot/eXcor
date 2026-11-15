@@ -14,16 +14,15 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-15 10:05 UTC
+## Latest verified checkpoint — 2026-11-15 11:10 UTC
 
-- Main is `c3091d31920bd6769402322fb2ee83d521fda3cc` after PR #197. PR #197's nine CI jobs and five CodeQL language analyses passed. Exact-main CI run [43699895566](https://github.com/bxanedot/eXcor/actions/runs/43699895566) had eight jobs passed and macOS queued at 10:05 UTC; readiness refresh [43699895540](https://github.com/bxanedot/eXcor/actions/runs/43699895540) succeeded with 53/100, Release NO-GO. The score measures engineering readiness, not playback parity.
-- A current-main paired audio player-seek check on `dQw4w9WgXcQ` produced three HTTP 206 reads per adapter. FFplay visibly responded to Right for both adapters and to Left for InnerTubeX; eXcor's lower final range offset suggests backward I/O, but its window closed before the final UI capture. This is one ID/network with adapter-specific comparison IDs and no per-key timing. See the [manual report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c309-player-seek.md).
-- The latest repeated direct-audio decode comparison remains tied to eXcor source `d29f6ae`; the `ScMzIvxBSi4` availability differential remains a one-network observation. Neither establishes broad reliability or SABR parity.
-- `git fetch --prune` found no stale branches to delete. Keep the active `automation/excor-competitiveness` score branch, remove merged topic branches after their PRs, and keep G4/G5/G11 partial, G6 blocked, issue #78 open and release NO-GO. See the [live score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
+- Main is `b1d020cbe2eeea9be31687ace29da3ddefb5c2f7` after PR #199. The exact-main readiness refresh [43707467300](https://github.com/bxanedot/eXcor/actions/runs/43707467300) succeeded; the score remains 53/100, Release NO-GO. Exact-main CI [43706362524](https://github.com/bxanedot/eXcor/actions/runs/43706362524) and CodeQL [43706362422](https://github.com/bxanedot/eXcor/actions/runs/43706362422) were still queued at the latest check.
+- A same-metadata signed-out FFplay 9.0.2 audio-seek run on `dQw4w9WgXcQ` confirmed Right and Left seeking in both eXcor 0.2.0 and InnerTubeX 0.11.7. Each player visibly refreshed; HTTP 206 range starts moved `0 → 497307 → 329300`, with per-key range arrivals 71–77 ms after input. Both adapters relayed 753,664 bytes before the configured 30-second limit. This is one ID, one network and one cold sample per adapter, not broad parity. See the [timestamped report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-b1-player-seek.md).
+- Keep G4/G5/G11 partial, G6 blocked, issue #78 open and Release NO-GO. The live readiness score is engineering readiness, not a playback-success percentage. The active `automation/excor-competitiveness` branch remains required for the README badge; delete merged topic branches after merging new work.
 
 ## Next
 
-Continue issue #78 with an eligible public stream on another network, aiming for repeatable eXcor/InnerTubeX full decode and real player-seek evidence. Keep access refusals and unsupported or unclassified outcomes distinct; do not promote release gates from HTTP range probes. If Ruflo is used for development coordination, use its MCP-only path and follow this repository's clean-room and privacy rules.
+Continue issue #78 with eligible public streams on another network and across multiple IDs; capture real video-seek and live cipher evidence when accessible. Keep access refusals and unsupported or unclassified outcomes distinct; do not promote release gates from HTTP range probes. For coordination, use Ruflo's MCP-only path and do not run its project-scaffolding `init`.
 
 ## Previous verified checkpoint — 2026-11-15 06:14 UTC
 
