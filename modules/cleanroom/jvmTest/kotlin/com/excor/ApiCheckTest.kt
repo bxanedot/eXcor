@@ -14,6 +14,7 @@ import java.io.File
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicLong
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -22,7 +23,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okio.Buffer
+import okio.ForwardingSource
+import okio.buffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -128,6 +133,41 @@ class ApiCheckTest {
             library.close()
             hostClient.dispatcher.executorService.shutdownNow()
             hostClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun metadataByteLimitStopsReadingTheUnderlyingResponse() = runBlocking {
+        // Leave room for Ktor's transport read-ahead after the application stops.
+        val fixtureSize = 5_000_000
+        val consumed = AtomicLong()
+        val http = OkHttpClient.Builder().addInterceptor { chain ->
+            val source = object : ForwardingSource(Buffer().write(ByteArray(fixtureSize))) {
+                override fun read(sink: Buffer, byteCount: Long): Long =
+                    super.read(sink, byteCount).also { if (it > 0) consumed.addAndGet(it) }
+            }.buffer()
+            val body = object : ResponseBody() {
+                override fun contentType() = "application/json".toMediaType()
+                override fun contentLength() = -1L
+                override fun source() = source
+            }
+            Response.Builder()
+                .request(chain.request())
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body(body)
+                .build()
+        }.build()
+        val library = Excor(apiHost(http))
+        try {
+            assertNull(library.videoInfo("abcdefghijk"))
+            val bytes = consumed.get()
+            assertTrue(bytes in 2_000_001L until fixtureSize.toLong(), "expected the read to stop at the byte limit, read $bytes")
+        } finally {
+            library.close()
+            http.dispatcher.executorService.shutdownNow()
+            http.connectionPool.evictAll()
         }
     }
 }

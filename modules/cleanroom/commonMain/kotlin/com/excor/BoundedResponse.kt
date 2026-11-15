@@ -6,9 +6,8 @@ import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readAvailable
 
 /**
- * Read at most [limit] bytes of an HTTP response. A body that exceeds the limit is
- * rejected before it can be fully buffered by bodyAsText(), including chunked
- * responses that omit Content-Length.
+ * Read at most [limit] bytes plus one from a scoped streaming response. Use
+ * HttpStatement.execute with a response block to avoid buffering before this check.
  *
  * YouTube's player JSON, watch pages, and player scripts are served as UTF-8.
  * Limits are byte counts, not character counts.
