@@ -14,16 +14,18 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-14 14:56 UTC
+## Latest verified checkpoint — 2026-11-15 01:50 UTC
 
-- Main is at `c6faa41e8eb817210bbdf796bacca710be08653a`. PR #177 exact-head CI and CodeQL passed; post-merge main CI run [43605472266](https://github.com/bxanedot/eXcor/actions/runs/43605472266) passed all nine jobs.
-- The latest signed-out owner-home comparison ran 24 samples at exact main `c6faa41`: three cold and three warm attempts per adapter on each of two public music videos. eXcor and InnerTubeX both fully decoded the 3,507,483-byte stream and passed both HTTP byte-range probes in 6/6 on `dQw4w9WgXcQ`. On `aqz-KE-bpKQ`, eXcor was `ACCESS_DENIED` before media in 6/6 while InnerTubeX passed in 6/6. See the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md) and [sanitized samples](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.jsonl).
-- One same-FFplay 9.0.2 audio-seek attempt per adapter on `dQw4w9WgXcQ` produced the same initial, forward-offset and backward-offset HTTP 206 reads after Right/Left input. Both stopped at the configured 30-second limit below the byte cap; this does not establish video-seek or multi-network reliability. See the [seek report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md).
-- The evidence is reflected in the README, feature and competitive matrices, playback evidence matrix and release gates. Keep G4/G5/G11 partial, G6 blocked, G12 partial and release NO-GO. Issue #78 remains open for eligible ciphered playback, cross-network repetition, video seeking and broader repeatability. Preserve GPL-3.0-only and the clean-room boundary.
+- Main is at `a983599f1256209a78a1d30140fdda23a521b328` after PR #185 grouped maintainer tooling under `modules/tooling/`. All eight post-merge CI jobs passed in run [43663143264](https://github.com/bxanedot/eXcor/actions/runs/43663143264). The merged topic branch was deleted locally and remotely; the remaining remote automation branch publishes the readiness score.
+- The current readiness report is 53/100, Release NO-GO, with CI success for the exact main SHA. This is evidence-backed readiness, not a playback-success percentage or feature-parity score.
+- At exact main `a983599`, three cold and three warm signed-out attempts per adapter on `dQw4w9WgXcQ`) both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes. First-media p50/p95 was 372/429 ms cold and 104/105 ms warm for eXcor, versus 1,199/1,328 ms and 144/144 ms for InnerTubeX; decode p50/p95 was 369/402 ms and 350/371 ms versus 399/433 ms and 386/420 ms. See the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.md) and [sanitized samples](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.jsonl).
+- A same-FFplay 9.0.2 seek check at the same exact main used one Right, 1.5-second pause, then Left attempt per adapter. eXcor returned ranges starting at `0, 666109, 497307`; InnerTubeX at `0, 497307, 329300`; all six responses were HTTP 206. Both runs stopped at the configured 30-second limit below the byte cap. This is one signed-out audio ID and network, not video-seek or broad reliability proof. See the [seek report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-player-seek-spaced.md).
+- A previous exact-main `aqz-KE-bpKQ` check at `2818f68` found eXcor `ACCESS_DENIED` before media in 6/6 while InnerTubeX passed full decode and both ranges in 6/6. This access differential does not identify its cause; see the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.md).
+- Keep G4/G5/G11 partial, G6 blocked, G12 partial and release NO-GO. Issue #78 remains open for eligible ciphered playback, cross-network repetition, video seeking and broader repeatability. Preserve GPL-3.0-only and the clean-room boundary.
 
 ## Next
 
-Continue issue #78 using authorized public cases and classify access refusals separately. Do not claim broad parity from the current one-network comparison or one paired audio-seek case.
+Continue issue #78 with eligible public playback cases on another network and video-seek coverage; keep cipher/access refusals separate and do not bypass them. Do not claim broad parity from one video/network or one paired audio-seek case.
 
 ## Latest verified checkpoint — 2026-11-14 14:03 UTC
 

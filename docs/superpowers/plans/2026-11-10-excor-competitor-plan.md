@@ -178,6 +178,16 @@ References: docs/maintainers/HANDOFF.md, docs/maintainers/EXCOR_PROGRESS.md, doc
 - Repeated the signed-out `aqz-KE-bpKQ` comparison at exact main `2818f68490e596f26f43f3be9902c3bc762b198b`, with three cold and three warm attempts per JVM adapter on one Windows home network. eXcor was `ACCESS_DENIED` before media in 6/6; InnerTubeX fully decoded and passed both HTTP byte-range probes in 6/6. This confirms a current-head access differential, not its cause, and adds no shared successful ID or eXcor timing.
 - See the [sanitized report](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.md) and [samples](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.jsonl). Issue #78 remains open for eligible playback, cipher coverage and repeatable player seeking; G11 remains partial.
 
+## 2026-11-15 — current-main shared audio decode and range recheck
+
+- At exact main `a983599f1256209a78a1d30140fdda23a521b328`, eXcor 0.2.0 and InnerTubeX 0.11.6 each completed full decode of the same 3,507,483-byte Opus stream and forward/backward HTTP byte-range probes in 6/6 signed-out cold/warm attempts on `dQw4w9WgXcQ`, one Windows home network. First-media p50/p95 was 372/429 ms cold and 104/105 ms warm for eXcor, versus 1,199/1,328 ms and 144/144 ms for InnerTubeX; decode p50/p95 was 369/402 ms and 350/371 ms versus 399/433 ms and 386/420 ms.
+- This is one current-main shared audio result, not broad performance parity or player-seek evidence. Issue #78 remains open for multiple eligible IDs/networks, cipher playback and repeatable player seeking; G4/G5/G11 remain partial. See the [report](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.md) and its sanitized JSONL and JSON summary.
+
+## 2026-11-15 — exact-main paired audio seek
+
+- At main `a983599f1256209a78a1d30140fdda23a521b328`, both signed-out JVM adapters used the same FFplay 9.0.2 build for one Right, 1.5-second pause, Left sequence on `dQw4w9WgXcQ`). Each recorded three HTTP 206 ranges: eXcor starts `0, 666109, 497307`; InnerTubeX starts `0, 497307, 329300`. Both stopped at the configured 30-second limit below the byte cap.
+- This adds one audio-seek case per adapter on one video/network. Video seeks, ciphered playback and cross-network repeatability remain open, so issue #78 stays open and G4/G5/G11 stay partial. See the [sanitized seek report](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-player-seek-spaced.md).
+
 
 ## 2026-11-13 — Java 17 compatibility and runtime recheck
 
