@@ -26,12 +26,12 @@ remains unsupported; release gates and readiness points are unchanged.
 - The follow-up removes local-file byte ranges from the MPD. It copies each
   validated initialization/media range into a distinct temporary file, then
   decodes that reconstructed SegmentList MPD. On the same FFmpeg 7.1.5 build,
-  all three focused checks pass: XML structure, exact range-copy/truncated-file
+  all three DASH-focused checks pass: XML structure, exact range-copy/truncated-file
   rejection, and complete generated AAC/H.264 decode (at least two SIDX
   references per track). This resolves the local experiment only. It does not
   demonstrate HTTP byte-range MPD consumption, live service DASH, or seeking.
 - Linux CI now installs FFmpeg, records its version and runs these three
-  generated-media checks with EXCOR_LIVE=0. This checks reconstruction without
+  DASH checks plus the generated HLS VOD check with EXCOR_LIVE=0. This checks reconstruction without
   a YouTube request. Exact-head CI for this follow-up is still required.
   The PR remains draft; no production capability is promoted.
 
@@ -43,14 +43,14 @@ init 0–740, index 741–1228, timescale 12,800, duration 2,726,912 ticks,
 on one ID/network. This cloud session did not reproduce those reads. A range
 probe is not a player seek.
 
-The follow-up default JVM suite passed: 278 tests, 0 failures/errors, 24 opt-in
-skips (254 executed passes), including XML/segment-copy and malformed-SIDX
-regressions. The separate FFmpeg-enabled focused run passed all three tests.
+The integrated follow-up JVM suite passed: 281 tests, 0 failures/errors, 26 opt-in
+skips (255 executed passes), including XML/segment-copy and malformed-SIDX
+regressions. The separate FFmpeg-enabled run passed all four generated HLS/DASH checks.
 `git diff --check` and the immutable-action-pin check also passed.
 
 A follow-up reproduced stale skips when only EXCOR_DASH_DECODE changed from
 0 to 1: passing it through `environment` alone left :jvmTest UP-TO-DATE.
-The opt-in controls (including EXCOR_DECODE_ID) are now explicit task input
+The opt-in controls (including EXCOR_DECODE_ID and EXCOR_HLS_FIXTURE) are now explicit task input
 properties as well. Repeating the same selected tests with flag 0 then 1
 reran :jvmTest and changed one skip into a successful synthetic decode.
 Unset controls remain unset in the worker environment, preserving built-in

@@ -9,10 +9,12 @@ import com.excor.music.ExcorMusicTrack
 import com.excor.music.ExcorTrackMatch
 import com.excor.music.excorRankMatches
 import io.ktor.client.HttpClient
-import io.ktor.client.request.get
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.prepareGet
 import io.ktor.client.request.header
-import io.ktor.client.request.post
+import io.ktor.client.request.preparePost
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -21,7 +23,6 @@ import io.ktor.http.takeFrom
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import io.ktor.utils.io.cancel
 import io.ktor.utils.io.readByte
 import kotlinx.coroutines.CancellationException
 import kotlin.random.Random
@@ -820,82 +821,77 @@ internal class ExcorEngine(
         class Failed(val cause: Exception) : PostResult
     }
 
-    private suspend fun postOnce(request: PlayerRequest): PostOutcome {
-        val response = http.post(request.url) {
-            request.headers.forEach { (name, value) -> header(name, value) }
-            contentType(ContentType.Application.Json)
-            header(HttpHeaders.ContentLength, request.body.encodeToByteArray().size.toString())
-            setBody(request.body)
-        }
+    private suspend fun postOnce(request: PlayerRequest): PostOutcome = http.preparePost(request.url) {
+        request.headers.forEach { (name, value) -> header(name, value) }
+        contentType(ContentType.Application.Json)
+        header(HttpHeaders.ContentLength, request.body.encodeToByteArray().size.toString())
+        setBody(request.body)
+    }.execute { response ->
         if (!response.status.isSuccess()) {
-            response.bodyAsChannel().cancel()
             val status = response.status.value
             // The endpoint name and status only: InnerTube URLs carry no secrets, but headers and bodies might.
             log(ExcorLogLevel.WARN, "InnerTube ${request.url.substringAfter("/youtubei/v1/").substringBefore('?')} answered HTTP $status")
-            if (status !in RETRYABLE_STATUSES) return PostOutcome.Done(null)
+            if (status !in RETRYABLE_STATUSES) return@execute PostOutcome.Done(null)
             val retryAfter = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()?.takeIf { it in 0..5 }?.times(1_000)
-            return PostOutcome.Retry(retryAfter, status)
+            return@execute PostOutcome.Retry(retryAfter, status)
         }
         if ((response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L) > PLAYER_RESPONSE_LIMIT) {
-            response.bodyAsChannel().cancel()
-            return PostOutcome.Done(null)
+            return@execute PostOutcome.Done(null)
         }
-        return PostOutcome.Done(readBoundedResponseText(response, PLAYER_RESPONSE_LIMIT))
+        PostOutcome.Done(readBoundedResponseText(response, PLAYER_RESPONSE_LIMIT))
     }
 
-    private suspend fun getText(url: String, headers: Map<String, String>, limit: Int): String? {
-        val response = http.get(url) { headers.forEach { (name, value) -> header(name, value) } }
-        if (!response.status.isSuccess() ||
-            (response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L) > limit
-        ) {
-            response.bodyAsChannel().cancel()
-            return null
+    private suspend fun getText(url: String, headers: Map<String, String>, limit: Int): String? =
+        http.prepareGet(url) { headers.forEach { (name, value) -> header(name, value) } }.execute { response ->
+            if (!response.status.isSuccess() ||
+                (response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L) > limit
+            ) null else readBoundedResponseText(response, limit)
         }
-        return readBoundedResponseText(response, limit)
-    }
 
-    /**
-     * Requests the first KiB of [url] and reads one byte to confirm it is non-empty. googlevideo answers a media request
-     * with a 302 to another googlevideo node, so up to [MAX_MEDIA_REDIRECTS] redirects are followed here (the client
-     * follows none), each only to a target that passes the same playback allowlist.
-     */
-    private suspend fun isPlayable(url: String, headers: Map<String, String>): Boolean {
+    /** Requests the first KiB and reads one byte to confirm a nonempty response. */
+    private suspend fun isPlayable(url: String, headers: Map<String, String>): Boolean = probeMedia(
+        url, headers, ::isAllowedPlaybackUrl, "playback",
+        configure = { header(HttpHeaders.Range, "bytes=0-1023") },
+    ) { response ->
+        if (response.status.value != 200 && response.status.value != 206) return@probeMedia false
+        response.bodyAsChannel().readByte()
+        true
+    } != null
+
+    private suspend fun probeMedia(
+        url: String,
+        headers: Map<String, String>,
+        allowed: (String) -> Boolean,
+        label: String,
+        configure: HttpRequestBuilder.() -> Unit,
+        accept: suspend (HttpResponse) -> Boolean,
+    ): String? {
         var target = url
         repeat(MAX_MEDIA_REDIRECTS + 1) {
-            if (!isAllowedPlaybackUrl(target)) return false
-            val response = try {
-                http.get(target) {
+            if (!allowed(target)) return null
+            val (accepted, location) = try {
+                http.prepareGet(target) {
                     headers.forEach { (name, value) -> header(name, value) }
-                    header(HttpHeaders.Range, "bytes=0-1023")
+                    configure()
+                }.execute { response ->
+                    val status = response.status.value
+                    log(ExcorLogLevel.DEBUG, "$label probe answered HTTP $status")
+                    if (status in MEDIA_REDIRECT_STATUSES) false to response.headers[HttpHeaders.Location]
+                    else accept(response) to null
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                log(ExcorLogLevel.DEBUG, "playback probe failed: ${failure::class.simpleName}")
-                return false
+                log(ExcorLogLevel.DEBUG, "$label probe failed: ${failure::class.simpleName}")
+                return null
             }
-            val status = response.status.value
-            log(ExcorLogLevel.DEBUG, "playback probe answered HTTP $status")
-            if (status == 200 || status == 206) {
-                val channel = response.bodyAsChannel()
-                return try {
-                    channel.readByte()
-                    true
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (_: Exception) {
-                    false
-                } finally {
-                    channel.cancel()
-                }
-            }
-            response.bodyAsChannel().cancel()
-            if (status !in MEDIA_REDIRECT_STATUSES) return false
-            val location = response.headers[HttpHeaders.Location] ?: return false
-            // An absolute Location is used exactly as sent: rebuilding it re-encodes the signed query and breaks it.
-            target = if (location.startsWith("https://")) location else runCatching { URLBuilder(target).takeFrom(location).buildString() }.getOrNull() ?: return false
+            if (accepted) return target
+            if (location == null) return null
+            // Preserve an absolute signed Location byte-for-byte; only relative references need URL resolution.
+            target = if (location.startsWith("https://", ignoreCase = true)) location
+            else runCatching { URLBuilder(target).takeFrom(location).buildString() }.getOrNull() ?: return null
         }
-        return false
+        return null
     }
 
     private suspend fun playableHlsManifestUrl(
@@ -924,41 +920,16 @@ internal class ExcorEngine(
         return rewriteHlsManifestUrl(rawUrl, solved?.throttling.orEmpty(), streamingToken)
     }
 
-    /** Reads and validates a bounded HLS manifest, following only validated GoogleVideo manifest redirects. */
-    private suspend fun probeHlsManifest(url: String, headers: Map<String, String>): String? {
-        var target = url
-        repeat(MAX_MEDIA_REDIRECTS + 1) {
-            if (!isAllowedHlsManifestUrl(target)) return null
-            val response = try {
-                http.get(target) {
-                    headers.forEach { (name, value) -> header(name, value) }
-                    header(HttpHeaders.Accept, "application/vnd.apple.mpegurl, application/x-mpegURL, */*;q=0.8")
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (failure: Exception) {
-                log(ExcorLogLevel.DEBUG, "HLS manifest probe failed: ${failure::class.simpleName}")
-                return null
-            }
-            val status = response.status.value
-            if (status == 200) {
-                val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-                if (contentLength != null && contentLength !in 0..MAX_HLS_MANIFEST_BYTES.toLong()) {
-                    response.bodyAsChannel().cancel()
-                    return null
-                }
-                val manifest = readBoundedResponseText(response, MAX_HLS_MANIFEST_BYTES) ?: return null
-                val firstLine = manifest.removePrefix("\uFEFF").lineSequence().firstOrNull { it.isNotBlank() }?.trim()
-                return target.takeIf { firstLine == "#EXTM3U" }
-            }
-            response.bodyAsChannel().cancel()
-            if (status !in MEDIA_REDIRECT_STATUSES) return null
-            val location = response.headers[HttpHeaders.Location] ?: return null
-            // Preserve an absolute signed Location byte-for-byte; only relative references need URL resolution.
-            target = if (location.startsWith("https://", ignoreCase = true)) location
-            else runCatching { URLBuilder(target).takeFrom(location).buildString() }.getOrNull() ?: return null
-        }
-        return null
+    /** Validates a bounded HLS manifest and restricts redirects to allowed GoogleVideo manifest URLs. */
+    private suspend fun probeHlsManifest(url: String, headers: Map<String, String>): String? = probeMedia(
+        url, headers, ::isAllowedHlsManifestUrl, "HLS manifest",
+        configure = { header(HttpHeaders.Accept, "application/vnd.apple.mpegurl, application/x-mpegURL, */*;q=0.8") },
+    ) { response ->
+        if (response.status.value != 200) return@probeMedia false
+        val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+        if (contentLength != null && contentLength !in 0..MAX_HLS_MANIFEST_BYTES.toLong()) return@probeMedia false
+        val manifest = readBoundedResponseText(response, MAX_HLS_MANIFEST_BYTES) ?: return@probeMedia false
+        manifest.removePrefix("\uFEFF").lineSequence().firstOrNull { it.isNotBlank() }?.trim() == "#EXTM3U"
     }
 
     private suspend fun warmUp() {

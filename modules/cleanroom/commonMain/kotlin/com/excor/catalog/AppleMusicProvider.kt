@@ -1,9 +1,10 @@
 package com.excor.catalog
 
 import io.ktor.client.HttpClient
-import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsChannel
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
@@ -90,16 +91,19 @@ internal class AppleMusicProvider(private val http: HttpClient) {
         val url = URLBuilder("https://itunes.apple.com/$path").apply {
             parameters.forEach { (name, value) -> this.parameters.append(name, value) }
         }.buildString()
-        val response = try {
-            http.get(url) { header(HttpHeaders.Accept, "application/json") }
+        return try {
+            http.prepareGet(url) { header(HttpHeaders.Accept, "application/json") }.execute(::readJson)
         } catch (cancelled: CancellationException) {
             throw cancelled
+        } catch (failure: ExcorCatalogException) {
+            throw failure
         } catch (_: Exception) {
             throw error(ExcorCatalogError.NETWORK_FAILURE)
         }
+    }
 
+    private suspend fun readJson(response: HttpResponse): JsonObject {
         if (!response.status.isSuccess()) {
-            response.bodyAsChannel().cancel()
             val category = when (response.status.value) {
                 401 -> ExcorCatalogError.AUTHENTICATION_REQUIRED
                 403 -> ExcorCatalogError.ACCESS_DENIED
@@ -109,12 +113,10 @@ internal class AppleMusicProvider(private val http: HttpClient) {
             throw error(category, response.status.value)
         }
         if (response.headers[HttpHeaders.ContentLength]?.toLongOrNull()?.let { it > MAX_RESPONSE_BYTES } == true) {
-            response.bodyAsChannel().cancel()
             throw error(ExcorCatalogError.RESPONSE_TOO_LARGE)
         }
         val contentType = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()
         if (contentType != "application/json") {
-            response.bodyAsChannel().cancel()
             throw error(ExcorCatalogError.MALFORMED_RESPONSE)
         }
 
