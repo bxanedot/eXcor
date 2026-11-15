@@ -13,8 +13,8 @@ The current repository snapshot is licensed under GPL-3.0-only. Earlier revision
 The library code was written by Claude in a separate cloud environment with no access to the
 owner's PC. Codex contributed the watch-page capture, live-test runs and results, and
 documentation; its part ended on 2026-10-27 at the owner's decision. During local workspace discovery, Codex listed directory and file metadata under
-the forbidden `Desktop\vyon-main` and `Documents\Codex\2026-*` locations and ran `git status`
-in `Desktop\vyon-main`; it did not read source-file contents from those locations. This records
+owner-designated off-limits workspaces and ran `git status` in one such workspace; it did not
+read source-file contents from those locations. This records
 Codex's actions and contributions, not a legal or release determination.
 
 ## Sources read or ported

@@ -4,9 +4,9 @@
 
 > **License target update (2026-11-13):** This brief originally requested Apache-2.0. The owner changed the current project license target to GPL-3.0-only. The brief's clean-room and source-selection rules remain in force.
 
-> **Owner naming amendment (2026-10-28):** The deliverable names are `eXcor`, Kotlin package `com.excor`, Maven coordinates `com.excor:eXcor`, XCFramework `eXcor`, and native Swift package/module `eXcorKit`. API names in sections 2–8 use this mapping. It does not change the functional requirements or clean-room rules. Section 1 retains the exact identifiers needed to avoid forbidden historical sources.
+> **Owner naming amendment (2026-10-28):** The deliverable names are `eXcor`, Kotlin package `com.excor`, Maven coordinates `com.excor:eXcor`, XCFramework `eXcor`, and native Swift package/module `eXcorKit`. API names in sections 2–8 use this mapping. It does not change the functional requirements or clean-room rules. Section 1 states source-exclusion rules without naming historical repositories, paths, or indexes.
 
-You are writing **eXcor**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **eXcorKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier implementation exists, but it contains GPL-licensed code. Write the new deliverables from scratch, from this brief and permissively licensed public sources only, so they can be released under **Apache-2.0**.
+You are writing **eXcor**, a Kotlin Multiplatform library that turns a YouTube video ID into a directly playable audio URL, and then **eXcorKit**, a native Swift package that does the same on Apple platforms (section 8). An earlier implementation exists, but it contains GPL-licensed code. Write the new deliverables from scratch, from this brief and permissively licensed public sources only, so they can be released under **GPL-3.0-only**.
 
 This brief tells you **what** the library must do. It deliberately does not tell you how the old one did it. Do not try to find out.
 
@@ -15,9 +15,9 @@ This brief tells you **what** the library must do. It deliberately does not tell
 ## 1. Clean-room rules (read first, follow throughout)
 
 1. **Never open the old code.** Off limits, in every form (web, clone, local copy, search index, cache):
-   - GitHub `bxanedot/vyonex` and `bxanedot/vyon`, all branches and history, including `player_configs.json`.
-   - Local folders `Desktop\vyon-main`, `Desktop\vyon`, `Documents\Codex\vyonex`, any `Documents\Codex\2026-*` folder, and `~/.gradle/caches/vyon-extractor`.
-   - The XERJ index `vyonex-current`. Disable the `xerj` MCP server for this work.
+   - Any GitHub repository containing prior GPL extractor implementation, including every branch, the full history, and source configuration files.
+   - Local folders, caches, and artifacts that may contain prior implementation source, including archived workspace snapshots.
+   - Any search index or cache built from prior implementation source. Do not query or rely on it.
 2. **Never read GPL, LGPL or AGPL extractor code**, not even "for the idea". That includes NewPipe / NewPipe Extractor, InnerTubeX, Metrolist, InnerTune, OuterTune, ViMusic, SimpMusic, LibreTube, Piped and Invidious.
 3. **Allowed sources:**
    - **yt-dlp** (`github.com/yt-dlp/yt-dlp`) is released under the Unlicense (public domain). You may read it and port its logic. Check the `LICENSE` file at the commit you use.
@@ -44,7 +44,7 @@ This brief tells you **what** the library must do. It deliberately does not tell
   - QuickJS-KT 1.0.15 (JavaScript runtime on every target).
   - Anything else only if its license is Apache, MIT or BSD, and logged.
 - Shared logic lives in `commonMain`. Platform code only for transport, storage and the host interface.
-- `README.md`, `LICENSE` (Apache-2.0), `PROVENANCE.md`, and a GitHub Actions workflow:
+- `README.md`, `LICENSE` (GPL-3.0-only), `PROVENANCE.md`, and a GitHub Actions workflow:
   - Windows job: `jvmTest jvmJar`.
   - macOS job: JVM tests, iOS simulator tests, framework links, XCFramework, and a Swift type-check of the public API.
 
