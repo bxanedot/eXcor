@@ -45,7 +45,7 @@ Remove-Item Env:\EXCOR_HLS_ID
 
 Use `EXCOR_DECODE_ID` only for a public video you are allowed to access. With no override, the test uses its existing fixture ID `dQw4w9WgXcQ`. The audio test downloads the complete stream, validates its duration and reads a mid-file HTTP byte range. The video test downloads and muxes selected video/audio, decodes it, checks dimensions/duration, and reads a mid-file HTTP byte range; its default height cap is 480p. These byte-range checks do not drive a player or establish playback seeking. The format-list test probes advertised ranges. These tests may consume significant bandwidth and disk space. They delete temporary media on completion.
 
-The HLS test uses `EXCOR_HLS_ID` (default `dQw4w9WgXcQ`), validates a manifest through the public API, and asks FFmpeg to decode up to eight seconds. It needs a live, eligible video and `ffmpeg`; known bot/age challenges and the exact known page-reload refusal are classified as access-blocked, while unrelated errors remain visible. Use `--rerun-tasks` for a fresh network attempt. The 2026-11-14 signed-out attempt was refused before an HLS manifest was returned; see the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-hls-blocked.md) and earlier [JVM HLS attempt](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). For the per-ID initial-range matrix, `EXCOR_LIVE_IDS` optionally overrides its default three public IDs as a comma-separated list. It records recognized access blocks per ID and continues to later IDs; unclassified technical failures still fail visibly. A successful initial range is only a 1 KiB transport check, not decode or player-seek evidence.
+The HLS test uses `EXCOR_HLS_ID` (default `dQw4w9WgXcQ`), validates a manifest through the public API, and asks FFmpeg to decode up to eight seconds. A pass requires completed [FFmpeg progress](https://ffmpeg.org/ffmpeg.html#toc-Advanced-options) with positive output media time. It needs a live, eligible video and `ffmpeg`; known bot/age challenges and the exact known page-reload refusal are classified as access-blocked, while unrelated errors remain visible. Use `--rerun-tasks` for a fresh network attempt. The 2026-11-14 signed-out attempt was refused before an HLS manifest was returned; see the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-hls-blocked.md) and earlier [JVM HLS attempt](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). For the per-ID initial-range matrix, `EXCOR_LIVE_IDS` optionally overrides its default three public IDs as a comma-separated list. It records recognized access blocks per ID and continues to later IDs; unclassified technical failures still fail visibly. A successful initial range is only a 1 KiB transport check, not decode or player-seek evidence.
 
 ```powershell
 $env:EXCOR_LIVE="1"
@@ -260,6 +260,20 @@ See `docs/release-gates.json`, `docs/COMPETITOR_MATRIX.md`, `docs/ERROR_HANDLING
 ## 2026-11-15 — current-main paired direct-audio decode refresh
 
 At exact main `1f141412aeb55ee5972cffbe11a1d077d0274aec`, three signed-out cold samples per adapter used `dQw4w9WgXcQ` on one Windows home network. eXcor 0.2.0 and InnerTubeX 0.11.7 both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in 3/3 attempts. First-media p50/p95 was 1,561/1,617 ms for eXcor versus 2,924/3,049 ms for InnerTubeX; transfer-plus-decode p50/p95 was 726/792 ms versus 1,530/1,551 ms. A separate cold attempt six minutes earlier measured eXcor transfer plus decode at 16,951 ms; the reason for that variation is unknown. This is one sample ID/network, not a broad performance ranking. HTTP ranges are not player seeks, and the direct-audio adapters disable SABR. See the [three-sample report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat-report.json), and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.jsonl). The earlier separate [single-sample report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-refresh.md) records the slower result. G4/G5/G11 remain partial, G6 remains blocked, and issue #78 remains open.
+
+## 2026-11-15 — HLS livestream attempt and local decoder check
+
+At 18:14 UTC, on main `314dd6e3fa7f44325f280feb826b298a8fb70e17`, the signed-out JVM HLS test tried NASA's public ISS livestream `M3HKLzjvKPc` on one Windows x64 home network. Both VISIONOS and TVHTML5 returned `LOGIN_REQUIRED` before a manifest arrived. FFmpeg did not run in this attempt. [NASA's official stream](https://www.youtube.com/watch?v=M3HKLzjvKPc)
+
+The local check generated and decoded a three-second VOD playlist using FFmpeg 9.0.2. The same decoder check reported `out_time_us=3000000` and completed progress. Run it without YouTube access:
+
+```powershell
+$env:EXCOR_HLS_FIXTURE="1"
+.\gradlew.bat :jvmTest --rerun --tests 'com.excor.LivePlaybackTest.generatedHlsVodProducesDecodedMedia'
+Remove-Item Env:\EXCOR_HLS_FIXTURE
+```
+
+This verifies the FFmpeg check against a generated playlist. Live HLS extraction, playback, seeking, and the G5 gate remain open.
 
 ## 2026-11-15 — live JVM player request cancellation
 
