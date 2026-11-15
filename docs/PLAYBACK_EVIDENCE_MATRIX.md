@@ -176,7 +176,7 @@ A separate same-FFplay 9.0.2 check used Right then Left once per adapter for `dQ
 
 The 2026-11-14 results add repeatable same-ID decode and byte-range evidence plus one paired audio-seek case. They do not close the cross-network, eligible cipher, video-seek or repeated-seek requirements. G4/G5 remain partial.
 
-## 2026-11-15 — current-main paired audio decode and range recheck
+## 2026-11-15 — previous-main paired audio decode and range recheck
 
 At exact main commit `a983599f1256209a78a1d30140fdda23a521b328`, the signed-out Windows x64 eXcor 0.2.0 and InnerTubeX 0.11.6 adapters ran three cold and three warm attempts on one home network for `dQw4w9WgXcQ`. Both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in all six attempts.
 
@@ -187,13 +187,19 @@ At exact main commit `a983599f1256209a78a1d30140fdda23a521b328`, the signed-out 
 | Cold | Full decode (ms) | 369/402 | 399/433 |
 | Warm | Full decode (ms) | 350/371 | 386/420 |
 
-This refreshes one shared successful ID on the current main commit; this decode run itself does not add video, cipher, signed-in or cross-network evidence. HTTP ranges from this run are not player seeks. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full-report.json).
+At the time, this refreshed one shared successful ID on main `a983599`; the decode run itself did not add video, cipher, signed-in or cross-network evidence. HTTP ranges from this run are not player seeks. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full-report.json).
 
-## 2026-11-15 — current-main paired FFplay audio seek
+## 2026-11-15 — previous-main paired FFplay audio seek
 
 At exact main `a983599f1256209a78a1d30140fdda23a521b328`, one signed-out Windows x64 FFplay 9.0.2 attempt per adapter tested `dQw4w9WgXcQ`) on one home network. Each run received Right, waited 1.5 seconds, then received Left. eXcor range starts were `0, 666109, 497307`; InnerTubeX starts were `0, 497307, 329300`. All initial, forward and backward requests returned HTTP 206. The configured 30-second `time_limit` ended each run below the 256 MiB cap.
 
 This verifies one direct-audio seek sequence for each adapter, not video seeking, ciphered playback, cross-network behavior or broad reliability. See the [sanitized seek report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-player-seek-spaced.md). Issue #78 remains open; G4/G5/G11 remain partial.
+
+## 2026-11-15 — exact-main d29 paired audio and muxed-video playback
+
+At exact main `d29f6ae3e433c103748b12634c56f193788ac8cc`, signed-out Windows x64 tests on `dQw4w9WgXcQ` passed full Opus audio decode and a 480p H.264/AAC mux decode. The audio stream was 3,433,755 bytes and decoded for 213.061 seconds. The video track was 854×480 at 25 fps and 14,103,519 bytes; the mux decoded for 213.089 seconds. Midpoint HTTP range reads passed for both tracks. This eXcor-only run is one video/network and does not test player-controlled seeking. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-playback.md).
+
+At the same exact main SHA, signed-out JVM adapters ran three cold and three warm direct-audio attempts for the same video. Both eXcor 0.2.0 and InnerTubeX 0.11.7 passed full decode of the same 3,507,483-byte Opus stream and forward/backward HTTP range probes in all six attempts. First-media p50/p95 was 389/427 ms cold and 99/124 ms warm for eXcor, versus 1,179/1,298 ms and 153/169 ms for InnerTubeX. Full-decode p50/p95 was 462/547 ms and 512/552 ms for eXcor, versus 524/546 ms and 598/1,367 ms. This is one shared ID on one network, not broad parity; ranges are not player seeks. The comparison adapter disables SABR, so the run does not measure InnerTubeX v0.11.7's Remix SABR preference. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117-report.json).
 
 ## Release-gate interpretation
 
