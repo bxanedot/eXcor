@@ -7,6 +7,8 @@ eXcor is compared on capabilities that are documented or can be observed from ou
 - **YouTube.js:** public README, [Getting Started](https://ytjs.dev/guide/getting-started), [API docs](https://ytjs.dev/api/), and [npm package metadata](https://www.npmjs.com/package/youtubei.js), checked 2026-11-11. The separate adapter pins MIT-licensed `youtubei.js@18.3.0`, uses direct-URL audio only, and does not execute player JavaScript.
 - **NewPipeExtractor:** official README, v0.27.1 release notes and v0.27.1 Javadocs, checked 2026-11-11.
 
+**Matched video player-seek attempts — 2026-11-15, exact eXcor main `360c38c`:** on signed-out `dQw4w9WgXcQ` over one Windows home network, two eXcor attempts sent Right then Left to FFplay 9.0.2 and each reported five HTTP 206 ranges before the 30-second limit. The matched InnerTubeX 0.11.7 adapter returned `stream_resolution_failed` before FFplay opened in both attempts. No per-key range timing or decoded-frame measurement was captured, so this repeated one-case result is not a successful paired video seek or broad parity result. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-360-video-player-seek.md).
+
 **Latest exact-main paired direct-audio run — 2026-11-15, eXcor main `d29f6ae3e433c103748b12634c56f193788ac8cc`:** on signed-out `dQw4w9WgXcQ`, eXcor 0.2.0 and InnerTubeX 0.11.7 both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in all three cold and three warm samples on one Windows home network.
 
 | Phase | Measure (p50/p95) | eXcor | InnerTubeX |

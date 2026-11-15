@@ -14,7 +14,13 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-15 02:28 UTC
+## Latest verified checkpoint — 2026-11-15 05:48 UTC
+
+- PR #191 merged to main as `360c38cd77e344a801fc0fcf1a292bfcca9eea56` at 05:29:45 UTC. All PR CI jobs passed; CodeQL was neutral. Post-merge main CI run [43681308219](https://github.com/bxanedot/eXcor/actions/runs/43681308219) passed at 05:45:07 UTC. The readiness branch reports 53/100, NO-GO, for this exact main SHA; this is engineering readiness, not playback parity.
+- Two same-metadata video player-seek attempts on signed-out `dQw4w9WgXcQ` used FFplay 9.0.2, cold samples and one Windows home network. eXcor received Right then Left in both runs; each reported five HTTP 206 ranges and relayed 786,432 bytes before the 30-second limit. InnerTubeX 0.11.7 returned `stream_resolution_failed` before FFplay opened in both matched attempts. No per-key request timing or decoded-frame measurement. See the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-360-video-player-seek.md).
+- The exact-main HLS recheck at `59f87af` remained skipped before manifest access. G4/G5/G11 stay partial, G6 stays blocked, issue #78 remains open, and the release decision stays NO-GO.
+
+## Previous verified checkpoint — 2026-11-15 02:28 UTC
 
 - Main is at `8912fdb664b876bc1a616363b9e0edccb1f5011c` after PR #186 refreshed the comparison evidence documentation. All 13 PR checks passed; exact-main CI also passed all jobs in run [43667024030](https://github.com/bxanedot/eXcor/actions/runs/43667024030). The merged topic branch was deleted locally and remotely. The only other remote branch is the active readiness-score automation branch.
 - The live readiness report is **53/100, Release NO-GO**, for this exact main SHA. Its post-CI refresh [43667920567](https://github.com/bxanedot/eXcor/actions/runs/43667920567) records CI success. This is evidence-backed engineering readiness, not a playback-success percentage or feature-parity score.
