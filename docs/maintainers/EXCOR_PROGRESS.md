@@ -14,12 +14,12 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-15 11:32 UTC
+## Latest verified checkpoint — 2026-11-15 11:58 UTC
 
-- Main is `17c6febd14d53da67700656dd8daa2030df38796` after PR #200. The exact-main readiness refresh [43708561692](https://github.com/bxanedot/eXcor/actions/runs/43708561692) succeeded at 53/100, Release NO-GO. Main CI [43708561736](https://github.com/bxanedot/eXcor/actions/runs/43708561736) and CodeQL [43708561645](https://github.com/bxanedot/eXcor/actions/runs/43708561645) were queued at the latest check.
-- PR #200's Linux, Windows, Android 26/36, preview, both Maven publications and artifact comparison passed. All five CodeQL analyses passed; macOS CI was still in progress. The merged topic branch was deleted locally and remotely; the only remote branches are main and the active `automation/excor-competitiveness` badge branch.
-- Three paired, signed-out FFplay 9.0.2 audio-seek attempts now confirm Right/Left seeking for eXcor 0.2.0 and InnerTubeX 0.11.7 on `dQw4w9WgXcQ`, one Windows home network. All six player runs visibly refreshed after both keys; each adapter returned 9/9 HTTP 206 reads at `0 → 497307 → 329300`. The first run used main `b1d020c`; two repeats used `17c6feb`, with no adapter-source changes between them. See the [first sample](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-b1-player-seek.md) and [repeat samples](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-17c6-player-seek-repeats.md).
-- Keep G4/G5/G11 partial, G6 blocked, issue #78 open and Release NO-GO. The live readiness score is engineering readiness, not a playback-success percentage.
+- PR #201 merged as `af7697d6cfa49f65c29c2566ed53d8e0cec5ce9a`; GitHub deleted the merged topic branch and `git fetch --prune` removed its stale ref. The active `automation/excor-competitiveness` score branch remains.
+- The exact-main score refresh [43710492664](https://github.com/bxanedot/eXcor/actions/runs/43710492664) succeeded at 53/100, Release NO-GO. Post-merge CI [43710492630](https://github.com/bxanedot/eXcor/actions/runs/43710492630) passed Linux, Windows, Android 26/36, preview and both Maven publications plus artifact comparison; macOS was queued. CodeQL [43710492578](https://github.com/bxanedot/eXcor/actions/runs/43710492578) passed Actions, Java/Kotlin, JavaScript/TypeScript and Python analyses; Swift was queued.
+- A new exact-main signed-out paired audio check on `jNQXAC9IVRw` ran one initial cold sample plus two cold and two warm repeats per adapter on one Windows home network. eXcor 0.2.0 was `ACCESS_DENIED` before media in all five attempts; InnerTubeX 0.11.7 fully decoded audio and passed forward/backward HTTP byte-range probes in all five. This is one-ID access evidence; it does not establish the refusal's cause or a shared playback pass.
+- Sanitized reports and samples are linked in the README, feature/competitor matrices and owner-run matrix. Keep G4/G5/G11 partial, G6 blocked, issue #78 open and Release NO-GO. No live access refusal was retried with another profile or bypassed.
 
 ## Next
 

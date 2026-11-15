@@ -248,3 +248,11 @@ On current eXcor main `17c6febd14d53da67700656dd8daa2030df38796`, one signed-out
 - **G10 remote publishing remains owner-authorized only**, regardless of these results.
 
 See `docs/release-gates.json`, `docs/COMPETITOR_MATRIX.md`, `docs/ERROR_HANDLING.md`, `maintainers/HANDOFF.md`, and issue #78.
+
+
+## 2026-11-15 — exact-main second-ID paired availability check
+
+- On main `af7697d6cfa49f65c29c2566ed53d8e0cec5ce9a`, signed-out Windows x64 adapters compared the public video `jNQXAC9IVRw` on the owner's home network. The first cold attempt was followed by two additional cold and two warm attempts per adapter.
+- eXcor 0.2.0 was `BLOCKED/ACCESS_DENIED` before any media request in all five attempts. InnerTubeX 0.11.7 fully decoded the audio and passed forward and backward HTTP byte-range probes in all five. This is an access differential; the cause of eXcor's refusal is unknown, and no shared eXcor decode, player seek, cipher, or cross-network result was produced.
+- The first run used `--full-decode --range-probes`; repeats covered cold and warm phases. Reports and sanitized samples: [first report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id.md), [repeat report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id-repeats.md), [first samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id.jsonl), [repeat samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id-repeats.jsonl).
+- Keep this separate from decoder failures and do not promote G4/G5/G11 from one ID/network. Issue #78 remains open.
