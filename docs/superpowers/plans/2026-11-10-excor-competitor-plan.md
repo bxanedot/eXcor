@@ -173,6 +173,11 @@ References: docs/maintainers/HANDOFF.md, docs/maintainers/EXCOR_PROGRESS.md, doc
 - Added `kJQP7kiw5Fk` as a signed-out music-video sample. InnerTubeX passed full 4,678,808-byte Opus decode and forward/backward HTTP byte-range probes in 3/3; eXcor was `BLOCKED/ACCESS_DENIED` before media in 3/3. This is one-network diagnostic evidence and does not add a shared playable ID.
 - See `modules/samples/black-box-comparison/results/owner-home-2026-11-13-fifth-video.md`; keep G5/G11 partial and preserve the access-denial classification.
 
+## 2026-11-15 — exact-main aqz comparison
+
+- Repeated the signed-out `aqz-KE-bpKQ` comparison at exact main `2818f68490e596f26f43f3be9902c3bc762b198b`, with three cold and three warm attempts per JVM adapter on one Windows home network. eXcor was `ACCESS_DENIED` before media in 6/6; InnerTubeX fully decoded and passed both HTTP byte-range probes in 6/6. This confirms a current-head access differential, not its cause, and adds no shared successful ID or eXcor timing.
+- See the [sanitized report](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.md) and [samples](../../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.jsonl). Issue #78 remains open for eligible playback, cipher coverage and repeatable player seeking; G11 remains partial.
+
 
 ## 2026-11-13 — Java 17 compatibility and runtime recheck
 
