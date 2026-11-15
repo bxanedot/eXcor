@@ -1,7 +1,7 @@
 # License boundary
 
-The adapter is a separate Gradle build and is not included in the eXcor SDK, examples, or application dependency graph. It uses only InnerTubeX's public API; no InnerTubeX implementation code is copied. Building it resolves the GPL-3.0 artifact and creates a linked executable. Treat that combined executable as separately licensed and obtain licensing review before distributing it. The repository's Apache-2.0 license continues to govern the original source files; this note does not authorize distribution of a linked binary.
+The current eXcor source, including this adapter, is licensed under GPL-3.0-only; see the repository root `LICENSE` and `NOTICE`. Earlier eXcor revisions and contributions were also distributed under Apache-2.0, and those grants remain in place.
 
-The adapter has no code copied from InnerTubeX. It uses only the public extraction API documented by the pinned artifact. Treat the adapter and any linked binary as GPL-3.0-covered; do not distribute a linked binary until the repository owner has completed a licensing review. The eXcor project license does not change the license of this subproject or its linked output.
+This adapter is a separate Gradle build, is not part of the eXcor SDK dependency graph, and uses only InnerTubeX's public API. No InnerTubeX implementation code is copied. Its pinned artifact is GPL-3.0. Building the adapter resolves that artifact and creates a linked executable; review licensing before redistributing it. This notice does not authorize publication or distribution.
 
-Pinned artifact: `com.github.MetrolistGroup.innertubex:innertubex:v0.11.6`.
+Pinned artifact: `com.github.MetrolistGroup.innertubex:innertubex:v0.11.7`.
