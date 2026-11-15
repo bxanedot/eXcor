@@ -176,6 +176,25 @@ A separate same-FFplay 9.0.2 check used Right then Left once per adapter for `dQ
 
 The 2026-11-14 results add repeatable same-ID decode and byte-range evidence plus one paired audio-seek case. They do not close the cross-network, eligible cipher, video-seek or repeated-seek requirements. G4/G5 remain partial.
 
+## 2026-11-15 — current-main paired audio decode and range recheck
+
+At exact main commit `a983599f1256209a78a1d30140fdda23a521b328`, the signed-out Windows x64 eXcor 0.2.0 and InnerTubeX 0.11.6 adapters ran three cold and three warm attempts on one home network for `dQw4w9WgXcQ`. Both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in all six attempts.
+
+| Phase | Measure (p50/p95) | eXcor | InnerTubeX |
+|---|---|---:|---:|
+| Cold | First media (ms) | 372/429 | 1,199/1,328 |
+| Warm | First media (ms) | 104/105 | 144/144 |
+| Cold | Full decode (ms) | 369/402 | 399/433 |
+| Warm | Full decode (ms) | 350/371 | 386/420 |
+
+This refreshes one shared successful ID on the current main commit; this decode run itself does not add video, cipher, signed-in or cross-network evidence. HTTP ranges from this run are not player seeks. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full-report.json).
+
+## 2026-11-15 — current-main paired FFplay audio seek
+
+At exact main `a983599f1256209a78a1d30140fdda23a521b328`, one signed-out Windows x64 FFplay 9.0.2 attempt per adapter tested `dQw4w9WgXcQ`) on one home network. Each run received Right, waited 1.5 seconds, then received Left. eXcor range starts were `0, 666109, 497307`; InnerTubeX starts were `0, 497307, 329300`. All initial, forward and backward requests returned HTTP 206. The configured 30-second `time_limit` ended each run below the 256 MiB cap.
+
+This verifies one direct-audio seek sequence for each adapter, not video seeking, ciphered playback, cross-network behavior or broad reliability. See the [sanitized seek report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-player-seek-spaced.md). Issue #78 remains open; G4/G5/G11 remain partial.
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.

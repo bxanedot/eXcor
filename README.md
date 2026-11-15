@@ -8,17 +8,22 @@ The badge refreshes after main CI and hourly. Its score measures evidence-backed
 
 ## Live comparison with InnerTubeX
 
-Latest exact-main paired direct-audio run: **2026-11-15** at eXcor main [`2818f68`](https://github.com/bxanedot/eXcor/commit/2818f68490e596f26f43f3be9902c3bc762b198b), eXcor 0.2.0 vs InnerTubeX 0.11.6. Both signed-out JVM adapters ran three cold and three warm attempts on one Windows home network, with full audio decode and HTTP byte-range probes.
+**Readiness score: 53/100 — NO-GO.** This is evidence-backed engineering readiness, not a percentage of InnerTubeX features or videos that play. The live score report and badge above track the current main commit and CI state.
 
-| Public video | eXcor | InnerTubeX |
-|---|---|---|
-| `aqz-KE-bpKQ` | `ACCESS_DENIED` before media in 6/6; no media bytes or timing | 6/6 full-decode and forward/backward range passes; first-media p50 1,204 / 140 ms cold / warm; decode p50 1,114 / 1,117 ms |
+**Latest exact-main paired direct-audio run:** 2026-11-15 at eXcor main [`a983599`](https://github.com/bxanedot/eXcor/commit/a983599f1256209a78a1d30140fdda23a521b328), eXcor 0.2.0 vs InnerTubeX 0.11.6. Signed-out JVM adapters ran three cold and three warm attempts on one Windows home network for `dQw4w9WgXcQ`. Both decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in all 6 attempts.
 
-This run is an access differential, not a shared playback pass or direct speed comparison. A previous exact-main run at `c92b2c0` found a shared case on `dQw4w9WgXcQ`: both adapters fully decoded and passed both ranges in 6/6 cold/warm attempts. First-media p50 cold/warm was 356/93 ms for eXcor and 1,285/141 ms for InnerTubeX; decode p50 was 320/321 ms and 373/384 ms. On `M7lc1UVf-VE`, eXcor was blocked before media in 6/6 and InnerTubeX's full decode timed out after 73,728 bytes in 6/6. Across these separate exact-main runs, the evidence includes one shared successful ID and repeatable access differentials on one network; it does not establish broad reliability or performance parity.
+| Measure (p50/p95) | Phase | eXcor | InnerTubeX |
+|---|---|---:|---:|
+| First media (ms) | Cold | 372/429 | 1,199/1,328 |
+| First media (ms) | Warm | 104/105 | 144/144 |
+| Full decode (ms) | Cold | 369/402 | 399/433 |
+| Full decode (ms) | Warm | 350/371 | 386/420 |
 
-A separate one-attempt-per-adapter FFplay check on `dQw4w9WgXcQ` at the previous exact main commit observed the same initial, forward, and backward HTTP 206 ranges for both clients. It covers audio seeking for one ID; video-seek parity and repeatability remain unverified. HTTP range probes alone are not player seeks.
+This is a shared direct-audio success on one video and one network, not broad reliability or performance parity. The same exact main also has one paired FFplay audio-seek check: after Right, a 1.5-second pause, and Left, both adapters produced distinct forward and backward HTTP 206 ranges. HTTP range probes from the decoder run are not player seeks.
 
-See the latest [aqz report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.md) and [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.jsonl), plus the previous exact-main [dQ report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c92-dq-full.md) and [M7 report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c92-m7lc-full.md). The [paired audio-seek report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md) records a separate one-ID check. See also the broader [competitive matrix](docs/COMPETITOR_MATRIX.md). The eXcor-only [video playback report](modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md) records a full audio/video decode and midpoint range read; it is not a matched InnerTubeX video comparison.
+The previous exact-main `aqz-KE-bpKQ` run at `2818f68` showed an access differential: eXcor was `ACCESS_DENIED` before media in 6/6 attempts, while InnerTubeX passed full decode and both ranges in 6/6. On `M7lc1UVf-VE`, the `c92b2c0` run showed the same eXcor access block; InnerTubeX passed ranges but its full decode timed out. These results do not identify a cause. The current paired seek attempt had distinct offsets per adapter (eXcor: `0, 666109, 497307`; InnerTubeX: `0, 497307, 329300`), all HTTP 206. It covers one audio ID and network; video seeking, ciphered playback and cross-network repeatability remain unverified.
+
+See the current [decode report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.md), [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.jsonl), and [machine-readable summary](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full-report.json), plus the matched [FFplay seek report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-player-seek-spaced.md). Older comparisons are in the [competitive matrix](docs/COMPETITOR_MATRIX.md).
 
 **Release status: NO-GO.** SABR/UMP playback is not implemented. Ciphered-stream playback, repeatable results across eligible videos and networks, and paired video-seek evidence remain incomplete. See the [release gates](docs/release-gates.json) and [playback evidence matrix](docs/PLAYBACK_EVIDENCE_MATRIX.md).
 
