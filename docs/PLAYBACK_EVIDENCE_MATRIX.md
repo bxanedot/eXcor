@@ -217,6 +217,12 @@ At exact main `360c38cd77e344a801fc0fcf1a292bfcca9eea56`, two signed-out Windows
 
 One signed-out InnerTubeX 0.11.7 attempt on `dQw4w9WgXcQ`, using the adapter diagnostic fix and eXcor main metadata `dbbe8c1`, returned `UNSUPPORTED/UNSUPPORTED_TRANSPORT` from the existing `NO_PLAYABLE_STREAM` classifier before FFplay or a media request. The earlier `stream_resolution_failed` attempts remain unclassified. This one direct-video extraction result is not a player-seek measurement or general incompatibility evidence. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-dbbe8c-innertubex-video-seek-classification.md). G4/G5/G11 remain partial.
 
+## 2026-11-15 — current-main availability and paired audio follow-up
+
+At eXcor main `766996e16dcb6a12ec5da5c7d9528094a7318d8f`, the signed-out per-ID range matrix classified `ScMzIvxBSi4` and `1ZAPwfrtAFY` as `ACCESS_BLOCKED`, and `ysz5S6PUM-U` as `VIDEO_UNAVAILABLE`. The test skipped after all three IDs were classified as blocked or unavailable; it had zero failures and no readable media range. The test-only classifier change was local to the JVM harness. See the [sanitized matrix record](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-766-range-matrix.md).
+
+The paired cold/warm follow-up repeated `ScMzIvxBSi4` three times per phase: eXcor was `BLOCKED/ACCESS_DENIED` in 6/6 before media, while InnerTubeX 0.11.7 passed full decode of 1,541,165 bytes and both HTTP byte-range probes in 6/6. On `ysz5S6PUM-U`, both adapters returned normalized `FAIL/OTHER`; on `1ZAPwfrtAFY`, eXcor was blocked before media and InnerTubeX timed out during decode after 73,728 bytes, although its two HTTP range probes passed. This is one signed-out Windows home network and no shared decode pass for these IDs; ranges are not player seeks. See the [three-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-unavailable-followup.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-unavailable-followup.jsonl), [six-sample ScMz report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-scmz-repeat.md), and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-scmz-repeat.jsonl). G4/G5/G11 remain partial; issue #78 remains open.
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.

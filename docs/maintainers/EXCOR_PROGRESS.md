@@ -14,7 +14,18 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-15 06:14 UTC
+## Latest verified checkpoint — 2026-11-15 08:17 UTC
+
+- Main is `766996e16dcb6a12ec5da5c7d9528094a7318d8f` after PR #195; that PR's 15 checks passed. The follow-up CI run for main was still in progress when this checkpoint was written. The readiness score is 53/100, NO-GO, and measures engineering readiness rather than playback parity.
+- An owner-run three-ID signed-out range matrix at this main SHA found two `ACCESS_BLOCKED` outcomes (`ScMzIvxBSi4`, `1ZAPwfrtAFY`) and one `VIDEO_UNAVAILABLE` outcome (`ysz5S6PUM-U`). The updated local test harness reported one skip, zero failures, and no readable range; no product playback source changed in this run. See the [sanitized matrix record](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-766-range-matrix.md).
+- A paired follow-up on the same one Windows home network repeated `ScMzIvxBSi4` three cold and three warm times: eXcor was `BLOCKED/ACCESS_DENIED` before media in all six; InnerTubeX 0.11.7 decoded 1,541,165 bytes and passed both HTTP ranges in all six. The three-ID run separately records `FAIL/OTHER` for both adapters on `ysz5S6PUM-U` and an InnerTubeX decode timeout on `1ZAPwfrtAFY`; these are not shared playback passes. See the [paired report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-scmz-repeat.md) and [three-ID report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-unavailable-followup.md).
+- This is diagnostic evidence from one signed-out network. Keep G4/G5/G11 partial, G6 blocked, issue #78 open, and release NO-GO. See the [live score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
+
+## Next
+
+Continue issue #78 with an eligible public stream on another network, aiming for repeatable eXcor/InnerTubeX full decode and real player-seek evidence. Keep access refusals and unsupported or unclassified outcomes distinct; do not promote release gates from HTTP range probes. If Ruflo is used for development coordination, use its MCP-only path and follow this repository's clean-room and privacy rules.
+
+## Previous verified checkpoint — 2026-11-15 06:14 UTC
 
 - Main is now `dbbe8c14463eca40adc44b9501b51f4e669c932b` after PR #192; post-merge main CI passed. The readiness score remains 53/100, NO-GO, for this exact main SHA; it measures engineering readiness, not playback parity.
 - Two same-metadata video player-seek attempts at main `360c38c` on signed-out `dQw4w9WgXcQ` used FFplay 9.0.2, cold samples and one Windows home network. eXcor received Right then Left in both runs; each reported five HTTP 206 ranges and relayed 786,432 bytes before the 30-second limit. InnerTubeX 0.11.7 returned `stream_resolution_failed` before FFplay opened in both attempts. They lack per-key request timing and decoded-frame measurement. See the [report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-360-video-player-seek.md).

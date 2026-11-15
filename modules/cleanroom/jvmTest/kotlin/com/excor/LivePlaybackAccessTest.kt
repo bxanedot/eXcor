@@ -25,6 +25,14 @@ class LivePlaybackAccessTest {
     }
 
     @Test
+    fun knownUnavailableVideoIsClassifiedSeparatelyFromAccessRefusal() {
+        val message = "Excor This video is not available for video ysz5S6PUM-U"
+        assertTrue(isKnownYouTubeUnavailable(message))
+        assertFalse(isKnownYouTubeAccessRefusal(message))
+        assertFalse(isKnownYouTubeUnavailable("Could not parse player response"))
+    }
+
+    @Test
     fun knownChallengeSkipsLiveRequest() = runBlocking {
         val error = assertFailsWith<SkipException> {
             liveRequest("id") { throw IllegalStateException("Excor Sign in to confirm you're not a bot for video id") }
