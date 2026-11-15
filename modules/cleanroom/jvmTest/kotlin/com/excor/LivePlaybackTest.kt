@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
@@ -23,6 +24,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.io.path.createTempDirectory
 
 class LivePlaybackTest {
     private data class ByteRange(val first: Long, val last: Long, val total: Long) {
@@ -168,25 +170,60 @@ class LivePlaybackTest {
                 liveRequest(videoId) { excor.extractHls(videoId) },
                 "No validated HLS manifest returned for $videoId",
             )
-            val command = mutableListOf("ffmpeg", "-v", "error", "-xerror", "-rw_timeout", "15000000")
-            if (stream.headers.isNotEmpty()) {
-                command += listOf("-headers", stream.headers.entries.joinToString("\r\n", postfix = "\r\n") { "${it.key}: ${it.value}" })
-            }
-            command += listOf("-i", stream.url, "-t", "8", "-f", "null", "-")
-            val decode = ProcessBuilder(command)
-                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                .redirectError(ProcessBuilder.Redirect.DISCARD)
-                .start()
+            val decodedUs = decodeHlsSample(stream.url, "https,tls,tcp,crypto", stream.headers)
+            println("decoded HLS media from ${stream.clientName} (live=${stream.isLive}, outputUs=$decodedUs)")
+        }
+    }
+
+    @Test
+    fun generatedHlsVodProducesDecodedMedia() {
+        if (System.getenv("EXCOR_HLS_FIXTURE") != "1") throw SkipException("Set EXCOR_HLS_FIXTURE=1 to enable the local FFmpeg HLS check")
+        val directory = createTempDirectory("excor-hls-test-").toFile()
+        try {
+            val playlist = File(directory, "index.m3u8")
+            val encode = ProcessBuilder(
+                "ffmpeg", "-nostdin", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=160x90:rate=10",
+                "-t", "3", "-c:v", "mpeg2video", "-g", "10", "-f", "hls", "-hls_time", "1",
+                "-hls_playlist_type", "vod", playlist.path,
+            ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
             try {
-                assertTrue(decode.waitFor(45, TimeUnit.SECONDS), "ffmpeg timed out decoding HLS media")
-                assertTrue(decode.exitValue() == 0, "ffmpeg could not decode the first 8 seconds of HLS media")
+                assertTrue(encode.waitFor(15, TimeUnit.SECONDS) && encode.exitValue() == 0, "could not generate the local HLS fixture")
             } finally {
-                if (decode.isAlive) {
-                    decode.destroyForcibly()
-                    decode.waitFor(5, TimeUnit.SECONDS)
-                }
+                if (encode.isAlive) encode.destroyForcibly().waitFor(5, TimeUnit.SECONDS)
             }
-            println("decoded an HLS sample from ${stream.clientName} (live=${stream.isLive})")
+            val decodedUs = decodeHlsSample(playlist.path, "file")
+            assertTrue(decodedUs in 2_500_000..3_500_000, "the HLS fixture should decode about three seconds, got $decodedUs µs")
+            println("Generated HLS VOD decoded outputUs=$decodedUs")
+        } finally {
+            directory.listFiles()?.forEach { it.delete() }
+            directory.delete()
+        }
+    }
+
+    private fun decodeHlsSample(url: String, protocols: String, headers: Map<String, String> = emptyMap()): Long {
+        val command = mutableListOf(
+            "ffmpeg", "-nostdin", "-v", "error", "-xerror", "-progress", "pipe:1", "-stats_period", "1",
+            "-protocol_whitelist", protocols, "-rw_timeout", "15000000",
+        )
+        if (headers.isNotEmpty()) {
+            command += listOf("-headers", headers.entries.joinToString("\r\n", postfix = "\r\n") { "${it.key}: ${it.value}" })
+        }
+        command += listOf("-i", url, "-t", "8", "-f", "null", "-")
+        val decode = ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        val output = FutureTask { decode.inputStream.use { it.readNBytes(32_769) } }
+        Thread(output, "excor-hls-progress").apply { isDaemon = true; start() }
+        try {
+            assertTrue(decode.waitFor(45, TimeUnit.SECONDS), "ffmpeg timed out decoding HLS media")
+            assertEquals(0, decode.exitValue(), "ffmpeg reported an HLS decoding failure")
+            val bytes = output.get(2, TimeUnit.SECONDS)
+            assertTrue(bytes.size <= 32_768, "FFmpeg progress exceeded its limit")
+            val lines = bytes.decodeToString().lineSequence().filter { it.isNotBlank() }.toList()
+            assertEquals("progress=end", lines.lastOrNull(), "FFmpeg did not report completed progress")
+            val decodedUs = lines.lastOrNull { it.startsWith("out_time_us=") }?.substringAfter('=')?.toLongOrNull()
+            assertTrue(decodedUs != null && decodedUs > 0, "FFmpeg finished without decoding media")
+            return decodedUs
+        } finally {
+            if (decode.isAlive) decode.destroyForcibly().waitFor(5, TimeUnit.SECONDS)
         }
     }
 
