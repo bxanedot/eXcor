@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import re
 import sys
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote
 
 CATEGORIES = {
     "bug": "bug", "feature": "enhancement", "documentation": "documentation",
@@ -115,11 +115,12 @@ class GitHub:
         data = json.dumps(payload).encode() if payload is not None else None
         if data is not None:
             headers["Content-Type"] = "application/json"
-        proxy = urlsplit(os.environ.get("HTTPS_PROXY", ""))
-        if proxy.geturl():
-            if proxy.scheme != "http" or not proxy.hostname or proxy.username or proxy.password:
-                raise ValueError("Unsupported proxy configuration")
-            connection = http.client.HTTPSConnection(proxy.hostname, proxy.port or 80, timeout=15)
+        proxy = os.environ.get("HTTPS_PROXY", "")
+        if proxy:
+            # The approved cloud proxy is a fixed alternative, never an arbitrary destination.
+            if proxy not in {"http://proxy:8080", "http://proxy:8080/"}:
+                raise ValueError("Proxy is not allowed by maintenance policy")
+            connection = http.client.HTTPSConnection("proxy", 8080, timeout=15)
             connection.set_tunnel("api.github.com", 443)
         else:
             connection = http.client.HTTPSConnection("api.github.com", timeout=15)

@@ -33,8 +33,9 @@ other repositories and a renamed default branch require policy review. It uses
 one fixed HTTPS origin, refuses redirects, limits each body
 to 2 MiB, each request to 15 seconds, and a run to 80 requests. It stops on API
 errors, including rate-limit responses; it does not retry or spam comments.
-The configured HTTP CONNECT proxy is supported without sending the GitHub bearer
-token to another HTTP origin. Scheduled jobs have a 10-minute hard timeout and
+The managed cloud's fixed `http://proxy:8080` CONNECT proxy is supported;
+arbitrary proxy hosts/ports are rejected before connection. The GitHub bearer
+token is sent only after TLS to api.github.com, not to another HTTP origin. Scheduled jobs have a 10-minute hard timeout and
 one shared concurrency group. Writes are additive and repeatable after failure.
 
 ## Branch and PR limits
@@ -66,12 +67,12 @@ python3 modules/tooling/github_maintenance.py --repo bxanedot/eXcor --output /tm
 
 A 2026-11-15 read-only live run found one issue, three open PRs, working
 `delete_on_merge`, no obsolete branch candidates, and `default_branch_protected=false`.
-No labels or branches changed. The focused synthetic suite passed eleven tests,
+No labels or branches changed. The focused synthetic suite passed twelve tests,
 including malicious text, stale security/closed states, idempotence, API limits,
 redirect refusal, human labels, and protected/active/unique branch retention.
 The immutable-action checker also now recognizes named steps (`- name:` followed
 by `uses:`); the new regression failed before the correction and passed after it.
-All 29 offline tooling tests and 24 pinned-action references passed validation.
+All 30 offline tooling tests and 24 pinned-action references passed validation.
 The scheduled Actions run and privileged label writes still need owner-approved
 activation and verification after merge; local tests do not establish that.
 

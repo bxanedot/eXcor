@@ -151,6 +151,12 @@ class TriageTests(unittest.TestCase):
                     api.request("GET", path)
             connect.assert_not_called()
 
+    def test_proxy_cannot_redirect_the_connection_to_an_arbitrary_host(self):
+        api = m.GitHub("bxanedot/eXcor")
+        with patch.dict("os.environ", {"HTTPS_PROXY": "http://attacker.invalid:8080"}), patch.object(m.http.client, "HTTPSConnection") as connect:
+            with self.assertRaises(ValueError): api.request("GET", "")
+            connect.assert_not_called()
+
     def test_branch_audit_preserves_protected_active_unique_and_score_refs(self):
         class SnapshotAPI:
             def request(self, method, path, payload=None):
