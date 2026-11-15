@@ -1,8 +1,8 @@
 # Local DASH MPD experiment — 2026-11-15
 
-This is branch-only diagnostic work based on `3faca7e`, stacked on PR #217
-(`7fae79e`). Main was still `314dd6e3fa7f44325f280feb826b298a8fb70e17`
-when checked. It supplies no new exact-main playback evidence. DASH playback
+This diagnostic began at `3faca7e`, stacked on PR #217 (`7fae79e`),
+when main was `314dd6e3fa7f44325f280feb826b298a8fb70e17`. It now integrates
+main `9a4672a7b6fc9ec791f423853e8ba4f49c16d034` after #217 merged. It supplies no new exact-main playback evidence. DASH playback
 remains unsupported; release gates and readiness points are unchanged.
 
 ## Results
@@ -33,7 +33,7 @@ remains unsupported; release gates and readiness points are unchanged.
 - Linux CI now installs FFmpeg, records its version and runs these three
   DASH checks plus the generated HLS VOD check with EXCOR_LIVE=0. This checks reconstruction without
   a YouTube request. Exact-head CI for this follow-up is still required.
-  The PR remains draft; no production capability is promoted.
+  No production capability is promoted; merge requires green current-head checks.
 
 The only service SIDX/range evidence remains PR #217's existing 2026-11-15
 Windows home-network sample: itag 139 init 0–731, index 732–1027, timescale
