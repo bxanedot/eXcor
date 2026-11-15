@@ -1,0 +1,279 @@
+{
+  "samples": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.5-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-15-main-1f1414-refresh",
+        "locale": "en-US",
+        "mainCommit": "1f141412aeb55ee5972cffbe11a1d077d0274aec",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-15T14:45:59Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 3507483,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 16950.921,
+        "extractMs": 1429.586,
+        "firstMediaByteMs": 2085.439,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": -7301088,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 6,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.5-innertubex0.11.7",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-15-main-1f1414-refresh",
+        "locale": "en-US",
+        "mainCommit": "1f141412aeb55ee5972cffbe11a1d077d0274aec",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-15T14:45:59Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 3507483,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1626.462,
+        "extractMs": 2213.04,
+        "firstMediaByteMs": 3748.34,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 61323496,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "dQw4w9WgXcQ"
+    }
+  ],
+  "schemaVersion": 1,
+  "summaries": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.5-excor0.2.0",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-15-main-1f1414-refresh",
+        "locale": "en-US",
+        "mainCommit": "1f141412aeb55ee5972cffbe11a1d077d0274aec",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-15T14:45:59Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 1,
+          "p50": 3507483,
+          "p95": 3507483
+        },
+        "decodeMs": {
+          "eligibleSamples": 1,
+          "p50": 16950.921,
+          "p95": 16950.921
+        },
+        "extractMs": {
+          "eligibleSamples": 1,
+          "p50": 1429.586,
+          "p95": 1429.586
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 1,
+          "p50": 2085.439,
+          "p95": 2085.439
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 1,
+          "p50": -7301088,
+          "p95": -7301088
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 1,
+          "p50": 4,
+          "p95": 4
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 1,
+          "p50": 4,
+          "p95": 4
+        },
+        "requestCount": {
+          "eligibleSamples": 1,
+          "p50": 6,
+          "p95": 6
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 1,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "PASS": 1
+        },
+        "rangeForwardProbe": {
+          "PASS": 1
+        },
+        "rangeProbeMethod": {
+          "HTTP_BYTE_RANGE": 1
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 1,
+      "videoId": "dQw4w9WgXcQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.5-innertubex0.11.7",
+      "comparison": {
+        "contentCategory": "music_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-15-main-1f1414-refresh",
+        "locale": "en-US",
+        "mainCommit": "1f141412aeb55ee5972cffbe11a1d077d0274aec",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-15T14:45:59Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 1,
+          "p50": 3507483,
+          "p95": 3507483
+        },
+        "decodeMs": {
+          "eligibleSamples": 1,
+          "p50": 1626.462,
+          "p95": 1626.462
+        },
+        "extractMs": {
+          "eligibleSamples": 1,
+          "p50": 2213.04,
+          "p95": 2213.04
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 1,
+          "p50": 3748.34,
+          "p95": 3748.34
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 1,
+          "p50": 61323496,
+          "p95": 61323496
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 1,
+          "p50": 4,
+          "p95": 4
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 1,
+          "p50": 4,
+          "p95": 4
+        },
+        "requestCount": {
+          "eligibleSamples": 1,
+          "p50": 4,
+          "p95": 4
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 1,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "PASS": 1
+        },
+        "rangeForwardProbe": {
+          "PASS": 1
+        },
+        "rangeProbeMethod": {
+          "HTTP_BYTE_RANGE": 1
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 1,
+      "videoId": "dQw4w9WgXcQ"
+    }
+  ]
+}
