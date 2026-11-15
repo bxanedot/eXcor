@@ -243,7 +243,7 @@ On current eXcor main `17c6febd14d53da67700656dd8daa2030df38796`, one signed-out
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
 - **G5** cannot be called broadly reliable until audio and video full-decode + seek checks work for multiple eligible videos and environments. Service-side access refusals must be tracked separately.
-- **G8** includes one owner-run live extraction that recovered from a locally injected synthetic 503; no upstream YouTube fault or live cancellation was tested, so reliability remains partial.
+- **G8** includes one owner-run extraction that recovered from a locally injected 503 and two live JVM metadata requests cancelled after the response headers arrived. Upstream faults and cancellation during media playback remain unverified.
 - **G6 SABR/UMP remains BLOCKED** until independently verified implementation and seek/decoding tests exist; this matrix cannot close it.
 - **G10 remote publishing remains owner-authorized only**, regardless of these results.
 
@@ -274,3 +274,13 @@ Remove-Item Env:\EXCOR_HLS_FIXTURE
 ```
 
 This verifies the FFmpeg check against a generated playlist. Live HLS extraction, playback, seeking, and the G5 gate remain open.
+
+## 2026-11-15 — live JVM player request cancellation
+
+On signed-out Windows x64 and one home network, two runs at `6312e7c301d34bfede84e6fadf4adbcd74248040` looked up metadata for `dQw4w9WgXcQ`. At 18:00:08 and 18:00:11 UTC, YouTube returned HTTP 200 headers in both trials. The test paused response delivery in OkHttp after the headers, cancelled the caller, and observed both the OkHttp cancellation event and the coroutine cancellation. Each trial sent one player POST.
+
+```sh
+EXCOR_LIVE=1 EXCOR_DECODE_ID=dQw4w9WgXcQ ./gradlew :jvmTest --rerun --tests 'com.excor.LivePlaybackTest.cancellingMetadataLookupCancelsLivePlayerCall'
+```
+
+G8 stays partial. The result covers host initiated cancellation of a metadata request. Upstream failure recovery, cancellation during a media read, and other platforms require separate evidence.

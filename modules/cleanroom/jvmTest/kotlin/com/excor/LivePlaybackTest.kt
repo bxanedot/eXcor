@@ -3,13 +3,22 @@ package com.excor
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.FutureTask
+
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import okhttp3.Call
+import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
@@ -39,7 +48,7 @@ class LivePlaybackTest {
     private val injectedPlayer503 = AtomicInteger()
     private val playerFaultArmed = AtomicBoolean()
 
-    private fun newExcor(): Pair<Excor, OkHttpClient> {
+    private fun newExcor(configure: OkHttpClient.Builder.() -> Unit = {}): Pair<Excor, OkHttpClient> {
         playerScriptRequests.set(0)
         playerApiRequests.set(0)
         injectedPlayer503.set(0)
@@ -63,7 +72,7 @@ class LivePlaybackTest {
                 if (request.url.encodedPath.contains("/s/player/")) playerScriptRequests.incrementAndGet()
                 chain.proceed(request)
             }
-        }.build()
+        }.apply(configure).build()
         val library = Excor(LiveHost(http))
         clients += http
         libraries += library
@@ -79,6 +88,56 @@ class LivePlaybackTest {
         }
         libraries.clear()
         clients.clear()
+    }
+
+    @Test
+    fun cancellingMetadataLookupCancelsLivePlayerCall() {
+        if (System.getenv("EXCOR_LIVE") != "1") throw SkipException("Set EXCOR_LIVE=1 to enable YouTube live checks")
+        val headers = CompletableDeferred<Int>()
+        val cancelled = CompletableDeferred<Unit>()
+        val release = CountDownLatch(1)
+        fun isPlayerPost(request: Request) =
+            request.method == "POST" && request.url.encodedPath == "/youtubei/v1/player"
+
+        val (excor, _) = newExcor {
+            eventListener(object : EventListener() {
+                override fun canceled(call: Call) {
+                    if (isPlayerPost(call.request())) cancelled.complete(Unit)
+                }
+            })
+            addNetworkInterceptor { chain ->
+                val response = chain.proceed(chain.request())
+                if (isPlayerPost(chain.request())) {
+                    try {
+                        // Keep the real response in flight until the caller has cancelled it.
+                        headers.complete(response.code)
+                        if (!release.await(10, TimeUnit.SECONDS) || chain.call().isCanceled()) {
+                            throw IOException("Live cancellation test ended the response")
+                        }
+                    } catch (error: Exception) {
+                        response.close()
+                        throw error
+                    }
+                }
+                response
+            }
+        }
+
+        runBlocking {
+            val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
+            val lookup = async { excor.videoInfo(videoId) }
+            try {
+                val status = withTimeout(35_000) { headers.await() }
+                lookup.cancel()
+                withTimeout(5_000) { cancelled.await() }
+                assertFailsWith<CancellationException> { lookup.await() }
+                assertEquals(1, playerApiRequests.get(), "cancellation must not retry the player request")
+                println("Live player POST received HTTP $status headers; OkHttp call and coroutine cancelled; player POSTs=1")
+            } finally {
+                release.countDown()
+                lookup.cancel()
+            }
+        }
     }
 
     /**
