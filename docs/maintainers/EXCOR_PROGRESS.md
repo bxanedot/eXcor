@@ -14,12 +14,12 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
-## Latest verified checkpoint — 2026-11-15 08:17 UTC
+## Latest verified checkpoint — 2026-11-15 09:00 UTC
 
-- Main is `766996e16dcb6a12ec5da5c7d9528094a7318d8f` after PR #195; that PR's 15 checks passed. The follow-up CI run for main was still in progress when this checkpoint was written. The readiness score is 53/100, NO-GO, and measures engineering readiness rather than playback parity.
-- An owner-run three-ID signed-out range matrix at this main SHA found two `ACCESS_BLOCKED` outcomes (`ScMzIvxBSi4`, `1ZAPwfrtAFY`) and one `VIDEO_UNAVAILABLE` outcome (`ysz5S6PUM-U`). The updated local test harness reported one skip, zero failures, and no readable range; no product playback source changed in this run. See the [sanitized matrix record](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-766-range-matrix.md).
-- A paired follow-up on the same one Windows home network repeated `ScMzIvxBSi4` three cold and three warm times: eXcor was `BLOCKED/ACCESS_DENIED` before media in all six; InnerTubeX 0.11.7 decoded 1,541,165 bytes and passed both HTTP ranges in all six. The three-ID run separately records `FAIL/OTHER` for both adapters on `ysz5S6PUM-U` and an InnerTubeX decode timeout on `1ZAPwfrtAFY`; these are not shared playback passes. See the [paired report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-scmz-repeat.md) and [three-ID report](../../modules/samples/black-box-comparison/results/owner-home-2026-11-15-unavailable-followup.md).
-- This is diagnostic evidence from one signed-out network. Keep G4/G5/G11 partial, G6 blocked, issue #78 open, and release NO-GO. See the [live score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
+- Main is `ae437714f9ec84d839aebad631bd8d2f529025f1` after PR #196. Its nine CI jobs and five CodeQL language analyses passed; post-merge main CI run [43696187646](https://github.com/bxanedot/eXcor/actions/runs/43696187646) also passed. The readiness refresh [43697137976](https://github.com/bxanedot/eXcor/actions/runs/43697137976) records 53/100, Release NO-GO, for this exact main SHA. The score measures engineering readiness, not playback parity.
+- The README and [playback evidence matrix](../PLAYBACK_EVIDENCE_MATRIX.md) carry the latest paired direct-audio decode and availability results, with their source revisions and limits. The dQw4w9WgXcQ full-decode comparison is tied to eXcor source `d29f6ae`; the ScMzIvxBSi4 access differential is from one signed-out Windows home network. HTTP ranges are not player seeks, and neither result establishes broad reliability or SABR parity.
+- PR #196's merged topic branch `fix/live-availability-matrix` was deleted. The only remaining branches are `main` and the required `automation/excor-competitiveness` score branch; there are no open PRs.
+- Keep G4/G5/G11 partial, G6 blocked, issue #78 open, and release NO-GO. See the [live score](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md).
 
 ## Next
 
