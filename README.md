@@ -39,6 +39,13 @@ In this sample eXcor delivered first media sooner; decode medians were similar. 
 
 **Release decision: NO-GO.** The live [score report](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md), [release gates](docs/release-gates.json), and [competitor matrix](docs/COMPETITOR_MATRIX.md) show category coverage and remaining gaps. These are evidence limits, not inferred competitor failures.
 
+## Start using the API
+
+Follow the [JVM installation and API guide](docs/GETTING_STARTED.md) to build
+local artifacts, add the dependency, handle pagination and errors, and manage
+client lifetime. The [standalone JVM sample](modules/samples/jvm-quickstart)
+is compiled in CI. There is no public Maven repository for eXcor yet.
+
 ## Build
 
 ```sh
