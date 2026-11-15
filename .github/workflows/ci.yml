@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# Group PR checks by PR number; keep each main push in its own group.
+concurrency:
+  group: excor-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   GRADLE_ARGS: -Porg.gradle.java.installations.fromEnv=JAVA_HOME_27_X64,JAVA_HOME_27_ARM64 --stacktrace
 
