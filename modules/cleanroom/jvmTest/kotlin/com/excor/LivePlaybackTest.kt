@@ -550,14 +550,18 @@ class LivePlaybackTest {
                     }
                 } catch (error: SkipException) {
                     "$videoId:ACCESS_BLOCKED"
+                } catch (error: IllegalStateException) {
+                    if (!isKnownYouTubeUnavailable(error.message)) throw error
+                    "$videoId:VIDEO_UNAVAILABLE"
                 }
             }
             println("public music video range matrix: ${outcomes.joinToString(", ")}")
             val readable = outcomes.any { it.endsWith(":RANGE_READABLE") || it.endsWith(":READABLE_HTTP_200") }
-            val accessOnly = outcomes.all {
-                it.endsWith(":ACCESS_BLOCKED") || ":MEDIA_REFUSED_HTTP_" in it || it.endsWith(":MEDIA_UNAVAILABLE_HTTP_404")
+            val onlyBlockedOrUnavailable = outcomes.all {
+                it.endsWith(":ACCESS_BLOCKED") || it.endsWith(":VIDEO_UNAVAILABLE") ||
+                    ":MEDIA_REFUSED_HTTP_" in it || it.endsWith(":MEDIA_UNAVAILABLE_HTTP_404")
             }
-            if (!readable && accessOnly) throw SkipException("All selected public videos were access-blocked, unavailable or media-refused: ${outcomes.joinToString(", ")}")
+            if (!readable && onlyBlockedOrUnavailable) throw SkipException("All selected public videos were access-blocked, unavailable or media-refused: ${outcomes.joinToString(", ")}")
             assertTrue(readable, "No selected public video returned readable audio: ${outcomes.joinToString(", ")}")
             assertTrue(
                 outcomes.none { it.endsWith(":NO_STREAM") || ":EMPTY_MEDIA_HTTP_" in it || it.endsWith(":INVALID_RANGE") || it.endsWith(":MIME_MISMATCH") || it.substringAfter(':').startsWith("HTTP_") },
@@ -588,6 +592,9 @@ internal fun isKnownYouTubeAccessRefusal(message: String?): Boolean {
         reason.startsWith("excor sign in to confirm your age") ||
         reason.startsWith("excor the page needs to be reloaded.")
 }
+
+internal fun isKnownYouTubeUnavailable(message: String?): Boolean =
+    message?.lowercase()?.startsWith("excor this video is not available for video ") == true
 
 internal suspend fun <T> liveRequest(videoId: String, request: suspend () -> T): T = try {
     request()
