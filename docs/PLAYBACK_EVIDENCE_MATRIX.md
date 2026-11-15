@@ -201,6 +201,10 @@ At exact main `d29f6ae3e433c103748b12634c56f193788ac8cc`, signed-out Windows x64
 
 At the same exact main SHA, signed-out JVM adapters ran three cold and three warm direct-audio attempts for the same video. Both eXcor 0.2.0 and InnerTubeX 0.11.7 passed full decode of the same 3,507,483-byte Opus stream and forward/backward HTTP range probes in all six attempts. First-media p50/p95 was 389/427 ms cold and 99/124 ms warm for eXcor, versus 1,179/1,298 ms and 153/169 ms for InnerTubeX. Full-decode p50/p95 was 462/547 ms and 512/552 ms for eXcor, versus 524/546 ms and 598/1,367 ms. This is one shared ID on one network, not broad parity; ranges are not player seeks. The comparison adapter disables SABR, so the run does not measure InnerTubeX v0.11.7's Remix SABR preference. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117-report.json).
 
+## 2026-11-15 — exact-main 17f five-ID range classification
+
+At exact main `17f160417d3d98449e3ab6cd6cd07c6c0aa5eada`, the signed-out Windows x64 JVM test `LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId` ran on one home network. It recorded one `RANGE_READABLE` outcome (`dQw4w9WgXcQ`) and four recognized `ACCESS_BLOCKED` outcomes (`kJQP7kiw5Fk`, `JGwWNGJdvx8`, `aqz-KE-bpKQ`, `M7lc1UVf-VE`). The test completed with one pass, zero skips and zero failures; it continues after each recognized access block. This adds no new playable ID, full decode, player seek or cipher evidence and does not establish cross-network reliability. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-17f-range-matrix.md).
+
 ## Release-gate interpretation
 
 - **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
