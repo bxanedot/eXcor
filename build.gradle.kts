@@ -165,9 +165,10 @@ kotlin.sourceSets.commonTest { kotlin.srcDir(generateFixturesPath) }
 // Test environment alone is not a Gradle input: changing opt-in controls must invalidate skipped results.
 tasks.withType<Test>().configureEach {
     listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS", "EXCOR_BENCH", "EXCOR_HLS_ID", "EXCOR_DASH_DECODE", "EXCOR_DECODE_ID").forEach {
-        val value = System.getenv(it) ?: ""
-        environment(it, value)
-        inputs.property(it, value)
+        val value = System.getenv(it)
+        if (value != null) environment(it, value)
+        inputs.property(it, value.orEmpty())
+        inputs.property("$it.isSet", value != null)
     }
 }
 tasks.withType<AbstractTestTask>().configureEach {

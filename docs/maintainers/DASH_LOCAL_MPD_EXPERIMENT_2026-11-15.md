@@ -53,6 +53,9 @@ A follow-up reproduced stale skips when only EXCOR_DASH_DECODE changed from
 The opt-in controls (including EXCOR_DECODE_ID) are now explicit task input
 properties as well. Repeating the same selected tests with flag 0 then 1
 reran :jvmTest and changed one skip into a successful synthetic decode.
+Unset controls remain unset in the worker environment, preserving built-in
+video-ID defaults. Presence is a separate task input so absent and explicitly
+empty values do not share a cached result.
 See [Gradle incremental-build runtime inputs](https://docs.gradle.org/current/userguide/incremental_build.html).
 
 ## Bounds and scope
