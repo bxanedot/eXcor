@@ -18,7 +18,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.plugin
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
-import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.client.statement.bodyAsChannel
@@ -38,7 +38,7 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
 
-private const val ADAPTER_VERSION = "0.1.5-innertubex0.11.7"
+private const val ADAPTER_VERSION = "0.1.6-innertubex0.11.7"
 private const val MAX_RANGE_BYTES = 65_536
 private val videoIdPattern = Regex("^[A-Za-z0-9_-]{11}$")
 private val commitPattern = Regex("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
@@ -284,7 +284,7 @@ private fun mediaHeaders(input: Map<String, String>): Map<String, String> {
 internal fun mediaUrlAllowedForTest(value: String): Boolean = allowedMediaUrl(value)
 internal fun mediaHeadersForTest(input: Map<String, String>): Map<String, String> = mediaHeaders(input)
 
-private data class RangeResponse(
+internal data class RangeResponse(
     val code: Int,
     val location: String?,
     val contentRange: String?,
@@ -320,7 +320,7 @@ private fun rangeResponseValid(code: Int, contentRange: String?, bytesRead: Int)
     return end in 0 until MAX_RANGE_BYTES.toLong() && bytesRead.toLong() == end + 1 && (total == null || total > end)
 }
 
-private suspend fun executeRangeRequest(
+internal suspend fun executeRangeRequest(
     client: HttpClient,
     url: String,
     headers: Map<String, String>,
@@ -330,43 +330,43 @@ private suspend fun executeRangeRequest(
     maxBytes: Int = MAX_RANGE_BYTES,
 ): RangeResponse {
     requestCount.incrementAndGet()
-    val response = client.get(url) {
+    return client.prepareGet(url) {
         header(HttpHeaders.Range, "bytes=$startByte-${startByte + maxBytes - 1}")
         headers.forEach { (name, value) -> header(name, value) }
-    }
-    val code = response.status.value
-    val location = response.headers[HttpHeaders.Location]
-    val contentRange = response.headers[HttpHeaders.ContentRange]
-    val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-    if (code !in setOf(200, 206)) {
-        response.bodyAsChannel().cancel()
-        return RangeResponse(code, location, contentRange, 0, null, contentLength)
-    }
-
-    val channel: ByteReadChannel = response.bodyAsChannel()
-    val buffer = ByteArray(8192)
-    var total = 0
-    var zeroReads = 0
-    var firstByteAtNs: Long? = null
-    try {
-        while (total < maxBytes) {
-            val count = channel.readAvailable(buffer, 0, minOf(buffer.size, maxBytes - total))
-            if (count < 0) break
-            if (count == 0) {
-                zeroReads += 1
-                if (zeroReads > 128) break
-                yield()
-                continue
-            }
-            zeroReads = 0
-            if (firstByteAtNs == null) firstByteAtNs = System.nanoTime()
-            total += count
+    }.execute { response ->
+        val code = response.status.value
+        val location = response.headers[HttpHeaders.Location]
+        val contentRange = response.headers[HttpHeaders.ContentRange]
+        val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+        if (code !in setOf(200, 206)) {
+            return@execute RangeResponse(code, location, contentRange, 0, null, contentLength)
         }
-    } finally {
-        channel.cancel()
+
+        val channel: ByteReadChannel = response.bodyAsChannel()
+        val buffer = ByteArray(8192)
+        var total = 0
+        var zeroReads = 0
+        var firstByteAtNs: Long? = null
+        try {
+            while (total < maxBytes) {
+                val count = channel.readAvailable(buffer, 0, minOf(buffer.size, maxBytes - total))
+                if (count < 0) break
+                if (count == 0) {
+                    zeroReads += 1
+                    if (zeroReads > 128) break
+                    yield()
+                    continue
+                }
+                zeroReads = 0
+                if (firstByteAtNs == null) firstByteAtNs = System.nanoTime()
+                total += count
+            }
+        } finally {
+            channel.cancel()
+        }
+        if (total > 0) bytesCounter.addAndGet(total.toLong())
+        return@execute RangeResponse(code, location, contentRange, total, firstByteAtNs, contentLength)
     }
-    if (total > 0) bytesCounter.addAndGet(total.toLong())
-    return RangeResponse(code, location, contentRange, total, firstByteAtNs, contentLength)
 }
 
 private suspend fun probeInitialRange(
@@ -459,77 +459,76 @@ private suspend fun decodeFullMedia(
         for (hop in 0..3) {
             if (!allowedMediaUrl(current)) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
             mediaRequestCount.incrementAndGet()
-            val response = client.get(current) {
+            var redirect: String? = null
+            val attempt = client.prepareGet(current) {
                 headers.forEach { (name, value) -> header(name, value) }
                 header(HttpHeaders.AcceptEncoding, "identity")
                 header(HttpHeaders.Range, "bytes=0-")
-            }
-            val code = response.status.value
-            if (code in redirectStatuses) {
-                val location = response.headers[HttpHeaders.Location]
-                response.bodyAsChannel().cancel()
-                if (hop == 3 || location.isNullOrBlank()) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
-                current = try {
-                    URI(current).resolve(location).toString()
-                } catch (_: Exception) {
-                    return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+            }.execute { response ->
+                val code = response.status.value
+                if (code in redirectStatuses) {
+                    redirect = response.headers[HttpHeaders.Location]
+                    return@execute null
                 }
-                if (!allowedMediaUrl(current)) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
-                continue
-            }
-            if (code == 401 || code == 403) {
-                response.bodyAsChannel().cancel()
-                return DecodeAttempt(SampleOutcome("BLOCKED", "ACCESS_DENIED"))
-            }
-            if (!HttpRangeProbe.fullResponseIsComplete(
-                    code, response.headers[HttpHeaders.ContentRange], expectedBytes,
-                )
-            ) {
-                response.bodyAsChannel().cancel()
-                return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
-            }
-            val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-            if (contentLength != null && contentLength != expectedBytes) {
-                response.bodyAsChannel().cancel()
-                return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
-            }
-
-            val channel = response.bodyAsChannel()
-            val buffer = ByteArray(32_768)
-            var total = 0L
-            var zeroReads = 0
-            try {
-                while (true) {
-                    val count = channel.readAvailable(buffer, 0, buffer.size)
-                    if (count < 0) break
-                    if (count == 0) {
-                        zeroReads += 1
-                        if (zeroReads > 128) break
-                        yield()
-                        continue
-                    }
-                    zeroReads = 0
-                    if (count.toLong() > expectedBytes - total || count.toLong() > FfmpegMediaDecoder.MAX_INPUT_BYTES - total) {
-                        return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
-                    }
-                    total += count
-                    bytesRead.addAndGet(count.toLong())
-                    when (decoder.write(buffer, count)) {
-                        "PASS" -> Unit
-                        "LIMIT" -> return DecodeAttempt(null, "UNSUPPORTED")
-                        else -> return DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL")
-                    }
+                if (code == 401 || code == 403) {
+                    return@execute DecodeAttempt(SampleOutcome("BLOCKED", "ACCESS_DENIED"))
                 }
-            } finally {
-                channel.cancel()
-            }
-            if (total != expectedBytes) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                if (!HttpRangeProbe.fullResponseIsComplete(
+                        code, response.headers[HttpHeaders.ContentRange], expectedBytes,
+                    )
+                ) {
+                    return@execute DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                }
+                val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+                if (contentLength != null && contentLength != expectedBytes) {
+                    return@execute DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                }
 
-            val decoded = decoder.finish(remainingBudgetMs(deadlineNs))
-            return when (decoded.status) {
-                "PASS" -> DecodeAttempt(SampleOutcome("PASS", null), "PASS", decoded.elapsedMs)
-                "TIMEOUT" -> DecodeAttempt(SampleOutcome("FAIL", "TIMEOUT"), "FAIL", decoded.elapsedMs)
-                else -> DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL", decoded.elapsedMs)
+                val channel = response.bodyAsChannel()
+                val buffer = ByteArray(32_768)
+                var total = 0L
+                var zeroReads = 0
+                try {
+                    while (true) {
+                        val count = channel.readAvailable(buffer, 0, buffer.size)
+                        if (count < 0) break
+                        if (count == 0) {
+                            zeroReads += 1
+                            if (zeroReads > 128) break
+                            yield()
+                            continue
+                        }
+                        zeroReads = 0
+                        if (count.toLong() > expectedBytes - total || count.toLong() > FfmpegMediaDecoder.MAX_INPUT_BYTES - total) {
+                            return@execute DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+                        }
+                        total += count
+                        bytesRead.addAndGet(count.toLong())
+                        when (decoder.write(buffer, count)) {
+                            "PASS" -> Unit
+                            "LIMIT" -> return@execute DecodeAttempt(null, "UNSUPPORTED")
+                            else -> return@execute DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL")
+                        }
+                    }
+                } finally {
+                    channel.cancel()
+                }
+                if (total != expectedBytes) return@execute DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+
+                val decoded = decoder.finish(remainingBudgetMs(deadlineNs))
+                when (decoded.status) {
+                    "PASS" -> DecodeAttempt(SampleOutcome("PASS", null), "PASS", decoded.elapsedMs)
+                    "TIMEOUT" -> DecodeAttempt(SampleOutcome("FAIL", "TIMEOUT"), "FAIL", decoded.elapsedMs)
+                    else -> DecodeAttempt(SampleOutcome("FAIL", "DECODE"), "FAIL", decoded.elapsedMs)
+                }
+            }
+            if (attempt != null) return attempt
+            val location = redirect
+            if (hop == 3 || location.isNullOrBlank()) return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
+            current = try {
+                URI(current).resolve(location).toString()
+            } catch (_: Exception) {
+                return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))
             }
         }
         return DecodeAttempt(SampleOutcome("FAIL", "HTTP"))

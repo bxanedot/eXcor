@@ -8,22 +8,22 @@ The automated score and [machine-readable report](https://github.com/bxanedot/eX
 
 ## eXcor vs InnerTubeX
 
-**Latest exact-main paired direct-audio repeats (2026-11-15 14:51 UTC, main `1f141412aeb55ee5972cffbe11a1d077d0274aec`):** three signed-out cold attempts per adapter compared eXcor 0.2.0 with InnerTubeX 0.11.7 on public video `dQw4w9WgXcQ` over one Windows home network. Both decoded the same 3,507,483-byte Opus stream and passed both HTTP byte-range probes in 3/3 attempts. First-media p50/p95 was 1,561/1,617 ms for eXcor versus 2,924/3,049 ms for InnerTubeX; transfer-plus-decode p50/p95 was 726/792 ms versus 1,530/1,551 ms. A separate cold sample six minutes earlier measured 16,951 ms for eXcor transfer plus decode, so timing varied sharply and the reason is unknown; see that [single-sample report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-refresh.md). This remains one ID/network, not a broad performance ranking; player seeking and SABR are not measured. See the [three-sample report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.md), [JSON summary](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat-report.json), and [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.jsonl).
+**Paired direct audio, 2026-11-15 18:11 UTC.** eXcor 0.2.0 (main `314dd6e`) and InnerTubeX 0.11.7 (adapter `0.1.6`, source `e2ce366`) both decoded Opus and passed the two HTTP range probes in **6/6 attempts each**. This was one public video, `dQw4w9WgXcQ`, signed out on one Windows home network.
+
+| Measurement (p50 / p95) | eXcor | InnerTubeX |
+|---|---:|---:|
+| First media, cold (ms) | 449 / 915 | 2,361 / 3,736 |
+| First media, warm (ms) | 144 / 185 | 169 / 369 |
+| Transfer and decode, cold (ms) | 356 / 443 | 331 / 1,041 |
+| Transfer and decode, warm (ms) | 343 / 382 | 359 / 489 |
+
+Each phase had three samples per adapter. First media measures from extraction start to the first body read. The adapters exercised direct audio with HLS and SABR disabled. [Run report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-streaming-reads.md) · [Sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-streaming-reads.jsonl)
+
+Older InnerTubeX adapter versions through 0.1.5 buffered the initial range before timing the first body read. Use the new run for first-media comparisons. The older results still document completion and variation, including one eXcor sample that took 16,951 ms to transfer and decode. [Earlier paired run](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.md) · [Outlier report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-refresh.md)
 
 **Earlier exact-main paired Sintel diagnostic (2026-11-15, main `5bc3036d7e47ba2d0fc3382e6755ae9b5bf56220`):** one signed-out cold attempt for Blender Foundation's public [Sintel](https://www.youtube.com/watch?v=eRsGyueVLvQ) on one Windows home network. eXcor 0.2.0 was `BLOCKED/ACCESS_DENIED` before media; InnerTubeX 0.11.7 read 73,728 bytes and passed both HTTP byte-range probes, then hit the 30-second limit during full audio decode. Neither adapter fully decoded this sample. This is one attempt on one ID/network; it establishes neither the cause of eXcor's access block nor broad reliability or playback parity. See the [report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-sintel-paired.md), [JSON summary](modules/samples/black-box-comparison/results/owner-home-2026-11-15-sintel-paired-report.json), and [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-sintel-paired.jsonl).
 
 **Repeated second-ID paired availability check (2026-11-15, main `af7697d`):** signed-out adapters compared the public video `jNQXAC9IVRw` on one Windows home network. Across one cold attempt and two additional cold plus two warm attempts per adapter, eXcor was `BLOCKED/ACCESS_DENIED` before any media request in 5/5; InnerTubeX 0.11.7 fully decoded audio and passed forward/backward HTTP byte-range probes in 5/5. This is an access differential on one ID/network: it does not establish why YouTube denied eXcor, a general implementation failure, player-seek behavior, or broad parity. See the [first report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id.md), [repeat report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id-repeats.md), [first samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id.jsonl), and [repeat samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id-repeats.jsonl).
-
-**Earlier six-sample shared paired direct-audio pass:** signed-out eXcor 0.2.0 and InnerTubeX 0.11.7 adapters, on `dQw4w9WgXcQ` and one Windows home network. Both decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP range reads in all 3 cold and 3 warm attempts. Source: eXcor main `d29f6ae` (2026-11-15).
-
-| Measurement (p50 / p95) | eXcor | InnerTubeX |
-|---|---:|---:|
-| First media, cold (ms) | 389 / 427 | 1,179 / 1,298 |
-| First media, warm (ms) | 99 / 124 | 153 / 169 |
-| Full decode, cold (ms) | 462 / 547 | 524 / 546 |
-| Full decode, warm (ms) | 512 / 552 | 598 / 1,367 |
-
-In this sample eXcor delivered first media sooner; decode medians were similar. It is one successful video on one network, not a broad performance or reliability ranking. The adapters disabled HLS and SABR, so this does not test InnerTubeX's Remix SABR path. HTTP range reads are not player seeks. See the [paired run report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.md), [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.jsonl), and [full eXcor audio/video decode report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-playback.md).
 
 **Earlier paired availability check:** on `yydNF8tuVmU` at exact main `acff0a3`, signed-out eXcor 0.2.0 was `BLOCKED/ACCESS_DENIED` before media in all 3 cold and 3 warm attempts. InnerTubeX 0.11.7 decoded a 4,147,964-byte Opus stream and passed both forward/backward HTTP range probes in all six. InnerTubeX first-media p50/p95 was 1,360/2,108 ms cold and 148/161 ms warm; decode p50/p95 was 585/680 ms cold and 611/634 ms warm. eXcor has no media timing here, so these are not side-by-side speed results. This is one signed-out Windows home network and gives no shared decode or broad reliability comparison. See the [report](modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full.md), [sanitized samples](modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full.jsonl), and [JSON summary](modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full-report.json).
 
@@ -38,6 +38,13 @@ In this sample eXcor delivered first media sooner; decode medians were similar. 
 | SABR/UMP | No independently validated viewer contract or authorized fixture set; playback and seeking remain unimplemented/unverified. ([contract review](docs/SABR_VIEWER_CONTRACT_RECHECK_2026-11-14.md)) |
 
 **Release decision: NO-GO.** The live [score report](https://github.com/bxanedot/eXcor/blob/automation/excor-competitiveness/score/README.md), [release gates](docs/release-gates.json), and [competitor matrix](docs/COMPETITOR_MATRIX.md) show category coverage and remaining gaps. These are evidence limits, not inferred competitor failures.
+
+## Start using the API
+
+Follow the [JVM installation and API guide](docs/GETTING_STARTED.md) to build
+local artifacts, add the dependency, handle pagination and errors, and manage
+client lifetime. The [standalone JVM sample](modules/samples/jvm-quickstart)
+is compiled in CI. There is no public Maven repository for eXcor yet.
 
 ## Build
 

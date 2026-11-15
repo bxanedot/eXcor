@@ -15,6 +15,10 @@ import org.testng.Assert.assertFalse
 import org.testng.Assert.assertTrue
 import org.testng.annotations.Test
 import java.net.InetSocketAddress
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 class ComparisonAdapterTest {
@@ -71,6 +75,42 @@ class ComparisonAdapterTest {
         val json = ComparisonSample(options, "PASS", null).toJson()
         assertTrue(json.contains("\"rangeProbeMethod\":\"NOT_TESTED\""))
         assertTrue(json.contains("\"forwardSeek\":\"NOT_TESTED\""))
+    }
+
+    @Test
+    fun rangeProbeFinishesBeforeAnUnneededResponseTail() = runBlocking {
+        val probeFinished = CountDownLatch(1)
+        val sentTail = AtomicBoolean()
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        server.createContext("/") { exchange ->
+            try {
+                exchange.sendResponseHeaders(200, 2048)
+                exchange.responseBody.write(ByteArray(1024))
+                exchange.responseBody.flush()
+                if (!probeFinished.await(3, TimeUnit.SECONDS)) {
+                    sentTail.set(true)
+                    exchange.responseBody.write(ByteArray(1024))
+                }
+            } finally {
+                exchange.close()
+            }
+        }
+        server.start()
+        val client = newHttpClient(10, followRedirects = false)
+        try {
+            val result = executeRangeRequest(
+                client, "http://127.0.0.1:${server.address.port}/", emptyMap(),
+                AtomicLong(), AtomicLong(), maxBytes = 1024,
+            )
+            probeFinished.countDown()
+            assertEquals(result.bytesRead, 1024)
+            assertTrue(result.firstByteAtNs != null)
+            assertFalse(sentTail.get(), "the probe waited for the unrelated response tail")
+        } finally {
+            probeFinished.countDown()
+            client.close()
+            server.stop(0)
+        }
     }
 
     @Test

@@ -5,7 +5,7 @@ plugins {
     application
 }
 
-// As in the README's Installation section.
+// As in docs/GETTING_STARTED.md.
 repositories {
     mavenLocal()
     mavenCentral()
@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     implementation("com.excor:eXcor:0.2.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     testImplementation("org.testng:testng:7.5.1")
 }
 
