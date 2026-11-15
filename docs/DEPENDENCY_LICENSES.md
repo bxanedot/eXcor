@@ -21,6 +21,24 @@ The current eXcor source license is GPL-3.0-only. This table covers dependency l
 
 Ktor, Kotlin and test dependencies bring transitive artifacts; use Gradle dependency reports for the exact resolved graph on each target. See [`NOTICE`](../NOTICE) for bundled third-party text and [PROVENANCE.md](../PROVENANCE.md) for source records. The separate Swift package has no QuickJS-KT dependency and uses Apple JavaScriptCore.
 
+## Resolved native inputs
+
+Run `./gradlew -q --init-script modules/tooling/native-dependency-inventory.gradle nativeDependencyInventory` from the repository root. It resolves the same five configurations used by CI's shipped dependency scan. It scans ZIP entry names without unpacking the files and reports native library, object and bitcode entries with the containing archive's SHA-256.
+
+The 2026-11-15 inventory at main `df65af48d96354b87f8976c198a9793460bc17d0` found these native inputs:
+
+| Configuration | Archives inspected | Native entries |
+|---|---:|---|
+| JVM runtime | 24 | QuickJS-KT 1.0.15 JNI libraries for Linux arm64 and x64, macOS arm64 and x64, and Windows x64 |
+| Android runtime | 27 | QuickJS-KT 1.0.15 JNI libraries for arm64-v8a, armeabi-v7a, x86 and x86_64 |
+| iOS device arm64 | 26 | QuickJS-KT 1.0.15 static library and C interop bitcode. Ktor 3.6.0 and AtomicFU 0.33.0 C interop bitcode |
+| iOS simulator arm64 | 26 | Same components, built for simulator arm64 |
+| iOS simulator x64 | 26 | Same components, built for simulator x64 |
+
+Ktor's interop entries come from `ktor-io` (mutex), `ktor-network` (network and Unix domain), and `ktor-utils` (thread utilities). Ktor and AtomicFU's Maven POMs declare Apache-2.0. The QuickJS-KT wrapper and its embedded native sources have the licenses listed above.
+
+This inventory covers named entries in resolved dependency archives. A release audit still needs the links and native objects in the final binaries, including statically linked and system components, and verification against the release artifacts. The [XCFramework linkage check](https://github.com/bxanedot/eXcor/actions/runs/43739867814) verifies `JS_Eval` independently in each generated slice.
+
 ## CI vulnerability scan snapshot — 2026-11-12
 
 The all-configuration OSV scan in [CI run 43123548640](https://github.com/bxanedot/eXcor/actions/runs/43123548640) reported eight advisory records among 237 locked packages. Its separate shipped-runtime scan covered 115 packages and reported no issues. A Gradle dependency-lock report generated from main commit `e318753cd37b66699d11157dffa101d4e18a6b0d`, with locking enabled for all configurations, maps the affected artifacts to build-tool configurations that the shipped-runtime scan excludes:
