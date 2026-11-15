@@ -48,6 +48,13 @@ skips (254 executed passes), including XML/segment-copy and malformed-SIDX
 regressions. The separate FFmpeg-enabled focused run passed all three tests.
 `git diff --check` and the immutable-action-pin check also passed.
 
+A follow-up reproduced stale skips when only EXCOR_DASH_DECODE changed from
+0 to 1: passing it through `environment` alone left :jvmTest UP-TO-DATE.
+The opt-in controls (including EXCOR_DECODE_ID) are now explicit task input
+properties as well. Repeating the same selected tests with flag 0 then 1
+reran :jvmTest and changed one skip into a successful synthetic decode.
+See [Gradle incremental-build runtime inputs](https://docs.gradle.org/current/userguide/incremental_build.html).
+
 ## Bounds and scope
 
 The experiment downloads complete tracks in validated HTTP ranges to temporary
