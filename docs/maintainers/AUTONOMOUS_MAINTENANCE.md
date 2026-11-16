@@ -40,7 +40,7 @@ body is capped at 8,192 characters, at most 100 PRs are considered, and only num
 enter the report. Cross-repository references and ordinary mentions are ignored.
 
 The repository API client accepts only `bxanedot/eXcor` and a closed set of
-read/label paths. Two additional fixed public latest-release GET paths are
+read/label paths. Eight additional fixed public latest-release GET paths are
 allowed for the release observer, with no Authorization header. The final
 target is validated at the network boundary. Unexpected paths,
 other repositories and a renamed default branch require policy review. It uses
@@ -76,9 +76,10 @@ Those remain explicit backlog items, rather than implied capabilities.
 
 ## Public competitor release observations
 
-Scheduled and manual audits query GitHub's latest full release for InnerTubeX
-and YouTube.js. Issue-event audits skip these queries, and the label writer
-leaves the optional check disabled. There are at most two extra requests, sharing
+Scheduled and manual audits query GitHub's latest full release for the eight
+owner-selected projects: InnerTubeX, YouTube.js, tombulled/innertube,
+YoutubeExplode, youtube-transcript-api, ytmusicapi, yewtube and alaouy/YouTube. Issue-event audits skip these queries, and the label writer
+leaves the optional check disabled. There are at most eight extra requests, sharing
 the client's request/body/socket bounds. They use the fixed api.github.com origin,
 refuse redirects and send no repository token. No competitor source is fetched.
 
@@ -89,7 +90,7 @@ values are discarded. The report retains HTTP/access/rate-limit, network,
 response-size and metadata states separately. Known observation failures leave
 the repository audit usable; unexpected policy/programming errors fail it.
 
-A version difference from the 2026-11-15 baselines is `REVIEW_NEEDED`; a match
+A version difference from the 2026-11-16 baselines is `REVIEW_NEEDED`; a match
 records release metadata only. This covers GitHub releases, with npm-registry,
 interface, feature-gap and behavioral review remaining separate work. The
 observer never edits the competitor matrix, creates issues, copies implementation

@@ -130,3 +130,48 @@ eXcor's per-feature evidence lives in `FEATURE_MATRIX.md` and `EXCOR_ENGINEERING
 The JDK 17 second-ID repeat on `aqz-KE-bpKQ` was `ACCESS_DENIED` before media for eXcor in 3/3; InnerTubeX passed full decode and both ranges in 3/3. An earlier run on that ID had eXcor pass in 1/3, showing run-to-run access inconsistency. This does not add a shared decode result; see the [JDK 17 second-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-aqz-repeat.md).
 
 **Fresh matched cold follow-up (2026-11-13 09:18 UTC):** On signed-out `dQw4w9WgXcQ`, eXcor 0.1.4 and InnerTubeX 0.1.3 each passed full 3,507,483-byte Opus decode and forward/backward HTTP byte-range probes in 3/3 cold samples. First-media p50/p95 was 1,438/1,530 ms for eXcor and 1,358/1,535 ms for InnerTubeX; decode p50/p95 was 332/381 ms and 378/388 ms. This is one video/network from a dirty worktree, so it does not support a broad performance or reliability claim and remains excluded from the public readiness score. See the [normalized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-autonomy-followup.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-autonomy-followup.jsonl).
+
+## Owner-selected comparison scope — checked 2026-11-16
+
+These baselines use each project's latest published full **GitHub release** and
+that release's README. They do not establish package-registry currentness or
+successful runtime behavior. Roles below are documented claims; observable
+advantages require independent, version-matched tests on comparable workloads.
+Existing NewPipeExtractor adapter/evidence remains in the earlier comparison.
+
+| Project / release-pinned README | Published (UTC) | Documented role | Comparable workload and next eXcor evidence |
+|---|---|---|---|
+| [MetrolistGroup/innertubex v0.11.7](https://github.com/MetrolistGroup/innertubex/blob/v0.11.7/README.md) | 2026-11-13 | Kotlin extraction/InnerTube SDK | Matched metadata, format selection, first media, decode and seek; broader availability and SABR remain open. |
+| [LuanRT/YouTube.js v18.3.0](https://github.com/LuanRT/YouTube.js/blob/v18.3.0/README.md) | 2026-10-23 | JavaScript InnerTube SDK for Node.js, Deno and browsers | Comparable public API coverage and per-transport playback; eXcor JavaScript integration and broad matched evidence remain open. |
+| [tombulled/innertube v2.1.19](https://github.com/tombulled/innertube/blob/v2.1.19/README.md) | 2025-07-01 | Python low-level InnerTube endpoints; README says authentication is not implemented | Anonymous endpoint breadth, continuations, errors and request counts; raw endpoint coverage must not be equated with a typed, verified feature. |
+| [Tyrrrz/YoutubeExplode 6.6.3](https://github.com/Tyrrrz/YoutubeExplode/blob/6.6.3/Readme.md) | 2026-10-25 | .NET metadata, stream/download and closed-caption APIs | Metadata/format extraction and caption tracks; eXcor caption/transcript APIs remain unimplemented, while media storage stays host-owned. |
+| [jdepoix/youtube-transcript-api v1.2.5](https://github.com/jdepoix/youtube-transcript-api/blob/v1.2.5/README.md) | 2026-11-05 | Python transcript listing/fetching, languages and translation | Timestamped transcript retrieval, language choice and failure classification; eXcor transcript support remains unimplemented. |
+| [sigma67/ytmusicapi 1.12.3](https://github.com/sigma67/ytmusicapi/blob/1.12.3/README.rst) | 2026-09-16 | Python YouTube Music discovery, lyrics, library/history and playlist operations | Music discovery plus authorized library/write coverage; eXcor built-in YouTube Music authenticated operations/lyrics retrieval are not claimed by its host lyrics-provider API. |
+| [mps-youtube/yewtube v2.13.1](https://github.com/mps-youtube/yewtube/blob/v2.13.1/README.md) | 2026-03-04 | Terminal player/downloader with search and local playlists | End-user search/play/download flows versus host examples; application startup and player behavior are separate from extraction-SDK latency. |
+| [alaouy/YouTube v2.2.6](https://github.com/alaouy/YouTube/blob/v2.2.6/README.md) | 2026-03-04 | Laravel/PHP wrapper for YouTube Data API v3; API key, non-OAuth | Installation, metadata/search and pagination on the official API; a different protocol/quota model, not a media transport competitor. |
+
+The scheduled release observer checks these eight fixed public release routes
+without an Authorization header; a version change requests review and never
+awards readiness points. It does not inspect implementation code or establish
+feature parity. Library adapters, transcript tests, Music operations, terminal
+application flows and official Data API queries need distinct test contracts.
+
+Priorities exposed by the wider scope are caption/track/transcript APIs; authorized
+YouTube Music breadth and session isolation; independently verified transport
+compatibility; and reproducible installation/error/pagination comparisons across
+runtimes. Follow current access refusals and owner-authorized testing boundaries.
+The documented gaps and existing release decision remain unchanged; no new live
+playback or benchmark results were produced by this documentation/metadata audit.
+
+Release README blob fingerprints (content reproducibility, not runtime evidence):
+
+| Project | README git blob SHA |
+|---|---|
+| MetrolistGroup/innertubex | `cfa1b5cf8abbcabccd56b98a0e3b1bc310b5d512` |
+| LuanRT/YouTube.js | `01aa833a0cbdabaa59f575da71a932b053281a27` |
+| tombulled/innertube | `7d6ccd055e6c21b4a0bfa2011c325508558c340a` |
+| Tyrrrz/YoutubeExplode | `b195b70950ba534ec0cf87cedd0c2276be5a0c8f` |
+| jdepoix/youtube-transcript-api | `d0fdceb8a0f51d8d584681168f298661c10d4498` |
+| sigma67/ytmusicapi | `69efaeca97ee529e53171fe78b6825e49ba457f8` |
+| mps-youtube/yewtube | `8d63cf080a400bc98c76ebe7ce1670a44e5001ac` |
+| alaouy/YouTube | `33a992fd317cb041f143ba3542ff96de92ac514d` |
