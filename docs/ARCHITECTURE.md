@@ -43,7 +43,8 @@ The main/PR macOS job uses the supported Intel host by default and executes
 `iosX64Test`. Manual CI dispatch can select the arm64 host and
 `iosSimulatorArm64Test`. Both paths still build device arm64, simulator arm64
 and simulator x64 frameworks, verify XCFramework slices/notices and Swift APIs,
-and run the Swift package checks. The native report guard rejects absent, failed
+and run the Swift package checks. The macOS job uses the root project's Java 21
+toolchain (JVM bytecode target 17). The native report guard rejects absent, failed
 or entirely skipped tests; a disabled task cannot satisfy verification. Intel
 execution does not establish current arm64 simulator runtime evidence. Runner
 capacity failures remain incomplete verification and do not promote release gates.
