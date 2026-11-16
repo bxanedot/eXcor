@@ -130,7 +130,12 @@ with `dry_run=false` and inspect the triage result and sanitized label-update
 count. A skipped job means writes were disabled, not verified. A successful job
 with zero updates verifies execution but may mean all desired labels already
 exist. Keep the first run URL/count in the maintenance PR's validation record.
-The daily schedule still requires observation of an actual scheduled run.
+The first actual scheduled run is now observed: [run 43907193097](https://github.com/bxanedot/eXcor/actions/runs/43907193097)
+on main `edf2bdea5553ff01be916efb72df558ecd386081`, created 2026-11-16 16:24 UTC.
+Audit and triage both succeeded; each reported one issue, three PRs and zero label
+updates. This verifies one scheduled execution and an idempotent writer on that
+snapshot. It used the then-current two-project release observer; validation of
+the expanded eight-project observer on main and ongoing recurrence remain separate.
 
 The branch API reports `main` unprotected and the effective rules endpoint was
 empty. Classic protection administration was inaccessible (HTTP 403), so the
