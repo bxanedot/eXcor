@@ -1,4 +1,4 @@
-"""Exercise the actual writer condition; no workflow or issue text is executed."""
+"""Exercise actual maintenance conditions; no workflow or issue text is executed."""
 import ast
 from pathlib import Path
 import re
@@ -7,15 +7,10 @@ import unittest
 WORKFLOW = Path(__file__).resolve().parents[3] / ".github/workflows/maintenance.yml"
 
 
-def writer_enabled(setting, event, dry_run):
-    section = WORKFLOW.read_text(encoding="utf-8").split("\n  triage:\n", 1)[1]
-    match = re.search(r"^    if: >-\n((?:      .*\n)+)", section, re.M)
-    expression = " ".join(line.strip() for line in match[1].splitlines())
+def evaluate_condition(expression, contexts):
     expression = expression.replace("&&", " and ").replace("||", " or ")
     expression = re.sub(r"(?<!['\"\w])false(?!['\"\w])", "False", expression)
     expression = re.sub(r"(?<!['\"\w])true(?!['\"\w])", "True", expression)
-    contexts = {"vars": {"EXCOR_MAINTENANCE_APPLY_LABELS": setting},
-                "github": {"event_name": event}, "inputs": {"dry_run": dry_run}}
 
     def evaluate(node):
         if isinstance(node, ast.Constant) and type(node.value) in (str, bool):
@@ -34,9 +29,18 @@ def writer_enabled(setting, event, dry_run):
                 left, right = left.casefold(), right.casefold()
             if isinstance(node.ops[0], ast.Eq): return left == right
             if isinstance(node.ops[0], ast.NotEq): return left != right
-        raise AssertionError("Unsupported writer-condition syntax; extend the gate review")
+        raise AssertionError("Unsupported maintenance-condition syntax; extend the gate review")
 
-    return evaluate(ast.parse(expression, mode="eval").body)
+    return evaluate(ast.parse(expression.strip(), mode="eval").body)
+
+
+def writer_enabled(setting, event, dry_run):
+    section = WORKFLOW.read_text(encoding="utf-8").split("\n  triage:\n", 1)[1]
+    match = re.search(r"^    if: >-\n((?:      .*\n)+)", section, re.M)
+    expression = " ".join(line.strip() for line in match[1].splitlines())
+    contexts = {"vars": {"EXCOR_MAINTENANCE_APPLY_LABELS": setting},
+                "github": {"event_name": event}, "inputs": {"dry_run": dry_run}}
+    return evaluate_condition(expression, contexts)
 
 
 class MaintenanceWorkflowTest(unittest.TestCase):
@@ -56,6 +60,12 @@ class MaintenanceWorkflowTest(unittest.TestCase):
             self.assertTrue(writer_enabled(setting, "workflow_dispatch", False))
         for setting in ("false", "unexpected"):
             self.assertFalse(writer_enabled(setting, "workflow_dispatch", False))
+
+    def test_competitor_reads_only_run_for_schedule_and_manual_events(self):
+        match = re.search(r"EXCOR_CHECK_COMPETITORS: \$\{\{(.*?)\}\}", WORKFLOW.read_text(encoding="utf-8"))
+        for event, expected in [("schedule", True), ("workflow_dispatch", True),
+                                ("issues", False), ("pull_request", False)]:
+            self.assertEqual(expected, evaluate_condition(match[1], {"github": {"event_name": event}}))
 
 
 if __name__ == "__main__":

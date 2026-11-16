@@ -5,7 +5,7 @@ and on manual dispatch. It checks out trusted `main` only. It never executes
 issue text or PR code, and is not triggered by `pull_request_target`.
 
 The default audit job has read permissions. It produces a sanitized JSON artifact
-and a count-only run summary. Titles, bodies, comments, author/account details,
+and a bounded run summary with repository counts and optional public-release observations. Titles, bodies, comments, author/account details,
 headers and tokens are absent from reports. Security-like issues get a category
 but no writes or duplicate suggestions. No public bot comments are posted.
 
@@ -39,11 +39,14 @@ may produce a claim, so this is never treated as verified resolution. Each PR
 body is capped at 8,192 characters, at most 100 PRs are considered, and only numeric IDs
 enter the report. Cross-repository references and ordinary mentions are ignored.
 
-The API client accepts only `bxanedot/eXcor` and a closed set of read/label API
-paths, validating the final target at the network boundary. Unexpected paths,
+The repository API client accepts only `bxanedot/eXcor` and a closed set of
+read/label paths. Two additional fixed public latest-release GET paths are
+allowed for the release observer, with no Authorization header. The final
+target is validated at the network boundary. Unexpected paths,
 other repositories and a renamed default branch require policy review. It uses
 one fixed HTTPS origin, refuses redirects, limits each body
-to 2 MiB, each request to 15 seconds, and a run to 80 requests. It stops on API
+to 2 MiB and a run to 80 requests. Socket operations have a 15-second inactivity
+timeout; the Actions job supplies the ten-minute hard wall-time bound. It stops on API
 errors, including rate-limit responses; it does not retry or spam comments.
 The managed cloud's fixed `http://proxy:8080` CONNECT proxy is supported;
 arbitrary proxy hosts/ports are rejected before connection. The GitHub bearer
@@ -67,14 +70,38 @@ branches are retained. This is a safe audit, not complete obsolete-branch cleanu
 Inventories are bounded at 100 issues/PRs/branches and at most 25 branch
 comparisons. The report flags an incomplete inventory; no deletion or closure
 can occur regardless. This pilot does not yet close resolved issues, reopen
-regressions, verify PR fixes, monitor competitor releases, or automate merge policy.
+regressions, verify PR fixes, review competitor API/behavior changes, or automate merge policy.
 Those remain explicit backlog items, rather than implied capabilities.
+
+
+## Public competitor release observations
+
+Scheduled and manual audits query GitHub's latest full release for InnerTubeX
+and YouTube.js. Issue-event audits skip these queries, and the label writer
+leaves the optional check disabled. There are at most two extra requests, sharing
+the client's request/body/socket bounds. They use the fixed api.github.com origin,
+refuse redirects and send no repository token. No competitor source is fetched.
+
+`--check-competitors` records one observation per project, including failures.
+Only numeric X.Y.Z tags (optional v/V prefix), full-release flags and a valid UTC
+publication timestamp are accepted. Unusual metadata is unverified and its raw
+values are discarded. The report retains HTTP/access/rate-limit, network,
+response-size and metadata states separately. Known observation failures leave
+the repository audit usable; unexpected policy/programming errors fail it.
+
+A version difference from the 2026-11-15 baselines is `REVIEW_NEEDED`; a match
+records release metadata only. This covers GitHub releases, with npm-registry,
+interface, feature-gap and behavioral review remaining separate work. The
+observer never edits the competitor matrix, creates issues, copies implementation
+code, or changes readiness points. JSON artifacts, bounded console observations
+and `--summary-output` Markdown carry sanitized versions/statuses for review.
+The summary formatter accepts fixed project/status names and numeric versions.
 
 ## Verification
 
 ```sh
 python3 -m unittest discover -s modules/tooling/tests -p 'test_*maintenance*.py' -v
-python3 modules/tooling/github_maintenance.py --repo bxanedot/eXcor --output /tmp/maintenance.json
+python3 modules/tooling/github_maintenance.py --repo bxanedot/eXcor --output /tmp/maintenance.json --check-competitors --summary-output /tmp/maintenance.md
 ```
 
 A 2026-11-15 read-only live run found one issue, three open PRs, working
