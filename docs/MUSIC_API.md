@@ -2,6 +2,11 @@
 
 Everything is reached through `excor.music`, an instance of `ExcorMusic`. Every network call is a `suspend` function that throws `ExcorCatalogException(provider, error, statusCode)`. In Swift these calls are `async throws`.
 
+JSON reads and token-form responses with an empty or whitespace-only HTTP 200 body
+throw `MALFORMED_RESPONSE`; failed reads are not cached. Commands can still accept
+an empty success body, and explicit HTTP 204 responses keep their no-content
+behavior (for example, no active Spotify player).
+
 | The brief's operation | eXcor |
 | --- | --- |
 | `music.search(query, providers)` | `search(query, providers, kinds, limit)` returns `ExcorMultiSearchResult` (results and per-provider errors); `search(query, provider, kinds, limit, page)` searches one provider and pages |

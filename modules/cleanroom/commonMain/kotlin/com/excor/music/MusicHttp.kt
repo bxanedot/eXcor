@@ -93,7 +93,7 @@ internal class MusicHttp(
         json: String? = null,
         contentType: ContentType = ContentType.Application.Json,
     ): JsonElement =
-        send(provider, url) {
+        send(provider, url, allowEmptyBody = true) {
             http.prepareRequest(url) {
                 this.method = method
                 header(HttpHeaders.Accept, "application/json")
@@ -102,7 +102,12 @@ internal class MusicHttp(
             }
         }
 
-    private suspend fun send(provider: ExcorCatalogProvider, url: String, call: suspend () -> HttpStatement): JsonElement {
+    private suspend fun send(
+        provider: ExcorCatalogProvider,
+        url: String,
+        allowEmptyBody: Boolean = false,
+        call: suspend () -> HttpStatement,
+    ): JsonElement {
         var retried = false
         // The keyless iTunes Search/Lookup API has its own published limit, separate from the Apple Music API's.
         val budget = if (runCatching { Url(url).host }.getOrNull().equals(ITUNES_HOST, ignoreCase = true)) itunesBudget else budgets.getValue(provider)
@@ -119,7 +124,7 @@ internal class MusicHttp(
                         retryAfterMs = wait * 1_000
                         null
                     } else {
-                        read(provider, response)
+                        read(provider, response, allowEmptyBody)
                     }
                 }
             } catch (cancelled: CancellationException) {
@@ -135,7 +140,7 @@ internal class MusicHttp(
         }
     }
 
-    private suspend fun read(provider: ExcorCatalogProvider, response: HttpResponse): JsonElement {
+    private suspend fun read(provider: ExcorCatalogProvider, response: HttpResponse, allowEmptyBody: Boolean): JsonElement {
         val status = response.status.value
         if (status == 204) {
             return JsonObject(emptyMap())
@@ -148,7 +153,7 @@ internal class MusicHttp(
         }
         val type = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()?.lowercase()
         if (type == null && response.headers[HttpHeaders.ContentLength] == "0") {
-            return JsonObject(emptyMap())
+            return emptyBody(provider, allowEmptyBody)
         }
         if (type != "application/json" && type != "text/javascript") {
             throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
@@ -160,13 +165,18 @@ internal class MusicHttp(
             channel.cancel()
         }
         if (bytes.size > MAX_BYTES) throw ExcorCatalogException(provider, ExcorCatalogError.RESPONSE_TOO_LARGE)
-        // Commands such as Spotify's library writes succeed with an empty body.
-        if (bytes.all { it.toInt().toChar().isWhitespace() }) return JsonObject(emptyMap())
+        // Commands such as Spotify's library writes succeed with an empty body; JSON reads require a value.
+        if (bytes.all { it.toInt().toChar().isWhitespace() }) return emptyBody(provider, allowEmptyBody)
         return try {
             Json.parseToJsonElement(bytes.decodeToString())
         } catch (_: Exception) {
             throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
         }
+    }
+
+    private fun emptyBody(provider: ExcorCatalogProvider, allowed: Boolean): JsonElement {
+        if (!allowed) throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
+        return JsonObject(emptyMap())
     }
 
     private suspend fun cached(url: String): JsonElement? = cacheLock.withLock {
