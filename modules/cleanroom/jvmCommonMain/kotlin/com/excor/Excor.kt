@@ -50,8 +50,11 @@ class Excor(host: ExcorHost) {
         persistentPlayerData = PlayerDataDiskStore(host.filesDir) { host.configStore.enabled },
     )
 
-    /** Closes this instance's transport resources; the host's [ExcorHost.httpClient] stays open. */
-    fun close() = client.close()
+    /** Cancels background warm-up and closes this instance's transport resources; the host's [ExcorHost.httpClient] stays open. */
+    fun close() {
+        engine.close()
+        client.close()
+    }
 
     fun init() = engine.initialize()
     fun initializeFallback() = engine.initializeFallback()

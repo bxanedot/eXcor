@@ -29,6 +29,7 @@ import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,6 +57,9 @@ internal class ExcorEngine(
     }
 
     fun initializeFallback() = Unit
+
+    /** Cancel this engine's delayed and active warm-up work. Host-owned providers remain open. */
+    fun close() = scope.cancel()
 
     fun onSessionChanged() {
         state.update {

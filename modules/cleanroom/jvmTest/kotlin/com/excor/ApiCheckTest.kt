@@ -8,6 +8,8 @@ import com.excor.catalog.ExcorCatalogKind
 import com.excor.catalog.ExcorCatalogProvider
 import com.excor.catalog.ExcorCatalogTokenProvider
 import com.sun.net.httpserver.HttpServer
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -71,6 +73,43 @@ class ApiCheckTest {
             assertEquals(0, dnsLookups)
             assertFalse(httpClient.dispatcher.executorService.isShutdown, "eXcor must not shut down the host's shared OkHttp dispatcher")
         } finally {
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun closingExcorCancelsBackgroundWarmUpInsideTheHostSessionCallback() = runBlocking {
+        val entered = CompletableDeferred<Unit>()
+        val cancelled = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val base = apiHost(httpClient)
+        val host = object : ExcorHost by base {
+            override val configStore = object : ExcorConfigStore by base.configStore {
+                override val enabled = true
+            }
+            override suspend fun session(): ExcorSession {
+                entered.complete(Unit)
+                try {
+                    release.await()
+                } catch (failure: CancellationException) {
+                    cancelled.complete(Unit)
+                    throw failure
+                }
+                return base.session()
+            }
+        }
+        val library = Excor(host)
+        try {
+            library.onSessionChanged() // Starts warm-up immediately when the config store is enabled.
+            withTimeout(5_000) { entered.await() }
+            library.close()
+            withTimeout(5_000) { cancelled.await() }
+            assertFalse(httpClient.dispatcher.executorService.isShutdown)
+        } finally {
+            library.close()
+            release.complete(Unit)
             httpClient.dispatcher.executorService.shutdownNow()
             httpClient.connectionPool.evictAll()
         }
