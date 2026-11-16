@@ -9,13 +9,20 @@ and a count-only run summary. Titles, bodies, comments, author/account details,
 headers and tokens are absent from reports. Security-like issues get a category
 but no writes or duplicate suggestions. No public bot comments are posted.
 
-## Enable label writes
+## Fixed-label write policy
 
-Owner review is required before merging this workflow and enabling its write job.
-After reviewing the policy and a dry-run artifact, set the repository Actions
-variable `EXCOR_MAINTENANCE_APPLY_LABELS=true`. Manual dispatch defaults to
-`dry_run=true`; choose false only to exercise the enabled label job. Unset or
-false variables leave the writer disabled. No personal token is required.
+After a successful read-only audit, scheduled and issue-event runs apply fixed
+labels by default. Set the repository Actions variable
+`EXCOR_MAINTENANCE_APPLY_LABELS=false` to disable the writer. An unset variable
+uses the enabled repository default; `true` explicitly enables it. Other nonempty
+values disable writes, so a mistyped setting fails closed.
+
+Manual dispatch defaults to `dry_run=true` and remains read-only for every
+configuration value. Choose false to run the enabled writer. The explicit
+repository disable setting also blocks manual apply runs. No personal token or
+Actions-variable administration is needed to use the default policy. This
+activation follows the owner's delegated fixed-label decision; it changes the
+initial pilot's opt-in default, while retaining its fixed write scope and audit.
 
 Only the separate triage job receives `issues: write`. It re-fetches each issue
 before adding fixed category/priority/reproduction labels, keeps existing human
@@ -66,7 +73,7 @@ Those remain explicit backlog items, rather than implied capabilities.
 ## Verification
 
 ```sh
-python3 -m unittest discover -s modules/tooling/tests -p 'test_github_maintenance.py' -v
+python3 -m unittest discover -s modules/tooling/tests -p 'test_*maintenance*.py' -v
 python3 modules/tooling/github_maintenance.py --repo bxanedot/eXcor --output /tmp/maintenance.json
 ```
 
@@ -78,12 +85,24 @@ redirect refusal, human labels, and protected/active/unique branch retention.
 The immutable-action checker also now recognizes named steps (`- name:` followed
 by `uses:`); the new regression failed before the correction and passed after it.
 All 30 offline tooling tests and 24 pinned-action references passed validation.
+The activation follow-up adds tests against the actual workflow condition for
+scheduled/issue defaults, explicit disable and unknown settings, and manual
+dry-run/apply behavior. These run in both audit and writer policy checks.
 A manual `dry_run=true` Actions run on main `9a4672a` passed the policy tests,
 audit, and artifact-retention steps: [run 43776027815](https://github.com/bxanedot/eXcor/actions/runs/43776027815).
 The privileged triage job was skipped. Artifact download was access-blocked in
-the cloud environment, so its contents were not inspected here. Scheduled-event
-execution and privileged label writes remain unverified. Actions variable
-access returned HTTP 403; activation cannot be inferred from that failure.
+the cloud environment, so its contents were not inspected here. At that checkpoint, scheduled-event execution and privileged label writes were
+unverified. Actions-variable access returned HTTP 403; that response does not
+establish whether the effective workflow policy is enabled.
+
+
+To verify activation after merge, dispatch `maintenance.yml` on `main` with
+`dry_run=true` and confirm that audit succeeds and triage is skipped. Then dispatch
+with `dry_run=false` and inspect the triage result and sanitized label-update
+count. A skipped job means writes were disabled, not verified. A successful job
+with zero updates verifies execution but may mean all desired labels already
+exist. Keep the first run URL/count in the maintenance PR's validation record.
+The daily schedule still requires observation of an actual scheduled run.
 
 The branch API reports `main` unprotected and the effective rules endpoint was
 empty. Classic protection administration was inaccessible (HTTP 403), so the
