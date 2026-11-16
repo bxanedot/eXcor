@@ -9,6 +9,10 @@ import com.excor.catalog.ExcorCatalogProvider
 import com.excor.catalog.ExcorCatalogTokenProvider
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.CancellationException
@@ -17,6 +21,7 @@ import java.io.File
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import okhttp3.Cookie
@@ -109,6 +114,59 @@ class ApiCheckTest {
             library.close()
             withTimeout(5_000) { cancelled.await() }
             assertFalse(httpClient.dispatcher.executorService.isShutdown)
+        } finally {
+            library.close()
+            release.complete(Unit)
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun closingExcorDoesNotPrewarmAfterANonCancellableSessionCallbackReturns() =
+        cancelledWarmUpDoesNotPrewarmAfterSessionReturns(close = true)
+
+    @Test
+    fun sessionChangeDoesNotPrewarmAfterANonCancellableSessionCallbackReturns() =
+        cancelledWarmUpDoesNotPrewarmAfterSessionReturns(close = false)
+
+    private fun cancelledWarmUpDoesNotPrewarmAfterSessionReturns(close: Boolean) = runBlocking {
+        val entered = CompletableDeferred<Job>()
+        val release = CompletableDeferred<Unit>()
+        val providerCalls = AtomicInteger()
+        val warmUpEnabled = AtomicBoolean(true)
+        val provider = object : TokenProvider by apiTokenProvider() {
+            override suspend fun prewarm(cookie: String?) {
+                providerCalls.incrementAndGet()
+            }
+        }
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val base = warmUpHost(httpClient, provider)
+        val host = object : ExcorHost by base {
+            override val configStore = object : ExcorConfigStore by base.configStore {
+                override val enabled: Boolean get() = warmUpEnabled.get()
+            }
+            override suspend fun session(): ExcorSession {
+                entered.complete(currentCoroutineContext()[Job]!!)
+                // A host may finish cleanup before honoring cancellation. The SDK must
+                // check cancellation before handing its result to another host provider.
+                withContext(NonCancellable) { release.await() }
+                return base.session()
+            }
+        }
+        val library = Excor(host)
+        try {
+            library.onSessionChanged()
+            val warmUp = withTimeout(5_000) { entered.await() }
+            if (close) {
+                library.close()
+            } else {
+                warmUpEnabled.set(false) // Isolate cancellation of the old session's work.
+                library.onSessionChanged()
+            }
+            release.complete(Unit)
+            withTimeout(5_000) { warmUp.join() }
+            assertEquals(0, providerCalls.get(), "cancelled warm-up must not start provider work")
         } finally {
             library.close()
             release.complete(Unit)

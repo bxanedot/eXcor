@@ -109,7 +109,8 @@ shared `OkHttpClient`, let its owner decide when to shut it down. Reuse an Excor
 instance for related operations and close it when that owner finishes.
 Repeated initialization shares an active warm-up. `onSessionChanged()` cancels
 the preceding warm-up and schedules fresh work when the host config store is enabled. These
-background callbacks follow cooperative coroutine cancellation.
+background callbacks follow cooperative coroutine cancellation. If the session callback
+returns after cancellation, warm-up stops before invoking the token provider.
 
 Methods suspend: call them from a coroutine. `runBlocking` is appropriate for this
 command-line example; UI applications should use their existing coroutine scope.
