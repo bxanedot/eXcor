@@ -27,7 +27,20 @@ RELEASE_PROJECTS = {
                    "repo": "MetrolistGroup/innertubex", "baseline": "0.11.7"},
     "youtubejs": {"path": "/repos/LuanRT/YouTube.js/releases/latest",
                   "repo": "LuanRT/YouTube.js", "baseline": "18.3.0"},
+    "tombulled_innertube": {"path": "/repos/tombulled/innertube/releases/latest",
+                            "repo": "tombulled/innertube", "baseline": "2.1.19"},
+    "youtubeexplode": {"path": "/repos/Tyrrrz/YoutubeExplode/releases/latest",
+                       "repo": "Tyrrrz/YoutubeExplode", "baseline": "6.6.3"},
+    "youtube_transcript_api": {"path": "/repos/jdepoix/youtube-transcript-api/releases/latest",
+                              "repo": "jdepoix/youtube-transcript-api", "baseline": "1.2.5"},
+    "ytmusicapi": {"path": "/repos/sigma67/ytmusicapi/releases/latest",
+                   "repo": "sigma67/ytmusicapi", "baseline": "1.12.3"},
+    "yewtube": {"path": "/repos/mps-youtube/yewtube/releases/latest",
+                "repo": "mps-youtube/yewtube", "baseline": "2.13.1"},
+    "alaouy_youtube": {"path": "/repos/alaouy/YouTube/releases/latest",
+                       "repo": "alaouy/YouTube", "baseline": "2.2.6"},
 }
+RELEASE_BASELINE_DATE = "2026-11-16"
 VERSION_PATTERN = r"(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})"
 RELEASE_STATUSES = {"MATCHES_BASELINE", "REVIEW_NEEDED", "ACCESS_BLOCKED", "RATE_LIMITED",
                     "HTTP_ERROR", "NETWORK_ERROR", "RESPONSE_TOO_LARGE", "UNVERIFIED_METADATA"}
@@ -215,7 +228,7 @@ def release_metadata(project, value):
 def observe_competitor_releases(api):
     observations = []
     for project, policy in RELEASE_PROJECTS.items():
-        item = {"project": project, "baseline_version": policy["baseline"], "baseline_date": "2026-11-15",
+        item = {"project": project, "baseline_version": policy["baseline"], "baseline_date": RELEASE_BASELINE_DATE,
                 "api_url": "https://api.github.com" + policy["path"]}
         try:
             item.update(release_metadata(project, api.latest_release(project)))

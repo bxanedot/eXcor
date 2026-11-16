@@ -13,6 +13,13 @@ m = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(m)
 
 
+BASELINES = {
+    "innertubex": "0.11.7", "youtubejs": "18.3.0", "tombulled_innertube": "2.1.19",
+    "youtubeexplode": "6.6.3", "youtube_transcript_api": "1.2.5", "ytmusicapi": "1.12.3",
+    "yewtube": "2.13.1", "alaouy_youtube": "2.2.6",
+}
+
+
 def release(tag):
     return {"tag_name": tag, "draft": False, "prerelease": False,
             "published_at": "2026-11-13T14:59:23Z", "body": "synthetic-private-body",
@@ -22,7 +29,7 @@ def release(tag):
 
 class API:
     def __init__(self):
-        self.values = {"innertubex": release("v0.11.7"), "youtubejs": release("v18.3.0")}
+        self.values = {project: release("v" + version) for project, version in BASELINES.items()}
         self.checked = []
 
     def latest_release(self, project):
@@ -60,11 +67,18 @@ class Connection:
 
 
 class CompetitorReleaseTests(unittest.TestCase):
+    def test_owner_selected_projects_are_all_observed_once(self):
+        api = API()
+        observations = m.observe_competitor_releases(api)
+        self.assertEqual(list(BASELINES), api.checked)
+        self.assertEqual(list(BASELINES), [item["project"] for item in observations])
+        self.assertEqual(8, len(observations))
+
     def test_versions_are_metadata_only_and_changes_need_review(self):
         api = API()
         observations = m.observe_competitor_releases(api)
-        self.assertEqual(["MATCHES_BASELINE", "MATCHES_BASELINE"], [x["status"] for x in observations])
-        self.assertEqual(["0.11.7", "18.3.0"], [x["latest_version"] for x in observations])
+        self.assertEqual(["MATCHES_BASELINE"] * 8, [x["status"] for x in observations])
+        self.assertEqual(list(BASELINES.values()), [x["latest_version"] for x in observations])
         report = {"issues": [{"body": "synthetic-private-issue"}], "pull_requests": [],
                   "mode": "dry-run", "label_updates": 0, "competitor_check": "REQUESTED",
                   "competitor_releases": observations}
@@ -77,7 +91,7 @@ class CompetitorReleaseTests(unittest.TestCase):
                              ("latest_version", "1.2.3|@someone")]:
             bad = dict(observations[0], **{field: value})
             with self.assertRaises(ValueError):
-                m.render_summary(dict(report, competitor_releases=[bad, observations[1]]))
+                m.render_summary(dict(report, competitor_releases=[bad, *observations[1:]]))
 
     def test_unusual_tags_drafts_and_invalid_dates_are_not_reported_as_versions(self):
         for changes in [{"tag_name": "v1.2.3?token=synthetic-private"},
@@ -122,7 +136,7 @@ class CompetitorReleaseTests(unittest.TestCase):
             report = json.loads(output.read_text())
             self.assertEqual("dry-run", report["mode"])
             self.assertEqual(0, report["label_updates"])
-            self.assertEqual(["innertubex", "youtubejs"], api.checked)
+            self.assertEqual(list(BASELINES), api.checked)
             self.assertNotIn("synthetic-private", output.read_text() + summary.read_text())
             self.assertIn("MATCHES_BASELINE", summary.read_text())
 
@@ -130,8 +144,9 @@ class CompetitorReleaseTests(unittest.TestCase):
         connection = Connection(Response())
         with patch.dict("os.environ", {"HTTPS_PROXY": ""}), patch.object(m.http.client, "HTTPSConnection", return_value=connection) as connect:
             api = m.GitHub("bxanedot/eXcor", "synthetic-auth")
-            api.latest_release("innertubex")
-            api.latest_release("youtubejs")
+            for project in BASELINES:
+                api.latest_release(project)
+            self.assertEqual(8, len(connection.requests))
             for method, target, headers in connection.requests:
                 self.assertEqual("GET", method)
                 self.assertTrue(target.endswith("/releases/latest"))
