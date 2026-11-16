@@ -34,6 +34,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -957,6 +959,7 @@ internal class ExcorEngine(
     private suspend fun warmUp() {
         try {
             val session = host.session()
+            currentCoroutineContext().ensureActive()
             try {
                 tokenProvider?.prewarm(session.cookie)
             } catch (cancelled: CancellationException) {
