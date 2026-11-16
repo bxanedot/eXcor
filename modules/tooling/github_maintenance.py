@@ -86,6 +86,24 @@ def triage(issues):
     return result
 
 
+def link_fix_claims(plans, pulls):
+    """Link bounded PR-body claims only; never infer that a fix is verified."""
+    if len(pulls) > MAX_ITEMS:
+        raise ValueError("PR inventory exceeds limit")
+    eligible = {p["number"]: p for p in plans if p["category"] != "security"}
+    links = {ident: set() for ident in eligible}
+    for pull in pulls:
+        ident = number(pull.get("number"))
+        body = str(pull.get("body") or "")[:8192]
+        for match in re.finditer(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#([1-9][0-9]{0,8})\b", body, re.I):
+            target = int(match[1])
+            if target in links:
+                links[target].add(ident)
+    for ident, claims in links.items():
+        if claims:
+            eligible[ident]["unverified_fix_prs"] = sorted(claims)
+
+
 class GitHub:
     def __init__(self, repo, token=""):
         if repo != "bxanedot/eXcor":
@@ -194,7 +212,9 @@ def snapshot(api):
         reachable = comparison.get("status") in {"identical", "ahead"} and comparison.get("behind_by") == 0
         branch_plan.append({"branch": name, "sha": sha, "reachable_from_main": reachable,
                             "action": "retain_until_inactivity_and_warning_verified" if reachable else "retain_unique_or_unknown"})
-    return {"generated_at": datetime.now(timezone.utc).isoformat(), "issues": triage(issues),
+    plans = triage(issues)
+    link_fix_claims(plans, pulls)
+    return {"generated_at": datetime.now(timezone.utc).isoformat(), "issues": plans,
             "pull_requests": [{"number": number(p["number"]), "head": p["head"]["sha"], "draft": p["draft"]} for p in pulls],
             "branch_audit": branch_plan, "delete_on_merge": repo.get("delete_branch_on_merge"),
             "default_branch_protected": next((b.get("protected") for b in branches if b["name"] == main), None),

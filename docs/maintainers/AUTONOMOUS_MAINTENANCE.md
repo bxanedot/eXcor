@@ -25,7 +25,12 @@ creation uses only the hard-coded allowlist. Closed issues and PRs are skipped.
 
 Classification is heuristic and conservative, not a diagnosis. Exact normalized
 title matches are duplicate suggestions in the audit only; they do not link,
-close or suppress reports. `blocked by #N` references become dependency hints.
+close or suppress reports. `blocked by #N` references become dependency hints. PR bodies are scanned for
+local `fixes #N`, `closes #N`, and `resolves #N` claims. The audit links only
+currently open, non-security issues through `unverified_fix_prs`; quoted text
+may produce a claim, so this is never treated as verified resolution. Each PR
+body is capped at 8,192 characters, at most 100 PRs are considered, and only numeric IDs
+enter the report. Cross-repository references and ordinary mentions are ignored.
 
 The API client accepts only `bxanedot/eXcor` and a closed set of read/label API
 paths, validating the final target at the network boundary. Unexpected paths,
@@ -55,7 +60,7 @@ branches are retained. This is a safe audit, not complete obsolete-branch cleanu
 Inventories are bounded at 100 issues/PRs/branches and at most 25 branch
 comparisons. The report flags an incomplete inventory; no deletion or closure
 can occur regardless. This pilot does not yet close resolved issues, reopen
-regressions, link PR fixes, monitor competitor releases, or automate merge policy.
+regressions, verify PR fixes, monitor competitor releases, or automate merge policy.
 Those remain explicit backlog items, rather than implied capabilities.
 
 ## Verification
@@ -73,8 +78,12 @@ redirect refusal, human labels, and protected/active/unique branch retention.
 The immutable-action checker also now recognizes named steps (`- name:` followed
 by `uses:`); the new regression failed before the correction and passed after it.
 All 30 offline tooling tests and 24 pinned-action references passed validation.
-The scheduled Actions run and privileged label writes still need owner-approved
-activation and verification after merge; local tests do not establish that.
+A manual `dry_run=true` Actions run on main `9a4672a` passed the policy tests,
+audit, and artifact-retention steps: [run 43776027815](https://github.com/bxanedot/eXcor/actions/runs/43776027815).
+The privileged triage job was skipped. Artifact download was access-blocked in
+the cloud environment, so its contents were not inspected here. Scheduled-event
+execution and privileged label writes remain unverified. Actions variable
+access returned HTTP 403; activation cannot be inferred from that failure.
 
 The branch API reports `main` unprotected and the effective rules endpoint was
 empty. Classic protection administration was inaccessible (HTTP 403), so the
