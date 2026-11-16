@@ -218,13 +218,6 @@ The `com.excor.music` package was added while the repository used Apache-2.0. Th
 | YouTube InnerTube browse responses for channel Shorts and Playlists tabs | Observed 2026-11-01 | YouTube terms | `shortsLockupViewModel` (`reelWatchEndpoint` video ID, overlay title and views), playlist `gridRenderer` lockups, and tab addresses in `commandMetadata.webCommandMetadata.url`. |
 | YouTube InnerTube comments header (`sortFilterSubMenuRenderer`) | Observed 2026-11-01 | YouTube terms | Top and Newest sort continuation tokens, for `Excor.comments(newestFirst = true)`. |
 
-## CI concurrency configuration (2026-11-15)
-
-[GitHub workflow concurrency documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
-was consulted for PR-scoped replacement and unique main-push groups. Configuration
-was independently written from the documented interface; no implementation source
-or competitor material was used.
-
 ## Maintenance canonical repository (2026-11-16)
 
 GitHub's clone/push redirect and public repository metadata identified
@@ -232,3 +225,11 @@ GitHub's clone/push redirect and public repository metadata identified
 existing project. The maintenance client allowlist and synthetic network-boundary
 tests were independently updated to that fixed name. No competitor code or new
 dependency was used; redirect refusal and the fixed label-only write scope remain.
+
+
+## CI concurrency configuration (2026-11-15)
+
+[GitHub workflow concurrency documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+was consulted for PR-scoped replacement and unique main-push groups. Configuration
+was independently written from the documented interface; no implementation source
+or competitor material was used.
