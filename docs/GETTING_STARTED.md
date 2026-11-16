@@ -107,6 +107,9 @@ This example owns both the library and the default host client. `Excor.close()`
 cancels background warm-up and closes the library's transport; it leaves the host client open. When injecting a
 shared `OkHttpClient`, let its owner decide when to shut it down. Reuse an Excor
 instance for related operations and close it when that owner finishes.
+Repeated initialization shares an active warm-up. `onSessionChanged()` cancels
+the preceding warm-up and schedules fresh work when the host config store is enabled. These
+background callbacks follow cooperative coroutine cancellation.
 
 Methods suspend: call them from a coroutine. `runBlocking` is appropriate for this
 command-line example; UI applications should use their existing coroutine scope.

@@ -10,12 +10,14 @@ import com.excor.catalog.ExcorCatalogTokenProvider
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import okhttp3.Cookie
 import okhttp3.CookieJar
@@ -107,6 +109,72 @@ class ApiCheckTest {
             library.close()
             withTimeout(5_000) { cancelled.await() }
             assertFalse(httpClient.dispatcher.executorService.isShutdown)
+        } finally {
+            library.close()
+            release.complete(Unit)
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun sessionChangeCancelsThePreviousWarmUpBeforeItsProviderResumes() = runBlocking {
+        val firstEntered = CompletableDeferred<Unit>()
+        val secondEntered = CompletableDeferred<Unit>()
+        val firstCancelled = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val calls = AtomicInteger()
+        val provider = object : TokenProvider by apiTokenProvider() {
+            override suspend fun prewarm(cookie: String?) {
+                val first = calls.incrementAndGet() == 1
+                (if (first) firstEntered else secondEntered).complete(Unit)
+                try {
+                    release.await()
+                } catch (failure: CancellationException) {
+                    if (first) firstCancelled.complete(Unit)
+                    throw failure
+                }
+            }
+        }
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val library = Excor(warmUpHost(httpClient, provider))
+        try {
+            library.onSessionChanged()
+            withTimeout(5_000) { firstEntered.await() }
+            library.onSessionChanged()
+            withTimeout(5_000) {
+                firstCancelled.await()
+                secondEntered.await()
+            }
+        } finally {
+            library.close()
+            release.complete(Unit)
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun repeatedInitializationSharesAnActiveWarmUp() = runBlocking {
+        val firstEntered = CompletableDeferred<Unit>()
+        val duplicateEntered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val calls = AtomicInteger()
+        val provider = object : TokenProvider by apiTokenProvider() {
+            override suspend fun prewarm(cookie: String?) {
+                (if (calls.incrementAndGet() == 1) firstEntered else duplicateEntered).complete(Unit)
+                release.await()
+            }
+        }
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val library = Excor(warmUpHost(httpClient, provider))
+        try {
+            library.onSessionChanged()
+            withTimeout(5_000) { firstEntered.await() }
+            repeat(3) { library.init() }
+            assertNull(withTimeoutOrNull(5_000) { duplicateEntered.await() },
+                "init must share the active warm-up instead of starting delayed duplicates")
+            assertEquals(1, calls.get())
         } finally {
             library.close()
             release.complete(Unit)
@@ -226,6 +294,16 @@ private fun apiHost(httpClient: OkHttpClient = OkHttpClient()): ExcorHost = obje
     override suspend fun session() = ExcorSession(null, null, "US", "en")
     override fun nowMs(): Long = 0
     override fun log(level: ExcorLogLevel, message: String, trackId: String?) = Unit
+}
+
+private fun warmUpHost(httpClient: OkHttpClient, provider: TokenProvider): ExcorHost {
+    val base = apiHost(httpClient)
+    return object : ExcorHost by base {
+        override val tokenProvider = provider
+        override val configStore = object : ExcorConfigStore by base.configStore {
+            override val enabled = true
+        }
+    }
 }
 
 private fun apiTokenProvider(): TokenProvider = object : TokenProvider {

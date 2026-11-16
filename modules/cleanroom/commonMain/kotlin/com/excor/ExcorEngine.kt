@@ -26,14 +26,18 @@ import io.ktor.http.isSuccess
 import io.ktor.utils.io.readByte
 import kotlinx.coroutines.CancellationException
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -48,11 +52,24 @@ internal class ExcorEngine(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val state = MutableStateFlow(EngineState())
+    private val warmUpJob = MutableStateFlow<Job?>(null)
 
-    fun initialize() {
-        scope.launch {
-            delay(2_000)
-            warmUp()
+    fun initialize() = scheduleWarmUp(2_000)
+
+    private fun scheduleWarmUp(waitMs: Long) {
+        while (scope.isActive) {
+            val previous = warmUpJob.value
+            if (previous != null && !previous.isCompleted) return
+            // Publish before starting so concurrent initialization shares the same work.
+            val next = scope.launch(start = CoroutineStart.LAZY) {
+                if (waitMs > 0) delay(waitMs)
+                warmUp()
+            }
+            if (warmUpJob.compareAndSet(previous, next)) {
+                next.start()
+                return
+            }
+            next.cancel()
         }
     }
 
@@ -71,7 +88,8 @@ internal class ExcorEngine(
                 playerData = emptyMap(),
             )
         }
-        if (host.configStore.enabled) scope.launch { warmUp() }
+        warmUpJob.getAndUpdate { null }?.cancel()
+        if (host.configStore.enabled) scheduleWarmUp(0)
     }
 
     fun headersFor(url: String): Map<String, String>? = state.value.remembered[url]?.headers
