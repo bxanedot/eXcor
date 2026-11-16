@@ -155,12 +155,12 @@ class TriageTests(unittest.TestCase):
             self.assertEqual(m.MAX_BODY + 1, connection.response.limit)
             self.assertTrue(connection.closed)
             connection.response.status = 302
-            with self.assertRaises(ValueError): api.request("GET", "/issues")
+            with self.assertRaises(ValueError): api.request("GET", "/issues?state=open&per_page=100")
             connection.response.status = 200
             with patch.object(connection.response, "read", return_value=b"x" * (m.MAX_BODY + 1)):
-                with self.assertRaises(ValueError): api.request("GET", "/issues")
+                with self.assertRaises(ValueError): api.request("GET", "/issues?state=open&per_page=100")
             api.calls = 80
-            with self.assertRaises(ValueError): api.request("GET", "/issues")
+            with self.assertRaises(ValueError): api.request("GET", "/issues?state=open&per_page=100")
             with self.assertRaises(ValueError): api.request("DELETE", "/git/refs/heads/main")
 
     def test_request_rejects_cross_repository_and_unexpected_paths_before_connect(self):

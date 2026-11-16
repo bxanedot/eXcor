@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded deterministic issue triage; no issue text is executed or reported."""
+"""Bounded issue triage and public release observations; no issue text is executed or reported."""
 from __future__ import annotations
 
 import argparse
@@ -20,6 +20,32 @@ CATEGORIES = {
 LABELS = set(CATEGORIES.values()) | {"P0", "P1", "P2", "P3", "needs-reproduction"}
 MAX_BODY = 2 * 1024 * 1024
 MAX_ITEMS = 100
+
+# Manually reviewed public release baselines; matching tags are not capability evidence.
+RELEASE_PROJECTS = {
+    "innertubex": {"path": "/repos/MetrolistGroup/innertubex/releases/latest",
+                   "repo": "MetrolistGroup/innertubex", "baseline": "0.11.7"},
+    "youtubejs": {"path": "/repos/LuanRT/YouTube.js/releases/latest",
+                  "repo": "LuanRT/YouTube.js", "baseline": "18.3.0"},
+}
+VERSION_PATTERN = r"(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})"
+RELEASE_STATUSES = {"MATCHES_BASELINE", "REVIEW_NEEDED", "ACCESS_BLOCKED", "RATE_LIMITED",
+                    "HTTP_ERROR", "NETWORK_ERROR", "RESPONSE_TOO_LARGE", "UNVERIFIED_METADATA"}
+
+
+class GitHubHttpError(ValueError):
+    def __init__(self, status_code, rate_limited=False):
+        self.status_code = status_code
+        self.rate_limited = rate_limited or status_code == 429
+        super().__init__(f"GitHub API HTTP {status_code}")
+
+
+class GitHubResponseLimitError(ValueError):
+    pass
+
+
+class ReleaseMetadataError(ValueError):
+    pass
 
 
 def number(value):
@@ -110,12 +136,18 @@ class GitHub:
             raise ValueError("Repository is not allowed by maintenance policy")
         self.token, self.calls = token, 0
 
-    def request(self, method, path, payload=None):
+    def request(self, method, path, payload=None, *, public_release=False):
         if self.calls >= 80 or method not in {"GET", "POST"} or (path != "" and not path.startswith("/")):
             raise ValueError("API request limit or method rejected")
-        target = "/repos/bxanedot/eXcor" + path
+        if type(public_release) is not bool:
+            raise ValueError("Invalid public release mode")
+        target = path if public_release else "/repos/bxanedot/eXcor" + path
+        # Public reads have separate fixed paths and never receive the repository token.
+        if public_release and (method != "GET" or payload is not None or
+                               target not in {p["path"] for p in RELEASE_PROJECTS.values()}):
+            raise ValueError("Public release target is not allowed")
         # Validate the final origin-form target at the network boundary, not only its callers.
-        if not re.fullmatch(
+        if not public_release and not re.fullmatch(
             r"/repos/bxanedot/eXcor(?:"
             r"/(?:issues|pulls)\?state=open&per_page=100|"
             r"/(?:branches|labels)\?per_page=100|/labels|"
@@ -128,7 +160,7 @@ class GitHub:
         self.calls += 1
         headers = {"Accept": "application/vnd.github+json", "User-Agent": "excor-maintenance",
                    "X-GitHub-Api-Version": "2022-11-28"}
-        if self.token:
+        if self.token and not public_release:
             headers["Authorization"] = f"Bearer {self.token}"
         data = json.dumps(payload).encode() if payload is not None else None
         if data is not None:
@@ -146,13 +178,83 @@ class GitHub:
             connection.request(method, target, body=data, headers=headers)
             response = connection.getresponse()
             if not 200 <= response.status < 300:
-                raise ValueError(f"GitHub API HTTP {response.status}")
+                limited = response.status == 403 and (
+                    response.getheader("X-RateLimit-Remaining") == "0" or
+                    response.getheader("Retry-After") is not None)
+                raise GitHubHttpError(response.status, limited)
             body = response.read(MAX_BODY + 1)
             if len(body) > MAX_BODY:
-                raise ValueError("GitHub response exceeded limit")
+                raise GitHubResponseLimitError("GitHub response exceeded limit")
             return json.loads(body)
         finally:
             connection.close()
+
+    def latest_release(self, project):
+        if type(project) is not str or project not in RELEASE_PROJECTS:
+            raise ValueError("Competitor is not allowed")
+        return self.request("GET", RELEASE_PROJECTS[project]["path"], public_release=True)
+
+
+def release_metadata(project, value):
+    if type(value) is not dict or value.get("draft") is not False or value.get("prerelease") is not False:
+        raise ReleaseMetadataError("Unsupported release metadata")
+    tag, published = value.get("tag_name"), value.get("published_at")
+    match = re.fullmatch(r"[vV]?(" + VERSION_PATTERN + r")", tag) if type(tag) is str and len(tag) <= 22 else None
+    if match is None or type(published) is not str or not re.fullmatch(
+        r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?Z", published
+    ):
+        raise ReleaseMetadataError("Unsupported release metadata")
+    try:
+        published = datetime.fromisoformat(published.replace("Z", "+00:00")).isoformat().replace("+00:00", "Z")
+    except ValueError:
+        raise ReleaseMetadataError("Invalid release timestamp") from None
+    return {"latest_version": match[1], "published_at": published,
+            "release_url": "https://github.com/" + RELEASE_PROJECTS[project]["repo"] + "/releases/tag/" + quote(tag, safe="")}
+
+
+def observe_competitor_releases(api):
+    observations = []
+    for project, policy in RELEASE_PROJECTS.items():
+        item = {"project": project, "baseline_version": policy["baseline"], "baseline_date": "2026-11-15",
+                "api_url": "https://api.github.com" + policy["path"]}
+        try:
+            item.update(release_metadata(project, api.latest_release(project)))
+            item["status"] = "MATCHES_BASELINE" if item["latest_version"] == policy["baseline"] else "REVIEW_NEEDED"
+        except GitHubHttpError as failure:
+            item["status"] = "RATE_LIMITED" if failure.rate_limited else (
+                "ACCESS_BLOCKED" if failure.status_code in {401, 403} else "HTTP_ERROR")
+            item["status_code"] = failure.status_code
+        except GitHubResponseLimitError:
+            item["status"] = "RESPONSE_TOO_LARGE"
+        except (OSError, http.client.HTTPException):
+            item["status"] = "NETWORK_ERROR"
+        except (ReleaseMetadataError, json.JSONDecodeError, UnicodeDecodeError):
+            item["status"] = "UNVERIFIED_METADATA"
+        observations.append(item)
+    return observations
+
+
+def render_summary(report):
+    mode, updates = report["mode"], report["label_updates"]
+    if mode not in {"dry-run", "apply-labels"} or type(updates) is not int or not 0 <= updates <= 15:
+        raise ValueError("Invalid summary metadata")
+    lines = [f"Maintenance {mode}: issues={len(report['issues'])}; PRs={len(report['pull_requests'])}; label updates={updates}"]
+    observations = report["competitor_releases"]
+    if report["competitor_check"] == "NOT_REQUESTED" and not observations:
+        return "\n".join(lines + ["Competitor release check: NOT_REQUESTED", ""])
+    if report["competitor_check"] != "REQUESTED" or len(observations) != len(RELEASE_PROJECTS) or {
+        x["project"] for x in observations
+    } != set(RELEASE_PROJECTS):
+        raise ValueError("Invalid summary metadata")
+    lines += ["", "| Public GitHub release | Latest | Baseline | Observation |", "|---|---|---|---|"]
+    for item in observations:
+        project, status, latest = item["project"], item["status"], item.get("latest_version", "unverified")
+        if status not in RELEASE_STATUSES or (latest != "unverified" and (
+            type(latest) is not str or not re.fullmatch(VERSION_PATTERN, latest)
+        )):
+            raise ValueError("Invalid summary metadata")
+        lines.append(f"| {project} | {latest} | {RELEASE_PROJECTS[project]['baseline']} | {status} |")
+    return "\n".join(lines) + "\n"
 
 
 def apply_labels(api, plans):
@@ -191,7 +293,7 @@ def apply_labels(api, plans):
     return len(updates)
 
 
-def snapshot(api):
+def snapshot(api, check_competitors=False):
     issues = api.request("GET", "/issues?state=open&per_page=100")
     pulls = api.request("GET", "/pulls?state=open&per_page=100")
     branches = api.request("GET", "/branches?per_page=100")
@@ -220,7 +322,9 @@ def snapshot(api):
             "default_branch_protected": next((b.get("protected") for b in branches if b["name"] == main), None),
             "inventory_complete": len(issues) < 100 and len(pulls) < 100 and len(branches) <= 25,
             "branches_evaluated_limit": 25, "branch_deletion_enabled": False,
-            "obsolete_after_days": 30, "warning_period_days": 7}
+            "obsolete_after_days": 30, "warning_period_days": 7,
+            "competitor_check": "REQUESTED" if check_competitors else "NOT_REQUESTED",
+            "competitor_releases": observe_competitor_releases(api) if check_competitors else []}
 
 
 def main():
@@ -228,13 +332,19 @@ def main():
     parser.add_argument("--repo", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--apply-labels", action="store_true")
+    parser.add_argument("--check-competitors", action="store_true")
+    parser.add_argument("--summary-output", type=Path)
     args = parser.parse_args()
     try:
         api = GitHub(args.repo, os.environ.get("GH_TOKEN", ""))
-        report = snapshot(api)
+        report = snapshot(api, check_competitors=args.check_competitors)
         report["label_updates"] = apply_labels(api, report["issues"]) if args.apply_labels else 0
         report["mode"] = "apply-labels" if args.apply_labels else "dry-run"
         args.output.write_text(json.dumps(report, indent=2) + "\n")
+        if args.summary_output is not None:
+            args.summary_output.write_text(render_summary(report), encoding="utf-8")
+        for item in report["competitor_releases"]:
+            print(f"Competitor release {item['project']}: {item['status']} latest={item.get('latest_version', 'unverified')} baseline={item['baseline_version']}")
         print(f"Maintenance {report['mode']}: {len(report['issues'])} issues, {len(report['pull_requests'])} PRs; label updates={report['label_updates']}")
     except (ValueError, KeyError, TypeError, OSError, http.client.HTTPException):
         print("Maintenance failed; no response bodies or credentials logged", file=sys.stderr)
