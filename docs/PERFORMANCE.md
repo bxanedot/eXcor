@@ -30,7 +30,7 @@ The heap grew by about 4 MiB over the whole run.
 
 **Defects the benchmark found and fixed:**
 - **`videoInfo` failures:** before the watch-page fallback, `videoInfo` returned null for 8 of 10 videos from this environment.
-- **Transient `musicSearch` failures:** one earlier run had 3 failures and a 6.6 s p95, which no rerun reproduced. InnerTube reads now retry 429, 500, 502, 503, 504 and transport errors: three attempts at most, honoring a Retry-After of up to 5 s, otherwise exponential backoff with jitter.
+- **Transient `musicSearch` failures:** one earlier run had 3 failures and a 6.6 s p95, which no rerun reproduced. InnerTube reads now retry 429, 500, 502, 503, 504 and transport errors: three attempts at most, honoring numeric Retry-After values from zero through five seconds. Other present values end the current request chain; an absent header uses exponential backoff with jitter. See [the retry policy](ERROR_HANDLING.md).
 
 ## Competitor comparison
 

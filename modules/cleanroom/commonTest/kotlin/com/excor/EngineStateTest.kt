@@ -306,6 +306,58 @@ class EngineStateTest {
         }
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun unsupportedRetryAfterStopsTheRequestChainWithoutRetryingEarly() = runTest {
+        for ((status, failure) in listOf(
+            HttpStatusCode.TooManyRequests to ExcorRequestFailure.RATE_LIMITED,
+            HttpStatusCode.ServiceUnavailable to ExcorRequestFailure.SERVER_ERROR,
+        )) {
+            for (retryAfter in listOf("6", "120", "999999999999999999999999999999", "Thu, 31 Dec 2099 23:59:59 GMT", "-1", "+2", "invalid", "")) {
+                var calls = 0
+                val client = HttpClient(MockEngine {
+                    calls++
+                    respond("", status, headersOf(HttpHeaders.RetryAfter, retryAfter))
+                })
+                try {
+                    val start = testScheduler.currentTime
+                    val engine = ExcorEngine(FakeHost(), null, client)
+                    val result = assertFailsWith<ExcorRequestException> { engine.search("q", "token") }
+                    assertEquals(failure, result.failure)
+                    assertEquals(status.value, result.statusCode)
+                    assertEquals(1, calls, "an unsupported server delay must not become a short retry")
+                    assertEquals(start, testScheduler.currentTime, "the request must not sleep beyond its retry budget")
+                } finally {
+                    client.close()
+                }
+            }
+        }
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun supportedRetryAfterDelaysAreHonoredExactly() = runTest {
+        for (status in listOf(HttpStatusCode.TooManyRequests, HttpStatusCode.ServiceUnavailable)) {
+            for ((retryAfter, delayMs) in listOf("0" to 0L, "5" to 5_000L, " 0002 " to 2_000L)) {
+                var calls = 0
+                val client = HttpClient(MockEngine {
+                    calls++
+                    if (calls == 1) respond("", status, headersOf(HttpHeaders.RetryAfter, retryAfter))
+                    else respond("""{"onResponseReceivedCommands":[{"appendContinuationItemsAction":{"continuationItems":[]}}]}""", HttpStatusCode.OK)
+                })
+                try {
+                    val start = testScheduler.currentTime
+                    val engine = ExcorEngine(FakeHost(), null, client)
+                    assertNotNull(engine.search("q", "token"))
+                    assertEquals(2, calls)
+                    assertEquals(delayMs, testScheduler.currentTime - start)
+                } finally {
+                    client.close()
+                }
+            }
+        }
+    }
+
     @Test
     fun aConnectionThatKeepsFailingIsANetworkFailure() = runTest {
         var calls = 0

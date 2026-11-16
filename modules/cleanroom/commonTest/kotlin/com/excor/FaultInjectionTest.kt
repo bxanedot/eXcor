@@ -46,7 +46,7 @@ class FaultInjectionTest {
     }
 
     @Test
-    fun retryAfterAboveLimitFallsBackToBoundedBackoff() = runTest {
+    fun retryAfterAboveLimitReturnsTheTypedErrorWithoutAnEarlyRetry() = runTest {
         var calls = 0
         val client = HttpClient(MockEngine {
             calls++
@@ -58,9 +58,11 @@ class FaultInjectionTest {
         try {
             val engine = ExcorEngine(FaultHost(), null, client)
             val start = testScheduler.currentTime
-            assertNotNull(engine.search("q", "continuation"))
-            assertEquals(2, calls)
-            assertTrue(testScheduler.currentTime - start in 300L..499L)
+            val failure = assertFailsWith<ExcorRequestException> { engine.search("q", "continuation") }
+            assertEquals(ExcorRequestFailure.RATE_LIMITED, failure.failure)
+            assertEquals(429, failure.statusCode)
+            assertEquals(1, calls)
+            assertEquals(start, testScheduler.currentTime)
         } finally {
             client.close()
         }
