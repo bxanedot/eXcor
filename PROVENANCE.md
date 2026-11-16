@@ -224,3 +224,11 @@ The `com.excor.music` package was added while the repository used Apache-2.0. Th
 was consulted for PR-scoped replacement and unique main-push groups. Configuration
 was independently written from the documented interface; no implementation source
 or competitor material was used.
+
+## Maintenance canonical repository (2026-11-16)
+
+GitHub's clone/push redirect and public repository metadata identified
+`lylicht/eXcor` as the canonical name of repository ID `1434956251`, matching the
+existing project. The maintenance client allowlist and synthetic network-boundary
+tests were independently updated to that fixed name. No competitor code or new
+dependency was used; redirect refusal and the fixed label-only write scope remain.

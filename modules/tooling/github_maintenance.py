@@ -20,6 +20,8 @@ CATEGORIES = {
 LABELS = set(CATEGORIES.values()) | {"P0", "P1", "P2", "P3", "needs-reproduction"}
 MAX_BODY = 2 * 1024 * 1024
 MAX_ITEMS = 100
+# Verified canonical name for repository ID 1434956251; redirects remain forbidden.
+REPOSITORY = "lylicht/eXcor"
 
 # Manually reviewed public release baselines; matching tags are not capability evidence.
 RELEASE_PROJECTS = {
@@ -145,7 +147,7 @@ def link_fix_claims(plans, pulls):
 
 class GitHub:
     def __init__(self, repo, token=""):
-        if repo != "bxanedot/eXcor":
+        if repo != REPOSITORY:
             raise ValueError("Repository is not allowed by maintenance policy")
         self.token, self.calls = token, 0
 
@@ -154,14 +156,14 @@ class GitHub:
             raise ValueError("API request limit or method rejected")
         if type(public_release) is not bool:
             raise ValueError("Invalid public release mode")
-        target = path if public_release else "/repos/bxanedot/eXcor" + path
+        target = path if public_release else f"/repos/{REPOSITORY}" + path
         # Public reads have separate fixed paths and never receive the repository token.
         if public_release and (method != "GET" or payload is not None or
                                target not in {p["path"] for p in RELEASE_PROJECTS.values()}):
             raise ValueError("Public release target is not allowed")
         # Validate the final origin-form target at the network boundary, not only its callers.
         if not public_release and not re.fullmatch(
-            r"/repos/bxanedot/eXcor(?:"
+            re.escape(f"/repos/{REPOSITORY}") + r"(?:"
             r"/(?:issues|pulls)\?state=open&per_page=100|"
             r"/(?:branches|labels)\?per_page=100|/labels|"
             r"/issues/[1-9][0-9]{0,9}(?:/labels)?|"
