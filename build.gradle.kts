@@ -162,9 +162,14 @@ val generateFixturesPath = tasks.register("generateFixturesPath") {
 }
 kotlin.sourceSets.commonTest { kotlin.srcDir(generateFixturesPath) }
 
-// Declared so that changing EXCOR_LIVE or EXCOR_LIVE_IDS re-runs the tests instead of reusing results.
+// Test environment alone is not a Gradle input: changing opt-in controls must invalidate skipped results.
 tasks.withType<Test>().configureEach {
-    listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS", "EXCOR_BENCH", "EXCOR_HLS_ID").forEach { environment(it, System.getenv(it) ?: "") }
+    listOf("EXCOR_LIVE", "EXCOR_LIVE_IDS", "EXCOR_BENCH", "EXCOR_HLS_ID", "EXCOR_HLS_FIXTURE", "EXCOR_DASH_DECODE", "EXCOR_DECODE_ID").forEach {
+        val value = System.getenv(it)
+        if (value != null) environment(it, value)
+        inputs.property(it, value.orEmpty())
+        inputs.property("$it.isSet", value != null)
+    }
 }
 tasks.withType<AbstractTestTask>().configureEach {
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }

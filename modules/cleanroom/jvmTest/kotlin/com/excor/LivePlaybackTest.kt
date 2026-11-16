@@ -7,8 +7,8 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
-import java.util.concurrent.FutureTask
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
@@ -673,32 +673,272 @@ class LivePlaybackTest {
         runBlocking {
             val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
             val list = assertNotNull(liveRequest(videoId) { excor.formats(videoId) }, "No formats returned for $videoId")
-            val indexed = list.formats.filter { it.initRange != null && it.indexRange != null }
-            val audio = assertNotNull(indexed.firstOrNull {
-                it.hasAudio && !it.hasVideo && it.mimeType.startsWith("audio/mp4;")
-            }, "No indexed audio MP4")
-            val video = assertNotNull(indexed.filter {
-                it.hasVideo && !it.hasAudio && it.mimeType.startsWith("video/mp4;") &&
-                    it.videoCodec == ExcorVideoCodec.H264 && (it.height ?: 0) in 1..480
-            }.maxByOrNull { it.height ?: 0 }, "No indexed H.264 MP4 at or below 480p")
+            indexedMp4Tracks(list, http.newBuilder().followRedirects(false).followSslRedirects(false).build())
+        }
+    }
 
-            val media = http.newBuilder().followRedirects(false).followSslRedirects(false).build()
-            for (format in listOf(audio, video)) {
-                val init = assertNotNull(format.initRange)
-                val index = assertNotNull(format.indexRange)
-                assertEquals(0L, init.first)
-                assertTrue(init.last < index.first, "MP4 initialization and index ranges overlap")
-                val initBoxes = mp4BoxTypes(readMp4Range(media, format, init, list.headers))
-                assertTrue(initBoxes.containsAll(listOf("ftyp", "moov")), "MP4 initialization lacks ftyp or moov")
-                val bytes = readMp4Range(media, format, index, list.headers)
-                val total = assertNotNull(format.contentLength, "MP4 format has no total length")
-                val summary = checkMp4Index(bytes, index.last + 1, total)
-                val first = summary.firstMediaByte
-                val firstHeader = readMp4Range(media, format, first..first + 7, list.headers)
-                assertEquals("moof", firstHeader.decodeToString(4, 8), "First SIDX reference did not lead to a movie fragment")
-                println("MP4 itag=${format.itag} init=$init sidx=$index timescale=${summary.timescale} " +
-                    "durationTicks=${summary.durationTicks} references=${summary.references} firstMoof=$first")
+    // Experimental local-file SegmentList diagnostic, not a supported SDK DASH playback path.
+    // Reconstructs separate local segments; it does not exercise HTTP MPD/range consumption.
+    @Test
+    fun dashManifestDecodesLiveIndexedMp4Tracks() {
+        if (System.getenv("EXCOR_LIVE") != "1" || System.getenv("EXCOR_DASH_DECODE") != "1") {
+            throw SkipException("Set EXCOR_LIVE=1 and EXCOR_DASH_DECODE=1 to enable DASH media checks")
+        }
+        val (excor, http) = newExcor()
+        // Stop starting media calls after 120 seconds; an in-flight call has at most 15 more seconds.
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(120)
+        val media = http.newBuilder().followRedirects(false).followSslRedirects(false)
+            .callTimeout(15, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                if (System.nanoTime() >= deadline) throw java.io.IOException("DASH media deadline exceeded")
+                chain.proceed(chain.request())
+            }.build()
+        runBlocking {
+            val videoId = System.getenv("EXCOR_DECODE_ID") ?: "dQw4w9WgXcQ"
+            val list = assertNotNull(liveRequest(videoId) { excor.formats(videoId) }, "No formats returned for $videoId")
+            val tracks = indexedMp4Tracks(list, media)
+            assertTrue(tracks.sumOf { assertNotNull(it.format.contentLength) } <= 256L * 1024 * 1024,
+                "Combined DASH tracks exceed 256 MiB")
+            val dir = kotlin.io.path.createTempDirectory("excor-dash-test-").toFile()
+            try {
+                tracks.forEachIndexed { i, track ->
+                    download(media, track.format.url, list.headers, File(dir, "track-$i.mp4"),
+                        track.format.mimeType, track.format.contentLength)
+                }
+                writeLocalDashSegments(dir, tracks)
+                val manifest = File(dir, "sample.mpd")
+                manifest.writeText(localDashManifest(tracks))
+                val progress = runDashTool(
+                    "ffmpeg", "-nostdin", "-v", "error", "-xerror", "-protocol_whitelist", "file",
+                    "-progress", "pipe:1", "-stats_period", "5", "-i", manifest.path,
+                    "-map", "0:v:0", "-map", "0:a:0", "-f", "null", "-",
+                )
+                val decodedUs = assertNotNull(progress.lineSequence().lastOrNull { it.startsWith("out_time_us=") }
+                    ?.substringAfter('=')?.toLongOrNull())
+                val declaredUs = tracks.maxOf { it.index.endTicks * 1_000_000 / it.index.timescale }
+                assertTrue(kotlin.math.abs(decodedUs - declaredUs) <= 1_000_000, "DASH decode did not cover its declared duration")
+                assertTrue(progress.lineSequence().last { it.isNotBlank() } == "progress=end")
+                println("Reconstructed local DASH segments decoded audio and video: outputUs=$decodedUs declaredUs=$declaredUs")
+            } finally {
+                dir.listFiles()?.forEach { it.delete() }
+                dir.delete()
             }
+        }
+    }
+
+    private fun indexedMp4Tracks(list: ExcorFormatList, media: OkHttpClient): List<IndexedTrack> {
+        val indexed = list.formats.filter { it.initRange != null && it.indexRange != null }
+        val audio = assertNotNull(indexed.firstOrNull {
+            it.hasAudio && !it.hasVideo && it.mimeType.startsWith("audio/mp4;")
+        }, "No indexed audio MP4")
+        val video = assertNotNull(indexed.filter {
+            it.hasVideo && !it.hasAudio && it.mimeType.startsWith("video/mp4;") &&
+                it.videoCodec == ExcorVideoCodec.H264 && (it.height ?: 0) in 1..480
+        }.maxByOrNull { it.height ?: 0 }, "No indexed H.264 MP4 at or below 480p")
+
+        return listOf(audio, video).map { format ->
+            val init = assertNotNull(format.initRange)
+            val index = assertNotNull(format.indexRange)
+            assertEquals(0L, init.first)
+            assertTrue(init.last < index.first, "MP4 initialization and index ranges overlap")
+            val initBoxes = mp4BoxTypes(readMp4Range(media, format, init, list.headers))
+            assertTrue(initBoxes.containsAll(listOf("ftyp", "moov")), "MP4 initialization lacks ftyp or moov")
+            val bytes = readMp4Range(media, format, index, list.headers)
+            val total = assertNotNull(format.contentLength, "MP4 format has no total length")
+            val summary = checkMp4Index(bytes, index.last + 1, total)
+            val first = summary.firstMediaByte
+            val firstHeader = readMp4Range(media, format, first..first + 7, list.headers)
+            assertEquals("moof", firstHeader.decodeToString(4, 8), "First SIDX reference did not lead to a movie fragment")
+            println("MP4 itag=${format.itag} init=$init sidx=$index timescale=${summary.timescale} " +
+                "durationTicks=${summary.durationTicks} references=${summary.segments.size} firstMoof=$first")
+            IndexedTrack(format, init, summary)
+        }
+    }
+
+    @Test
+    fun localDashManifestKeepsTimelineAndSegmentsTogether() {
+        val format = ExcorMediaFormat(139, "https://example.invalid/unused", "audio/mp4; codecs=\"mp4a.40.2\"",
+            48, 300, true, false, null, null, null, null, null, 2, 44100, 0L..99L, 100L..199L)
+        val track = IndexedTrack(format, 0L..99L,
+            IndexSummary(44100, 0, 88200, listOf(IndexedSegment(200L..249L, 44100), IndexedSegment(250L..299L, 44100))))
+        val factory = javax.xml.parsers.DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+        val document = factory.newDocumentBuilder().parse(ByteArrayInputStream(localDashManifest(listOf(track)).toByteArray()))
+        val lists = document.getElementsByTagNameNS("urn:mpeg:dash:schema:mpd:2011", "SegmentList")
+        assertEquals(1, lists.length)
+        val list = lists.item(0) as org.w3c.dom.Element
+        assertEquals("44100", list.getAttribute("timescale"))
+        assertEquals("Representation", list.parentNode.localName)
+        assertEquals(1, list.getElementsByTagNameNS("*", "Initialization").length)
+        assertEquals(2, list.getElementsByTagNameNS("*", "S").length)
+        val ranges = list.getElementsByTagNameNS("*", "SegmentURL")
+        assertEquals("segment-0-0.m4s", (ranges.item(0) as org.w3c.dom.Element).getAttribute("media"))
+        assertEquals("segment-0-1.m4s", (ranges.item(1) as org.w3c.dom.Element).getAttribute("media"))
+        assertTrue(!(ranges.item(0) as org.w3c.dom.Element).hasAttribute("mediaRange"))
+        assertTrue(!localDashManifest(listOf(track)).contains(format.url))
+    }
+
+    // Synthetic reconstruction/decoder check only; no service access or player seeking.
+    @Test
+    fun localDashManifestDecodesSyntheticIndexedTracks() {
+        if (System.getenv("EXCOR_DASH_DECODE") != "1") throw SkipException("Set EXCOR_DASH_DECODE=1 for synthetic FFmpeg checks")
+        val dir = kotlin.io.path.createTempDirectory("excor-dash-synthetic-").toFile()
+        try {
+            val tracks = listOf(false, true).mapIndexed { i, video ->
+                val file = File(dir, "track-$i.mp4")
+                val source = if (video) "testsrc2=size=64x64:rate=10" else "sine=frequency=440:sample_rate=44100"
+                runDashTool("ffmpeg", "-nostdin", "-v", "error", "-f", "lavfi", "-i", source,
+                    "-t", "2", "-c:${if (video) "v" else "a"}", if (video) "libx264" else "aac",
+                    "-frag_duration", "1000000", "-movflags", "+dash+global_sidx", file.path)
+                val bytes = file.readBytes()
+                var position = 0
+                var indexStart = -1
+                var indexEnd = -1
+                while (position < bytes.size) {
+                    val size = ByteBuffer.wrap(bytes, position, 4).int
+                    assertTrue(size >= 8 && size <= bytes.size - position)
+                    if (bytes.decodeToString(position + 4, position + 8) == "sidx") {
+                        indexStart = position
+                        indexEnd = position + size
+                        break
+                    }
+                    position += size
+                }
+                assertTrue(indexStart > 0)
+                val summary = checkMp4Index(bytes.copyOfRange(indexStart, indexEnd), indexEnd.toLong(), bytes.size.toLong())
+                assertTrue(summary.segments.size >= 2, "Synthetic track needs multiple SIDX references")
+                val mime = if (video) "video/mp4; codecs=\"avc1.64000a\"" else "audio/mp4; codecs=\"mp4a.40.2\""
+                val format = ExcorMediaFormat(null, "https://example.invalid/unused", mime, 128, bytes.size.toLong(),
+                    !video, video, null, null, null, null, null, null, null, null, null)
+                IndexedTrack(format, 0L until indexStart.toLong(), summary)
+            }
+            writeLocalDashSegments(dir, tracks)
+            val manifest = File(dir, "sample.mpd").apply { writeText(localDashManifest(tracks)) }
+            val progress = runDashTool("ffmpeg", "-nostdin", "-v", "error", "-xerror", "-protocol_whitelist", "file",
+                "-progress", "pipe:1", "-i", manifest.path, "-map", "0:v:0", "-map", "0:a:0", "-f", "null", "-")
+            assertTrue(progress.lineSequence().any { it == "progress=end" })
+            val decodedUs = progress.lineSequence().last { it.startsWith("out_time_us=") }.substringAfter('=').toLong()
+            assertTrue(decodedUs in 1_900_000..2_200_000, "Synthetic tracks did not decode fully")
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun sidxRejectsIndirectOutOfBoundsAndOverflowingReferences() {
+        fun index(size: Int = 8, start: Long = 0, offset: Long = 0): ByteArray =
+            ByteBuffer.allocate(52).apply {
+                putInt(52); putInt(0x73696478); putInt(1 shl 24); putInt(1); putInt(1000)
+                putLong(start); putLong(offset); putShort(0); putShort(1)
+                putInt(size); putInt(1000); putInt(0)
+            }.array()
+        val valid = checkMp4Index(index(), 52, 60)
+        assertEquals(52L..59L, valid.segments.single().bytes)
+        assertEquals(1000L, valid.endTicks)
+        for (bytes in listOf(index(size = Int.MIN_VALUE), index(size = 9), index(start = Long.MAX_VALUE),
+            index(start = -1), index(offset = -1), index().copyOf(30))) {
+            assertFailsWith<AssertionError> { checkMp4Index(bytes, 52, 60) }
+        }
+    }
+
+    @Test
+    fun localDashSegmentsCopyExactRangesAndRejectTruncatedSource() {
+        val dir = kotlin.io.path.createTempDirectory("excor-dash-ranges-").toFile()
+        val format = ExcorMediaFormat(null, "https://example.invalid/unused", "audio/mp4; codecs=\"mp4a.40.2\"",
+            48, 32, true, false, null, null, null, null, null, null, null, null, null)
+        val track = IndexedTrack(format, 0L..7L,
+            IndexSummary(1000, 0, 2000, listOf(IndexedSegment(16L..23L, 1000), IndexedSegment(24L..31L, 1000))))
+        try {
+            val bytes = ByteArray(32) { it.toByte() }
+            File(dir, "track-0.mp4").writeBytes(bytes.copyOf(31))
+            assertFailsWith<AssertionError> { writeLocalDashSegments(dir, listOf(track)) }
+            assertTrue(!File(dir, "init-0.mp4").exists())
+            File(dir, "track-0.mp4").writeBytes(bytes)
+            writeLocalDashSegments(dir, listOf(track))
+            kotlin.test.assertContentEquals(bytes.copyOfRange(0, 8), File(dir, "init-0.mp4").readBytes())
+            kotlin.test.assertContentEquals(bytes.copyOfRange(16, 24), File(dir, "segment-0-0.m4s").readBytes())
+            kotlin.test.assertContentEquals(bytes.copyOfRange(24, 32), File(dir, "segment-0-1.m4s").readBytes())
+            assertTrue(!File(dir, "track-0.mp4").exists())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    private fun writeLocalDashSegments(dir: File, tracks: List<IndexedTrack>) {
+        assertTrue(tracks.sumOf { assertNotNull(it.format.contentLength) } in 1..256L * 1024 * 1024,
+            "Combined DASH tracks exceed 256 MiB")
+        tracks.forEachIndexed { i, track ->
+            val source = File(dir, "track-$i.mp4")
+            assertEquals(track.format.contentLength, source.length(), "Local track length changed")
+            val ranges = listOf(track.init) + track.index.segments.map { it.bytes }
+            var end = -1L
+            for (range in ranges) {
+                assertTrue(range.first > end && range.last >= range.first && range.last < source.length(),
+                    "Local DASH ranges overlap or exceed the track")
+                end = range.last
+            }
+            java.io.RandomAccessFile(source, "r").use { input ->
+                val buffer = ByteArray(8192)
+                ranges.forEachIndexed { j, range ->
+                    val name = if (j == 0) "init-$i.mp4" else "segment-$i-${j - 1}.m4s"
+                    input.seek(range.first)
+                    File(dir, name).outputStream().use { output ->
+                        var remaining = range.last - range.first + 1
+                        while (remaining > 0) {
+                            val count = input.read(buffer, 0, minOf(remaining, buffer.size.toLong()).toInt())
+                            assertTrue(count > 0, "Local DASH track was truncated")
+                            output.write(buffer, 0, count)
+                            remaining -= count
+                        }
+                    }
+                }
+            }
+            assertTrue(source.delete(), "Unable to remove reconstructed source track")
+        }
+    }
+
+    private fun localDashManifest(tracks: List<IndexedTrack>): String = buildString {
+        val durationMs = tracks.maxOf { (it.index.endTicks * 1_000 / it.index.timescale) + 1 }
+        val duration = "PT${durationMs / 1_000}.${(durationMs % 1_000).toString().padStart(3, '0')}S"
+        appendLine("""<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" profiles="urn:mpeg:dash:profile:full:2011" type="static" minBufferTime="PT1S" mediaPresentationDuration="$duration">""")
+        appendLine("""<Period start="PT0S">""")
+        tracks.forEachIndexed { i, track ->
+            val type = if (track.format.hasVideo) "video" else "audio"
+            assertEquals(0L, track.index.startTicks, "Local DASH experiment requires zero-based tracks")
+            assertTrue(track.format.kbps > 0, "DASH representation needs positive bandwidth")
+            val codecs = track.format.mimeType.substringAfter("codecs=", "").trim().trim('"')
+            assertTrue(codecs.matches(Regex("[A-Za-z0-9.]+")), "Invalid codec string for DASH representation")
+            appendLine("""<AdaptationSet contentType="$type" mimeType="$type/mp4">""")
+            appendLine("""<Representation id="track-$i" bandwidth="${track.format.kbps * 1000L}" codecs="$codecs">""")
+            appendLine("""<SegmentList timescale="${track.index.timescale}">""")
+            appendLine("""<Initialization sourceURL="init-$i.mp4"/>""")
+            appendLine("<SegmentTimeline>")
+            track.index.segments.forEachIndexed { j, segment ->
+                val start = if (j == 0) """ t="${track.index.startTicks}"""" else ""
+                appendLine("""<S$start d="${segment.durationTicks}"/>""")
+            }
+            appendLine("</SegmentTimeline>")
+            track.index.segments.indices.forEach { j ->
+                appendLine("""<SegmentURL media="segment-$i-$j.m4s"/>""")
+            }
+            appendLine("</SegmentList></Representation></AdaptationSet>")
+        }
+        appendLine("</Period></MPD>")
+    }
+
+    private fun runDashTool(vararg command: String): String {
+        val process = ProcessBuilder(*command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        val output = FutureTask { process.inputStream.use { it.readNBytes(32_769) } }
+        Thread(output, "excor-dash-test-output").apply { isDaemon = true; start() }
+        try {
+            assertTrue(process.waitFor(45, TimeUnit.SECONDS), "${command.first()} timed out verifying DASH media")
+            assertEquals(0, process.exitValue(), "${command.first()} failed to process the DASH manifest")
+            val bytes = output.get(2, TimeUnit.SECONDS)
+            assertTrue(bytes.size <= 32_768, "DASH diagnostic output exceeded its limit")
+            return bytes.decodeToString()
+        } finally {
+            if (process.isAlive) process.destroyForcibly().waitFor(5, TimeUnit.SECONDS)
+            process.inputStream.close()
+            output.cancel(true)
         }
     }
 
@@ -734,7 +974,14 @@ class LivePlaybackTest {
         }
     }
 
-    private data class IndexSummary(val timescale: Long, val durationTicks: Long, val references: Int, val firstMediaByte: Long)
+    private data class IndexedTrack(val format: ExcorMediaFormat, val init: LongRange, val index: IndexSummary)
+    private data class IndexedSegment(val bytes: LongRange, val durationTicks: Long)
+    private data class IndexSummary(
+        val timescale: Long, val startTicks: Long, val durationTicks: Long, val segments: List<IndexedSegment>,
+    ) {
+        val firstMediaByte get() = segments.first().bytes.first
+        val endTicks get() = startTicks + durationTicks
+    }
 
     // DASH-IF indexed addressing uses one SIDX with direct references to media ranges.
     private fun checkMp4Index(bytes: ByteArray, endExclusive: Long, contentLength: Long): IndexSummary {
@@ -748,13 +995,11 @@ class LivePlaybackTest {
         input.int // reference ID
         val timescale = Integer.toUnsignedLong(input.int)
         assertTrue(timescale > 0, "Invalid SIDX timescale")
-        val firstOffset = if (version == 0) {
-            input.int // earliest presentation time
-            Integer.toUnsignedLong(input.int)
+        val (start, firstOffset) = if (version == 0) {
+            Integer.toUnsignedLong(input.int) to Integer.toUnsignedLong(input.int)
         } else {
             assertTrue(input.remaining() >= 20, "Truncated version 1 SIDX")
-            input.long // earliest presentation time
-            input.long
+            input.long to input.long
         }
         assertTrue(endExclusive in 1 until contentLength && firstOffset in 0 until contentLength - endExclusive)
         val firstMediaByte = endExclusive + firstOffset
@@ -763,16 +1008,19 @@ class LivePlaybackTest {
         assertTrue(references > 0 && input.remaining() == references * 12, "Invalid SIDX reference table")
         var position = firstMediaByte
         var duration = 0L
-        repeat(references) {
+        val segments = List(references) {
             val size = input.int
             assertTrue(size >= 8 && size.toLong() <= contentLength - position, "SIDX reference is indirect or outside the track")
             val durationTicks = Integer.toUnsignedLong(input.int)
             assertTrue(durationTicks > 0, "SIDX reference has no duration")
             input.int // stream access point flags
+            val segment = IndexedSegment(position until position + size, durationTicks)
             position += size
             duration += durationTicks
+            segment
         }
-        return IndexSummary(timescale, duration, references, firstMediaByte)
+        assertTrue(start in 0..Long.MAX_VALUE / 1_000_000 - duration, "Unsupported SIDX presentation time")
+        return IndexSummary(timescale, start, duration, segments)
     }
 
     private class LiveHost(override val httpClient: OkHttpClient) : ExcorHost {

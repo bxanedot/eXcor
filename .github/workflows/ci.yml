@@ -90,6 +90,17 @@ jobs:
             27
             21
       - run: ./gradlew $GRADLE_ARGS :jvmTest :jvmJar :assembleAndroidMain
+      - name: Install FFmpeg for generated-media checks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version
+      - name: Decode generated HLS and reconstructed DASH segments (no service access)
+        env:
+          EXCOR_LIVE: '0'
+          EXCOR_DASH_DECODE: '1'
+          EXCOR_HLS_FIXTURE: '1'
+        run: ./gradlew $GRADLE_ARGS :jvmTest --tests 'com.excor.LivePlaybackTest.localDash*' --tests 'com.excor.LivePlaybackTest.generatedHlsVodProducesDecodedMedia'
       # Installability: publish every publication locally (this also compiles the shared metadata, which no platform
       # build does), then build a standalone consumer that follows the README's installation steps.
       - run: ./gradlew $GRADLE_ARGS publishToMavenLocal
