@@ -104,7 +104,7 @@ fun main() = runBlocking {
 ```
 
 This example owns both the library and the default host client. `Excor.close()`
-closes the library's transport; it leaves the host client open. When injecting a
+cancels background warm-up and closes the library's transport; it leaves the host client open. When injecting a
 shared `OkHttpClient`, let its owner decide when to shut it down. Reuse an Excor
 instance for related operations and close it when that owner finishes.
 

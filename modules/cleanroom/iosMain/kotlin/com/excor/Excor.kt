@@ -28,8 +28,11 @@ class Excor(host: ExcorHost) {
     val music = ExcorMusic(client, host.musicConfig ?: ExcorMusicConfig(tokens = host.catalogTokenProvider), host::nowMs)
     private val engine = ExcorEngine(host, host.tokenProvider, client)
 
-    /** Closes this instance's HTTP transport and releases its resources. */
-    fun close() = client.close()
+    /** Cancels background warm-up and closes this instance's HTTP transport and resources. */
+    fun close() {
+        engine.close()
+        client.close()
+    }
 
     fun initialize() = engine.initialize()
     fun initializeFallback() = engine.initializeFallback()
