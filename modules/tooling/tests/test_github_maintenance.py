@@ -133,6 +133,30 @@ class TriageTests(unittest.TestCase):
         self.assertTrue(all(set(payload.get("labels", [])) <= m.LABELS for _, payload in api.writes))
         self.assertEqual(15, len([p for p, _ in api.writes if p.startswith("/issues/") and p.endswith("/labels")]))
 
+    def test_canonical_repository_is_the_only_authenticated_target(self):
+        class Response:
+            status = 200
+            def read(self, limit): return b'{}'
+        class Connection:
+            def __init__(self): self.requests = []
+            def request(self, method, target, body=None, headers=None):
+                self.requests.append((method, target, headers))
+            def getresponse(self): return Response()
+            def close(self): pass
+        connection = Connection()
+        with patch.dict("os.environ", {"HTTPS_PROXY": ""}), patch.object(
+            m.http.client, "HTTPSConnection", return_value=connection
+        ) as connect:
+            for repo in ("bxanedot/eXcor", "other/eXcor", "lylicht/other", "lylicht/eXcor/../other"):
+                with self.assertRaises(ValueError): m.GitHub(repo, "synthetic-auth")
+            connect.assert_not_called()
+            api = m.GitHub("lylicht/eXcor", "synthetic-auth")
+            api.request("GET", "")
+            api.request("POST", "/issues/1/labels", {"labels": ["bug"]})
+            self.assertEqual(["/repos/lylicht/eXcor", "/repos/lylicht/eXcor/issues/1/labels"],
+                             [r[1] for r in connection.requests])
+            self.assertTrue(all(r[2]["Authorization"] == "Bearer synthetic-auth" for r in connection.requests))
+
     def test_http_origin_bounds_and_redirect_refusal(self):
         class Response:
             status = 200
@@ -148,10 +172,10 @@ class TriageTests(unittest.TestCase):
             def close(self): self.closed = True
         connection = Connection()
         with patch.dict("os.environ", {"HTTPS_PROXY": ""}), patch.object(m.http.client, "HTTPSConnection", return_value=connection) as connect:
-            api = m.GitHub("bxanedot/eXcor")
+            api = m.GitHub("lylicht/eXcor")
             self.assertEqual("main", api.request("GET", "")["default_branch"])
             connect.assert_called_with("api.github.com", timeout=15)
-            self.assertEqual("/repos/bxanedot/eXcor", connection.target)
+            self.assertEqual("/repos/lylicht/eXcor", connection.target)
             self.assertEqual(m.MAX_BODY + 1, connection.response.limit)
             self.assertTrue(connection.closed)
             connection.response.status = 302
@@ -166,7 +190,7 @@ class TriageTests(unittest.TestCase):
     def test_request_rejects_cross_repository_and_unexpected_paths_before_connect(self):
         with self.assertRaises(ValueError):
             m.GitHub("other/repository")
-        api = m.GitHub("bxanedot/eXcor")
+        api = m.GitHub("lylicht/eXcor")
         with patch.object(m.http.client, "HTTPSConnection") as connect:
             for path in ("/../other", "//attacker.invalid", "/issues/1/comments", "/issues/1?redirect=evil",
                          "/compare/../../evil...main", "/compare/" + "a" * 40 + "...other-branch"):
@@ -175,7 +199,7 @@ class TriageTests(unittest.TestCase):
             connect.assert_not_called()
 
     def test_proxy_cannot_redirect_the_connection_to_an_arbitrary_host(self):
-        api = m.GitHub("bxanedot/eXcor")
+        api = m.GitHub("lylicht/eXcor")
         with patch.dict("os.environ", {"HTTPS_PROXY": "http://attacker.invalid:8080"}), patch.object(m.http.client, "HTTPSConnection") as connect:
             with self.assertRaises(ValueError): api.request("GET", "")
             connect.assert_not_called()

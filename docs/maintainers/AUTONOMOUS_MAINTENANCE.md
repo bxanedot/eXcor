@@ -39,9 +39,12 @@ may produce a claim, so this is never treated as verified resolution. Each PR
 body is capped at 8,192 characters, at most 100 PRs are considered, and only numeric IDs
 enter the report. Cross-repository references and ordinary mentions are ignored.
 
-The repository API client accepts only `bxanedot/eXcor` and a closed set of
-read/label paths. Eight additional fixed public latest-release GET paths are
-allowed for the release observer, with no Authorization header. The final
+The repository API client accepts only `lylicht/eXcor` and a closed set of
+read/label paths. On 2026-11-16 GitHub redirected the historical clone URL to
+`lylicht/eXcor`; public metadata confirmed the same repository ID, `1434956251`.
+The fixed allowlist was updated to this canonical name. The historical name is
+rejected before connecting; HTTP redirects remain forbidden. Eight additional
+fixed public latest-release GET paths are allowed for the release observer, with no Authorization header. The final
 target is validated at the network boundary. Unexpected paths,
 other repositories and a renamed default branch require policy review. It uses
 one fixed HTTPS origin, refuses redirects, limits each body

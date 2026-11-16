@@ -129,7 +129,7 @@ class CompetitorReleaseTests(unittest.TestCase):
         api = API()
         with tempfile.TemporaryDirectory() as directory:
             output, summary = Path(directory) / "report.json", Path(directory) / "summary.md"
-            argv = ["maintenance", "--repo", "bxanedot/eXcor", "--output", str(output),
+            argv = ["maintenance", "--repo", "lylicht/eXcor", "--output", str(output),
                     "--summary-output", str(summary), "--check-competitors"]
             with patch.object(m.sys, "argv", argv), patch.object(m, "GitHub", return_value=api), redirect_stdout(io.StringIO()):
                 self.assertEqual(0, m.main())
@@ -143,7 +143,7 @@ class CompetitorReleaseTests(unittest.TestCase):
     def test_public_routes_drop_authorization_and_reject_other_targets_or_writes(self):
         connection = Connection(Response())
         with patch.dict("os.environ", {"HTTPS_PROXY": ""}), patch.object(m.http.client, "HTTPSConnection", return_value=connection) as connect:
-            api = m.GitHub("bxanedot/eXcor", "synthetic-auth")
+            api = m.GitHub("lylicht/eXcor", "synthetic-auth")
             for project in BASELINES:
                 api.latest_release(project)
             self.assertEqual(8, len(connection.requests))
@@ -170,7 +170,7 @@ class CompetitorReleaseTests(unittest.TestCase):
             connection = Connection(response)
             with patch.dict("os.environ", {"HTTPS_PROXY": ""}), patch.object(m.http.client, "HTTPSConnection", return_value=connection):
                 with self.assertRaises(m.GitHubHttpError) as failure:
-                    m.GitHub("bxanedot/eXcor").latest_release("innertubex")
+                    m.GitHub("lylicht/eXcor").latest_release("innertubex")
                 self.assertEqual(status, failure.exception.status_code)
                 self.assertEqual(limited, failure.exception.rate_limited)
                 self.assertEqual(0, response.reads)
@@ -179,7 +179,7 @@ class CompetitorReleaseTests(unittest.TestCase):
         connection = Connection(response)
         with patch.dict("os.environ", {"HTTPS_PROXY": ""}), patch.object(m.http.client, "HTTPSConnection", return_value=connection):
             with self.assertRaises(m.GitHubResponseLimitError):
-                m.GitHub("bxanedot/eXcor").latest_release("youtubejs")
+                m.GitHub("lylicht/eXcor").latest_release("youtubejs")
             self.assertEqual(m.MAX_BODY + 1, response.limit)
             self.assertTrue(connection.closed)
 
