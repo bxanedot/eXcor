@@ -44,10 +44,18 @@ internal class MusicHttp(
     private val requestTimeMs: () -> Long = monotonicNowMs(),
     private val cacheEntries: Int = 256,
     private val cacheTtlMs: Long = 5 * 60_000,
+    private val cacheResponseBytes: Int = 16 * 1024 * 1024,
 ) {
     private val budgets = ExcorCatalogProvider.entries.associateWith { RequestBudget(budgetOf(it), requestTimeMs) }
     private val itunesBudget = RequestBudget(ITUNES_BUDGET, requestTimeMs)
-    private val cache = LinkedHashMap<String, Pair<Long, JsonElement>>()
+    init {
+        require(cacheEntries >= 0 && cacheTtlMs >= 0 && cacheResponseBytes >= 0)
+    }
+
+    private data class JsonRead(val value: JsonElement, val bytes: Int)
+    private data class CacheEntry(val at: Long, val value: JsonElement, val bytes: Int)
+    private val cache = LinkedHashMap<String, CacheEntry>()
+    private var cachedResponseBytes = 0L
     private val cacheLock = Mutex()
     /** Requests sent so far, for benchmarks. */
     val requests: Int get() = budgets.values.sumOf { it.taken } + itunesBudget.taken
@@ -72,7 +80,7 @@ internal class MusicHttp(
             }
         }
         if (cacheable) store(url, element)
-        return element
+        return element.value
     }
 
     suspend fun postForm(provider: ExcorCatalogProvider, url: String, form: Map<String, String>, headers: Map<String, String> = emptyMap()): JsonElement =
@@ -82,7 +90,7 @@ internal class MusicHttp(
                 headers.forEach { (k, v) -> header(k, v) }
                 setBody(FormDataContent(Parameters.build { form.forEach { (k, v) -> append(k, v) } }))
             }
-        }
+        }.value
 
     /** A command (PUT, POST) with an optional JSON body; an empty success returns an empty object. Never cached. */
     suspend fun command(
@@ -100,14 +108,14 @@ internal class MusicHttp(
                 header(HttpHeaders.Authorization, "Bearer $bearer")
                 setBody(TextContent(json ?: "", contentType))
             }
-        }
+        }.value
 
     private suspend fun send(
         provider: ExcorCatalogProvider,
         url: String,
         allowEmptyBody: Boolean = false,
         call: suspend () -> HttpStatement,
-    ): JsonElement {
+    ): JsonRead {
         var retried = false
         // The keyless iTunes Search/Lookup API has its own published limit, separate from the Apple Music API's.
         val budget = if (runCatching { Url(url).host }.getOrNull().equals(ITUNES_HOST, ignoreCase = true)) itunesBudget else budgets.getValue(provider)
@@ -140,10 +148,10 @@ internal class MusicHttp(
         }
     }
 
-    private suspend fun read(provider: ExcorCatalogProvider, response: HttpResponse, allowEmptyBody: Boolean): JsonElement {
+    private suspend fun read(provider: ExcorCatalogProvider, response: HttpResponse, allowEmptyBody: Boolean): JsonRead {
         val status = response.status.value
         if (status == 204) {
-            return JsonObject(emptyMap())
+            return JsonRead(JsonObject(emptyMap()), 0)
         }
         if (!response.status.isSuccess()) {
             throw ExcorCatalogException(provider, errorOf(status), status)
@@ -168,31 +176,41 @@ internal class MusicHttp(
         // Commands such as Spotify's library writes succeed with an empty body; JSON reads require a value.
         if (bytes.all { it.toInt().toChar().isWhitespace() }) return emptyBody(provider, allowEmptyBody)
         return try {
-            Json.parseToJsonElement(bytes.decodeToString())
+            JsonRead(Json.parseToJsonElement(bytes.decodeToString()), bytes.size)
         } catch (_: Exception) {
             throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
         }
     }
 
-    private fun emptyBody(provider: ExcorCatalogProvider, allowed: Boolean): JsonElement {
+    private fun emptyBody(provider: ExcorCatalogProvider, allowed: Boolean): JsonRead {
         if (!allowed) throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
-        return JsonObject(emptyMap())
+        return JsonRead(JsonObject(emptyMap()), 0)
     }
 
     private suspend fun cached(url: String): JsonElement? = cacheLock.withLock {
-        val (at, value) = cache.remove(url) ?: return@withLock null
+        val entry = cache[url] ?: return@withLock null
         // A wall-clock rollback must not keep a cached catalog response alive indefinitely.
         val now = nowMs()
         // Compare first to detect rollback; unsigned elapsed time avoids signed Long overflow.
-        if (now < at || (now - at).toULong() > cacheTtlMs.toULong()) return@withLock null
-        cache[url] = at to value // move to the most recent end
-        value
+        if (now < entry.at || (now - entry.at).toULong() > cacheTtlMs.toULong()) {
+            cache.remove(url)
+            cachedResponseBytes -= entry.bytes
+            return@withLock null
+        }
+        cache.remove(url)
+        cache[url] = entry // move to the most recent end without changing the byte total
+        entry.value
     }
 
-    private suspend fun store(url: String, value: JsonElement) = cacheLock.withLock {
-        cache.remove(url)
-        cache[url] = nowMs() to value
-        while (cache.size > cacheEntries) cache.remove(cache.keys.first())
+    private suspend fun store(url: String, response: JsonRead) = cacheLock.withLock {
+        cache.remove(url)?.let { cachedResponseBytes -= it.bytes }
+        if (cacheEntries == 0 || cacheResponseBytes == 0 || response.bytes > cacheResponseBytes) return@withLock
+        cache[url] = CacheEntry(nowMs(), response.value, response.bytes)
+        cachedResponseBytes += response.bytes
+        while (cache.size > cacheEntries || cachedResponseBytes > cacheResponseBytes) {
+            val removed = cache.remove(cache.keys.first())!!
+            cachedResponseBytes -= removed.bytes
+        }
     }
 
     companion object {

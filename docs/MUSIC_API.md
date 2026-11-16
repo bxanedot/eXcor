@@ -7,6 +7,11 @@ throw `MALFORMED_RESPONSE`; failed reads are not cached. Commands can still acce
 an empty success body, and explicit HTTP 204 responses keep their no-content
 behavior (for example, no active Spotify player).
 
+Anonymous catalog reads use an LRU cache capped at 256 entries and 16 MiB of
+original UTF-8 response-body bytes, with a five-minute TTL. Authorized responses
+are not cached. The byte budget measures retained responses, not JVM/native heap
+overhead or objects retained by callers; each response also keeps its 4 MiB limit.
+
 | The brief's operation | eXcor |
 | --- | --- |
 | `music.search(query, providers)` | `search(query, providers, kinds, limit)` returns `ExcorMultiSearchResult` (results and per-provider errors); `search(query, provider, kinds, limit, page)` searches one provider and pages |
