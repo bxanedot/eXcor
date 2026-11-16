@@ -34,7 +34,7 @@ jobs:
           ref: main
           persist-credentials: false
       - name: Test maintenance policy
-        run: python3 -m unittest discover -s modules/tooling/tests -p 'test_github_maintenance.py' -v
+        run: python3 -m unittest discover -s modules/tooling/tests -p 'test_*maintenance*.py' -v
       - name: Audit without writes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -51,7 +51,7 @@ jobs:
   triage:
     needs: audit
     if: >-
-      vars.EXCOR_MAINTENANCE_APPLY_LABELS == 'true' &&
+      (vars.EXCOR_MAINTENANCE_APPLY_LABELS == '' || vars.EXCOR_MAINTENANCE_APPLY_LABELS == 'true') &&
       (github.event_name != 'workflow_dispatch' || inputs.dry_run == false)
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -69,7 +69,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 -m unittest discover -s modules/tooling/tests -p 'test_github_maintenance.py' -v
+          python3 -m unittest discover -s modules/tooling/tests -p 'test_*maintenance*.py' -v
           python3 modules/tooling/github_maintenance.py --repo "$GITHUB_REPOSITORY" \
             --output "$RUNNER_TEMP/triage.json" --apply-labels
       - name: Retain label audit
