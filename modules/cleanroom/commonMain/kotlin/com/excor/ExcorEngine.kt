@@ -787,8 +787,9 @@ internal class ExcorEngine(
 
     /**
      * InnerTube POSTs are reads, so a transient failure is retried: up to [INNERTUBE_ATTEMPTS] attempts on HTTP 429,
-     * 500, 502, 503, 504 or a transport error, waiting a Retry-After of at most 5 s or an exponential backoff with
-     * jitter. Any other status is final. Cancellation is never retried.
+     * 500, 502, 503, 504 or a transport error. Numeric Retry-After values up to 5 s are honored;
+     * a present value outside that supported range ends the chain. An absent header uses exponential
+     * backoff with jitter. Any other status is final. Cancellation is never retried.
      */
     private suspend fun postPlayer(request: PlayerRequest): String? = when (val result = postWithRetries(request)) {
         is PostResult.Body -> result.body
@@ -824,6 +825,7 @@ internal class ExcorEngine(
             }
             when (outcome) {
                 is PostOutcome.Done -> return PostResult.Body(outcome.body)
+                is PostOutcome.Stop -> return PostResult.Exhausted(outcome.status)
                 is PostOutcome.Retry -> {
                     if (attempt >= INNERTUBE_ATTEMPTS) return PostResult.Exhausted(outcome.status)
                     val backoff = 300L * (1L shl (attempt - 1)) + Random.nextLong(0, 200)
@@ -836,6 +838,7 @@ internal class ExcorEngine(
 
     private sealed interface PostOutcome {
         class Done(val body: String?) : PostOutcome
+        class Stop(val status: Int) : PostOutcome
         class Retry(val retryAfterMs: Long?, val status: Int?) : PostOutcome
     }
 
@@ -856,7 +859,12 @@ internal class ExcorEngine(
             // The endpoint name and status only: InnerTube URLs carry no secrets, but headers and bodies might.
             log(ExcorLogLevel.WARN, "InnerTube ${request.url.substringAfter("/youtubei/v1/").substringBefore('?')} answered HTTP $status")
             if (status !in RETRYABLE_STATUSES) return@execute PostOutcome.Done(null)
-            val retryAfter = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()?.takeIf { it in 0..5 }?.times(1_000)
+            val retryAfter = response.headers[HttpHeaders.RetryAfter]?.trim()?.let { value ->
+                val seconds = value.takeIf { it.isNotEmpty() && it.all { digit -> digit in '0'..'9' } }?.toLongOrNull()
+                // A date, malformed value or delay beyond the budget must not become an early retry.
+                if (seconds == null || seconds > 5) return@execute PostOutcome.Stop(status)
+                seconds * 1_000
+            }
             return@execute PostOutcome.Retry(retryAfter, status)
         }
         if ((response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: 0L) > PLAYER_RESPONSE_LIMIT) {
