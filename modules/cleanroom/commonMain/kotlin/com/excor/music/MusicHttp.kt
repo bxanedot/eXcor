@@ -176,7 +176,7 @@ internal class MusicHttp(
         // Commands such as Spotify's library writes succeed with an empty body; JSON reads require a value.
         if (bytes.all { it.toInt().toChar().isWhitespace() }) return emptyBody(provider, allowEmptyBody)
         return try {
-            JsonRead(Json.parseToJsonElement(bytes.decodeToString()), bytes.size)
+            JsonRead(Json.parseToJsonElement(bytes.decodeToString(throwOnInvalidSequence = true)), bytes.size)
         } catch (_: Exception) {
             throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
         }
