@@ -3,9 +3,12 @@
 Everything is reached through `excor.music`, an instance of `ExcorMusic`. Every network call is a `suspend` function that throws `ExcorCatalogException(provider, error, statusCode)`. In Swift these calls are `async throws`.
 
 JSON reads and token-form responses with an empty or whitespace-only HTTP 200 body
-throw `MALFORMED_RESPONSE`; failed reads are not cached. Commands can still accept
-an empty success body, and explicit HTTP 204 responses keep their no-content
-behavior (for example, no active Spotify player).
+throw `MALFORMED_RESPONSE`. Nonempty JSON responses must use valid UTF-8; malformed
+byte sequences also throw `MALFORMED_RESPONSE` rather than becoming replacement
+characters. Failed reads are not cached, and response text is not attached to the
+error. Valid Unicode, including an explicitly encoded replacement character, is
+preserved. Commands can still accept an empty success body, and explicit HTTP
+204 responses keep their no-content behavior (for example, no active Spotify player).
 
 Anonymous catalog reads use an LRU cache capped at 256 entries and 16 MiB of
 original UTF-8 response-body bytes, with a five-minute TTL. Authorized responses

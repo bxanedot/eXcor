@@ -224,3 +224,12 @@ The `com.excor.music` package was added while the repository used Apache-2.0. Th
 was consulted for PR-scoped replacement and unique main-push groups. Configuration
 was independently written from the documented interface; no implementation source
 or competitor material was used.
+
+## Catalog JSON UTF-8 validation (2026-11-16)
+
+[Kotlin's `ByteArray.decodeToString` API contract](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.text/decode-to-string.html)
+was consulted for its default replacement behavior and the common
+`throwOnInvalidSequence` option (documented since Kotlin 1.4). The current reference
+links Kotlin 2.4.20; this repository builds with Kotlin 2.4.21. Only the public API
+documentation was read. Strict decoding and synthetic malformed-byte/cache tests
+were independently written; no competitor implementation or fixture was used.
