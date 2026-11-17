@@ -218,6 +218,16 @@ The `com.excor.music` package was added while the repository used Apache-2.0. Th
 | YouTube InnerTube browse responses for channel Shorts and Playlists tabs | Observed 2026-11-01 | YouTube terms | `shortsLockupViewModel` (`reelWatchEndpoint` video ID, overlay title and views), playlist `gridRenderer` lockups, and tab addresses in `commandMetadata.webCommandMetadata.url`. |
 | YouTube InnerTube comments header (`sortFilterSubMenuRenderer`) | Observed 2026-11-01 | YouTube terms | Top and Newest sort continuation tokens, for `Excor.comments(newestFirst = true)`. |
 
+## Bounded YouTube UTF-8 validation (2026-11-17)
+
+The public Kotlin `ByteArray.decodeToString` contract cited in the catalog UTF-8
+entry below also governs the bounded YouTube text reader: strict decoding throws
+`CharacterCodingException` for malformed UTF-8. The rejection path and synthetic
+byte/metadata regressions were independently written, preserving valid Unicode
+and the existing nullable malformed-response behavior. No implementation source,
+competitor fixture or new dependency was used for this change.
+
+
 ## Maintenance canonical repository (2026-11-16)
 
 GitHub's clone/push redirect and public repository metadata identified

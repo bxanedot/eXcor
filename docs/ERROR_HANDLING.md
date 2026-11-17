@@ -5,7 +5,7 @@ How eXcor's YouTube and YouTube Music calls report problems. The music-provider 
 | Result | Meaning | What to do |
 |---|---|---|
 | A value | YouTube answered with the expected page | — |
-| `null` | YouTube answered, but not with that page: an unavailable, private or removed item, an ID of the wrong kind, a refusal that retrying would not change (such as HTTP 403 or 404), or a response eXcor doesn't recognize | Show "not available". If it happens for content that plays on youtube.com, YouTube may have changed its format; WARN logs name the endpoint and status |
+| `null` | YouTube answered, but not with that page: an unavailable, private or removed item, an ID of the wrong kind, a refusal that retrying would not change (such as HTTP 403 or 404), a response with malformed UTF-8, or a response eXcor doesn't recognize | Show "not available". If it happens for content that plays on youtube.com, YouTube may have changed its format; WARN logs name the endpoint and status |
 | `ExcorRequestException(RATE_LIMITED, 429)` | Retry policy ended on HTTP 429 | Back off for a while before asking again |
 | `ExcorRequestException(SERVER_ERROR, status)` | Retry policy ended on HTTP 500, 502, 503 or 504 | Try again later |
 | `ExcorRequestException(NETWORK, null)` | The connection failed on all three attempts: DNS, TLS, timeout or reset. The underlying transport exception is intentionally not attached, because its message may contain sensitive request data | Check connectivity, proxies and the HTTP client |
