@@ -271,3 +271,13 @@ and classpath/application APIs. The conditional settings classpath, installed-mo
 CI flags and isolated real-Gradle fixtures were independently written. The existing
 Foojay 1.0.0 plugin marker remains pinned and enabled by default; no competitor
 material, new SDK dependency or prebuilt SDK artifact was introduced.
+
+## InnerTubeX 0.11.8 reference refresh (2026-11-17)
+
+The public v0.11.8 release metadata, versioned README/CHANGELOG and LICENSE metadata
+were reviewed after exact-main release monitoring flagged the new version. Only
+the README's dependency coordinate changed between its v0.11.7/v0.11.8 blobs; the
+LICENSE blob remains `f288702d2fa16d3cdf0035b15a9fcbc552cd88e7`. The standalone
+benchmark adapter uses the published public API binary; no implementation file/diff
+or competitor test was opened or copied. It remains outside the active
+eXcor SDK dependency graph. Historical observations retain their original versions.

@@ -26,7 +26,7 @@ REPOSITORY = "lylicht/eXcor"
 # Manually reviewed public release baselines; matching tags are not capability evidence.
 RELEASE_PROJECTS = {
     "innertubex": {"path": "/repos/MetrolistGroup/innertubex/releases/latest",
-                   "repo": "MetrolistGroup/innertubex", "baseline": "0.11.7"},
+                   "repo": "MetrolistGroup/innertubex", "baseline": "0.11.8"},
     "youtubejs": {"path": "/repos/LuanRT/YouTube.js/releases/latest",
                   "repo": "LuanRT/YouTube.js", "baseline": "18.3.0"},
     "tombulled_innertube": {"path": "/repos/tombulled/innertube/releases/latest",
@@ -42,7 +42,7 @@ RELEASE_PROJECTS = {
     "alaouy_youtube": {"path": "/repos/alaouy/YouTube/releases/latest",
                        "repo": "alaouy/YouTube", "baseline": "2.2.6"},
 }
-RELEASE_BASELINE_DATE = "2026-11-16"
+RELEASE_BASELINE_DATE = "2026-11-17"
 VERSION_PATTERN = r"(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})"
 RELEASE_STATUSES = {"MATCHES_BASELINE", "REVIEW_NEEDED", "ACCESS_BLOCKED", "RATE_LIMITED",
                     "HTTP_ERROR", "NETWORK_ERROR", "RESPONSE_TOO_LARGE", "UNVERIFIED_METADATA"}
