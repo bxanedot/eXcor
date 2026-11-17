@@ -130,11 +130,11 @@ Use the same comparison ID, commit, UTC run time, environment categories and tim
 
 ## InnerTubeX JVM adapter
 
-Adapter `0.1.7-innertubex0.11.8` retains the streaming HTTP response and first positive body-read measurement introduced in `0.1.6-innertubex0.11.7`. Versions through 0.1.5 recorded first media after Ktor had received the full initial range response. Use the streaming version when comparing first-media latency with eXcor.
+Adapter `0.1.8-innertubex0.11.9` retains the streaming HTTP response and first positive body-read measurement introduced in `0.1.6-innertubex0.11.7`. Versions through 0.1.5 recorded first media after Ktor had received the full initial range response. Use the streaming version when comparing first-media latency with eXcor.
 
-The separate adapter in [`innertubex-jvm`](innertubex-jvm/) pins the public API artifact `com.github.MetrolistGroup.innertubex:innertubex:v0.11.8`. Build it independently with `./gradlew -p modules/samples/black-box-comparison/innertubex-jvm installDist`. It has no eXcor SDK dependency and is not wired into the root Gradle build. The pinned artifact is GPL-3.0; read [`LICENSE-NOTICE.md`](innertubex-jvm/LICENSE-NOTICE.md) before building or distributing it. CI compiles and exercises only synthetic tests; neither action makes YouTube requests.
+The separate adapter in [`innertubex-jvm`](innertubex-jvm/) pins the public API artifact `com.github.MetrolistGroup.innertubex:innertubex:v0.11.9`. Build it independently with `./gradlew -p modules/samples/black-box-comparison/innertubex-jvm installDist`. It has no eXcor SDK dependency and is not wired into the root Gradle build. The pinned artifact is GPL-3.0; read [`LICENSE-NOTICE.md`](innertubex-jvm/LICENSE-NOTICE.md) before building or distributing it. CI compiles and exercises only synthetic tests; neither action makes YouTube requests.
 
-Archived samples retain their recorded adapter/SDK versions. This reference update adds no live v0.11.8 decode, seek, availability or timing results.
+Archived samples retain their recorded adapter/SDK versions. This adapter-version update adds no new live comparison: the latest InnerTubeX decode/range samples remain v0.11.7, and the latest YouTube.js v18.3.0 four-adapter samples were unsupported for direct audio on both tested IDs. Run a new matched sample before describing current-version runtime behavior.
 
 At runtime, the adapter uses the documented `InnerTubeExtractor.extract` API and disables HLS and SABR through `ContentHints.withStreamCapabilities`. It defaults to a signed-out direct-audio initial-range probe; `--full-video-decode` requests a direct video track capped at 480p and reports in the `direct_video` lane. The media URL and each media redirect are validated; only allowlisted non-credential headers are forwarded; media response reads stop at 64 KiB. Output never includes signed URLs, request headers or raw exception text.
 
