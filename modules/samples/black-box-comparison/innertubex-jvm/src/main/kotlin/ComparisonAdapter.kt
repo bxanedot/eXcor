@@ -38,7 +38,7 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
 
-private const val ADAPTER_VERSION = "0.1.7-innertubex0.11.8"
+private const val ADAPTER_VERSION = "0.1.8-innertubex0.11.9"
 private const val MAX_RANGE_BYTES = 65_536
 private val videoIdPattern = Regex("^[A-Za-z0-9_-]{11}$")
 private val commitPattern = Regex("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
