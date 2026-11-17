@@ -133,6 +133,40 @@ class FaultInjectionTest {
     }
 
     @Test
+    fun mediaRedirectTextChecksRejectUnsafeReferencesAndPreserveEncodedQueries() = runTest {
+        val targets = listOf("https://rr1.googlevideo.com/videoplayback", "/videoplayback").flatMap { prefix ->
+            listOf("a".repeat(16_384), "a b", "a\tb", "caf\u00e9", "a#fragment").map { "$prefix?unsafe=$it" }
+        }
+        val cases = targets.map { it to false } +
+            listOf("/videoplayback?unsafe=a%20b%2Fc%23d%3De%2Bf" to true)
+        for ((target, accepted) in cases) {
+            var redirectedRequests = 0
+            val client = HttpClient(MockEngine { request ->
+                when (request.url.encodedPath) {
+                    "/watch" -> respond("", HttpStatusCode.TooManyRequests)
+                    "/youtubei/v1/player" -> respond(fixture("player-response.json"), HttpStatusCode.OK)
+                    "/videoplayback" -> if (request.url.parameters["unsafe"] != null) {
+                        redirectedRequests++
+                        respond("x", HttpStatusCode.PartialContent)
+                    } else respond(
+                        "", HttpStatusCode.Found,
+                        headersOf(HttpHeaders.Location, target),
+                    )
+                    else -> respond("", HttpStatusCode.NotFound)
+                }
+            }) { followRedirects = false }
+            try {
+                val engine = ExcorEngine(FaultHost(), null, client)
+                val result = engine.extract("abcdefghijk", 128, emptySet(), false, false)
+                assertEquals(if (accepted) 1 else 0, redirectedRequests, "Unexpected redirected request count")
+                if (accepted) assertNotNull(result) else assertNull(result)
+            } finally {
+                client.close()
+            }
+        }
+    }
+
+    @Test
     fun deniedMediaRedirectNeverVisitsForeignHostWithSessionCredentials() = runTest {
         val visited = mutableListOf<String>()
         val host = FaultHost(cookie = "SID=synthetic-secret", visitor = "synthetic-visitor")

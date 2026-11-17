@@ -918,7 +918,7 @@ internal class ExcorEngine(
                 return null
             }
             if (accepted) return target
-            if (location == null) return null
+            if (location == null || !hasSafeMediaUrlText(location)) return null
             // Preserve an absolute signed Location byte-for-byte; only relative references need URL resolution.
             target = if (location.startsWith("https://", ignoreCase = true)) location
             else runCatching { URLBuilder(target).takeFrom(location).buildString() }.getOrNull() ?: return null

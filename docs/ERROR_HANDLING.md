@@ -31,6 +31,14 @@ waiting for EOF, and its scoped response source is closed. The synthetic loopbac
 test withholds EOF and checks rejection, closure and no retry; it does not assign
 a byte limit to transport read-ahead. [Ktor response documentation](https://ktor.io/docs/client-responses.html#streaming)
 
+## Media URL limits
+
+Direct playback and HLS URLs are limited to 16,384 encoded characters. Raw
+whitespace, controls, non-ASCII text and fragments are rejected; percent-encoded
+query values remain accepted. Redirect references receive the same text checks
+before URL resolution, and resolved targets must still pass the host/path policy.
+An unsupported URL is discarded during extraction rather than requested.
+
 ## What messages contain
 
 `ExcorRequestException.message` is the failure kind and status only, such as `YouTube request failed: SERVER_ERROR (HTTP 503)`. WARN logs name the InnerTube endpoint and status, such as `InnerTube browse answered HTTP 403`. Neither ever includes URLs with query strings, headers, cookies, visitor data or response bodies.

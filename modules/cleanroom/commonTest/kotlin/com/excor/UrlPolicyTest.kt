@@ -6,6 +6,23 @@ import kotlin.test.assertTrue
 
 class UrlPolicyTest {
     @Test
+    fun playbackUrlsHaveAnExactEncodedLengthBound() {
+        val prefix = "https://rr1.googlevideo.com/videoplayback?signature="
+        val boundary = prefix + "a".repeat(16_384 - prefix.length)
+        assertTrue(isAllowedPlaybackUrl(boundary))
+        assertFalse(isAllowedPlaybackUrl(boundary + "a"))
+    }
+
+    @Test
+    fun playbackUrlsRejectRawControlsWhitespaceUnicodeAndFragments() {
+        val prefix = "https://rr1.googlevideo.com/videoplayback?signature="
+        for (suffix in listOf("a b", "a\tb", "a\nb", "a\rb", "a\u0000b", "a\u007fb", "caf\u00e9", "a#fragment")) {
+            assertFalse(isAllowedPlaybackUrl(prefix + suffix), "Unsafe synthetic URL suffix accepted")
+        }
+        assertTrue(isAllowedPlaybackUrl(prefix + "a%20b%2Fc%23d%3De%2Bf"))
+    }
+
+    @Test
     fun acceptsOnlyHttpsAllowedHostsAndExactPath() {
         listOf(
             "https://rr1---sn.googlevideo.com/videoplayback?c=WEB",
