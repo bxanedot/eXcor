@@ -105,7 +105,7 @@ The summary formatter accepts fixed project/status names and numeric versions.
 
 ```sh
 python3 -m unittest discover -s modules/tooling/tests -p 'test_*maintenance*.py' -v
-python3 modules/tooling/github_maintenance.py --repo bxanedot/eXcor --output /tmp/maintenance.json --check-competitors --summary-output /tmp/maintenance.md
+python3 modules/tooling/github_maintenance.py --repo lylicht/eXcor --output /tmp/maintenance.json --check-competitors --summary-output /tmp/maintenance.md
 ```
 
 A 2026-11-15 read-only live run found one issue, three open PRs, working
