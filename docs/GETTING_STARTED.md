@@ -25,6 +25,18 @@ to a remote service. These tasks are enough for this JVM consumer; the aggregate
 `publishToMavenLocal` also builds other targets and needs their toolchains.
 The library targets Java 17 bytecode; its source build uses JDK 21.
 
+By default the root settings apply the pinned Foojay resolver to provision missing
+JDKs. If JDK 21 is already installed, you can explicitly avoid that settings-plugin
+lookup and automatic JDK downloads:
+
+```sh
+./gradlew -Pexcor.autoProvisionJdk=false -Porg.gradle.java.installations.auto-download=false :jvmTest
+```
+
+CI uses this mode with its explicitly installed toolchains. A missing matching
+JDK fails rather than being downloaded. Other build dependencies still require
+their normal repositories; this option is not a fully offline build mode.
+
 The sample's `build` and `--help` commands make no YouTube requests. Running it
 without arguments makes live metadata requests and can fail if access is denied:
 

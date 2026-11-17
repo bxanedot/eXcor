@@ -262,3 +262,12 @@ was consulted for its default replacement behavior and the common
 links Kotlin 2.4.20; this repository builds with Kotlin 2.4.21. Only the public API
 documentation was read. Strict decoding and synthetic malformed-byte/cache tests
 were independently written; no competitor implementation or fixture was used.
+
+## Explicit installed-JDK settings mode (2026-11-16)
+
+[Gradle 9.8.2 plugin documentation](https://docs.gradle.org/9.8.2/userguide/plugins_intermediate.html)
+was consulted for static plugin DSL restrictions, resolution even with `apply false`,
+and classpath/application APIs. The conditional settings classpath, installed-mode
+CI flags and isolated real-Gradle fixtures were independently written. The existing
+Foojay 1.0.0 plugin marker remains pinned and enabled by default; no competitor
+material, new SDK dependency or prebuilt SDK artifact was introduced.
