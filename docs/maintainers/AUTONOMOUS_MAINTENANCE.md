@@ -93,7 +93,7 @@ values are discarded. The report retains HTTP/access/rate-limit, network,
 response-size and metadata states separately. Known observation failures leave
 the repository audit usable; unexpected policy/programming errors fail it.
 
-A version difference from the 2026-11-16 baselines is `REVIEW_NEEDED`; a match
+A version difference from the 2026-11-17 baselines is `REVIEW_NEEDED`; a match
 records release metadata only. This covers GitHub releases, with npm-registry,
 interface, feature-gap and behavioral review remaining separate work. The
 observer never edits the competitor matrix, creates issues, copies implementation
@@ -105,7 +105,7 @@ The summary formatter accepts fixed project/status names and numeric versions.
 
 ```sh
 python3 -m unittest discover -s modules/tooling/tests -p 'test_*maintenance*.py' -v
-python3 modules/tooling/github_maintenance.py --repo bxanedot/eXcor --output /tmp/maintenance.json --check-competitors --summary-output /tmp/maintenance.md
+python3 modules/tooling/github_maintenance.py --repo lylicht/eXcor --output /tmp/maintenance.json --check-competitors --summary-output /tmp/maintenance.md
 ```
 
 A 2026-11-15 read-only live run found one issue, three open PRs, working

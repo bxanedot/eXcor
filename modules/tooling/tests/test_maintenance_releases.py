@@ -14,7 +14,7 @@ SPEC.loader.exec_module(m)
 
 
 BASELINES = {
-    "innertubex": "0.11.7", "youtubejs": "18.3.0", "tombulled_innertube": "2.1.19",
+    "innertubex": "0.11.8", "youtubejs": "18.3.0", "tombulled_innertube": "2.1.19",
     "youtubeexplode": "6.6.3", "youtube_transcript_api": "1.2.5", "ytmusicapi": "1.12.3",
     "yewtube": "2.13.1", "alaouy_youtube": "2.2.6",
 }
@@ -84,7 +84,7 @@ class CompetitorReleaseTests(unittest.TestCase):
                   "competitor_releases": observations}
         summary = m.render_summary(report)
         self.assertNotIn("synthetic-private", json.dumps(observations) + summary)
-        self.assertIn("0.11.7", summary)
+        self.assertIn("0.11.8", summary)
         api.values["innertubex"] = release("v0.12.0")
         self.assertEqual("REVIEW_NEEDED", m.observe_competitor_releases(api)[0]["status"])
         for field, value in [("project", "@someone"), ("status", "unknown\n@someone"),

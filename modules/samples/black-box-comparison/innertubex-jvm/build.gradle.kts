@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.MetrolistGroup.innertubex:innertubex:v0.11.7")
+    implementation("com.github.MetrolistGroup.innertubex:innertubex:v0.11.8")
     implementation("io.ktor:ktor-client-cio:3.6.0")
     implementation("io.ktor:ktor-client-content-negotiation:3.6.0")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.6.0")
