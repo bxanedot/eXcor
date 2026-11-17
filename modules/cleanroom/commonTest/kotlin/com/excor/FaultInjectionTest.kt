@@ -115,6 +115,24 @@ class FaultInjectionTest {
     }
 
     @Test
+    fun malformedUtf8MetadataIsRejectedWithoutRetry() = runTest {
+        var calls = 0
+        val invalid = (EMPTY_CONTINUATION.dropLast(1) + ",\"ignored\":\"").encodeToByteArray() +
+            byteArrayOf(0x80.toByte()) + "\"}".encodeToByteArray()
+        val client = HttpClient(MockEngine {
+            calls++
+            respond(invalid, HttpStatusCode.OK)
+        })
+        try {
+            val engine = ExcorEngine(FaultHost(), null, client)
+            assertNull(engine.search("q", "continuation"), "invalid UTF-8 is not a successful metadata page")
+            assertEquals(1, calls, "a malformed successful response is not a network retry")
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
     fun deniedMediaRedirectNeverVisitsForeignHostWithSessionCredentials() = runTest {
         val visited = mutableListOf<String>()
         val host = FaultHost(cookie = "SID=synthetic-secret", visitor = "synthetic-visitor")
