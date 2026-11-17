@@ -7,7 +7,7 @@ For paired first-media latency, use the [streaming adapter comparison](../module
 eXcor is compared on capabilities that are documented or can be observed from outside. Competitor implementation code is not used or copied. Sources are recorded in `PROVENANCE.md`.
 
 **Sources:**
-- **InnerTubeX:** public [README](https://github.com/MetrolistGroup/innertubex/blob/v0.11.9/README.md), [CHANGELOG.md](https://github.com/MetrolistGroup/innertubex/blob/v0.11.9/CHANGELOG.md), and [v0.11.9 release](https://github.com/MetrolistGroup/innertubex/releases/tag/v0.11.9), checked 2026-11-17. The changelog documents a player-script variant fix for signature/n transforms after QuackJS parsing failures; the README install sample now pins v0.11.9. The older v0.11.7 notes prefer Remix SABR audio. Paired runtime results below retain their recorded earlier versions. The v0.11.6 README documents a source-built JVM playback harness; that earlier seek check used exact commit `64c7df4d88d27e6964157b3b341f7ec70f88ea6e`.
+- **InnerTubeX:** public [README](https://github.com/MetrolistGroup/innertubex/blob/v0.11.9/README.md), [CHANGELOG.md](https://github.com/MetrolistGroup/innertubex/blob/v0.11.9/CHANGELOG.md), and [v0.11.9 release](https://github.com/MetrolistGroup/innertubex/releases/tag/v0.11.9), checked 2026-11-17. The v0.11.9 changelog documents YouTube Music `navigation/resolve_url` fallback for catalog tracks whose video ID is replaced. This is documented competitor behavior, not evidence eXcor has the same gap. The README install sample pins v0.11.9; earlier notes document player-script variant and SABR changes. Paired runtime results below retain their recorded earlier versions. The v0.11.6 README documents a source-built JVM playback harness; that earlier seek check used exact commit `64c7df4d88d27e6964157b3b341f7ec70f88ea6e`.
 - **YouTube.js:** public README, [Getting Started](https://ytjs.dev/guide/getting-started), [API docs](https://ytjs.dev/api/), and [npm package metadata](https://www.npmjs.com/package/youtubei.js), checked 2026-11-11. The separate adapter pins MIT-licensed `youtubei.js@18.3.0`, uses direct-URL audio only, and does not execute player JavaScript.
 - **NewPipeExtractor:** official README, v0.27.1 release notes and v0.27.1 Javadocs, checked 2026-11-11.
 
@@ -142,6 +142,8 @@ The variant-fix description warrants independent eXcor EJS/cipher coverage in
 parser failure in eXcor. No implementation diff was opened. New runtime/paired
 observations are required before extending older results to v0.11.8.
 
+The exact-main audit on `560f2296894b9e409233a6878e071f0950ec1259` found v0.11.9 as `REVIEW_NEEDED`; the other seven tracked release versions matched. The v0.11.9 changelog documents the YouTube Music replacement-ID fallback. This is a public release-note observation only; no runtime comparison was run. Independent eXcor verification is tracked in [#245](https://github.com/lylicht/eXcor/issues/245). No implementation diff was opened, and archived paired observations remain tied to their recorded versions.
+
 These baselines use each project's latest published full **GitHub release** and
 that release's README. They do not establish package-registry currentness or
 successful runtime behavior. Roles below are documented claims; observable
@@ -176,7 +178,7 @@ Release README blob fingerprints (content reproducibility, not runtime evidence)
 
 | Project | README git blob SHA |
 |---|---|
-| MetrolistGroup/innertubex v0.11.8 | `5b5a170550ed562d6cf070a720022a22e1d0e5b9` |
+| MetrolistGroup/innertubex v0.11.9 | `5b5a170550ed562d6cf070a720022a22e1d0e5b9` |
 | LuanRT/YouTube.js | `01aa833a0cbdabaa59f575da71a932b053281a27` |
 | tombulled/innertube | `7d6ccd055e6c21b4a0bfa2011c325508558c340a` |
 | Tyrrrz/YoutubeExplode | `b195b70950ba534ec0cf87cedd0c2276be5a0c8f` |
