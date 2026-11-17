@@ -25,7 +25,11 @@ Stream extraction (`extract`) is separate: a failed player request moves on to t
 
 ## Response size limits
 
-The Kotlin library reads player responses, watch pages, scripts, HLS manifests, and catalog responses through Ktor's streaming API. Declared lengths above the relevant limit are rejected from the headers. Bodies without a length are read only until they cross the limit. Direct media probes request a short range and check for a byte before closing the response. The transport can buffer some bytes ahead of the application read. [Ktor response documentation](https://ktor.io/docs/client-responses.html#streaming)
+The Kotlin library reads player responses, watch pages, scripts, HLS manifests, and catalog responses through Ktor's streaming API. Declared lengths above the relevant limit are rejected from the headers. Bodies without a length are read only until they cross the limit. Direct media probes request a short range and check for a byte before closing the response. The transport can buffer bytes ahead of the application read, so an application
+byte cap is not an exact network-byte cap. Oversized metadata is rejected without
+waiting for EOF, and its scoped response source is closed. The synthetic loopback
+test withholds EOF and checks rejection, closure and no retry; it does not assign
+a byte limit to transport read-ahead. [Ktor response documentation](https://ktor.io/docs/client-responses.html#streaming)
 
 ## What messages contain
 

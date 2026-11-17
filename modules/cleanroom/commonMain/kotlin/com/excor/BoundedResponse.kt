@@ -10,7 +10,8 @@ import io.ktor.utils.io.readAvailable
  * HttpStatement.execute with a response block to avoid buffering before this check.
  *
  * YouTube's player JSON, watch pages, and player scripts are served as UTF-8.
- * Limits are byte counts, not character counts.
+ * Limits are byte counts, not character counts. They bound application reads;
+ * the transport may prefetch additional bytes before cancellation closes it.
  */
 internal suspend fun readBoundedResponseText(response: HttpResponse, limit: Int): String? {
     require(limit in 1 until Int.MAX_VALUE) { "invalid response limit" }

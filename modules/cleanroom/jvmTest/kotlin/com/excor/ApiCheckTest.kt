@@ -18,12 +18,15 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -34,7 +37,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
-import okio.Buffer
 import okio.ForwardingSource
 import okio.buffer
 import kotlin.test.Test
@@ -302,35 +304,64 @@ class ApiCheckTest {
     }
 
     @Test
-    fun metadataByteLimitStopsReadingTheUnderlyingResponse() = runBlocking {
-        // Leave room for Ktor's transport read-ahead after the application stops.
-        val fixtureSize = 5_000_000
-        val consumed = AtomicLong()
-        val http = OkHttpClient.Builder().addInterceptor { chain ->
-            val source = object : ForwardingSource(Buffer().write(ByteArray(fixtureSize))) {
-                override fun read(sink: Buffer, byteCount: Long): Long =
-                    super.read(sink, byteCount).also { if (it > 0) consumed.addAndGet(it) }
-            }.buffer()
-            val body = object : ResponseBody() {
-                override fun contentType() = "application/json".toMediaType()
-                override fun contentLength() = -1L
-                override fun source() = source
+    fun oversizedMetadataClosesStreamingResponseBeforeEof() = runBlocking {
+        val allowEof = CountDownLatch(1)
+        val normalEof = AtomicBoolean()
+        val sourceClosed = CountDownLatch(1)
+        val requests = AtomicInteger()
+        val executor = Executors.newSingleThreadExecutor()
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+            this.executor = executor
+            createContext("/") { exchange ->
+                try {
+                    exchange.responseHeaders.add("Content-Type", "application/json")
+                    exchange.sendResponseHeaders(200, 0) // chunked: no Content-Length
+                    val chunk = ByteArray(8192) { 'x'.code.toByte() }
+                    var remaining = 2_000_001 // exactly one byte beyond the metadata limit
+                    while (remaining > 0) {
+                        val count = minOf(chunk.size, remaining)
+                        exchange.responseBody.write(chunk, 0, count)
+                        remaining -= count
+                    }
+                    exchange.responseBody.flush()
+                    // A buffering client cannot complete until this gate opens (or its test deadline expires).
+                    if (allowEof.await(30, TimeUnit.SECONDS)) normalEof.set(true)
+                } catch (_: IOException) {
+                    // Expected if the client cancels while this fixture is still writing.
+                } finally {
+                    exchange.close()
+                }
             }
-            Response.Builder()
-                .request(chain.request())
-                .protocol(Protocol.HTTP_1_1)
-                .code(200)
-                .message("OK")
-                .body(body)
-                .build()
+            start()
+        }
+        val http = OkHttpClient.Builder().addInterceptor { chain ->
+            requests.incrementAndGet()
+            val response = chain.proceed(chain.request().newBuilder()
+                .url("http://127.0.0.1:${server.address.port}/").build())
+            val original = checkNotNull(response.body)
+            val source = object : ForwardingSource(original.source()) {
+                override fun close() {
+                    try { super.close() } finally { sourceClosed.countDown() }
+                }
+            }.buffer()
+            response.newBuilder().body(object : ResponseBody() {
+                override fun contentType() = original.contentType()
+                override fun contentLength() = original.contentLength()
+                override fun source() = source
+            }).build()
         }.build()
         val library = Excor(apiHost(http))
         try {
-            assertNull(library.videoInfo("abcdefghijk"))
-            val bytes = consumed.get()
-            assertTrue(bytes in 2_000_001L until fixtureSize.toLong(), "expected the read to stop at the byte limit, read $bytes")
+            assertNull(withTimeout(10_000) { library.videoInfo("abcdefghijk") })
+            assertFalse(normalEof.get(), "oversized metadata must be rejected before the producer reaches EOF")
+            assertTrue(sourceClosed.await(5, TimeUnit.SECONDS), "the scoped response source must close")
+            assertEquals(1, requests.get(), "an oversized success body must not cause a retry")
         } finally {
+            allowEof.countDown()
             library.close()
+            server.stop(0)
+            executor.shutdownNow()
+            executor.awaitTermination(5, TimeUnit.SECONDS)
             http.dispatcher.executorService.shutdownNow()
             http.connectionPool.evictAll()
         }

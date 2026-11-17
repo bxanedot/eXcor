@@ -226,6 +226,16 @@ existing project. The maintenance client allowlist and synthetic network-boundar
 tests were independently updated to that fixed name. No competitor code or new
 dependency was used; redirect refusal and the fixed label-only write scope remain.
 
+## Streaming metadata cancellation verification (2026-11-17)
+
+The official Ktor 3.6.0 `HttpStatement`, `SaveBody`, `OkHttpEngine`, `ByteChannel`
+and JVM byte-channel operation sources were inspected for streaming response
+lifecycle, buffering and cancellation behavior (Apache-2.0;
+[versioned source](https://github.com/ktorio/ktor/tree/3.6.0)). No implementation
+was copied. The bounded loopback fixture and EOF/cancellation assertions were
+independently written using the existing public host API, JDK HTTP server and
+OkHttp response-source interfaces. No competitor code, live service response or
+new dependency was used.
 
 ## CI concurrency configuration (2026-11-15)
 
