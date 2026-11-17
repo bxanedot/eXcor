@@ -2,7 +2,12 @@ package com.excor
 
 import io.ktor.http.Url
 
+/** Check raw URLs and redirect references before parsing or normalizing untrusted text. */
+internal fun hasSafeMediaUrlText(value: String): Boolean =
+    value.length in 1..16_384 && value.all { it.code in 0x21..0x7e } && '#' !in value
+
 internal fun isAllowedPlaybackUrl(value: String): Boolean {
+    if (!hasSafeMediaUrlText(value)) return false
     val schemeEnd = value.indexOf("://")
     if (schemeEnd < 0) return false
     val authorityStart = schemeEnd + 3
@@ -20,7 +25,7 @@ internal fun isAllowedPlaybackUrl(value: String): Boolean {
 
 /** A YouTube HLS master playlist URL. Its child playlists and segments remain the host player's responsibility. */
 internal fun isAllowedHlsManifestUrl(value: String): Boolean {
-    if (value.length !in 1..16_384 || value.any { it.code !in 0x21..0x7e } || '#' in value) return false
+    if (!hasSafeMediaUrlText(value)) return false
     val schemeEnd = value.indexOf("://")
     if (schemeEnd < 0) return false
     val authorityStart = schemeEnd + 3

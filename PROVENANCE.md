@@ -281,3 +281,13 @@ LICENSE blob remains `f288702d2fa16d3cdf0035b15a9fcbc552cd88e7`. The standalone
 benchmark adapter uses the published public API binary; no implementation file/diff
 or competitor test was opened or copied. It remains outside the active
 eXcor SDK dependency graph. Historical observations retain their original versions.
+
+
+## Playback URL text bounds (2026-11-17)
+
+Independent synthetic tests reproduced acceptance of an oversized direct playback
+URL, unsafe raw query text, and an oversized allowed-host redirect before the fix.
+The shared text check applies the existing HLS limit to direct playback and checks
+raw redirect references before URL parsing/resolution. Encoded query values and
+the exact supported size boundary remain accepted. Mock-only HTTP cases cover
+absolute and relative references; no competitor material or live media was used.
