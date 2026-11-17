@@ -15,9 +15,12 @@ class JdkProvisioningTests(unittest.TestCase):
     def run_settings(self, installed):
         properties = (ROOT / "gradle/wrapper/gradle-wrapper.properties").read_text()
         distribution = re.search(r"gradle-[0-9.]+-bin(?=\.zip)", properties).group()
-        home = Path(os.environ.get("GRADLE_USER_HOME", Path.home() / ".gradle"))
+        # Use only the standard wrapper cache, never an unchecked executable-search path from the environment.
+        home = Path.home() / ".gradle"
         binaries = list((home / "wrapper/dists" / distribution).glob("*/gradle-*/bin/gradle"))
-        self.assertEqual(1, len(binaries), "Run the repository wrapper once before this check")
+        self.assertEqual(1, len(binaries), "Run the repository wrapper with its standard cache before this check")
+        self.assertTrue(binaries[0].resolve().is_relative_to((home / "wrapper/dists").resolve()),
+                        "Gradle executable must remain inside the standard wrapper cache")
         with tempfile.TemporaryDirectory(prefix="excor-settings-") as temporary:
             fixture = Path(temporary)
             (fixture / "settings.gradle.kts").write_text((ROOT / "settings.gradle.kts").read_text())
