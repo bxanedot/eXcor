@@ -291,3 +291,8 @@ The shared text check applies the existing HLS limit to direct playback and chec
 raw redirect references before URL parsing/resolution. Encoded query values and
 the exact supported size boundary remain accepted. Mock-only HTTP cases cover
 absolute and relative references; no competitor material or live media was used.
+
+
+## InnerTubeX 0.11.9 reference refresh (2026-11-17)
+
+Reviewed the public v0.11.9 release notes, versioned README and changelog. The changelog documents YouTube Music `navigation/resolve_url` fallback for replaced catalog video IDs. No competitor implementation or tests were opened. The README git blob is `5b5a170550ed562d6cf070a720022a22e1d0e5b9`. This release-note observation adds no eXcor runtime evidence; paired results remain pinned to their recorded versions, and independent behavior verification is tracked in issue #245.

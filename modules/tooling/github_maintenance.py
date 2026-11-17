@@ -26,7 +26,7 @@ REPOSITORY = "lylicht/eXcor"
 # Manually reviewed public release baselines; matching tags are not capability evidence.
 RELEASE_PROJECTS = {
     "innertubex": {"path": "/repos/MetrolistGroup/innertubex/releases/latest",
-                   "repo": "MetrolistGroup/innertubex", "baseline": "0.11.8"},
+                   "repo": "MetrolistGroup/innertubex", "baseline": "0.11.9"},
     "youtubejs": {"path": "/repos/LuanRT/YouTube.js/releases/latest",
                   "repo": "LuanRT/YouTube.js", "baseline": "18.3.0"},
     "tombulled_innertube": {"path": "/repos/tombulled/innertube/releases/latest",
