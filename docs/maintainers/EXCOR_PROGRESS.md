@@ -17,9 +17,9 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 ## Latest verified checkpoint — 2026-11-18
 
 - PR #248 merged as `2cd94171959c9c0fcb58622396e9c0a7c61be7f7`; all CI and CodeQL checks passed. The GitHub repository description was also updated.
-- Exact-main implementation-tree signed-out Windows x64 live playback passed on `dQw4w9WgXcQ`: FFmpeg decoded the complete 3,433,755-byte Opus stream; a second test muxed and decoded 480p H.264/AAC (14,103,519-byte video track, 854×480, 213.089 seconds); both midpoint HTTP 206 reads returned the requested 65,536 bytes. One video/network only; byte ranges are not player seeks, and ciphered playback remains unverified. See `modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-audio-decode.md` and `owner-other-2026-11-18-main-video-mux.md`.
+- Exact-main implementation-tree signed-out Windows x64 live playback passed on `dQw4w9WgXcQ`: FFmpeg decoded the complete 3,433,755-byte Opus stream; a second test muxed and decoded 480p H.264/AAC (14,103,519-byte video track, 854×480, 213.089 seconds); both midpoint HTTP 206 reads returned the requested 65,536 bytes. A separate current-main FFplay run sent Right then Left and recorded ordered HTTP 206 audio ranges `0 → 666109 → 497307`. All checks used one video/network; ciphered playback and broader parity remain unverified. See `modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-audio-decode.md`, `owner-other-2026-11-18-main-video-mux.md`, and `owner-other-2026-11-18-main-audio-player-seek.md`.
 - The pinned Foojay 1.0.0 resolver loaded successfully in four separate empty Gradle user homes on the owner Windows network using Gradle 9.8.2. The historical GitHub failure log reports `UnknownPluginException` but no HTTP response/status. The underlying hosted-runner failure remains unreproduced and unclassified; issue #236 stays open.
-- Issue #78 remains open for actual player seek, eligible cipher playback and broader network/content coverage. Issue #245 remains open because no live old-to-replacement ID mapping was confirmed. G4/G5 remain partial; no release gate is promoted.
+- Issue #78 remains open for repeatable paired and cross-network playback, interactive video seeking, eligible cipher playback and broader content coverage. The current-main audio-seek sample is one eXcor run and does not establish parity. Issue #245 remains open because no live old-to-replacement ID mapping was confirmed. G4/G5 remain partial; no release gate is promoted.
 
 ## Latest verified checkpoint — 2026-11-15 12:55 UTC
 
@@ -30,7 +30,7 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 ## Next
 
-- #78: continue only with eligible, authorized cases. Another network, player-controlled video seeking and eligible live cipher playback remain outstanding. Do not retry access refusals or infer cipher failure from service blocks.
+- #78: continue only with eligible, authorized cases. A paired current-main seek comparison, another network, player-controlled video seeking and eligible live cipher playback remain outstanding. Do not retry access refusals or infer cipher failure from service blocks.
 - #236: if Foojay resolution fails again, capture redacted DNS/connect/TLS/HTTP status and redirect timing from the failing runner. Do not add blanket retries or infer the cause from `UnknownPluginException` alone.
 - #245: verify a public, confirmed old/new video-ID pair on an authorized owner environment. Stop if YouTube Music presents a consent or access refusal; do not bypass it.
 - Keep G4/G5 partial and Release NO-GO until the written evidence requirements pass. If no new eligible sample is available, continue the clean-room provenance and release-security review. Use Ruflo only through MCP from an isolated working directory, and do not run `init` in this checkout.

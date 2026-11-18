@@ -18,6 +18,10 @@ At merged main `2cd94171959c9c0fcb58622396e9c0a7c61be7f7`, signed-out Windows x6
 
 At the same merged-main implementation tree, signed-out Windows x64 eXcor selected 854×480 H.264 video at 25 fps and AAC audio for `dQw4w9WgXcQ`, muxed and decoded the complete 14,103,519-byte video track, and read exactly 65,536 bytes at the midpoint with HTTP 206. FFprobe reported 213.089 seconds. One video and network only; the HTTP range does not prove player seeking, and the run does not exercise ciphered playback. G4/G5 remain partial. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-video-mux.md).
 
+## 2026-11-18 — current-main direct-audio player seek
+
+At merged main `2cd94171959c9c0fcb58622396e9c0a7c61be7f7`, one signed-out Windows x64 FFplay run sent Right then Left on the direct `audio/webm` stream for `dQw4w9WgXcQ`. The eXcor relay recorded three HTTP 206 ranges at byte starts `0 → 666109 → 497307`; the implementation source tree matched main. This is one eXcor video/network sample, not a paired comparison, video seek, or ciphered playback result. G4/G5 remain partial. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-audio-player-seek.md).
+
 **Purpose:** close eXcor's G4 (player compatibility), G5 (direct streaming) and G8 (reliability) evidence gaps through authorized, reproducible testing. This is an *execution plan*, not a claim that missing playback paths are implemented. Track results in issue #78 and keep raw credentials, cookies, tokens and signed URLs out of the repository, issues and CI artifacts.
 
 ## Preconditions and safety
