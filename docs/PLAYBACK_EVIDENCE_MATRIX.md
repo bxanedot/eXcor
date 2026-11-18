@@ -14,6 +14,10 @@ eXcor passed the initial 64 KiB read for `dQw4w9WgXcQ` in 3/3 cold and 3/3 warm 
 
 At merged main `2cd94171959c9c0fcb58622396e9c0a7c61be7f7`, signed-out Windows x64 eXcor decoded the full 3,433,755-byte Opus stream for `dQw4w9WgXcQ` in one live test. FFprobe reported 213.061 seconds; the midpoint HTTP range returned 206 with the exact 65,536 requested bytes. The run used one owner network recorded as `other`, and the test source tree was confirmed identical to merged main. This is a full audio decode and byte-range result, not a player seek or ciphered playback result; G4/G5 remain partial. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-audio-decode.md).
 
+## 2026-11-18 — current-main 480p video/audio mux and decode
+
+At the same merged-main implementation tree, signed-out Windows x64 eXcor selected 854×480 H.264 video at 25 fps and AAC audio for `dQw4w9WgXcQ`, muxed and decoded the complete 14,103,519-byte video track, and read exactly 65,536 bytes at the midpoint with HTTP 206. FFprobe reported 213.089 seconds. One video and network only; the HTTP range does not prove player seeking, and the run does not exercise ciphered playback. G4/G5 remain partial. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-video-mux.md).
+
 **Purpose:** close eXcor's G4 (player compatibility), G5 (direct streaming) and G8 (reliability) evidence gaps through authorized, reproducible testing. This is an *execution plan*, not a claim that missing playback paths are implemented. Track results in issue #78 and keep raw credentials, cookies, tokens and signed URLs out of the repository, issues and CI artifacts.
 
 ## Preconditions and safety
