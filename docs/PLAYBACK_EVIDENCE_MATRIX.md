@@ -1,5 +1,15 @@
 # Owner-run playback evidence matrix
 
+## 2026-11-18 — current-version matched initial-range run
+
+At eXcor main `6352b8418278de5f8df6b15a141c21e8501c5a25`, the signed-out Windows x64 run used one connection recorded as network category `other`, locale `en-US`, and a 30-second timeout. The matched adapters were eXcor 0.2.0, InnerTubeX pinned at 0.11.9, and YouTube.js `youtubei.js@18.3.0`; the content category was `music_video`.
+
+```powershell
+python modules/samples/black-box-comparison/run_matched.py --video-id dQw4w9WgXcQ --video-id kJQP7kiw5Fk --video-id aqz-KE-bpKQ --comparison-id owner-other-2026-11-18-current-competitors --network-category other --content-category music_video --phases cold warm --sample-indices 1 2 3 --timeout-seconds 30 --adapters excor innertubex youtubejs --output modules/samples/black-box-comparison/results/owner-other-2026-11-18-current-competitors.jsonl
+```
+
+eXcor passed the initial 64 KiB read for `dQw4w9WgXcQ` in 3/3 cold and 3/3 warm attempts. `kJQP7kiw5Fk` and `aqz-KE-bpKQ` were `BLOCKED` before media on their first attempts; the runner stopped further attempts for those eXcor/video pairs. InnerTubeX did not emit normalized samples in any of the 18 calls and is recorded as `FAIL/OTHER` with unknown adapter version. YouTube.js reported `UNSUPPORTED/UNSUPPORTED_TRANSPORT` in 18/18 calls. The run did not request offset byte ranges or perform decode, seek, mux, or cipher checks. It adds no G4/G5/G11 release-gate credit. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-current-competitors-report.md) and [JSONL samples](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-current-competitors.jsonl).
+
 **Purpose:** close eXcor's G4 (player compatibility), G5 (direct streaming) and G8 (reliability) evidence gaps through authorized, reproducible testing. This is an *execution plan*, not a claim that missing playback paths are implemented. Track results in issue #78 and keep raw credentials, cookies, tokens and signed URLs out of the repository, issues and CI artifacts.
 
 ## Preconditions and safety

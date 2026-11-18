@@ -1,9 +1,13 @@
 import importlib.util
+import io
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -179,6 +183,150 @@ class MatchedRunnerSampleTest(unittest.TestCase):
             except SystemExit as error:
                 self.fail(f"runner rejected conflicting modes through argparse with exit code {error.code}")
             self.fail("runner accepted both full-decode modes")
+
+    def test_blocked_adapter_is_not_retried_for_the_same_video(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "results.jsonl"
+            specs = [
+                runner_module.AdapterSpec(name, (name,), Path(directory))
+                for name in ("excor", "innertubex")
+            ]
+            calls = []
+
+            def invoke(spec, arguments, timeout_seconds):
+                if arguments == ["--help"]:
+                    return subprocess.CompletedProcess(spec.command, 0, "", "")
+                calls.append((
+                    spec.name,
+                    arguments[arguments.index("--phase") + 1],
+                    int(arguments[arguments.index("--sample-index") + 1]),
+                ))
+                return subprocess.CompletedProcess(spec.command, 0, "{}", "")
+
+            def parse_sample(stdout, *, adapter, video_id, phase, sample_index, expected_comparison, expected_lane):
+                return {
+                    "adapter": adapter,
+                    "comparison": expected_comparison,
+                    "lane": expected_lane,
+                    "videoId": video_id,
+                    "phase": phase,
+                    "sampleIndex": sample_index,
+                    "outcome": "BLOCKED" if adapter == "excor" else "PASS",
+                }
+
+            arguments = [
+                "--video-id", "dQw4w9WgXcQ",
+                "--comparison-id", "run-home-01",
+                "--network-category", "home",
+                "--content-category", "music_video",
+                "--main-commit", "a" * 40,
+                "--phases", "cold", "warm",
+                "--sample-indices", "1", "2",
+                "--adapters", "excor", "innertubex",
+                "--output", str(output),
+            ]
+            with (
+                patch.object(runner_module, "discover_adapters", return_value=specs),
+                patch.object(runner_module, "_invoke", side_effect=invoke),
+                patch.object(runner_module, "_parse_adapter_sample", side_effect=parse_sample),
+                redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(runner_module.run(arguments), 0)
+
+            self.assertEqual(calls, [
+                ("excor", "cold", 1),
+                ("innertubex", "cold", 1),
+                ("innertubex", "cold", 2),
+                ("innertubex", "warm", 1),
+                ("innertubex", "warm", 2),
+            ])
+
+    def test_unhandled_adapter_exit_becomes_a_sanitized_technical_failure(self):
+        value = runner_module._failed_adapter_sample(
+            adapter="innertubex",
+            video_id="dQw4w9WgXcQ",
+            phase="cold",
+            sample_index=1,
+            expected_comparison=self.expected,
+            expected_lane="direct_audio",
+            failure_class="OTHER",
+        )
+        self.assertEqual(value["outcome"], "FAIL")
+        self.assertEqual(value["failureClass"], "OTHER")
+        self.assertEqual(value["adapterVersion"], "unknown")
+        self.assertEqual(value["measurements"]["decode"], "NOT_TESTED")
+
+    def test_nonzero_adapter_exit_is_a_failure_even_when_stdout_looks_valid(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "results.jsonl"
+            spec = runner_module.AdapterSpec("innertubex", ("innertubex",), Path(directory))
+
+            def invoke(spec, arguments, timeout_seconds):
+                if arguments == ["--help"]:
+                    return subprocess.CompletedProcess(spec.command, 0, "", "")
+                return subprocess.CompletedProcess(spec.command, 1, "valid normalized output", "")
+
+            def parse_sample(stdout, *, adapter, video_id, phase, sample_index, expected_comparison, expected_lane):
+                value = sample()
+                value.update(
+                    adapter=adapter,
+                    comparison=expected_comparison,
+                    videoId=video_id,
+                    phase=phase,
+                    sampleIndex=sample_index,
+                    lane=expected_lane,
+                )
+                return runner_module.report_contract.validate_sample(value)
+
+            arguments = [
+                "--video-id", "dQw4w9WgXcQ",
+                "--comparison-id", "run-home-01",
+                "--network-category", "home",
+                "--content-category", "music_video",
+                "--main-commit", "a" * 40,
+                "--adapters", "innertubex",
+                "--output", str(output),
+            ]
+            with (
+                patch.object(runner_module, "discover_adapters", return_value=[spec]),
+                patch.object(runner_module, "_invoke", side_effect=invoke),
+                patch.object(runner_module, "_parse_adapter_sample", side_effect=parse_sample),
+                redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(runner_module.run(arguments), 0)
+
+            result = runner_module.report_contract.load_samples(output)[0]
+            self.assertEqual(result["outcome"], "FAIL")
+            self.assertEqual(result["failureClass"], "OTHER")
+
+    def test_adapter_that_cannot_start_is_saved_as_a_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "results.jsonl"
+            spec = runner_module.AdapterSpec("innertubex", ("innertubex",), Path(directory))
+
+            def invoke(spec, arguments, timeout_seconds):
+                if arguments == ["--help"]:
+                    return subprocess.CompletedProcess(spec.command, 0, "", "")
+                raise runner_module.AdapterLaunchError("adapter process could not be started")
+
+            arguments = [
+                "--video-id", "dQw4w9WgXcQ",
+                "--comparison-id", "run-home-01",
+                "--network-category", "home",
+                "--content-category", "music_video",
+                "--main-commit", "a" * 40,
+                "--adapters", "innertubex",
+                "--output", str(output),
+            ]
+            with (
+                patch.object(runner_module, "discover_adapters", return_value=[spec]),
+                patch.object(runner_module, "_invoke", side_effect=invoke),
+                redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(runner_module.run(arguments), 0)
+
+            result = runner_module.report_contract.load_samples(output)[0]
+            self.assertEqual((result["outcome"], result["failureClass"]), ("FAIL", "OTHER"))
 
 
 if __name__ == "__main__":
