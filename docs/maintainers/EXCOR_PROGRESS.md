@@ -14,6 +14,13 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 **License update — 2026-11-13:** the owner changed the current license target from Apache-2.0 to GPL-3.0-only. Earlier Apache-2.0 grants remain available for previously distributed revisions; see `NOTICE` and `docs/licenses/Apache-2.0.txt`. The source-independence rules did not change.
 
+## Latest verified checkpoint — 2026-11-18
+
+- PR #248 merged as `2cd94171959c9c0fcb58622396e9c0a7c61be7f7`; all CI and CodeQL checks passed. The GitHub repository description was also updated.
+- Exact-main signed-out Windows x64 live audio verification passed on `dQw4w9WgXcQ`: FFmpeg decoded the complete 3,433,755-byte Opus stream, and a midpoint HTTP 206 returned the requested 65,536 bytes. One video/network only; this is not a player seek or ciphered-playback result. See `modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-audio-decode.md`.
+- The pinned Foojay 1.0.0 resolver loaded successfully in four separate empty Gradle user homes on the owner Windows network using Gradle 9.8.2. The historical GitHub failure log reports `UnknownPluginException` but no HTTP response/status. The underlying hosted-runner failure remains unreproduced and unclassified; issue #236 stays open.
+- Issue #78 remains open for actual player seek, eligible cipher playback and broader network/content coverage. Issue #245 remains open because no live old-to-replacement ID mapping was confirmed. G4/G5 remain partial; no release gate is promoted.
+
 ## Latest verified checkpoint — 2026-11-15 12:55 UTC
 
 - PR #202 is merged as `a021c96fb307e9a4c4051db55428463636bd8f30`. Its exact-main second-video comparison records eXcor `ACCESS_DENIED` in 5/5 attempts while InnerTubeX 0.11.7 fully decoded audio and passed both HTTP byte-range probes in 5/5 on one signed-out Windows home network. This is an access differential, not a shared playback pass or a diagnosis of the refusal.
@@ -23,7 +30,10 @@ Make eXcor a credible, independently implemented competitor to InnerTubeX by com
 
 ## Next
 
-Continue issue #78 only with eligible, authorized cases; another network, player-controlled video seeking and eligible live cipher playback remain outstanding. Do not retry access refusals or infer a cipher failure from service blocks. If no new eligible sample is available, work on the remaining clean-room provenance and release-security review. Use Ruflo only through MCP from an isolated working directory, and do not run `init` in this checkout.
+- #78: continue only with eligible, authorized cases. Another network, player-controlled video seeking and eligible live cipher playback remain outstanding. Do not retry access refusals or infer cipher failure from service blocks.
+- #236: if Foojay resolution fails again, capture redacted DNS/connect/TLS/HTTP status and redirect timing from the failing runner. Do not add blanket retries or infer the cause from `UnknownPluginException` alone.
+- #245: verify a public, confirmed old/new video-ID pair on an authorized owner environment. Stop if YouTube Music presents a consent or access refusal; do not bypass it.
+- Keep G4/G5 partial and Release NO-GO until the written evidence requirements pass. If no new eligible sample is available, continue the clean-room provenance and release-security review. Use Ruflo only through MCP from an isolated working directory, and do not run `init` in this checkout.
 
 ## Previous verified checkpoint — 2026-11-15 11:58 UTC
 
