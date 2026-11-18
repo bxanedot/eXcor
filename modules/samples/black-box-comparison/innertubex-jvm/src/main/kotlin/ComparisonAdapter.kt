@@ -917,8 +917,8 @@ fun main(args: Array<String>) {
     } catch (_: CancellationException) {
         System.err.println("comparison adapter cancelled")
         exitProcess(130)
-    } catch (_: Exception) {
-        System.err.println("comparison adapter failed before producing a sample")
+    } catch (error: Exception) {
+        System.err.println("comparison adapter failed before producing a sample: ${error::class.simpleName ?: "unknown"}")
         exitProcess(1)
     }
 }

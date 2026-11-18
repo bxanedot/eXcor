@@ -296,7 +296,14 @@ internal class ExcorEngine(
         require(videoId == null || VIDEO_ID.matches(videoId)) { "not a YouTube video ID" }
         require(playlistId == null || PLAYLIST_ID.matches(playlistId)) { "not a YouTube playlist ID" }
         require(continuation == null || continuation.length <= MAX_CONTINUATION) { "continuation too long" }
-        return decodeMusicQueue(postMetadata(buildMusicQueueRequest(videoId, playlistId, continuation, host.session())) ?: return null)
+        val session = host.session()
+        val queue = decodeMusicQueue(postMetadata(buildMusicQueueRequest(videoId, playlistId, continuation, session)) ?: return null)
+        if (continuation != null || videoId == null || !queue?.tracks.isNullOrEmpty()) return queue
+
+        val replacement = fetchMusicWatchEndpointVideoId(videoId, session)?.takeIf { it != videoId } ?: return queue
+        val replacementPlaylist = playlistId?.takeIf { it == "RDAMVM$videoId" }?.let { "RDAMVM$replacement" } ?: playlistId
+        val replacementBody = postMetadata(buildMusicQueueRequest(replacement, replacementPlaylist, null, session)) ?: return null
+        return decodeMusicQueue(replacementBody)
     }
 
     /** Songs credited in a video's description (one request); empty when it credits none, null when not a watch page. */
@@ -783,6 +790,18 @@ internal class ExcorEngine(
         }.buildString()
         val source = getText(url, watchHeaders(session), WATCH_PAGE_LIMIT) ?: return null
         return parseWatchPage(source)
+    }
+
+    private suspend fun fetchMusicWatchEndpointVideoId(videoId: String, session: ExcorSession): String? {
+        val url = URLBuilder("https://music.youtube.com/watch").apply {
+            parameters.append("v", videoId)
+        }.buildString()
+        val headers = youtubeHeaders(session, DESKTOP_UA) + mapOf(
+            "Referer" to "https://music.youtube.com/",
+            "Origin" to "https://music.youtube.com",
+        )
+        val source = getText(url, headers, WATCH_PAGE_LIMIT) ?: return null
+        return musicWatchEndpointVideoId(source)
     }
 
     /**

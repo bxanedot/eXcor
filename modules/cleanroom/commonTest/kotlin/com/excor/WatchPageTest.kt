@@ -22,6 +22,15 @@ class WatchPageTest {
     }
 
     @Test
+    fun readsCanonicalMusicWatchEndpointVideoId() {
+        val page = """<script>ytcfg.set({"INITIAL_ENDPOINT":{"watchEndpoint":{"videoId":"BBBBBBBBBBB"}}});</script>"""
+        assertEquals("BBBBBBBBBBB", musicWatchEndpointVideoId(page))
+        assertNull(musicWatchEndpointVideoId("<html>no music endpoint</html>"))
+        assertNull(musicWatchEndpointVideoId("""<script>ytcfg.set({"INITIAL_ENDPOINT":{"watchEndpoint":{"videoId":"invalid"}}});</script>"""))
+        assertNull(musicWatchEndpointVideoId("x".repeat(5_000_001)))
+    }
+
+    @Test
     fun rejectsMissingPlayerResponse() {
         assertNull(parseWatchPage("<html>no player data</html>"))
     }

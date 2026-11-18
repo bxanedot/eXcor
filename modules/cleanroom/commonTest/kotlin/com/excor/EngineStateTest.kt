@@ -7,6 +7,10 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -254,6 +258,76 @@ class EngineStateTest {
             player = """{"playabilityStatus":{"status":"ERROR","reason":"Video unavailable"}}"""
             assertNull(engine.videoInfo(VIDEO_ID))
             assertEquals(1, nextCalls)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun musicQueueRetriesOnceWithYouTubeMusicCanonicalVideoId() = runTest {
+        val oldId = "AAAAAAAAAAA"
+        val newId = "BBBBBBBBBBB"
+        var queueCalls = 0
+        var pageCalls = 0
+        val queue = """{"continuationContents":{"playlistPanelContinuation":{"contents":[
+            {"playlistPanelVideoRenderer":{"videoId":"$newId","title":{"runs":[{"text":"Replacement"}]},
+              "lengthText":{"runs":[{"text":"3:21"}]},"navigationEndpoint":{"watchEndpoint":{"videoId":"$newId"}}}}]}}}"""
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/youtubei/v1/next" -> {
+                    queueCalls++
+                    val body = (request.body as TextContent).text
+                    if ("\"videoId\":\"$oldId\"" in body) respond("{\"responseContext\":{}}", HttpStatusCode.OK)
+                    else {
+                        assertTrue("\"videoId\":\"$newId\"" in body)
+                        assertTrue("\"playlistId\":\"RDAMVM$newId\"" in body)
+                        respond(queue, HttpStatusCode.OK)
+                    }
+                }
+                "/watch" -> {
+                    pageCalls++
+                    assertEquals("music.youtube.com", request.url.host)
+                    respond("""<script>ytcfg.set({"INITIAL_ENDPOINT":{"watchEndpoint":{"videoId":"$newId"}}});</script>""", HttpStatusCode.OK)
+                }
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        })
+        try {
+            val result = assertNotNull(ExcorEngine(FakeHost(), null, client).musicQueue(oldId, "RDAMVM$oldId", null))
+            assertEquals(newId, result.tracks.single().videoId)
+            assertEquals(2, queueCalls)
+            assertEquals(1, pageCalls)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun cancelDuringMusicIdResolutionDoesNotRetryOrSwallowCancellation() = runTest {
+        var queueCalls = 0
+        var pageCalls = 0
+        val pageRequested = CompletableDeferred<Unit>()
+        val client = HttpClient(MockEngine { request ->
+            when (request.url.encodedPath) {
+                "/youtubei/v1/next" -> {
+                    queueCalls++
+                    respond("{\"responseContext\":{}}", HttpStatusCode.OK)
+                }
+                "/watch" -> {
+                    pageCalls++
+                    pageRequested.complete(Unit)
+                    awaitCancellation()
+                }
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        })
+        try {
+            val engine = ExcorEngine(FakeHost(), null, client)
+            val job = launch { engine.musicQueue("AAAAAAAAAAA", "RDAMVMAAAAAAAAAAA", null) }
+            pageRequested.await()
+            job.cancelAndJoin()
+            assertEquals(1, queueCalls)
+            assertEquals(1, pageCalls)
         } finally {
             client.close()
         }

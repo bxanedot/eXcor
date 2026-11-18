@@ -1,5 +1,8 @@
 package com.excor
 
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+
 internal data class WatchPage(
     val apiKey: String?,
     val playerResponse: PlayerResponse,
@@ -23,7 +26,19 @@ internal fun parseWatchPage(source: String): WatchPage? {
     return WatchPage(apiKey, player.copy(playerScriptUrl = scriptUrl))
 }
 
+internal fun musicWatchEndpointVideoId(source: String): String? {
+    if (source.length > 5_000_000) return null
+    val marker = INITIAL_ENDPOINT_MARKER.find(source) ?: return null
+    val start = source.indexOf('{', marker.range.last + 1)
+    if (start < 0) return null
+    val end = jsonObjectEnd(source, start)
+    if (end < 0) return null
+    val endpoint = parseObject(source.substring(start, end)) ?: return null
+    return (endpoint.path("watchEndpoint", "videoId") as? JsonPrimitive)?.contentOrNull?.takeIf(VIDEO_ID::matches)
+}
+
 private val API_KEY = Regex("\\\"INNERTUBE_API_KEY\\\"\\s*:\\s*\\\"([^\\\"]{1,256})\\\"")
+private val INITIAL_ENDPOINT_MARKER = Regex("\\\"INITIAL_ENDPOINT\\\"\\s*:")
 private val PLAYER_JS_URL = Regex("\"(?:jsUrl|PLAYER_JS_URL)\"\\s*:\\s*\"(/s/player/[A-Za-z0-9_./-]{1,200}\\.js)\"")
 
 private fun jsonObjectEnd(source: String, start: Int): Int {

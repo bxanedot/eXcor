@@ -36,6 +36,14 @@ class RunnerError(ValueError):
     """An error safe to display without exposing adapter output."""
 
 
+class AdapterTimeout(RunnerError):
+    """An adapter exceeded its sample timeout."""
+
+
+class AdapterLaunchError(RunnerError):
+    """An adapter process could not be started."""
+
+
 @dataclass(frozen=True)
 class AdapterSpec:
     name: str
@@ -115,9 +123,9 @@ def _invoke(spec: AdapterSpec, arguments: Sequence[str], timeout_seconds: int) -
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise RunnerError("adapter exceeded the comparison timeout") from exc
+        raise AdapterTimeout("adapter exceeded the comparison timeout") from exc
     except OSError as exc:
-        raise RunnerError("adapter process could not be started") from exc
+        raise AdapterLaunchError("adapter process could not be started") from exc
 
 
 def preflight(specs: Sequence[AdapterSpec]) -> None:
@@ -188,6 +196,48 @@ def _parse_adapter_sample(
     ):
         raise RunnerError(f"{adapter} returned a mismatched comparison context; no JSONL output was written")
     return sample
+
+
+def _failed_adapter_sample(
+    *,
+    adapter: str,
+    video_id: str,
+    phase: str,
+    sample_index: int,
+    expected_comparison: dict[str, object],
+    expected_lane: str,
+    failure_class: str,
+) -> dict[str, object]:
+    return report_contract.validate_sample({
+        "schemaVersion": 1,
+        "comparison": expected_comparison,
+        "adapter": adapter,
+        "adapterVersion": "unknown",
+        "runtime": "node" if adapter == "youtubejs" else "jvm",
+        "lane": expected_lane,
+        "phase": phase,
+        "sampleIndex": sample_index,
+        "videoId": video_id,
+        "outcome": "FAIL",
+        "failureClass": failure_class,
+        "measurements": {
+            "metadataMs": None,
+            "extractMs": None,
+            "startupMs": None,
+            "firstMediaByteMs": None,
+            "decodeMs": None,
+            "requestCount": None,
+            "mediaRequestCount": None,
+            "bytesRead": None,
+            "rangeRequests": None,
+            "heapDeltaBytes": None,
+            "backwardSeek": "NOT_TESTED",
+            "forwardSeek": "NOT_TESTED",
+            "decode": "NOT_TESTED",
+            "codec": None,
+            "mimeType": None,
+        },
+    })
 
 
 def _git_main_commit() -> str:
@@ -319,10 +369,13 @@ def run(argv: Sequence[str] | None = None) -> int:
 
         samples: list[dict[str, object]] = []
         seen: set[tuple[object, ...]] = set()
+        blocked: set[tuple[str, str]] = set()
         for video_id in args.video_id:
             for phase in args.phases:
                 for sample_index in args.sample_indices:
                     for spec in specs:
+                        if (video_id, spec.name) in blocked:
+                            continue
                         print(f"Running {spec.name}: phase={phase}, sample={sample_index}")
                         adapter_args = [
                             "--video-id", video_id,
@@ -346,18 +399,39 @@ def run(argv: Sequence[str] | None = None) -> int:
                             adapter_args.append("--full-video-decode")
                             if decoder_version is not None:
                                 adapter_args.extend(["--decoder-version", decoder_version])
-                        result = _invoke(spec, adapter_args, args.timeout_seconds + 10)
-                        if result.returncode != 0:
-                            raise RunnerError(f"{spec.name} failed with exit code {result.returncode}; no JSONL output was written")
-                        sample = _parse_adapter_sample(
-                            result.stdout,
-                            adapter=spec.name,
-                            video_id=video_id,
-                            phase=phase,
-                            sample_index=sample_index,
-                            expected_comparison=comparison,
-                            expected_lane="direct_video" if args.full_video_decode else "direct_audio",
-                        )
+                        try:
+                            result = _invoke(spec, adapter_args, args.timeout_seconds + 10)
+                        except (AdapterTimeout, AdapterLaunchError) as error:
+                            sample = _failed_adapter_sample(
+                                adapter=spec.name,
+                                video_id=video_id,
+                                phase=phase,
+                                sample_index=sample_index,
+                                expected_comparison=comparison,
+                                expected_lane="direct_video" if args.full_video_decode else "direct_audio",
+                                failure_class="TIMEOUT" if isinstance(error, AdapterTimeout) else "OTHER",
+                            )
+                        else:
+                            if result.returncode != 0:
+                                sample = _failed_adapter_sample(
+                                    adapter=spec.name,
+                                    video_id=video_id,
+                                    phase=phase,
+                                    sample_index=sample_index,
+                                    expected_comparison=comparison,
+                                    expected_lane="direct_video" if args.full_video_decode else "direct_audio",
+                                    failure_class="OTHER",
+                                )
+                            else:
+                                sample = _parse_adapter_sample(
+                                    result.stdout,
+                                    adapter=spec.name,
+                                    video_id=video_id,
+                                    phase=phase,
+                                    sample_index=sample_index,
+                                    expected_comparison=comparison,
+                                    expected_lane="direct_video" if args.full_video_decode else "direct_audio",
+                                )
                         key = (
                             sample["comparison"]["id"], sample["adapter"], sample["lane"],
                             sample["videoId"], sample["phase"], sample["sampleIndex"],
@@ -366,6 +440,8 @@ def run(argv: Sequence[str] | None = None) -> int:
                             raise RunnerError("comparison produced a duplicate sample; no JSONL output was written")
                         seen.add(key)
                         samples.append(sample)
+                        if sample["outcome"] == "BLOCKED":
+                            blocked.add((video_id, spec.name))
 
         args.output.parent.mkdir(parents=True, exist_ok=True)
         created = False
