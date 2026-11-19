@@ -1,0 +1,458 @@
+{
+  "samples": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 995.891,
+        "extractMs": 713.726,
+        "firstMediaByteMs": 769.866,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": -3173888,
+        "mediaRequestCount": 5,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 5,
+        "requestCount": 8,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1061.871,
+        "extractMs": 1730.92,
+        "firstMediaByteMs": 1792.884,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 185649120,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 1,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 4757.701,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 150033256,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 994.398,
+        "extractMs": 1294.06,
+        "firstMediaByteMs": 1327.834,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 122732344,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 2,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": "ACCESS_DENIED",
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 0,
+        "codec": null,
+        "decode": "NOT_TESTED",
+        "decodeMs": null,
+        "extractMs": 4304.065,
+        "firstMediaByteMs": null,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 149970416,
+        "mediaRequestCount": 0,
+        "metadataMs": null,
+        "mimeType": null,
+        "rangeBackwardProbe": "NOT_TESTED",
+        "rangeForwardProbe": "NOT_TESTED",
+        "rangeProbeMethod": "NOT_TESTED",
+        "rangeRequests": 0,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "BLOCKED",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClass": null,
+      "lane": "direct_audio",
+      "measurements": {
+        "backwardSeek": "NOT_TESTED",
+        "bytesRead": 10332653,
+        "codec": "opus",
+        "decode": "PASS",
+        "decodeMs": 1074.186,
+        "extractMs": 1346.835,
+        "firstMediaByteMs": 1418.766,
+        "forwardSeek": "NOT_TESTED",
+        "heapDeltaBytes": 122006672,
+        "mediaRequestCount": 4,
+        "metadataMs": null,
+        "mimeType": "audio/webm",
+        "rangeBackwardProbe": "PASS",
+        "rangeForwardProbe": "PASS",
+        "rangeProbeMethod": "HTTP_BYTE_RANGE",
+        "rangeRequests": 4,
+        "requestCount": 4,
+        "startupMs": null
+      },
+      "outcome": "PASS",
+      "phase": "cold",
+      "runtime": "jvm",
+      "sampleIndex": 3,
+      "schemaVersion": 1,
+      "videoId": "aqz-KE-bpKQ"
+    }
+  ],
+  "schemaVersion": 1,
+  "summaries": [
+    {
+      "adapter": "excor",
+      "adapterVersion": "0.1.4-excor0.2.0",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {
+        "ACCESS_DENIED": 2
+      },
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 1,
+          "p50": 10332653,
+          "p95": 10332653
+        },
+        "decodeMs": {
+          "eligibleSamples": 1,
+          "p50": 995.891,
+          "p95": 995.891
+        },
+        "extractMs": {
+          "eligibleSamples": 1,
+          "p50": 713.726,
+          "p95": 713.726
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 1,
+          "p50": 769.866,
+          "p95": 769.866
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 1,
+          "p50": -3173888,
+          "p95": -3173888
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 1,
+          "p50": 5,
+          "p95": 5
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 1,
+          "p50": 5,
+          "p95": 5
+        },
+        "requestCount": {
+          "eligibleSamples": 1,
+          "p50": 8,
+          "p95": 8
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 2,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 1,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "NOT_TESTED": 2,
+          "PASS": 1
+        },
+        "rangeForwardProbe": {
+          "NOT_TESTED": 2,
+          "PASS": 1
+        },
+        "rangeProbeMethod": {
+          "HTTP_BYTE_RANGE": 1,
+          "NOT_TESTED": 2
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3
+    },
+    {
+      "adapter": "innertubex",
+      "adapterVersion": "0.1.3-innertubex0.11.6",
+      "comparison": {
+        "contentCategory": "stable_public_video",
+        "decoderVersion": "ffmpeg-9.0.2-full_build-www.gyan.dev",
+        "id": "owner-home-2026-11-13-lazy-watch-aqz",
+        "locale": "en-US",
+        "mainCommit": "a9995256e3629b583f0e15faa4f73479aa54208a",
+        "networkCategory": "home",
+        "os": "windows",
+        "runDateUtc": "2026-11-13T11:41:31Z",
+        "sessionCategory": "signed_out",
+        "timeoutSeconds": 30
+      },
+      "failureClasses": {},
+      "lane": "direct_audio",
+      "metrics": {
+        "bytesRead": {
+          "eligibleSamples": 3,
+          "p50": 10332653,
+          "p95": 10332653
+        },
+        "decodeMs": {
+          "eligibleSamples": 3,
+          "p50": 1061.871,
+          "p95": 1074.186
+        },
+        "extractMs": {
+          "eligibleSamples": 3,
+          "p50": 1346.835,
+          "p95": 1730.92
+        },
+        "firstMediaByteMs": {
+          "eligibleSamples": 3,
+          "p50": 1418.766,
+          "p95": 1792.884
+        },
+        "heapDeltaBytes": {
+          "eligibleSamples": 3,
+          "p50": 122732344,
+          "p95": 185649120
+        },
+        "mediaRequestCount": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "metadataMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        },
+        "rangeRequests": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "requestCount": {
+          "eligibleSamples": 3,
+          "p50": 4,
+          "p95": 4
+        },
+        "startupMs": {
+          "eligibleSamples": 0,
+          "p50": null,
+          "p95": null
+        }
+      },
+      "outcomes": {
+        "BLOCKED": 0,
+        "FAIL": 0,
+        "NOT_RUN": 0,
+        "PASS": 3,
+        "UNSUPPORTED": 0
+      },
+      "phase": "cold",
+      "rangeProbeResults": {
+        "rangeBackwardProbe": {
+          "PASS": 3
+        },
+        "rangeForwardProbe": {
+          "PASS": 3
+        },
+        "rangeProbeMethod": {
+          "HTTP_BYTE_RANGE": 3
+        }
+      },
+      "runtime": "jvm",
+      "totalSamples": 3
+    }
+  ]
+}

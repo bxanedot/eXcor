@@ -1,0 +1,462 @@
+package com.excor
+
+import com.excor.internal.primary.extraction.PoTokenResult
+import com.excor.internal.primary.extraction.TokenProvider
+import com.excor.internal.primary.extraction.TokenProviderCapabilities
+import com.excor.internal.primary.extraction.strategy.PoTokenProviderKind
+import com.excor.catalog.ExcorCatalogKind
+import com.excor.catalog.ExcorCatalogProvider
+import com.excor.catalog.ExcorCatalogTokenProvider
+import com.sun.net.httpserver.HttpServer
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runBlocking
+import java.io.File
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.UnknownHostException
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
+import okio.ForwardingSource
+import okio.buffer
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+class ApiCheckTest {
+    @Test
+    fun apiCompilesAgainstBriefApi() {
+        assertTrue(true)
+    }
+
+    @Test
+    fun poTokenStringOmitsEveryTokenValue() {
+        val values = listOf("secret-player", "secret-stream", "secret-visitor")
+        val output = PoTokenResult(values[0], values[1], values[2]).toString()
+
+        values.forEach { assertFalse(it in output) }
+        assertTrue("present" in output)
+    }
+
+    @Test
+    fun closingExcorStopsFurtherRequestsAndIsIdempotent() = runBlocking {
+        var dnsLookups = 0
+        val httpClient = OkHttpClient.Builder().dns { hostname ->
+            dnsLookups++
+            throw UnknownHostException(hostname)
+        }.build()
+        try {
+            val library = Excor(apiHost(httpClient))
+            library.close()
+            library.close()
+            var cancelledAfterClose = false
+            try {
+                library.search("close lifecycle")
+            } catch (_: CancellationException) {
+                cancelledAfterClose = true
+            }
+
+            assertTrue(cancelledAfterClose, "closed eXcor instances must reject new requests")
+            assertEquals(0, dnsLookups)
+            assertFalse(httpClient.dispatcher.executorService.isShutdown, "eXcor must not shut down the host's shared OkHttp dispatcher")
+        } finally {
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun closingExcorCancelsBackgroundWarmUpInsideTheHostSessionCallback() = runBlocking {
+        val entered = CompletableDeferred<Unit>()
+        val cancelled = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val base = apiHost(httpClient)
+        val host = object : ExcorHost by base {
+            override val configStore = object : ExcorConfigStore by base.configStore {
+                override val enabled = true
+            }
+            override suspend fun session(): ExcorSession {
+                entered.complete(Unit)
+                try {
+                    release.await()
+                } catch (failure: CancellationException) {
+                    cancelled.complete(Unit)
+                    throw failure
+                }
+                return base.session()
+            }
+        }
+        val library = Excor(host)
+        try {
+            library.onSessionChanged() // Starts warm-up immediately when the config store is enabled.
+            withTimeout(5_000) { entered.await() }
+            library.close()
+            withTimeout(5_000) { cancelled.await() }
+            assertFalse(httpClient.dispatcher.executorService.isShutdown)
+        } finally {
+            library.close()
+            release.complete(Unit)
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun closingExcorDoesNotPrewarmAfterANonCancellableSessionCallbackReturns() =
+        cancelledWarmUpDoesNotPrewarmAfterSessionReturns(close = true)
+
+    @Test
+    fun sessionChangeDoesNotPrewarmAfterANonCancellableSessionCallbackReturns() =
+        cancelledWarmUpDoesNotPrewarmAfterSessionReturns(close = false)
+
+    private fun cancelledWarmUpDoesNotPrewarmAfterSessionReturns(close: Boolean) = runBlocking {
+        val entered = CompletableDeferred<Job>()
+        val release = CompletableDeferred<Unit>()
+        val providerCalls = AtomicInteger()
+        val warmUpEnabled = AtomicBoolean(true)
+        val provider = object : TokenProvider by apiTokenProvider() {
+            override suspend fun prewarm(cookie: String?) {
+                providerCalls.incrementAndGet()
+            }
+        }
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val base = warmUpHost(httpClient, provider)
+        val host = object : ExcorHost by base {
+            override val configStore = object : ExcorConfigStore by base.configStore {
+                override val enabled: Boolean get() = warmUpEnabled.get()
+            }
+            override suspend fun session(): ExcorSession {
+                entered.complete(currentCoroutineContext()[Job]!!)
+                // A host may finish cleanup before honoring cancellation. The SDK must
+                // check cancellation before handing its result to another host provider.
+                withContext(NonCancellable) { release.await() }
+                return base.session()
+            }
+        }
+        val library = Excor(host)
+        try {
+            library.onSessionChanged()
+            val warmUp = withTimeout(5_000) { entered.await() }
+            if (close) {
+                library.close()
+            } else {
+                warmUpEnabled.set(false) // Isolate cancellation of the old session's work.
+                library.onSessionChanged()
+            }
+            release.complete(Unit)
+            withTimeout(5_000) { warmUp.join() }
+            assertEquals(0, providerCalls.get(), "cancelled warm-up must not start provider work")
+        } finally {
+            library.close()
+            release.complete(Unit)
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun sessionChangeCancelsThePreviousWarmUpBeforeItsProviderResumes() = runBlocking {
+        val firstEntered = CompletableDeferred<Unit>()
+        val secondEntered = CompletableDeferred<Unit>()
+        val firstCancelled = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val calls = AtomicInteger()
+        val provider = object : TokenProvider by apiTokenProvider() {
+            override suspend fun prewarm(cookie: String?) {
+                val first = calls.incrementAndGet() == 1
+                (if (first) firstEntered else secondEntered).complete(Unit)
+                try {
+                    release.await()
+                } catch (failure: CancellationException) {
+                    if (first) firstCancelled.complete(Unit)
+                    throw failure
+                }
+            }
+        }
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val library = Excor(warmUpHost(httpClient, provider))
+        try {
+            library.onSessionChanged()
+            withTimeout(5_000) { firstEntered.await() }
+            library.onSessionChanged()
+            withTimeout(5_000) {
+                firstCancelled.await()
+                secondEntered.await()
+            }
+        } finally {
+            library.close()
+            release.complete(Unit)
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun repeatedInitializationSharesAnActiveWarmUp() = runBlocking {
+        val firstEntered = CompletableDeferred<Unit>()
+        val duplicateEntered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val calls = AtomicInteger()
+        val provider = object : TokenProvider by apiTokenProvider() {
+            override suspend fun prewarm(cookie: String?) {
+                (if (calls.incrementAndGet() == 1) firstEntered else duplicateEntered).complete(Unit)
+                release.await()
+            }
+        }
+        val httpClient = OkHttpClient.Builder().dns { throw UnknownHostException("synthetic offline host") }.build()
+        val library = Excor(warmUpHost(httpClient, provider))
+        try {
+            library.onSessionChanged()
+            withTimeout(5_000) { firstEntered.await() }
+            repeat(3) { library.init() }
+            assertNull(withTimeoutOrNull(5_000) { duplicateEntered.await() },
+                "init must share the active warm-up instead of starting delayed duplicates")
+            assertEquals(1, calls.get())
+        } finally {
+            library.close()
+            release.complete(Unit)
+            httpClient.dispatcher.executorService.shutdownNow()
+            httpClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun clonedTransportDoesNotSendHostJarCookiesButKeepsExplicitSessionCookie() {
+        val receivedCookies = CopyOnWriteArrayList<String>()
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+            createContext("/") { exchange ->
+                receivedCookies += exchange.requestHeaders.getFirst("Cookie") ?: "<none>"
+                exchange.sendResponseHeaders(204, -1)
+            }
+            start()
+        }
+        val url = "http://127.0.0.1:${server.address.port}/"
+        val hostClient = OkHttpClient.Builder().cookieJar(object : CookieJar {
+            override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) = Unit
+            override fun loadForRequest(url: HttpUrl): List<Cookie> = listOf(
+                Cookie.Builder().name("ambient").value("host-secret").hostOnlyDomain(url.host).path("/").build(),
+            )
+        }).build()
+        val library = Excor(apiHost(hostClient))
+        try {
+            val transport = Excor::class.java.getDeclaredField("engineHttpClient").apply { isAccessible = true }
+                .get(library) as OkHttpClient
+            transport.newCall(Request.Builder().url(url).build()).execute().close()
+            transport.newCall(Request.Builder().url(url).header("Cookie", "SID=explicit-session").build()).execute().close()
+
+            assertEquals(listOf("<none>", "SID=explicit-session"), receivedCookies)
+        } finally {
+            library.close()
+            hostClient.dispatcher.executorService.shutdownNow()
+            hostClient.connectionPool.evictAll()
+            server.stop(0)
+        }
+    }
+
+    @Test
+    fun extractDoesNotReturnAnEmptyPartialContentResponseAsPlayable() = runBlocking {
+        val hostClient = OkHttpClient.Builder().addInterceptor { chain ->
+            val request = chain.request()
+            val (code, body, type) = when (request.url.encodedPath) {
+                "/youtubei/v1/player" -> Triple(200, fixture("player-response.json"), "application/json")
+                "/videoplayback" -> Triple(206, "", "audio/mp4")
+                else -> Triple(404, "", "text/plain")
+            }
+            Response.Builder()
+                .request(request)
+                .protocol(Protocol.HTTP_1_1)
+                .code(code)
+                .message(if (code == 206) "Partial Content" else if (code == 200) "OK" else "Not Found")
+                .body(body.toResponseBody(type.toMediaType()))
+                .build()
+        }.build()
+        val library = Excor(apiHost(hostClient))
+        try {
+            assertNull(library.extract("dQw4w9WgXcQ", 128))
+        } finally {
+            library.close()
+            hostClient.dispatcher.executorService.shutdownNow()
+            hostClient.connectionPool.evictAll()
+        }
+    }
+
+    @Test
+    fun oversizedMetadataClosesStreamingResponseBeforeEof() = runBlocking {
+        val allowEof = CountDownLatch(1)
+        val normalEof = AtomicBoolean()
+        val sourceClosed = CountDownLatch(1)
+        val requests = AtomicInteger()
+        val executor = Executors.newSingleThreadExecutor()
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+            this.executor = executor
+            createContext("/") { exchange ->
+                try {
+                    exchange.responseHeaders.add("Content-Type", "application/json")
+                    exchange.sendResponseHeaders(200, 0) // chunked: no Content-Length
+                    val chunk = ByteArray(8192) { 'x'.code.toByte() }
+                    var remaining = 2_000_001 // exactly one byte beyond the metadata limit
+                    while (remaining > 0) {
+                        val count = minOf(chunk.size, remaining)
+                        exchange.responseBody.write(chunk, 0, count)
+                        remaining -= count
+                    }
+                    exchange.responseBody.flush()
+                    // A buffering client cannot complete until this gate opens (or its test deadline expires).
+                    if (allowEof.await(30, TimeUnit.SECONDS)) normalEof.set(true)
+                } catch (_: IOException) {
+                    // Expected if the client cancels while this fixture is still writing.
+                } finally {
+                    exchange.close()
+                }
+            }
+            start()
+        }
+        val http = OkHttpClient.Builder().addInterceptor { chain ->
+            requests.incrementAndGet()
+            val response = chain.proceed(chain.request().newBuilder()
+                .url("http://127.0.0.1:${server.address.port}/").build())
+            val original = checkNotNull(response.body)
+            val source = object : ForwardingSource(original.source()) {
+                override fun close() {
+                    try { super.close() } finally { sourceClosed.countDown() }
+                }
+            }.buffer()
+            response.newBuilder().body(object : ResponseBody() {
+                override fun contentType() = original.contentType()
+                override fun contentLength() = original.contentLength()
+                override fun source() = source
+            }).build()
+        }.build()
+        val library = Excor(apiHost(http))
+        try {
+            assertNull(withTimeout(10_000) { library.videoInfo("abcdefghijk") })
+            assertFalse(normalEof.get(), "oversized metadata must be rejected before the producer reaches EOF")
+            assertTrue(sourceClosed.await(5, TimeUnit.SECONDS), "the scoped response source must close")
+            assertEquals(1, requests.get(), "an oversized success body must not cause a retry")
+        } finally {
+            allowEof.countDown()
+            library.close()
+            server.stop(0)
+            executor.shutdownNow()
+            executor.awaitTermination(5, TimeUnit.SECONDS)
+            http.dispatcher.executorService.shutdownNow()
+            http.connectionPool.evictAll()
+        }
+    }
+}
+
+private fun apiHost(httpClient: OkHttpClient = OkHttpClient()): ExcorHost = object : ExcorHost {
+    override val tokenProvider: TokenProvider? = null
+    override val filesDir: File? = null
+    override val httpClient: OkHttpClient = httpClient
+    override val configStore: ExcorConfigStore = object : ExcorConfigStore {
+        override val enabled: Boolean = true
+        override fun getString(key: String): String? = null
+        override fun getLong(key: String): Long? = null
+        override fun putString(key: String, value: String) = Unit
+        override fun putLong(key: String, value: Long) = Unit
+    }
+
+    override suspend fun session() = ExcorSession(null, null, "US", "en")
+    override fun nowMs(): Long = 0
+    override fun log(level: ExcorLogLevel, message: String, trackId: String?) = Unit
+}
+
+private fun warmUpHost(httpClient: OkHttpClient, provider: TokenProvider): ExcorHost {
+    val base = apiHost(httpClient)
+    return object : ExcorHost by base {
+        override val tokenProvider = provider
+        override val configStore = object : ExcorConfigStore by base.configStore {
+            override val enabled = true
+        }
+    }
+}
+
+private fun apiTokenProvider(): TokenProvider = object : TokenProvider {
+    override val capabilities = TokenProviderCapabilities(
+        providers = setOf(PoTokenProviderKind.EXTERNAL),
+        usesWebView = false,
+    )
+
+    override suspend fun getPoToken(videoId: String, visitorData: String, cookie: String?): PoTokenResult? = null
+    override suspend fun prewarm(cookie: String?) = Unit
+    override suspend fun invalidateAttestation() = Unit
+    override suspend fun close() = Unit
+}
+
+@Suppress("unused")
+private suspend fun compileEveryBriefMember() {
+    val stream = ExcorStream("id", "url", 1, "audio/mp4", null, "WEB", "WEB", emptyMap())
+    val candidate = ExcorAudioCandidate("url", 1, "audio/mp4", ExcorAudioFormat.M4A)
+    val session = ExcorSession(null, null, "US", "en")
+    val host = apiHost()
+    val provider = apiTokenProvider()
+    val tokens = PoTokenResult("player", "stream", "visitor")
+    val capabilities = TokenProviderCapabilities()
+    val providerKind = PoTokenProviderKind.WEB_BOTGUARD
+    val levels = listOf(ExcorLogLevel.DEBUG, ExcorLogLevel.INFO, ExcorLogLevel.WARN, ExcorLogLevel.ERROR)
+    host.session()
+    host.configStore.enabled
+    host.configStore.getString("key")
+    host.configStore.getLong("key")
+    host.configStore.putString("key", "value")
+    host.configStore.putLong("key", 1)
+    host.nowMs()
+    host.log(ExcorLogLevel.INFO, "message")
+    provider.capabilities
+    provider.getPoToken("id", "visitor")
+    provider.prewarm()
+    provider.invalidateAttestation()
+    provider.close()
+    tokens.toString()
+    capabilities.providers
+    capabilities.usesWebView
+    providerKind.name
+    levels.map { it.name }
+    stream.copy(videoId = "id").headers
+    candidate.copy(format = ExcorAudioFormat.WEBM_OPUS).kbps
+    session.region
+    val library = Excor(host)
+    val catalog = library.musicCatalog
+    catalog.capabilities(ExcorCatalogProvider.APPLE_MUSIC)
+    catalog.search(ExcorCatalogProvider.APPLE_MUSIC, "query", ExcorCatalogKind.TRACK)
+    catalog.lookup("https://music.apple.com/us/album/night-signals/740003")
+    catalog.albumTracks(ExcorCatalogProvider.APPLE_MUSIC, "740003")
+    catalog.artistAlbums(ExcorCatalogProvider.APPLE_MUSIC, "740002")
+    catalog.capabilities(ExcorCatalogProvider.SPOTIFY)
+    host.catalogTokenProvider
+    val catalogTokenProvider = ExcorCatalogTokenProvider { provider -> provider.name }
+    catalogTokenProvider.accessToken(ExcorCatalogProvider.SPOTIFY)
+    library.init()
+    library.initializeFallback()
+    library.audioCandidates("abcdefghijk")
+    library.extract("abcdefghijk", 128, setOf("WEB"), requireM4a = true)
+    library.headersFor("https://rr1---sn.googlevideo.com/videoplayback")
+    library.onRefused("https://rr1---sn.googlevideo.com/videoplayback")
+    library.exclude("abcdefghijk", "WEB")
+    library.onSessionChanged()
+    library.close()
+}

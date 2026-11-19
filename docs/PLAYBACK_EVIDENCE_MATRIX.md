@@ -1,0 +1,323 @@
+# Owner-run playback evidence matrix
+
+## 2026-11-18 — current-version matched initial-range run
+
+At eXcor main `6352b8418278de5f8df6b15a141c21e8501c5a25`, the signed-out Windows x64 run used one connection recorded as network category `other`, locale `en-US`, and a 30-second timeout. The matched adapters were eXcor 0.2.0, InnerTubeX pinned at 0.11.9, and YouTube.js `youtubei.js@18.3.0`; the content category was `music_video`.
+
+```powershell
+python modules/samples/black-box-comparison/run_matched.py --video-id dQw4w9WgXcQ --video-id kJQP7kiw5Fk --video-id aqz-KE-bpKQ --comparison-id owner-other-2026-11-18-current-competitors --network-category other --content-category music_video --phases cold warm --sample-indices 1 2 3 --timeout-seconds 30 --adapters excor innertubex youtubejs --output modules/samples/black-box-comparison/results/owner-other-2026-11-18-current-competitors.jsonl
+```
+
+eXcor passed the initial 64 KiB read for `dQw4w9WgXcQ` in 3/3 cold and 3/3 warm attempts. `kJQP7kiw5Fk` and `aqz-KE-bpKQ` were `BLOCKED` before media on their first attempts; the runner stopped further attempts for those eXcor/video pairs. InnerTubeX did not emit normalized samples in any of the 18 calls and is recorded as `FAIL/OTHER` with unknown adapter version. YouTube.js reported `UNSUPPORTED/UNSUPPORTED_TRANSPORT` in 18/18 calls. The run did not request offset byte ranges or perform decode, seek, mux, or cipher checks. It adds no G4/G5/G11 release-gate credit. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-current-competitors-report.md) and [JSONL samples](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-current-competitors.jsonl).
+
+## 2026-11-18 — current-main full audio decode and midpoint range
+
+At merged main `2cd94171959c9c0fcb58622396e9c0a7c61be7f7`, signed-out Windows x64 eXcor decoded the full 3,433,755-byte Opus stream for `dQw4w9WgXcQ` in one live test. FFprobe reported 213.061 seconds; the midpoint HTTP range returned 206 with the exact 65,536 requested bytes. The run used one owner network recorded as `other`, and the test source tree was confirmed identical to merged main. This is a full audio decode and byte-range result, not a player seek or ciphered playback result; G4/G5 remain partial. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-audio-decode.md).
+
+## 2026-11-18 — current-main 480p video/audio mux and decode
+
+At the same merged-main implementation tree, signed-out Windows x64 eXcor selected 854×480 H.264 video at 25 fps and AAC audio for `dQw4w9WgXcQ`, muxed and decoded the complete 14,103,519-byte video track, and read exactly 65,536 bytes at the midpoint with HTTP 206. FFprobe reported 213.089 seconds. One video and network only; the HTTP range does not prove player seeking, and the run does not exercise ciphered playback. G4/G5 remain partial. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-video-mux.md).
+
+## 2026-11-18 — current-main direct-audio player seek
+
+At merged main `2cd94171959c9c0fcb58622396e9c0a7c61be7f7`, one signed-out Windows x64 FFplay run sent Right then Left on the direct `audio/webm` stream for `dQw4w9WgXcQ`. The eXcor relay recorded three HTTP 206 ranges at byte starts `0 → 666109 → 497307`; the implementation source tree matched main. This is one eXcor video/network sample, not a paired comparison, video seek, or ciphered playback result. G4/G5 remain partial. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-other-2026-11-18-main-audio-player-seek.md).
+
+**Purpose:** close eXcor's G4 (player compatibility), G5 (direct streaming) and G8 (reliability) evidence gaps through authorized, reproducible testing. This is an *execution plan*, not a claim that missing playback paths are implemented. Track results in issue #78 and keep raw credentials, cookies, tokens and signed URLs out of the repository, issues and CI artifacts.
+
+## Preconditions and safety
+
+- Run only on a computer and YouTube account you control, using content and network access you are authorized to use.
+- **Do not bypass bot checks, CAPTCHAs, consent screens, DRM or any access-control decision.** If YouTube refuses a request, classify the outcome and stop that case.
+- Prefer disposable public test IDs for any report. Never paste a full request/response, media URL, query string, Cookie or Authorization header, visitor data, PO token, browser profile, HAR file or session-bearing screenshot.
+- Use the current `main` SHA and note the environment and `ffmpeg` version, but not IP addresses or account identifiers.
+- A `SKIP` means *unverified*, not passed. A `LOGIN_REQUIRED` or bot check is *access blocked*, not proof that a decoder works or fails.
+- Signed-in testing is **owner-operated only**, using the preview app's supported sign-in flow. The existing `LivePlaybackTest` uses a signed-out `LiveHost`; it does **not** verify signed-in playback.
+
+## Prerequisites
+
+JDK / Android SDK as described in `maintainers/HANDOFF.md`. For full decode and seek checks, install `ffmpeg` and `ffprobe` and confirm they are on PATH.
+
+On Linux/macOS, run from repository root:
+
+```bash
+ffmpeg -version
+ffprobe -version
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
+EXCOR_LIVE=1 EXCOR_VIDEO_HEIGHT=480 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
+EXCOR_LIVE=1 ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.formatListReportsRangeSupport --rerun-tasks
+EXCOR_LIVE=1 EXCOR_HLS_ID=VIDEO_ID ./gradlew :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
+```
+
+PowerShell on Windows:
+
+```powershell
+ffmpeg -version
+ffprobe -version
+$env:EXCOR_LIVE="1"
+$env:EXCOR_VIDEO_HEIGHT="480"
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks --rerun-tasks
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux --rerun-tasks
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.formatListReportsRangeSupport --rerun-tasks
+$env:EXCOR_HLS_ID="VIDEO_ID"
+.\gradlew.bat :jvmTest --tests com.excor.LivePlaybackTest.hlsManifestDecodesForHostPlayer --rerun-tasks
+Remove-Item Env:\EXCOR_LIVE
+Remove-Item Env:\EXCOR_VIDEO_HEIGHT
+Remove-Item Env:\EXCOR_HLS_ID
+```
+
+Use `EXCOR_DECODE_ID` only for a public video you are allowed to access. With no override, the test uses its existing fixture ID `dQw4w9WgXcQ`. The audio test downloads the complete stream, validates its duration and reads a mid-file HTTP byte range. The video test downloads and muxes selected video/audio, decodes it, checks dimensions/duration, and reads a mid-file HTTP byte range; its default height cap is 480p. These byte-range checks do not drive a player or establish playback seeking. The format-list test probes advertised ranges. These tests may consume significant bandwidth and disk space. They delete temporary media on completion.
+
+The HLS test uses `EXCOR_HLS_ID` (default `dQw4w9WgXcQ`), validates a manifest through the public API, and asks FFmpeg to decode up to eight seconds. A pass requires completed [FFmpeg progress](https://ffmpeg.org/ffmpeg.html#toc-Advanced-options) with positive output media time. It needs a live, eligible video and `ffmpeg`; known bot/age challenges and the exact known page-reload refusal are classified as access-blocked, while unrelated errors remain visible. Use `--rerun-tasks` for a fresh network attempt. The 2026-11-14 signed-out attempt was refused before an HLS manifest was returned; see the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-hls-blocked.md) and earlier [JVM HLS attempt](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). For the per-ID initial-range matrix, `EXCOR_LIVE_IDS` optionally overrides its default three public IDs as a comma-separated list. It records recognized access blocks per ID and continues to later IDs; unclassified technical failures still fail visibly. A successful initial range is only a 1 KiB transport check, not decode or player-seek evidence.
+
+```powershell
+$env:EXCOR_LIVE="1"
+$env:EXCOR_LIVE_IDS="dQw4w9WgXcQ,kJQP7kiw5Fk,JGwWNGJdvx8"
+.\gradlew.bat :jvmTest --tests 'com.excor.LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId' --rerun-tasks
+Remove-Item Env:\EXCOR_LIVE
+Remove-Item Env:\EXCOR_LIVE_IDS
+```
+
+## Matrix to execute
+
+### Owner-run ffplay result — 2026-11-13
+
+On `dQw4w9WgXcQ`, two signed-out quickstart runs selected VISIONOS WebM audio and started ffplay at 30 seconds. Right then Left produced ordered HTTP 206 range starts `0`, `329300`, `980764`, and `824084` in both runs; the waveform refreshed after both keys on the repeat run. The first and repeat runs relayed 966,656 and 983,040 bytes and ended at their 45-second limits. This repeats eXcor audio seeking on one ID and network; it does not establish video seeking, broader ID/network repeatability, or InnerTubeX player parity. See the [first run](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-player-seek.md) and [repeat run](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-player-seek-repeat.md).
+
+### Current direct-transport run record — 2026-11-13
+
+| Field | Value |
+|---|---|
+| Source commit | PR #154 head `120892be137b6182c512a26a92d74bc64b14e199`; clean-room sources match base `0409b1fd15130a2ce2723bd420cb02e99da2709f` |
+| Date | 2026-11-13 UTC |
+| Command | `$env:EXCOR_LIVE='1'; $env:EXCOR_DECODE_ID='dQw4w9WgXcQ'; $env:EXCOR_VIDEO_HEIGHT='480'; .\gradlew.bat :jvmTest --tests 'com.excor.LivePlaybackTest.extractedAudioDecodesFullyAndSeeks' --tests 'com.excor.LivePlaybackTest.extractedVideoAndAudioDecodeAndMux' --tests 'com.excor.LivePlaybackTest.formatListIsRangeReadable' --rerun-tasks --no-daemon` |
+| Platform / network | Windows x64 workstation; owner's home network; signed-out test harness |
+| Content | One public music video, `dQw4w9WgXcQ` |
+| Outcome | Full audio decode, 480p video/audio mux and decode, all 27 format range probes passed. This is one ID/network; HTTP ranges are not player seeks, and no InnerTubeX comparison ran in this command. |
+
+### Per-ID initial-range matrix — 2026-11-13
+
+The updated opt-in test at source `9cc903163d58ef97f11f4352fef02a3c51baee90` ran twice on signed-out Windows x64 over the owner's home network. Both runs recorded `dQw4w9WgXcQ` as a valid 1 KiB HTTP 206 range and `kJQP7kiw5Fk` plus `JGwWNGJdvx8` as `ACCESS_BLOCKED` before media. The 2026-11-14 repeat reported one test, zero skips and zero failures. A baseline run had skipped after the second ID and omitted the third. This adds test-matrix coverage only, not additional successful video, decode, seek or competitor-comparison evidence. See the [sanitized run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-per-id-range-matrix.md).
+
+| Case | Session/network | Evidence required | Current baseline |
+|---|---|---|---|
+| A | Signed out, owner's computer | Whole audio decode + mid-file HTTP range read + actual player seek; video with audio mux + whole decode + mid-file HTTP range read + actual player seek; list ranges | One public video has separate eXcor full audio decode/range and 480p video+audio mux/decode/range checks. The post-order 2026-11-13 paired run passed full 3,507,483-byte Opus decode and forward/back HTTP byte-range probes in 3/3 cold and 3/3 warm samples per adapter. Cold first-media p50/p95 was 1,146/1,265 ms for eXcor and 1,169/1,211 ms for InnerTubeX; cold decode p50/p95 was 307/312 ms and 365/370 ms. Warm first-media p50/p95 was 869/979 ms and 135/143 ms; warm decode p50/p95 was 315/360 ms and 365/374 ms. This remains one shared video/network from a dirty worktree. The earlier pre-update 5,130 ms eXcor first-media result and one-sample Cobalt result (4,724 ms vs 1,100 ms) are historical. On four additional IDs, InnerTubeX passed full decode and both probes in 3/3 while eXcor was access-blocked before media in 3/3: 4,064,225 bytes on `9bZkp7q19f0`, 4,247,110 bytes on `CevxZvSJLk8`, 10,332,653 bytes on `aqz-KE-bpKQ`, and 4,678,808 bytes on `kJQP7kiw5Fk`. On the fifth ID, InnerTubeX first-media p50/p95 was 1,377/1,437 ms and decode p50/p95 was 466/495 ms; eXcor made zero media requests. These are access differences, not additional paired media passes. HTTP byte ranges from the adapters are not player seeks; three 2026-11-15 same-harness FFplay samples on unchanged eXcor source confirm forward/backward audio seeking for both adapters on the first ID. Video seeks, broader ID/network repeatability and additional paired playable IDs remain unverified. Older InnerTubeX FAIL/OTHER results were from adapter 0.1.2 before its JSON serialization fix. See the [cold report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-visionos-first.md), [cold samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-visionos-first.jsonl), [warm report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-warm-full.md), [warm samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-warm-full.jsonl), [player seek first run](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-player-seek.md), [player seek repeat](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-player-seek-repeat.md), [second report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-second-video.md), [third report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-third-video.md), [fourth report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-bbb-audio.md), [fourth samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-bbb-audio.jsonl), [fifth report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-fifth-video.md), [fifth samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-fifth-video.jsonl), and [pre-fix recheck](../modules/samples/black-box-comparison/results/owner-home-2026-11-12-classifier-recheck.md). The companion eXcor live test logged Cobalt as UNPLAYABLE and then decoded through VISIONOS. Other signed-out IDs hit access challenges or failed before metadata. The companion LivePlaybackTest did not run a player seek.
+| B | Signed out, phone/mobile connection | Preview search, metadata, playback and format selection | Search/metadata available; playback access blocked in prior owner reports |
+| C | Signed in, owner's computer | Preview playback and format selection with supported sign-in; no credential disclosure | Not verified end to end |
+| D | Signed in, owner's phone | Preview audio/video playback and refusal handling after account switch | Not verified end to end |
+| E | Eligible response requiring player JavaScript | Confirm `s` and/or `n` transform then **actual full decode and seek** | Cipher transform tested; no live eligible stream verified |
+| F | Fault handling | 429, 5xx, cancellation, expiry, refusal and session switch remain bounded and correctly classified | Synthetic cases pass on supported CI; owner-run live fault injection incomplete |
+| G | Stream denied by service | Capture only generalized reason/status and which public client path failed | Known `LOGIN_REQUIRED`, `UNPLAYABLE` cases |
+| H | Experimental HLS on owner's Android device and JVM host | Tap **Try HLS (experimental)** in the preview; record Media3 readiness/playback and, for a seekable VOD, backward/forward seek. The JVM check validates the manifest and decodes up to eight seconds with FFmpeg. Classify manifest, child-request, decoder and access refusals separately | Android and JVM returned `UNPLAYABLE` before a manifest on signed-out `dQw4w9WgXcQ`. Two other JVM attempts, including a public NASA ISS live stream, hit bot checks before a manifest. FFmpeg and Media3 never started; no InnerTubeX HLS comparison was possible. Successful HLS playback remains unverified. See the [Android report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-android-hls-attempt.md) and [JVM report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jvm-hls-attempt.md). |
+| I | Signed out, Android 8.0/API 26 and Android 16/API 36 emulators on workstation Wi-Fi | Preview metadata and visible video playback | `dQw4w9WgXcQ` rendered at 720p H.264 with `audio/mp4` at 130 kbps from VISIONOS on both API levels; frames changed during both runs. API 36 logged two HTTP 206 playback-probe responses. One ID/network; no InnerTubeX Android comparison, full-duration decode, player seek or HLS test. See the [run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-android-preview-playback.md). |
+
+**Earlier isolated-user attempt (2026-11-13; no playback result):** A fresh Android 16/API 36 emulator user stayed at Android’s system “Unlock for all features and data” screen, so no playback operation could be invoked there. This was an environment blocker, not an app failure or YouTube access refusal; the temporary user was removed.
+
+**Android preview playback (2026-11-13; signed-out pass):** On the existing unlocked emulator user, without clearing app data, the signed-out preview resolved `dQw4w9WgXcQ`, reported playback at 720p H.264 with `audio/mp4` at 130 kbps from VISIONOS, logged two HTTP 206 playback-probe responses, and rendered different video frames across captures more than six seconds apart. This was an emulator on the workstation Wi-Fi, not a mobile-data test or an InnerTubeX app comparison. Full-duration decode, player seeking, other IDs and live HLS remain unverified. See the [sanitized run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-android-preview-playback.md).
+
+**Post-order matched check (2026-11-13):** after moving signed-out VISIONOS ahead of the scripted fallback profiles, eXcor and InnerTubeX both passed full decode and forward/backward HTTP byte-range probes in 3/3 cold samples for `dQw4w9WgXcQ` on the owner's Windows home network. A separate same-day warm run passed 3/3 per adapter on the same ID/network. Cold first-media p50/p95: 1,146/1,265 ms for eXcor and 1,169/1,211 ms for InnerTubeX; warm: 869/979 ms and 135/143 ms. Cold decode p50/p95: 307/312 ms and 365/370 ms; warm: 315/360 ms and 365/374 ms. The current worktree was dirty and only one shared video/network was tested. HTTP byte-range probes are not player seeks. See the [cold report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-visionos-first.md), [cold samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-visionos-first.jsonl), [warm report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-warm-full.md), and [warm samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-warm-full.jsonl).
+
+**Earlier rerun after lazy watch-page fetching (2026-11-13):** all 12 cold/warm attempts passed full decode of 3,507,483 bytes and both HTTP byte ranges. First-media p50/p95 was 357/438 ms vs 1,344/1,662 ms cold and 98/106 ms vs 168/187 ms warm (eXcor vs InnerTubeX). eXcor now defers the watch-page request until a selected client needs a player script; scripted fallbacks still fetch it. InnerTubeX request-count instrumentation misses extractor traffic and is not compared. One video/network only; dirty-worktree diagnostic, not player-seek evidence. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch-report.json) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch.jsonl).
+
+**Second-video rerun (2026-11-13):** `aqz-KE-bpKQ` produced one eXcor full-decode plus forward/backward range PASS and two access blocks; InnerTubeX passed all three cold attempts. Both decoded 10,332,653 bytes on the successful samples. This is a shared success on a second video, with only 1/3 eXcor repeatability on that video and no new network coverage. It came from the dirty worktree and is not player-seek evidence. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch-aqz.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch-aqz-report.json) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-lazy-watch-aqz.jsonl).
+
+**Exact-main matched two-video comparison (2026-11-13; source `4e5e67d`):** the signed-out cold/warm run used three samples per phase and adapter on one Windows home network. For `dQw4w9WgXcQ`, eXcor and InnerTubeX passed full audio decode and both HTTP ranges in all six attempts; first-media p50/p95 was 379/406 ms cold and 118/139 ms warm for eXcor, versus 1,524/1,645 ms and 185/189 ms for InnerTubeX. For `kJQP7kiw5Fk`, eXcor was `ACCESS_DENIED` before media in all six attempts while InnerTubeX passed decode and both ranges in all six. This is one-network diagnostic evidence, with different extraction paths; ranges are not player seeks. See the [per-video report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-main-4e5e67d.jsonl).
+
+For each row, mark **PASS**, **FAIL**, **BLOCKED** or **NOT RUN**. Do not mark cipher support PASS just because a token or transformed URL was constructed; actual playback/seek verification is required. Do not infer a transport (SABR/UMP, HLS or direct file) from a playlist name or marketing description.
+
+## Safe evidence template
+
+```text
+Date (UTC):
+main commit:
+OS and app version:
+Network category: home / mobile / CI / other (no IP)
+Session category: signed out / signed in by owner (no account details)
+Public video ID or label:
+Operation: metadata / audio / video / formats / cipher / refusal
+Result: PASS / FAIL / BLOCKED / NOT RUN
+Observed status category: OK / LOGIN_REQUIRED / UNPLAYABLE / HTTP 429 / 5xx / transport / other
+Selected client profile (non-secret):
+Container and codec (if known):
+Full decode and duration match: yes / no / not tested
+Mid-file HTTP byte-range read: yes / no / not tested
+Actual backward/forward player seek: yes / no / not tested
+Sanitized short note (no response body, URL, headers or tokens):
+```
+
+Post only this sanitized template to issue #78; private raw diagnostics must stay on the owner's machine. If a failure can only be reproduced with sensitive logs, describe the generalized status and ask for a safe synthetic fixture instead.
+
+**Java 25 runtime recheck (2026-11-13):** After lowering the JVM bytecode target to Java 17 and using a JDK 21 build toolchain, the eXcor and InnerTubeX adapters ran on the workstation's Java 25 runtime. On `dQw4w9WgXcQ`, both passed full 3,507,483-byte Opus decode and forward/backward HTTP byte-range probes in 3/3 cold attempts. First-media p50/p95 was 1,131/1,348 ms for eXcor and 1,392/1,757 ms for InnerTubeX; decode p50/p95 was 319/363 ms and 369/369 ms. This is one ID/network. A separate run under Temurin JDK 17.0.20.1 passed the same full decode and forward/backward range checks in all 3 cold and 3 warm samples per adapter; see the [JDK 17 report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-direct-audio.md). See the [normalized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-java17-runtime-recheck.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-java17-runtime-recheck.jsonl).
+
+**Second-ID JDK 17 repeat (2026-11-13):** On signed-out `aqz-KE-bpKQ`, eXcor was classified `ACCESS_DENIED` before media in 3/3 cold attempts; InnerTubeX fully decoded 10,332,653 bytes and passed both HTTP byte-range probes in 3/3. A prior JDK 25 run on the same ID yielded eXcor success in 1/3, so the second ID remains inconsistent and provides no repeatable shared decode result. See the [normalized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-aqz-repeat.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-jdk17-aqz-repeat.jsonl).
+
+**Sixth-ID matched attempt (2026-11-13):** On `M7lc1UVf-VE`, eXcor was blocked before media in 3/3. InnerTubeX passed both HTTP byte-range probes but timed out during full decode after reading 73,728 bytes in 3/3. This adds no shared full-decode pass. See the [normalized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-sixth-video.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-sixth-video.jsonl).
+
+**Fresh matched cold recheck (2026-11-13 09:18 UTC):** On signed-out `dQw4w9WgXcQ`, eXcor 0.1.4 and InnerTubeX 0.1.3 each passed full 3,507,483-byte Opus decode and forward/backward HTTP byte-range probes in 3/3 cold samples. First-media p50/p95 was 1,438/1,530 ms for eXcor and 1,358/1,535 ms for InnerTubeX; decode p50/p95 was 332/381 ms and 378/388 ms. This is one video/network from a dirty worktree, not player-seek evidence, and does not change G5/G11 status. See the [normalized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-autonomy-followup.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-autonomy-followup.jsonl).
+
+**TVHTML5-only cipher-path attempt (2026-11-13):** A signed-out run against `dQw4w9WgXcQ` skipped VISIONOS and WEB; the test observed one player-script fetch, then YouTube returned `The page needs to be reloaded.` before a playable stream. No media download, full decode, byte-range probe, or seek was performed; this records an access/playability refusal and does not establish cipher failure or successful ciphered playback. See the [sanitized attempt report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-tvhtml5-only.md). G4 remains partial.
+
+**Live extraction with one injected 503 (2026-11-13 12:44 UTC):** A signed-out test locally returned one synthetic HTTP 503 with `Retry-After: 0` before the first `/youtubei/v1/player` request was sent. The bounded retry made one live player POST; VISIONOS returned usable audio. eXcor fully decoded 3,433,755 bytes and passed a midpoint HTTP 206 range read. This verifies recovery in one real extraction flow, not an upstream outage or player seek. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-13-live-503-recovery.md). G8 remains partial.
+
+## 2026-11-14 — current-main matched direct-audio check
+
+At exact main `ad7a6f1514c1f320b493c1e62d9bbb6c04c82a5a`, the owner-run Windows x64 signed-out comparison used the home network and the public music video `dQw4w9WgXcQ`. It ran three cold and three warm attempts per adapter with a 30-second timeout and FFmpeg 9.0.2. eXcor 0.2.0 was rebuilt from this checkout; InnerTubeX was pinned to v0.11.6. Both decoded the same 3,507,483-byte Opus stream and passed both HTTP byte-range probes in 6/6 attempts. First-media p50/p95 was 395/555 ms cold and 96/98 ms warm for eXcor, versus 1,388/1,488 ms and 142/145 ms for InnerTubeX. Full-decode p50/p95 was 464/475 ms and 322/331 ms for eXcor, versus 455/540 ms and 364/367 ms for InnerTubeX. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-dq-full.jsonl).
+
+A separate current-main LivePlaybackTest on the same ID also passed full 3,433,755-byte Opus decode and a midpoint HTTP 206 range; see the [sanitized run](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-playback.md).
+
+On merged main `36d5bd0a08a39c1c708b9d71405cbacc2ca1fc8b`, the signed-out Windows owner-workstation test on the same video passed both the full Opus decode and 480p H.264/AAC mux-and-decode cases (two tests, zero skips/failures). The video was 854×480 at 25 fps; the mux contained audio and video and decoded for 213.089 seconds. Midpoint HTTP byte-range probes returned 206 for both tracks. This eXcor-only run does not compare video playback with InnerTubeX; ranges are not player-controlled seeks. See the [exact-main run report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-36d5-playback.md).
+
+This is one video and one network, not broad parity or a performance ranking. The range requests are not player-controlled seeks. The per-sample report records forward/backward player seeks as `NOT_TESTED`; ciphered playback, same-harness InnerTubeX video comparison and another network remain open.
+
+On a second public video, aqz-KE-bpKQ, the same adapters on the same network gave eXcor ACCESS_DENIED before media in all six attempts while InnerTubeX passed full decode and both byte-range probes in all six. This does not establish a cause for the access difference. See the [second-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-ad7-aqz-full.jsonl).
+
+## 2026-11-14 — exact-source strict range validation
+
+At exact source commit `e990cb32a05c096cba9c02eed7962febf275ef0c`, nine selected tests passed with zero skips or failures. The signed-out Windows x64 run fully decoded 3,433,755 bytes of Opus, muxed and fully decoded 480p H.264/AAC, and validated MIME type, content length, exact range boundaries and body sizes. All 27 VISIONOS format-list entries returned valid HTTP 206 ranges. Synthetic regressions rejected misaligned ranges, body-length mismatches, MIME mismatches and excess bytes, and accepted a short final range and valid HTTP 200 full response. This is one public ID and one network; it is not an InnerTubeX comparison or player-seek result. See the [sanitized exact-source report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-e990-range-validation.md).
+
+## 2026-11-14 — exact-main signed-out playback and range matrix
+
+At main commit 2a9f8dd6a0de4cef37724fad7102fc50c0c8a0cf, the per-ID range matrix found dQw4w9WgXcQ range-readable and two known public IDs access-blocked by YouTube bot checks. Two further selected tests on dQ fully decoded 3,433,755-byte Opus audio and a 480p H.264/AAC mux (854×480, 25 fps, 213.089 seconds). Midpoint byte ranges returned HTTP 206. Exact commands, timestamps, environment and limits are in the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-2a9f-playback.md).
+
+This is one signed-out Windows home network and eXcor-only. It does not compare InnerTubeX video, test player-controlled seeking or exercise a ciphered path. The two access blocks are reported separately from technical failures. G4/G5 remain partial.
+
+## 2026-11-15 — latest exact-main paired direct-audio follow-up
+
+At exact main commit `2818f68490e596f26f43f3be9902c3bc762b198b`, the signed-out Windows x64 JVM adapters ran three cold and three warm attempts on one home network for `aqz-KE-bpKQ`. eXcor was `ACCESS_DENIED` before media in all six attempts. InnerTubeX v0.11.6 fully decoded the stream and passed forward/backward HTTP byte-range probes in all six. Its first-media p50/p95 was 1,204/1,366 ms cold and 140/181 ms warm; decode p50/p95 was 1,114/1,156 ms cold and 1,117/1,120 ms warm. eXcor has no media timing for this access-blocked run. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.md) and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-2818-aqz-full.jsonl).
+
+## 2026-11-15 — previous exact-main paired direct-audio follow-up
+
+At exact main commit `c92b2c0cc14849a42937253cbd7014cf88405670`, the signed-out Windows x64 JVM adapters ran three cold and three warm attempts per ID on one home network. On `dQw4w9WgXcQ`, eXcor 0.2.0 and InnerTubeX v0.11.6 both fully decoded the direct-audio stream and passed forward/backward HTTP byte-range probes in 6/6 attempts. First-media p50/p95 was 356/363 ms cold and 93/104 ms warm for eXcor, versus 1,285/1,292 ms and 141/152 ms for InnerTubeX. Full-decode p50/p95 was 320/378 ms and 321/348 ms for eXcor, versus 373/394 ms and 384/390 ms for InnerTubeX.
+
+On `M7lc1UVf-VE`, eXcor was `ACCESS_DENIED` before media in all six attempts. InnerTubeX reached media and passed both HTTP byte-range probes in all six, but full decode timed out after 73,728 bytes in each attempt. This is one current-head shared success on one network; the second ID does not compare completed playback and the outcomes do not identify their cause. See the [dQ report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c92-dq-full.md) and [M7 report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c92-m7lc-full.md), with sanitized JSONL files beside each report.
+
+## 2026-11-14 — previous exact-main paired audio, range and FFplay seek checks
+
+At exact main commit `c6faa41e8eb817210bbdf796bacca710be08653a`, the signed-out Windows x64 adapters ran three cold and three warm attempts per ID on one home network. On `dQw4w9WgXcQ`, eXcor 0.2.0 and InnerTubeX v0.11.6 both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in 6/6 attempts. First-media p50/p95 was 353/353 ms cold and 101/102 ms warm for eXcor, versus 1,377/1,399 ms and 154/185 ms for InnerTubeX. Full-decode p50/p95 was 307/308 ms and 310/314 ms for eXcor, versus 366/367 ms and 360/363 ms for InnerTubeX. On `aqz-KE-bpKQ`, eXcor was `ACCESS_DENIED` before media in 6/6 attempts while InnerTubeX passed full decode and both range probes in 6/6. See the [sanitized comparison](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-paired.md).
+
+A separate same-FFplay 9.0.2 check used Right then Left once per adapter for `dQw4w9WgXcQ` under shared comparison metadata. Both produced range starts `0`, `497307`, `329300`, all HTTP 206, and relayed 720,896 bytes before the configured 30-second limit. The results support one paired direct-audio seek case, not video seek, multiple-network reliability or ciphered playback. Details and commands are in the [seek report](../modules/samples/black-box-comparison/results/owner-home-2026-11-14-main-c6-player-seek.md).
+
+The 2026-11-14 results add repeatable same-ID decode and byte-range evidence plus one paired audio-seek case. They do not close the cross-network, eligible cipher, video-seek or repeated-seek requirements. G4/G5 remain partial.
+
+## 2026-11-15 — previous-main paired audio decode and range recheck
+
+At exact main commit `a983599f1256209a78a1d30140fdda23a521b328`, the signed-out Windows x64 eXcor 0.2.0 and InnerTubeX 0.11.6 adapters ran three cold and three warm attempts on one home network for `dQw4w9WgXcQ`. Both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in all six attempts.
+
+| Phase | Measure (p50/p95) | eXcor | InnerTubeX |
+|---|---|---:|---:|
+| Cold | First media (ms) | 372/429 | 1,199/1,328 |
+| Warm | First media (ms) | 104/105 | 144/144 |
+| Cold | Full decode (ms) | 369/402 | 399/433 |
+| Warm | Full decode (ms) | 350/371 | 386/420 |
+
+At the time, this refreshed one shared successful ID on main `a983599`; the decode run itself did not add video, cipher, signed-in or cross-network evidence. HTTP ranges from this run are not player seeks. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-dq-full-report.json).
+
+## 2026-11-15 — previous-main paired FFplay audio seek
+
+At exact main `a983599f1256209a78a1d30140fdda23a521b328`, one signed-out Windows x64 FFplay 9.0.2 attempt per adapter tested `dQw4w9WgXcQ`) on one home network. Each run received Right, waited 1.5 seconds, then received Left. eXcor range starts were `0, 666109, 497307`; InnerTubeX starts were `0, 497307, 329300`. All initial, forward and backward requests returned HTTP 206. The configured 30-second `time_limit` ended each run below the 256 MiB cap.
+
+This verifies one direct-audio seek sequence for each adapter, not video seeking, ciphered playback, cross-network behavior or broad reliability. See the [sanitized seek report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-a983-player-seek-spaced.md). Issue #78 remains open; G4/G5/G11 remain partial.
+
+## 2026-11-15 — exact-main d29 paired audio and muxed-video playback
+
+At exact main `d29f6ae3e433c103748b12634c56f193788ac8cc`, signed-out Windows x64 tests on `dQw4w9WgXcQ` passed full Opus audio decode and a 480p H.264/AAC mux decode. The audio stream was 3,433,755 bytes and decoded for 213.061 seconds. The video track was 854×480 at 25 fps and 14,103,519 bytes; the mux decoded for 213.089 seconds. Midpoint HTTP range reads passed for both tracks. This eXcor-only run is one video/network and does not test player-controlled seeking. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-playback.md).
+
+At the same exact main SHA, signed-out JVM adapters ran three cold and three warm direct-audio attempts for the same video. Both eXcor 0.2.0 and InnerTubeX 0.11.7 passed full decode of the same 3,507,483-byte Opus stream and forward/backward HTTP range probes in all six attempts. First-media p50/p95 was 389/427 ms cold and 99/124 ms warm for eXcor, versus 1,179/1,298 ms and 153/169 ms for InnerTubeX. Full-decode p50/p95 was 462/547 ms and 512/552 ms for eXcor, versus 524/546 ms and 598/1,367 ms. This is one shared ID on one network, not broad parity; ranges are not player seeks. The comparison adapter disables SABR, so the run does not measure InnerTubeX v0.11.7's Remix SABR preference. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-d29-v0117-report.json).
+
+## 2026-11-15 — exact-main 17f five-ID range classification
+
+At exact main `17f160417d3d98449e3ab6cd6cd07c6c0aa5eada`, the signed-out Windows x64 JVM test `LivePlaybackTest.publicMusicVideosRecordRangeOutcomeForEachId` ran on one home network. It recorded one `RANGE_READABLE` outcome (`dQw4w9WgXcQ`) and four recognized `ACCESS_BLOCKED` outcomes (`kJQP7kiw5Fk`, `JGwWNGJdvx8`, `aqz-KE-bpKQ`, `M7lc1UVf-VE`). The test completed with one pass, zero skips and zero failures; it continues after each recognized access block. This adds no new playable ID, full decode, player seek or cipher evidence and does not establish cross-network reliability. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-17f-range-matrix.md).
+
+## 2026-11-15 — exact-main 59f HLS and video-seek follow-up
+
+On signed-out Windows x64 and `dQw4w9WgXcQ`, `LivePlaybackTest.hlsManifestDecodesForHostPlayer` completed as one skipped test with zero failures or errors: a recognized access refusal arrived before the HLS manifest, so FFmpeg did not run. Two separate `excor-jvm --player-seek-video` attempts reached the 30-second limit and each relayed two HTTP 206 reads, but the desktop automation could not target FFplay and sent no Right/Left keys. Those HTTP reads do not prove playback or a player seek; no InnerTubeX video-seek attempt ran. See the [sanitized follow-up report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-59f-hls-video-seek.md). G4/G5/G11 remain partial.
+
+## 2026-11-15 — exact-main 360 video player-seek attempt
+
+At exact main `360c38cd77e344a801fc0fcf1a292bfcca9eea56`, two signed-out Windows x64 attempts used `dQw4w9WgXcQ`, FFplay 9.0.2 and the 30-second limit. In both attempts the eXcor FFplay window received Right then Left and the adapter reported five HTTP 206 reads, relaying 786,432 bytes before `time_limit`. InnerTubeX 0.11.7 returned `stream_resolution_failed` before FFplay opened in both matched attempts. No per-key range timing or decoded-frame result was captured, and both attempts used one ID/network. This repeated result is not a demonstrated paired seek pass or broad parity evidence. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-360-video-player-seek.md). G4/G5/G11 remain partial.
+
+## 2026-11-15 — InnerTubeX video-seek classification follow-up
+
+One signed-out InnerTubeX 0.11.7 attempt on `dQw4w9WgXcQ`, using the adapter diagnostic fix and eXcor main metadata `dbbe8c1`, returned `UNSUPPORTED/UNSUPPORTED_TRANSPORT` from the existing `NO_PLAYABLE_STREAM` classifier before FFplay or a media request. The earlier `stream_resolution_failed` attempts remain unclassified. This one direct-video extraction result is not a player-seek measurement or general incompatibility evidence. See the [sanitized report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-dbbe8c-innertubex-video-seek-classification.md). G4/G5/G11 remain partial.
+
+## 2026-11-15 — current-main availability and paired audio follow-up
+
+At eXcor main `766996e16dcb6a12ec5da5c7d9528094a7318d8f`, the signed-out per-ID range matrix classified `ScMzIvxBSi4` and `1ZAPwfrtAFY` as `ACCESS_BLOCKED`, and `ysz5S6PUM-U` as `VIDEO_UNAVAILABLE`. The test skipped after all three IDs were classified as blocked or unavailable; it had zero failures and no readable media range. The test-only classifier change was local to the JVM harness. See the [sanitized matrix record](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-766-range-matrix.md).
+
+The paired cold/warm follow-up repeated `ScMzIvxBSi4` three times per phase: eXcor was `BLOCKED/ACCESS_DENIED` in 6/6 before media, while InnerTubeX 0.11.7 passed full decode of 1,541,165 bytes and both HTTP byte-range probes in 6/6. On `ysz5S6PUM-U`, both adapters returned normalized `FAIL/OTHER`; on `1ZAPwfrtAFY`, eXcor was blocked before media and InnerTubeX timed out during decode after 73,728 bytes, although its two HTTP range probes passed. This is one signed-out Windows home network and no shared decode pass for these IDs; ranges are not player seeks. See the [three-ID report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-unavailable-followup.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-unavailable-followup.jsonl), [six-sample ScMz report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-scmz-repeat.md), and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-scmz-repeat.jsonl). G4/G5/G11 remain partial; issue #78 remains open.
+
+## 2026-11-15 — exact-main c309 paired audio player-seek check
+
+One signed-out direct-audio FFplay 9.0.2 run per adapter used `dQw4w9WgXcQ`, eXcor main `c3091d31920bd6769402322fb2ee83d521fda3cc`, one Windows home network, cold sample 1 and the configured 30-second limit. eXcor logged three HTTP 206 reads at starts `0, 666109, 497307`; InnerTubeX 0.11.7 logged three at `0, 497307, 329300`. FFplay visibly responded to Right for both and to Left for InnerTubeX. The eXcor final offset was lower than its preceding offset after the Left input attempt, but its window closed before a final UI refresh. The adapters used separate comparison IDs and their key events were not timestamped independently. This is one ID/network and does not establish per-key latency, broad seek parity, video seeking, ciphered playback or SABR/UMP. See the [sanitized manual report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-c309-player-seek.md). G4/G5/G11 remain partial, G6 remains blocked, and issue #78 remains open.
+
+## 2026-11-15 — exact-main second-ID paired direct-audio check
+
+At exact main `acff0a3bc43d19dc44572ea66fcc254fc70685ae`, signed-out Windows x64 JVM adapters ran three cold and three warm attempts for `yydNF8tuVmU` on one home network. eXcor 0.2.0 was `BLOCKED/ACCESS_DENIED` before media in all six attempts. InnerTubeX 0.11.7 decoded the full 4,147,964-byte Opus stream and passed forward/backward HTTP byte-range probes in all six. Its first-media p50/p95 was 1,360/2,108 ms cold and 148/161 ms warm; decode p50/p95 was 585/680 ms cold and 611/634 ms warm. eXcor has no media timing in this run, so this is an availability difference, not a shared decode or speed comparison. It adds another ID-level availability observation, but no new network or shared playable case. HTTP byte-range probes are not player seeks. See the [report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full.md), [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full.jsonl), and [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-acff-yyd-full-report.json). G4/G5/G11 remain partial, G6 remains blocked, and issue #78 remains open.
+
+## 2026-11-15 — exact-main matched FFplay audio seek
+
+At exact eXcor main `b1d020cbe2eeea9be31687ace29da3ddefb5c2f7`, one signed-out cold sample per adapter used the same metadata context (`owner-home-shared-player-20261115`, run date `2026-11-15T11:09:19Z)), public audio `dQw4w9WgXcQ`, one Windows home network and FFplay 9.0.2. In both UI runs, the audio waveform refreshed after Right and then Left. The relay recorded the initial range at byte 0, a forward range at byte 497,307, then a backward range at byte 329,300. eXcor key/range times were Right 11:09:36.328Z → 11:09:36.401Z (+73 ms) and Left 11:09:39.191Z → 11:09:39.268Z (+77 ms); InnerTubeX times were Right 11:10:04.850Z → 11:10:04.924Z (+74 ms) and Left 11:10:09.213Z → 11:10:09.284Z (+71 ms). Each adapter reported three HTTP 206 ranges and 753,664 bytes relayed; both reached the configured 30-second limit below the 256 MiB cap. Range-arrival times do not measure audible seek latency. This confirms one paired direct-audio seek case only; it adds no video-seek, cross-network, cipher or SABR/UMP evidence. G4/G5/G11 remain partial, G6 remains blocked, and issue #78 remains open. See the [sanitized owner report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-b1-player-seek.md).
+
+## 2026-11-15 — two additional paired FFplay audio-seek samples
+
+On current eXcor main `17c6febd14d53da67700656dd8daa2030df38796`, one signed-out cold sample per adapter was repeated twice on the same `dQw4w9WgXcQ` audio stream and Windows home network. The earlier sample used `b1d020c`; the intervening PR changed only documentation, so the adapter source was unchanged. In both repeats, both FFplay windows visibly refreshed after Right and Left; each adapter again returned HTTP 206 at offsets `0 → 497307 → 329300` in both samples. Across samples 1–3, each adapter therefore has 9/9 HTTP 206 range reads; eXcor relayed 2,244,608 bytes and InnerTubeX 2,211,840 bytes. All six runs hit the configured 30-second limit below the 256 MiB cap. The detailed Right/Left and range-arrival timestamps are in the [repeat report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-17c6-player-seek-repeats.md) and [first-sample report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-b1-player-seek.md). This improves same-ID/network seek repeatability only; it does not add a video, network, cipher or SABR/UMP case. G4/G5/G11 remain partial, G6 blocked, and issue #78 remains open.
+
+## Release-gate interpretation
+
+- **G4** cannot be considered complete without at least one authorized *real playable* stream that exercises each claimed cipher path.
+- **G5** cannot be called broadly reliable until audio and video full-decode + seek checks work for multiple eligible videos and environments. Service-side access refusals must be tracked separately.
+- **G8** includes one owner-run extraction that recovered from a locally injected 503 and two live JVM metadata requests cancelled after the response headers arrived. Upstream faults and cancellation during media playback remain unverified.
+- **G6 SABR/UMP remains BLOCKED** until independently verified implementation and seek/decoding tests exist; this matrix cannot close it.
+- **G10 remote publishing remains owner-authorized only**, regardless of these results.
+
+See `docs/release-gates.json`, `docs/COMPETITOR_MATRIX.md`, `docs/ERROR_HANDLING.md`, `maintainers/HANDOFF.md`, and issue #78.
+
+
+## 2026-11-15 — DASH indexed MP4 inputs
+
+The signed-out JVM range check used library main `314dd6e` and test source `352e80a` on one Windows x64 home network. At 18:21 UTC, VISIONOS exposed the following MP4 tracks for `dQw4w9WgXcQ`.
+
+| Track | Initialization bytes | Index bytes | Timescale | Duration ticks | References | First movie fragment byte |
+|---|---|---|---:|---:|---:|---:|
+| AAC, itag 139 | 0–731 | 732–1027 | 44,100 | 9,400,320 | 22 | 1,028 |
+| H.264, itag 135 | 0–740 | 741–1228 | 12,800 | 2,726,912 | 38 | 1,229 |
+
+All six range requests returned HTTP 206 with matching byte offsets and lengths. Both initialization ranges held `ftyp` and `moov`. Each index contained one `sidx`, with direct references bounded by the file length. The first reference of each pointed to a `moof` box. This verifies inputs for a DASH manifest on one video. Manifest playback and seeking still need a host player test. [DASH-IF indexed addressing](https://dashif.org/Guidelines-TimingModel/#indexed-addressing)
+
+```sh
+EXCOR_LIVE=1 EXCOR_DECODE_ID=dQw4w9WgXcQ ./gradlew :jvmTest --rerun --tests 'com.excor.LivePlaybackTest.mp4TracksExposeDashInitializationAndIndex'
+```
+
+## 2026-11-15 — exact-main second-ID paired availability check
+
+- On main `af7697d6cfa49f65c29c2566ed53d8e0cec5ce9a`, signed-out Windows x64 adapters compared the public video `jNQXAC9IVRw` on the owner's home network. The first cold attempt was followed by two additional cold and two warm attempts per adapter.
+- eXcor 0.2.0 was `BLOCKED/ACCESS_DENIED` before any media request in all five attempts. InnerTubeX 0.11.7 fully decoded the audio and passed forward and backward HTTP byte-range probes in all five. This is an access differential; the cause of eXcor's refusal is unknown, and no shared eXcor decode, player seek, cipher, or cross-network result was produced.
+- The first run used `--full-decode --range-probes`; repeats covered cold and warm phases. Reports and sanitized samples: [first report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id.md), [repeat report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id-repeats.md), [first samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id.jsonl), [repeat samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-zoo-second-id-repeats.jsonl).
+- Keep this separate from decoder failures and do not promote G4/G5/G11 from one ID/network. Issue #78 remains open.
+
+## 2026-11-15 — current-main paired direct-audio decode refresh
+
+At exact main `1f141412aeb55ee5972cffbe11a1d077d0274aec`, three signed-out cold samples per adapter used `dQw4w9WgXcQ` on one Windows home network. eXcor 0.2.0 and InnerTubeX 0.11.7 both fully decoded the same 3,507,483-byte Opus stream and passed forward/backward HTTP byte-range probes in 3/3 attempts. First-media p50/p95 was 1,561/1,617 ms for eXcor versus 2,924/3,049 ms for InnerTubeX; transfer-plus-decode p50/p95 was 726/792 ms versus 1,530/1,551 ms. A separate cold attempt six minutes earlier measured eXcor transfer plus decode at 16,951 ms; the reason for that variation is unknown. This is one sample ID/network, not a broad performance ranking. HTTP ranges are not player seeks, and the direct-audio adapters disable SABR. See the [three-sample report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.md), [JSON summary](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat-report.json), and [sanitized samples](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-cold-repeat.jsonl). The earlier separate [single-sample report](../modules/samples/black-box-comparison/results/owner-home-2026-11-15-main-1f1414-refresh.md) records the slower result. G4/G5/G11 remain partial, G6 remains blocked, and issue #78 remains open.
+
+## 2026-11-15 — HLS livestream attempt and local decoder check
+
+At 18:14 UTC, on main `314dd6e3fa7f44325f280feb826b298a8fb70e17`, the signed-out JVM HLS test tried NASA's public ISS livestream `M3HKLzjvKPc` on one Windows x64 home network. Both VISIONOS and TVHTML5 returned `LOGIN_REQUIRED` before a manifest arrived. FFmpeg did not run in this attempt. [NASA's official stream](https://www.youtube.com/watch?v=M3HKLzjvKPc)
+
+The local check generated and decoded a three-second VOD playlist using FFmpeg 9.0.2. The same decoder check reported `out_time_us=3000000` and completed progress. Run it without YouTube access:
+
+```powershell
+$env:EXCOR_HLS_FIXTURE="1"
+.\gradlew.bat :jvmTest --rerun --tests 'com.excor.LivePlaybackTest.generatedHlsVodProducesDecodedMedia'
+Remove-Item Env:\EXCOR_HLS_FIXTURE
+```
+
+This verifies the FFmpeg check against a generated playlist. Live HLS extraction, playback, seeking, and the G5 gate remain open.
+
+## 2026-11-15 — live JVM player request cancellation
+
+On signed-out Windows x64 and one home network, two runs at `6312e7c301d34bfede84e6fadf4adbcd74248040` looked up metadata for `dQw4w9WgXcQ`. At 18:00:08 and 18:00:11 UTC, YouTube returned HTTP 200 headers in both trials. The test paused response delivery in OkHttp after the headers, cancelled the caller, and observed both the OkHttp cancellation event and the coroutine cancellation. Each trial sent one player POST.
+
+```sh
+EXCOR_LIVE=1 EXCOR_DECODE_ID=dQw4w9WgXcQ ./gradlew :jvmTest --rerun --tests 'com.excor.LivePlaybackTest.cancellingMetadataLookupCancelsLivePlayerCall'
+```
+
+G8 stays partial. The result covers host initiated cancellation of a metadata request. Upstream failure recovery, cancellation during a media read, and other platforms require separate evidence.

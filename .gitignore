@@ -1,0 +1,10 @@
+build/
+.gradle/
+.kotlin/
+local.properties
+*.iml
+.idea/
+*.hprof
+__pycache__/
+modules/platforms/swift/.build/
+modules/platforms/swift/.swiftpm/

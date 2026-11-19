@@ -1,0 +1,4 @@
+# Preserve the upstream artifact bytes for license and reproducibility checks.
+modules/cleanroom/ejs/*.min.js -text
+modules/platforms/swift/Sources/eXcorKit/Resources/ExcorEjsCore.js -text
+modules/platforms/swift/Sources/eXcorKit/Resources/ExcorEjsLib.js -text

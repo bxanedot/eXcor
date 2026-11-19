@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "artists": [{"id": "2222222222222222222222", "name": "June Harbor"}],
+      "disc_number": 1,
+      "duration_ms": 187000,
+      "explicit": false,
+      "external_urls": {"spotify": "https://open.spotify.com/track/4444444444444444444444"},
+      "id": "4444444444444444444444",
+      "name": "North Loop",
+      "track_number": 3
+    }
+  ],
+  "limit": 50,
+  "next": null,
+  "offset": 0,
+  "total": 1
+}

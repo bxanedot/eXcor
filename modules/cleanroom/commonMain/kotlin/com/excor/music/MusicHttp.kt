@@ -1,0 +1,273 @@
+package com.excor.music
+
+import com.excor.catalog.ExcorCatalogError
+import com.excor.catalog.ExcorCatalogException
+import com.excor.catalog.ExcorCatalogProvider
+import io.ktor.client.HttpClient
+import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.prepareGet
+import io.ktor.client.request.header
+import io.ktor.client.request.preparePost
+import io.ktor.client.request.prepareRequest
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.HttpStatement
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.content.TextContent
+import io.ktor.http.Parameters
+import io.ktor.http.Url
+import io.ktor.http.isSuccess
+import io.ktor.utils.io.cancel
+import io.ktor.utils.io.readBuffer
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.io.readByteArray
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlin.time.TimeSource
+
+/**
+ * The music providers' shared HTTP: bounded bodies, JSON only, one retry after a short Retry-After, a per-provider
+ * request budget, and a small cache for anonymous catalog reads. Authorized responses are never cached, so one
+ * account's data cannot reach another.
+ */
+internal class MusicHttp(
+    private val http: HttpClient,
+    private val nowMs: () -> Long,
+    private val requestTimeMs: () -> Long = monotonicNowMs(),
+    private val cacheEntries: Int = 256,
+    private val cacheTtlMs: Long = 5 * 60_000,
+    private val cacheResponseBytes: Int = 16 * 1024 * 1024,
+) {
+    private val budgets = ExcorCatalogProvider.entries.associateWith { RequestBudget(budgetOf(it), requestTimeMs) }
+    private val itunesBudget = RequestBudget(ITUNES_BUDGET, requestTimeMs)
+    init {
+        require(cacheEntries >= 0 && cacheTtlMs >= 0 && cacheResponseBytes >= 0)
+    }
+
+    private data class JsonRead(val value: JsonElement, val bytes: Int)
+    private data class CacheEntry(val at: Long, val value: JsonElement, val bytes: Int)
+    private val cache = LinkedHashMap<String, CacheEntry>()
+    private var cachedResponseBytes = 0L
+    private val cacheLock = Mutex()
+    /** Requests sent so far, for benchmarks. */
+    val requests: Int get() = budgets.values.sumOf { it.taken } + itunesBudget.taken
+
+    suspend fun getJson(
+        provider: ExcorCatalogProvider,
+        url: String,
+        bearer: String? = null,
+        headers: Map<String, String> = emptyMap(),
+        cacheable: Boolean = bearer == null && headers.isEmpty(),
+    ): JsonElement {
+        val cacheable = cacheable &&
+            bearer == null &&
+            headers.isEmpty() &&
+            currentCoroutineContext()[FreshReadsKey] == null
+        if (cacheable) cached(url)?.let { return it }
+        val element = send(provider, url) {
+            http.prepareGet(url) {
+                header(HttpHeaders.Accept, "application/json")
+                bearer?.let { header(HttpHeaders.Authorization, "Bearer $it") }
+                headers.forEach { (k, v) -> header(k, v) }
+            }
+        }
+        if (cacheable) store(url, element)
+        return element.value
+    }
+
+    suspend fun postForm(provider: ExcorCatalogProvider, url: String, form: Map<String, String>, headers: Map<String, String> = emptyMap()): JsonElement =
+        send(provider, url) {
+            http.preparePost(url) {
+                header(HttpHeaders.Accept, "application/json")
+                headers.forEach { (k, v) -> header(k, v) }
+                setBody(FormDataContent(Parameters.build { form.forEach { (k, v) -> append(k, v) } }))
+            }
+        }.value
+
+    /** A command (PUT, POST) with an optional JSON body; an empty success returns an empty object. Never cached. */
+    suspend fun command(
+        provider: ExcorCatalogProvider,
+        method: HttpMethod,
+        url: String,
+        bearer: String,
+        json: String? = null,
+        contentType: ContentType = ContentType.Application.Json,
+    ): JsonElement =
+        send(provider, url, allowEmptyBody = true) {
+            http.prepareRequest(url) {
+                this.method = method
+                header(HttpHeaders.Accept, "application/json")
+                header(HttpHeaders.Authorization, "Bearer $bearer")
+                setBody(TextContent(json ?: "", contentType))
+            }
+        }.value
+
+    private suspend fun send(
+        provider: ExcorCatalogProvider,
+        url: String,
+        allowEmptyBody: Boolean = false,
+        call: suspend () -> HttpStatement,
+    ): JsonRead {
+        var retried = false
+        // The keyless iTunes Search/Lookup API has its own published limit, separate from the Apple Music API's.
+        val budget = if (runCatching { Url(url).host }.getOrNull().equals(ITUNES_HOST, ignoreCase = true)) itunesBudget else budgets.getValue(provider)
+        while (true) {
+            budget.take()
+            var retryAfterMs = 0L
+            val result = try {
+                call().execute { response ->
+                    if (response.status.value == 429 && !retried) {
+                        val wait = response.headers[HttpHeaders.RetryAfter]?.toLongOrNull()
+                        if (wait == null || wait !in 0..MAX_RETRY_AFTER_S) {
+                            throw ExcorCatalogException(provider, ExcorCatalogError.RATE_LIMITED, 429)
+                        }
+                        retryAfterMs = wait * 1_000
+                        null
+                    } else {
+                        read(provider, response, allowEmptyBody)
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: ExcorCatalogException) {
+                throw failure
+            } catch (_: Exception) {
+                throw ExcorCatalogException(provider, ExcorCatalogError.NETWORK_FAILURE)
+            }
+            if (result != null) return result
+            retried = true
+            delay(retryAfterMs)
+        }
+    }
+
+    private suspend fun read(provider: ExcorCatalogProvider, response: HttpResponse, allowEmptyBody: Boolean): JsonRead {
+        val status = response.status.value
+        if (status == 204) {
+            return JsonRead(JsonObject(emptyMap()), 0)
+        }
+        if (!response.status.isSuccess()) {
+            throw ExcorCatalogException(provider, errorOf(status), status)
+        }
+        if (response.headers[HttpHeaders.ContentLength]?.toLongOrNull()?.let { it > MAX_BYTES } == true) {
+            throw ExcorCatalogException(provider, ExcorCatalogError.RESPONSE_TOO_LARGE)
+        }
+        val type = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()?.lowercase()
+        if (type == null && response.headers[HttpHeaders.ContentLength] == "0") {
+            return emptyBody(provider, allowEmptyBody)
+        }
+        if (type != "application/json" && type != "text/javascript") {
+            throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
+        }
+        val channel = response.bodyAsChannel()
+        val bytes = try {
+            channel.readBuffer(MAX_BYTES + 1L).readByteArray()
+        } finally {
+            channel.cancel()
+        }
+        if (bytes.size > MAX_BYTES) throw ExcorCatalogException(provider, ExcorCatalogError.RESPONSE_TOO_LARGE)
+        // Commands such as Spotify's library writes succeed with an empty body; JSON reads require a value.
+        if (bytes.all { it.toInt().toChar().isWhitespace() }) return emptyBody(provider, allowEmptyBody)
+        return try {
+            JsonRead(Json.parseToJsonElement(bytes.decodeToString(throwOnInvalidSequence = true)), bytes.size)
+        } catch (_: Exception) {
+            throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
+        }
+    }
+
+    private fun emptyBody(provider: ExcorCatalogProvider, allowed: Boolean): JsonRead {
+        if (!allowed) throw ExcorCatalogException(provider, ExcorCatalogError.MALFORMED_RESPONSE)
+        return JsonRead(JsonObject(emptyMap()), 0)
+    }
+
+    private suspend fun cached(url: String): JsonElement? = cacheLock.withLock {
+        val entry = cache[url] ?: return@withLock null
+        // A wall-clock rollback must not keep a cached catalog response alive indefinitely.
+        val now = nowMs()
+        // Compare first to detect rollback; unsigned elapsed time avoids signed Long overflow.
+        if (now < entry.at || (now - entry.at).toULong() > cacheTtlMs.toULong()) {
+            cache.remove(url)
+            cachedResponseBytes -= entry.bytes
+            return@withLock null
+        }
+        cache.remove(url)
+        cache[url] = entry // move to the most recent end without changing the byte total
+        entry.value
+    }
+
+    private suspend fun store(url: String, response: JsonRead) = cacheLock.withLock {
+        cache.remove(url)?.let { cachedResponseBytes -= it.bytes }
+        if (cacheEntries == 0 || cacheResponseBytes == 0 || response.bytes > cacheResponseBytes) return@withLock
+        cache[url] = CacheEntry(nowMs(), response.value, response.bytes)
+        cachedResponseBytes += response.bytes
+        while (cache.size > cacheEntries || cachedResponseBytes > cacheResponseBytes) {
+            val removed = cache.remove(cache.keys.first())!!
+            cachedResponseBytes -= removed.bytes
+        }
+    }
+
+    companion object {
+        const val MAX_BYTES = 4 * 1024 * 1024
+        const val MAX_RETRY_AFTER_S = 10L
+
+        fun errorOf(status: Int): ExcorCatalogError = when (status) {
+            400 -> ExcorCatalogError.INVALID_REQUEST
+            401 -> ExcorCatalogError.AUTHENTICATION_REQUIRED
+            403 -> ExcorCatalogError.ACCESS_DENIED
+            404 -> ExcorCatalogError.NOT_FOUND
+            429 -> ExcorCatalogError.RATE_LIMITED
+            else -> ExcorCatalogError.PROVIDER_UNAVAILABLE
+        }
+
+        // shortcut: 50 per 5 s is Deezer's commonly cited limit (its docs need a login); Spotify and the Apple Music API
+        // publish no figure. Tune if 429s appear.
+        private fun budgetOf(provider: ExcorCatalogProvider) = when (provider) {
+            ExcorCatalogProvider.DEEZER -> 50 to 5_000L
+            else -> 20 to 1_000L
+        }
+
+        // Apple's Search API page: "limited to approximately 20 calls per minute (subject to change)". Over it, Apple
+        // has been seen answering 403, so waiting here keeps matching from failing as access denied.
+        private const val ITUNES_HOST = "itunes.apple.com"
+        private val ITUNES_BUDGET = 20 to 60_000L
+    }
+}
+
+private fun monotonicNowMs(): () -> Long {
+    val start = TimeSource.Monotonic.markNow()
+    return { start.elapsedNow().inWholeMilliseconds }
+}
+
+/** A sliding-window budget: at most `limit.first` requests per `limit.second` ms, waiting rather than failing. */
+internal class RequestBudget(private val limit: Pair<Int, Long>, private val nowMs: () -> Long) {
+    private val sent = ArrayDeque<Long>()
+    private val lock = Mutex()
+    var taken = 0
+        private set
+
+    suspend fun take() {
+        while (true) {
+            val wait = lock.withLock {
+                val now = nowMs()
+                while (sent.isNotEmpty() && now - sent.first() >= limit.second) sent.removeFirst()
+                if (sent.size < limit.first) { sent.addLast(now); taken++; 0L } else limit.second - (now - sent.first())
+            }
+            if (wait <= 0) return
+            delay(wait)
+        }
+    }
+}
+
+/** In a coroutine with this element, reads skip the cache; sync needs current snapshots. */
+internal object FreshReads : kotlin.coroutines.AbstractCoroutineContextElement(FreshReadsKey)
+
+internal object FreshReadsKey : kotlin.coroutines.CoroutineContext.Key<FreshReads>
+
+internal fun JsonElement.objectOrNull(): JsonObject? = this as? JsonObject
