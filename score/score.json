@@ -377,7 +377,7 @@
     "G12": "partial"
   },
   "release_decision": "NO-GO",
-  "checked_date_utc": "2026-11-20",
+  "checked_date_utc": "2026-11-21",
   "main_sha": "c76eb1830bcf6701fa4919dc84bbf28c7b45ba1c",
   "ci": {
     "status": "completed",
